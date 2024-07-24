@@ -3,7 +3,7 @@
     PSISANS1toHMI.py is part of pySASfit package
 """
 __author__ = "Joachim Kohlbrecher"
-__copyright__ = "Copyright 2023, The SASfit Project"
+__copyright__ = "Copyright 2024, The SASfit Project"
 __license__ = "GPL"
 __version__ = "1.0"
 __maintainer__ = "Joachim Kohlbrecher"
@@ -75,6 +75,7 @@ def rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Ignore=None, Tfiles=None, thick
                 fn=os.path.basename(FullFileNameHMI)
                 f = fn.split('.')
                 BERSANS.write(f'FileName={f[0]}\n')
+                RFN = f[0]
             else:
                 BERSANS.write(f'{f[1]}={val}\n')
     BERSANS.write('%Setup\n')
@@ -87,6 +88,55 @@ def rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Ignore=None, Tfiles=None, thick
         f = key.split(",")
         if len(f) > 1:
             BERSANS.write(f'{f[1]}={val}\n')
+            if f[1]=='SampleName':
+                RSN = ''
+                if val=='EXP-001673_1':
+                    BERSANS.write(f'{f[1]}=EXP-001763_1\n')
+                    RSN="EXP-001763_1"
+                if val=='EXP-001673_2':
+                    BERSANS.write(f'{f[1]}=EXP-001763_2\n')
+                    RSN="EXP-001763_2"
+                if val=='EXP-001673_3':
+                    BERSANS.write(f'{f[1]}=EXP-001763_3\n')
+                    RSN="EXP-001763_3"
+                if val=='EXP-001673_4':
+                    BERSANS.write(f'{f[1]}=EXP-001763_4\n')
+                    RSN="EXP-001763_4"
+                if val=='EXP-001673_5':
+                    BERSANS.write(f'{f[1]}=EXP-001763_5\n')
+                    RSN="EXP-001763_5"
+                if val=='EXP-001673_6':
+                    BERSANS.write(f'{f[1]}=EXP-001763_6\n')
+                    RSN="EXP-001763_6"
+                if val=='EXP-001674_1':
+                    BERSANS.write(f'{f[1]}=EXP-001764_1\n')
+                    RSN="EXP-001764_1"
+                if val=='EXP-001674_2':
+                    BERSANS.write(f'{f[1]}=EXP-001764_2\n')
+                    RSN="EXP-001764_2"
+                if val=='EXP-001674_3':
+                    BERSANS.write(f'{f[1]}=EXP-001764_3\n')
+                    RSN="EXP-001764_3"
+                if val=='EXP-001674_4':
+                    BERSANS.write(f'{f[1]}=EXP-001764_4\n')
+                    RSN="EXP-001764_4"
+                if val=='EXP-001674_5':
+                    BERSANS.write(f'{f[1]}=EXP-001764_5\n')
+                    RSN="EXP-001764_5"
+                if val=='EXP-001674_6':
+                    BERSANS.write(f'{f[1]}=EXP-001764_6\n')
+                    RSN="EXP-001764_6"
+                    
+                if  RFN == 'D0007750':
+                    BERSANS.write(f'{f[1]}=EXP-001770_4\n')
+                    RSN="EXP-001770_4"
+                if  RFN == 'D0007751':
+                    BERSANS.write(f'{f[1]}=EXP-001770_5\n')
+                    RSN="EXP-001770_5"
+                if  RFN == 'D0007752':
+                    BERSANS.write(f'{f[1]}=EXP-001770_6\n')
+                    RSN="EXP-001770_6"
+              
     BERSANS.write('%Counter\n')
     for key, val in resCounter.items():
         f = key.split(",")
@@ -97,8 +147,15 @@ def rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Ignore=None, Tfiles=None, thick
         f = key.split(",")
         if len(f) > 1:
             BERSANS.write(f'{f[1]}={val}\n')
-    if f'{Data.BerSANS["%Sample,SampleName"]}' in transD.keys():
-        BERSANS.write(f'Transmission={transD[Data.BerSANS["%Sample,SampleName"]]}\n') 
+    sRSN = f'{Data.BerSANS["%Sample,SampleName"]}'
+    print(sRSN)
+    if len(RSN)>0:
+        sRSN=RSN
+    print(f'\nsRSN={sRSN} RSN={RSN}\n')
+    if sRSN in transD.keys():    
+#    if f'{Data.BerSANS["%Sample,SampleName"]}' in transD.keys():
+#        BERSANS.write(f'Transmission={transD[Data.BerSANS["%Sample,SampleName"]]}\n') 
+        BERSANS.write(f'Transmission={transD[sRSN]}\n')
     if "%History,Attenuation" not in Data.BerSANS.keys():
         BERSANS.write('Attenuation=1\n') 
     if "%History,Probability" not in Data.BerSANS.keys():
@@ -113,7 +170,7 @@ def rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Ignore=None, Tfiles=None, thick
         elif re.search('4mm',Data.BerSANS["%Sample,SampleName"]):
             BERSANS.write('Scaling=0.4\n')
         else:
-            BERSANS.write('Scaling=0.1\n')
+            BERSANS.write('Scaling=0.2\n')
     BERSANS.write('%Counts\n')
     try:
         DetData = Data.BerSANS['%Counts,DetCounts']

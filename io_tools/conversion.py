@@ -18,8 +18,8 @@ import pprint
 import tkinter
 from PSISANS1toHMI import rawhdf2hmi
 
-Data_path = 'C:/Users/kohlbrecher/switchdrive/SANS/user/Genix/raw/'
-year = '2023'
+Data_path = 'C:/Users/kohlbrecher/switchdrive/SANS/user/Vifor/1stJuly2024/'
+year = '2024'
 from_number = 84927
 to_number = 85114
 
@@ -65,6 +65,10 @@ def rawhdf2hmi_tcl (FullFileNameHDF, FullFileNameHMI):
     #rawhdf2hmi(FullFileNameHDF, FullFileNameHMI Tfiles=None, thickness=None, rwl='')
     rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Tfiles=Tfiles_tcl)
 
+def resetdict_Tfiles():
+    global Tfiles_tcl
+    Tfiles_tcl = {}
+    
 def adddict_Tfiles(*args):
     global Tfiles_tcl
     #print(len(args))
@@ -74,6 +78,7 @@ def adddict_Tfiles(*args):
         Tfiles_tcl.update({args[2]:args[3]})
     if len(args)>=6:
         Tfiles_tcl.update({args[4]:args[5]})
+    print(Tfiles_tcl)
         
 
 # register it as a tcl command:
@@ -81,6 +86,9 @@ tcl_command_name = "adddict_Tfiles"
 python_function = adddict_Tfiles
 cmd = gui.createcommand(tcl_command_name, python_function)
 
+tcl_command_name = "resetdict_Tfiles"
+python_function = resetdict_Tfiles
+cmd = gui.createcommand(tcl_command_name, python_function)
 
 def register(my_python_function, tcl_cmd_name=None):
     if tcl_cmd_name is None:

@@ -221,7 +221,7 @@ button .top.in.wltrans.trans1select -text "select..." \
                   } else {
                      set active1 0
                   }
-                  puts "wl1: $trans1data"
+                  puts "$wl1: $trans1data"
                 } 
 checkbutton .top.in.wltrans.trans2active -text ":use" -variable active2 \
                -command {
@@ -252,7 +252,7 @@ button .top.in.wltrans.trans2select -text "select..." \
                   } else {
                      set active2 0
                   }
-                  puts "wl2: $trans2data"
+                  puts "$wl2: $trans2data"
                 } 
 label .top.in.wltrans.label2 -text "lambda2:" \
       -width 8 -anchor w
@@ -293,9 +293,16 @@ button .top.in.convert.action -text "convert" \
                               set outname [file tail $output]
                               # catch {eval exec "${home}/hdf2hmi ${home}/sansstore.dic $input $output $outname"} msg
                               # catch {eval exec "python ${home}/PSISANS1toHMI.py $input $output"} msg
-                              set Trans_path "C:/Users/kohlbrecher/switchdrive/SANS/user/Genix/raw/"
-                              set T8 ${Trans_path}trans8A.txt
-                              adddict_Tfiles 0.8 $T8
+                              #set Trans_path "C:/Users/kohlbrecher/switchdrive/SANS/user/Vifor/June2024/"
+                              #set T6 ${Trans_path}trans.txt
+                              resetdict_Tfiles
+                              if {$active1} {
+                                    adddict_Tfiles $wl1 $trans1data
+                              }
+                              if {$active2} {
+                                    adddict_Tfiles $wl2 $trans2data
+                              }
+                              #adddict_Tfiles 0.6 $T6
                               catch {rawhdf2hmi_tcl $input $output} msg 
                               puts "msg from tcl call >rawhdf2hmi_tcl $input $output<"
                               #puts "python ${home}/PSISANS1toHMI.py $input $output"
