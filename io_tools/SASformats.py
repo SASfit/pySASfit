@@ -4,7 +4,220 @@ import h5py
 import errno
 import os, sys
 import re
+class ASCIIData:
+    def __init__(self):
+        self.InputFormat = "xye"
+        self.FileName = ""
+        self.Ext = "dat"
+        self.in_out = "nm^-1->nm^-1"
+        self.xscale = 1
+        self.unit = "nm"
+        self.npoints = 0
+        self.LineSkip = 0
+        self.Comment = []
+        self.error = 0
+        self.x = []
+        self.y = []
+        self.e = []
+        self.res = []
+        self.nonneg = 0
+        self.res_available = 0
+        self.zero_int_chkb = False
 
+def create_ASCIIData():
+    return ASCIIData()
+
+def read_Ascii(filename, data=None, *args):
+    if data is None:
+        data = create_ASCIIData()
+
+    # Set unit and xscale based on in_out
+    in_out_map = {
+        "nm^-1->Ångström^-1": ("Ångström^-1", 0.1),
+        "Ångström^-1->nm^-1": ("nm^-1", 10),
+        "Ångström^-1->Ångström^-1": ("Ångström^-1", 1.0),
+        "nm^-1->nm^-1": ("nm^-1", 1.0),
+        "nm->Ångström": ("Ångström", 10),
+        "Ångström->nm": ("nm", 0.1),
+        "Ångström->Ångström": ("Ångström", 1.0),
+        "nm->nm": ("nm", 1.0),
+        "ms->s": ("s", 1e-3),
+        "s->s": ("s", 1.0),
+        "s->ms": ("ms", 1000.0),
+        "ms->ms": ("ms", 1.0),
+        "mus->mus": ("mus", 1.0),
+        "mus->s": ("s", 1e-6),
+        "s->mus": ("mus", 1e6),
+    }
+    data.unit, data.xscale = in_out_map.get(data.in_out, ("xxx", 1))
+
+    data.InputFormat = data.InputFormat.lower()
+    if not ("x" in data.InputFormat and "y" in data.InputFormat):
+        return 0, data
+
+    if "e" not in data.InputFormat:
+        e = -1.0
+        data.error = 0
+    else:
+        data.error = 1
+
+    if not os.path.isfile(filename):
+        return 0, data
+
+    data.FileName = filename
+    data.npoints = 0
+    data.x = []
+    data.y = []
+    data.e = []
+    data.res = []
+    data.Comment = []
+
+    with open(filename, "r") as f:
+        lineno = 0
+        # Skip header lines
+        for _ in range(data.LineSkip):
+            line = f.readline()
+            if not line:
+                return 2, data
+            lineno += 1
+            data.Comment.append(line.rstrip())
+
+        fieldseparator = "\t ;"
+        fieldseparator_comma = "\t ;,"
+
+        for line in f:
+            line = " ".join(line.split())  # Replace multiple spaces with single space
+            line = line.strip()
+            if not line:
+                continue
+            lineno += 1
+
+            # Determine field separator
+            firstcomma = line.find(",")
+            firstdot = line.find(".")
+            if firstcomma >= 0 and firstdot >= 0 and firstdot < firstcomma:
+                tmpsplitline = [x for x in split_multi(line, fieldseparator_comma)]
+            else:
+                tmpsplitline = [x for x in split_multi(line, fieldseparator)]
+
+            # Remove empty fields and replace comma with dot for decimals
+            splitline = [i.replace(",", ".").strip() for i in tmpsplitline if i.strip()]
+
+            e_ok = x_ok = y_ok = r_ok = 1
+            e = -1
+            res = 0.0
+            x = 0.0
+            y = 0.0
+
+            if len(data.InputFormat) <= len(splitline):
+                for i, fmt in enumerate(data.InputFormat):
+                    try:
+                        if fmt == "e":
+                            e = float(splitline[i])
+                        elif fmt == "x":
+                            x = float(splitline[i])
+                        elif fmt == "y":
+                            y = float(splitline[i])
+                        elif fmt == "r":
+                            res = float(splitline[i])
+                    except Exception:
+                        if fmt == "e":
+                            e_ok = 0
+                        elif fmt == "x":
+                            x_ok = 0
+                        elif fmt == "y":
+                            y_ok = 0
+                        elif fmt == "r":
+                            r_ok = 0
+
+                # Optionally skip zero intensity
+                if hasattr(data, "zero_int_chkb") and data.zero_int_chkb and y == 0:
+                    continue
+                if e == 0 and not args:
+                    e_ok = 0
+
+                if "r" in data.InputFormat:
+                    data.res_available = 1
+                else:
+                    data.res_available = 0
+                    res = 0.0
+
+                if data.nonneg and y_ok:
+                    nonneg = 0 if y < 0.0 else 1
+                else:
+                    nonneg = 1
+
+                if e_ok and x_ok and y_ok and r_ok and nonneg:
+                    data.x.append(x * data.xscale)
+                    data.y.append(y)
+                    data.e.append(e)
+                    data.res.append(res * data.xscale)
+                    data.npoints += 1
+                else:
+                    data.Comment.append(line)
+            else:
+                data.Comment.append(line)
+
+    if data.error == 0:
+        # Generate artificial error data if none was provided
+        try:
+            data.e = sasfit_guess_err(3, 2, data.x, data.y)
+        except Exception as msg:
+            raise RuntimeError(msg)
+        data.error = 1
+
+    return 1, data
+
+def split_multi(s, seps):
+    import re
+    # Split string s by any of the characters in seps
+    return [x for x in re.split(f"[{re.escape(seps)}]", s) if x]
+
+def sasfit_guess_err(sw, po, x, y):
+    """
+    Estimate errors for y data using a sliding window polynomial fit.
+    sw: window half-width (int)
+    po: polynomial order (int)
+    x: list or np.array of x values
+    y: list or np.array of y values
+    Returns: list of estimated errors for each y value
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    ndata = len(x)
+    nd = 2 * sw + 1
+    ncoeffs = po + 1
+
+    if po < 0:
+        raise ValueError("po needs to be >= 0")
+    if po >= 2 * sw:
+        raise ValueError("po needs to be smaller than 2*sw")
+    if ndata < nd:
+        raise ValueError("not enough data points available")
+
+    err = np.zeros(ndata)
+    for i in range(sw, ndata - sw):
+        # Select window
+        idx = np.arange(i - sw, i + sw + 1)
+        xw = x[idx]
+        yw = y[idx]
+        # Design matrix for polynomial fit
+        X = np.vander(xw, N=ncoeffs, increasing=True)
+        # Weighted least squares (weights are all 1)
+        coeffs, residuals, rank, s = np.linalg.lstsq(X, yw, rcond=None)
+        # Calculate residuals
+        yfit = X @ coeffs
+        chisq = np.sum((yw - yfit) ** 2)
+        dof = nd - ncoeffs
+        if dof > 0:
+            err[i] = np.sqrt(chisq / dof)
+        else:
+            err[i] = 0.0
+
+    # Fill the edges with the nearest computed error
+    err[:sw] = err[sw]
+    err[ndata - sw:] = err[ndata - sw - 1]
+    return err.tolist()
     
 def readBerSANStrans(BerSANStransfile):
     events = {}
@@ -23,7 +236,7 @@ class SANSdata:
     During initialization it will try to automatically determining its type.
     """
     __author__ = "Joachim Kohlbrecher"
-    __copyright__ = "Copyright 2023, The SASfit Project"
+    __copyright__ = "Copyright 2024, The SASfit Project"
     __license__ = "GPL"
     __version__ = "1.0"
     __maintainer__ = "Joachim Kohlbrecher"
@@ -98,7 +311,8 @@ class SANSdata:
             self.BerSANS.update({"%Detector,Distance":round(HDF['entry1/SANS/detector/x_position'][0]/1000,4)})
         
         if 'entry1/sample/name' in HDF.keys():
-            self.BerSANS.update({"%Sample,SampleName"    : HDF['entry1/sample/name'][0].decode('UTF-8')})
+            SNtmp = HDF['entry1/sample/name'][0].decode('UTF-8')
+            self.BerSANS.update({"%Sample,SampleName"    : SNtmp.strip() })
         if 'entry1/sample/environment' in HDF.keys():
             self.BerSANS.update({"%Sample,Environment"   : HDF['entry1/sample/environment'][0].decode('UTF-8')})
         if 'entry1/sample/temperature' in HDF.keys():
@@ -150,6 +364,10 @@ class SANSdata:
             self.BerSANS.update({"%Sample,Theta"         : round(HDF['entry1/sample/goniometer_theta'][0],3)})
         if 'entry1/sample/goniometer_theta_null' in HDF.keys():
             self.BerSANS.update({"%Sample,ThetaNull" : round(HDF['entry1/sample/goniometer_theta_null'][0],3)})
+        if 'entry1/sample/goniometer_theta' in HDF.keys():
+            self.BerSANS.update({"%Sample,Phi"         : round(HDF['entry1/sample/goniometer_theta'][0],3)})
+        if 'entry1/sample/goniometer_theta_null' in HDF.keys():
+            self.BerSANS.update({"%Sample,PhiNull" : round(HDF['entry1/sample/goniometer_theta_null'][0],3)})
         
         if 'entry1/SANS/detector/counting_time' in HDF.keys():
             time=max([0.1,HDF['entry1/SANS/detector/counting_time'][0]])

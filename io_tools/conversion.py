@@ -16,6 +16,7 @@ import sys
 import re
 import pprint
 import tkinter
+import csv
 from PSISANS1toHMI import rawhdf2hmi
 
 Data_path = 'C:/Users/kohlbrecher/switchdrive/SANS/user/Vifor/1stJuly2024/'
@@ -63,7 +64,34 @@ gui = tkinter.Tk()
 def rawhdf2hmi_tcl (FullFileNameHDF, FullFileNameHMI):
     global Tfiles_tcl
     #rawhdf2hmi(FullFileNameHDF, FullFileNameHMI Tfiles=None, thickness=None, rwl='')
-    rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Tfiles=Tfiles_tcl)
+    SNchange = {
+        "sans2024n026338.hdf" : "EXP-001912_1",
+        "sans2024n026339.hdf" : "EXP-001912_2",
+        "sans2024n026340.hdf" : "EXP-001912_3",
+        "sans2024n026341.hdf" : "EXP-001912_4",
+        "sans2024n026342.hdf" : "EXP-001912_5",
+        "sans2024n026343.hdf" : "EXP-001912_6",
+        "sans2024n026344.hdf" : "EXP-001913_1",
+        "sans2024n026345.hdf" : "EXP-001913_2",
+        "sans2024n026346.hdf" : "EXP-001913_3",
+        "sans2024n026347.hdf" : "EXP-001913_4",
+        "sans2024n026348.hdf" : "EXP-001913_5",
+        "sans2024n026349.hdf" : "EXP-001913_6",
+        "sans2024n026375.hdf" : "EXP-001912_1",
+        "sans2024n026376.hdf" : "EXP-001912_2",
+        "sans2024n026377.hdf" : "EXP-001912_3",
+        "sans2024n026378.hdf" : "EXP-001912_4",
+        "sans2024n026379.hdf" : "EXP-001912_5",
+        "sans2024n026380.hdf" : "EXP-001912_6",
+        "sans2024n026381.hdf" : "EXP-001913_1",
+        "sans2024n026382.hdf" : "EXP-001913_2",
+        "sans2024n026383.hdf" : "EXP-001913_3",
+        "sans2024n026384.hdf" : "EXP-001913_4",
+        "sans2024n026385.hdf" : "EXP-001913_5",
+        "sans2024n026386.hdf" : "EXP-001913_6"
+        }
+    SNchange = None
+    rawhdf2hmi(FullFileNameHDF, FullFileNameHMI, Tfiles=Tfiles_tcl, replaceSN=SNchange)
 
 def resetdict_Tfiles():
     global Tfiles_tcl

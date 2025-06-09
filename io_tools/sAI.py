@@ -1,11 +1,12 @@
 import numpy as np
 import sys
 import os
+print(os.path.dirname(os.getcwd()))
 try:
     from SASformats import SANSdata
     import smoothing
 except:
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.getcwd()), '..')))
+    sys.path.insert(0, 'c:\\Users\\kohlbrecher\\switchdrive')
     from pySASfit.io_tools.SASformats import SANSdata
     import pySASfit.tools.smoothing
 import cv2
@@ -40,6 +41,7 @@ class SASazimuthal:
     __status__ = "Production"
     
     algorithms = ["cv2", "scipy", "meshgrid", 'polarTransform', 'pyFAI']
+    maskimg = []
     cartimg = []
     polarimg = []
     backcartimg = []
@@ -108,6 +110,9 @@ class SASazimuthal:
             self.azimuthal_average_meshgrid()
         self.calcAnsisotropy()
     
+    def applyMask(self, array2D):
+        print('Hello',array2D)
+        
     def calcAnsisotropy(self):
         def MaierSaupe2(x, A1, A2, Ibckg, kappa1, kappa2, Offset):
             kappa1 = np.abs(kappa1)
