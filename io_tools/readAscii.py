@@ -75,10 +75,12 @@ if ascii_data is not None:
         #result, _ = scipy.integrate.quad(f_interp, r.min(), r.max(), limit=200)
         #I_Q.append(result)
     F_Q = np.array(F_Q)
-    I_Q = np.abs(F_Q)**2 * 1.90721e-08/1.00397
+    I_Q = 1.90721e-08 *np.abs(F_Q)**2
     plt.loglog(Q, I_Q, marker='o', linestyle='-', markersize=1)
     plt.xlabel("Q")
     plt.ylabel("I(Q)")
     plt.title("ASCII Data Plot")
     plt.show()
-    np.savetxt(os.path.join(ascii_data.FileName, 'IQ.dat'), np.column_stack((Q, I_Q)), header='Q I(Q)')
+    base, ext = os.path.splitext(ascii_data.FileName)
+    output_path = base + '_IQ.'+ext
+    np.savetxt(output_path, np.column_stack((Q, I_Q)), header='Q I(Q)')
