@@ -315,11 +315,12 @@ class SANSdata:
             self.BerSANS.update({"%Sample,SampleName"    : SNtmp.strip() })
         if 'entry1/sample/environment' in HDF.keys():
             self.BerSANS.update({"%Sample,Environment"   : HDF['entry1/sample/environment'][0].decode('UTF-8')})
-        if 'entry1/sample/temperature' in HDF.keys():
-            self.BerSANS.update({"%Sample,Temperature"   : round(HDF['entry1/sample/temperature'][-1],2)})
+        if 'entry1/sample/T' in HDF.keys():
+            self.BerSANS.update({"%Sample,Temperature"   : round(HDF['entry1/sample/T'][-1],2)})
+            self.BerSANS.update({"%Sample,Temp1"   : round(HDF['entry1/sample/T'][-1],2)})
 #            print(HDF['entry1/sample/temperature'][-1])
-        if 'entry1/sample/temperature2' in HDF.keys():
-            self.BerSANS.update({"%Sample,Temperature2"  : round(HDF['entry1/sample/temperature2'][-1],2)})
+        if 'entry1/sample/temperature' in HDF.keys():
+            self.BerSANS.update({"%Sample,Temp2"  : round(HDF['entry1/sample/temperature'][-1],2)})
         if 'entry1/sample/magnetic_field' in HDF.keys():
             self.BerSANS.update({"%Sample,Magnet"        : round(HDF['entry1/sample/magnetic_field'][0],4)})
         if 'entry1/sample/x_position' in HDF.keys():

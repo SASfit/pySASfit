@@ -63,3 +63,19 @@ for j in range(128):
         ii = ii+8
         f.write("\n")
 f.close()
+
+def rad_avg_pyFAI(detx, bcx, bcy, wl=6.e-10, npt=100):
+    from pyFAI import load
+    from pyFAI import azimuthalIntegrator
+    ai = AzimuthalIntegrator(
+        dist=detx,              # Detector distance in meters
+        poni1=0.05,            # Beam center Y in meters
+        poni2=0.05,            # Beam center X in meters
+        pixel1=7.5e-3,           # Pixel size Y in meters
+        pixel2=7.5e-3,           # Pixel size X in meters
+        wavelength=wl    # Wavelength in meters
+    )
+
+    q, I, err = ai.radial_average(npt=npt, unit='q_nm^-1', method='csr', mask=None, polarization_factor=1.0)
+    mask = (q < qmin) | (q > qmax)
+    return q[~mask], I[~mask], err[~mask]
