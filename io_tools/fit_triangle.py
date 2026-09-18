@@ -34,12 +34,13 @@ def triangle_model(x, center, width, amplitude, baseline):
     Triangle shape (value at center = amplitude + baseline; linearly falls to baseline at +/-width/2):
     value(x) = baseline + amplitude * max(0, 1 - 2*abs(x-center)/width)
     """
-    x = np.asarray(x, dtype=float)
     w = float(width)
     if w <= 0:
         # Avoid division by zero; return baseline
         return np.full_like(x, baseline)
-    tri = np.maximum(0.0, 1.0 - 2.0 * np.abs(x - center) / w)
+    tri = np.maximum(0.0, 1.0 - 2.0 * np.abs(x - center) / w) + \
+          np.maximum(0.0, 1.0 - 2.0 * np.abs(x - center+40) / w) + \
+          np.maximum(0.0, 1.0 - 2.0 * np.abs(x - center-40) / w)
     return baseline + amplitude * tri
 
 
@@ -82,7 +83,7 @@ def fit_triangle(x, y, p0=None, bounds=None, plot=True, ax=None):
 
     # sensible bounds if not provided
     if bounds is None:
-        lower = [x.min(), 1e-8, -np.inf, -np.inf]
+        lower = [-np.inf, -np.inf, -np.inf, -np.inf]
         upper = [x.max(), x.max() - x.min() + 1e-8, np.inf, np.inf]
         bounds = (lower, upper)
 

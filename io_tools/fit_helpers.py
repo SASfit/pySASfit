@@ -27,7 +27,7 @@ def read_files_sumtof(file_tofs):
             pass
     return sum_tofs
         
-def fit_stack(sum_tofs, labels, tof=None, L=None, rpm_start=12000, rpm_step=2000,
+def fit_stack(sum_tofs, labels, tof=None, L=None,DL=None,
               plot=False, other_centers=None, constants_module=None):
     """Fit a stack of SUMtof arrays using the triangular model.
 
@@ -37,7 +37,7 @@ def fit_stack(sum_tofs, labels, tof=None, L=None, rpm_start=12000, rpm_step=2000
     - tof: optional x-axis array matching each y's length; if None, index axis used
     - L: optional flight path length used to compute lambda; if None, lambda may be
          calculated from `other_centers` if provided
-    - rpm_start, rpm_step: used to fill `rpm` field in results
+    - DL: flight difference
     - plot: if True, calls the underlying `fit_triangle` with plot=True
     - other_centers: optional list of center values used to compute lambda for
                      paired datasets (preserves previous notebook behavior)
@@ -80,31 +80,38 @@ def fit_stack(sum_tofs, labels, tof=None, L=None, rpm_start=12000, rpm_step=2000
             perr = np.sqrt(np.diag(pcov)) if pcov is not None else [np.nan]*4
             center, width, amplitude, baseline = popt
             center_err, width_err, amp_err, base_err = perr
-
+            tc = center
+            if center-width < 0:
+                print(f"{tc} {tc+40}")
+                tc = center+40 
             # Dense model evaluation (returned only if needed later)
-            xf = np.linspace(x.min(), x.max(), max(400, x.size*4))
+            xf = np.linspace(x.min(), x.max(), max(402, x.size*4))
             yf = triangle_model(xf, *popt)
 
             # Compute lambda using either L or other_centers (backwards compatibility)
             if other_centers is not None and idx < len(other_centers) and L is None:
-                lamb = (other_centers[idx] - center) / 4000.0 * consts.Planck / consts.neutron_mass / consts.nano
-                SD=center / lamb * consts.Planck / consts.neutron_mass / consts.nano
+                oc=other_centers[idx]
+                if other_centers[idx]-width < 0:
+                    print(f"{oc} {oc+40}")
+                    oc = oc+40 
+                lamb = (oc - tc) / (DL) * consts.Planck / consts.neutron_mass / consts.nano
+                SD=tc / lamb * consts.Planck / consts.neutron_mass / consts.nano
             elif L is not None:
-                lamb = center / L * consts.Planck / consts.neutron_mass / consts.nano
+                lamb = tc / L * consts.Planck / consts.neutron_mass / consts.nano
                 SD=L
             else:
                 lamb = None
 
             results.append({
                 "name": name,
-                "center": center, #"center_err": center_err,
+                "center": tc, #"center_err": center_err,
                 "width": width, #"width_err": width_err,
                 #"amplitude": amplitude, "amplitude_err": amp_err,
                 #"baseline": baseline, "baseline_err": base_err,
-                "rpm": (rpm_start + idx * rpm_step),
-                "lambda": lamb, "lambda_err":lamb*center_err/center,
-                "DL/L": width / center / 2.0 if center != 0 else np.nan,
-                "DL/L_err": width_err / center / 2.0 if center != 0 else np.nan,
+                "rpm": int(name),
+                "lambda": lamb, "lambda_err":lamb*center_err/tc if tc != 0 else np.nan,
+                "DL/L": width / tc / 2.0 if tc != 0 else np.nan,
+                "DL/L_err": width_err / tc / 2.0 if tc != 0 else np.nan,
                 "SD":SD,
             })
             if plot:
@@ -118,7 +125,7 @@ def fit_stack(sum_tofs, labels, tof=None, L=None, rpm_start=12000, rpm_step=2000
                 "width": np.nan, "width_err": np.nan,
                 "amplitude": np.nan, "amplitude_err": np.nan,
                 "baseline": np.nan, "baseline_err": np.nan,
-                "rpm": (rpm_start + idx * rpm_step),
+                "rpm": int(name),
                 "lambda": None,
                 "DL/L": np.nan,
             })

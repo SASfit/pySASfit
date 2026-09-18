@@ -236,14 +236,14 @@ class SANSdata:
     During initialization it will try to automatically determining its type.
     """
     __author__ = "Joachim Kohlbrecher"
-    __copyright__ = "Copyright 2024, The SASfit Project"
+    __copyright__ = "Copyright 2025, The SASfit Project"
     __license__ = "GPL"
-    __version__ = "1.0"
+    __version__ = "1.1"
     __maintainer__ = "Joachim Kohlbrecher"
     __email__ = "joachim.kohlbrecher@psi.ch"
     __status__ = "Production"
     
-    knownformats = ["UNKNOWN" "PSISANS1hdf", "PSISANSLLBhdf", "BerSANSDRaw1","BerSANSDAni1", "BerSANSDIso", "BerSANSmask1", "BerSANStransmission", "BerSANSRawLLB", "BerSANSDAniLLB", "BerSANSmaskLLB" ]
+    knownformats = ["UNKNOWN", "PSISANS1TOFhdf", "PSISANS1hdf", "PSISANSLLBhdf", "BerSANSDRaw1","BerSANSDAni1", "BerSANSDIso", "BerSANSmask1", "BerSANStransmission", "BerSANSRawLLB", "BerSANSDAniLLB", "BerSANSmaskLLB" ]
     ext = ''
     basename = ''
     dirname = ''
@@ -265,8 +265,14 @@ class SANSdata:
         HDF = h5py.File(self.infn)
         detector_counts=np.array(HDF['entry1/SANS/detector/counts'])    
         if detector_counts.shape != (128,128):
-            HDF.close()
-            raise RuntimeError(f'can\'t convert {self.infn} as it has the shape {detector_counts.shape}')
+            if detector_counts.ndim == 3 \
+                and detector_counts.shape[0] == 128 \
+                and detector_counts.shape[1] == 128:
+                self.fformat = "PSISANS1TOFhdf"
+                self.tof_bins = detector_counts.shape[2]
+            else:
+                HDF.close()
+                raise RuntimeError(f'can\'t convert {self.infn} as it has the shape {detector_counts.shape}')
         if np.sum(detector_counts) == 0 :
             HDF.close()
             raise RuntimeError(f'{self.infn} seems to be empty. Sum({np.sum(detector_counts)})')
@@ -277,6 +283,7 @@ class SANSdata:
         self.BerSANS.update({"%File,DataSize"   : 16384})
         self.BerSANS.update({"%File,DataSizeX"  : 128})
         self.BerSANS.update({"%File,DataSizeY"  : 128})
+        self.BerSANS.update({"%File,DataSizeTOF": self.tof_bins if 'tof_bins' in dir(self) else 1})
         self.BerSANS.update({"%File,Definition" : str(HDF['entry1/definition'][0].decode('UTF-8'))})
         if 'entry1/SANS/name' in HDF.keys():
             self.BerSANS.update({"%File,Instrument": HDF['entry1/SANS/name'][0].decode(encoding='UTF-8')})
@@ -401,11 +408,10 @@ class SANSdata:
         if 'entry1/SANS/monitor_8/counts' in HDF.keys():
             moni8=HDF['entry1/SANS/monitor_8/counts'][0]
             self.BerSANS.update({"%Sample,IEEE8"     : (moni8)})
-            
         if 'entry1/SANS/Dornier-VS/rotation_speed' in HDF.keys():
             self.BerSANS.update({"%Setup,LambdaC"    : round(HDF['entry1/SANS/Dornier-VS/rotation_speed'][0],3)})
-        if 'entry1/SANS/Dornier-VS/tilt_angle' in HDF.keys():
-            self.BerSANS.update({"%Setup,Tilting"    : round(HDF['entry1/SANS/Dornier-VS/tilt_angle'][0],3)})
+        if 'entry1/SANS/Dornier-VS/tilt' in HDF.keys():
+            self.BerSANS.update({"%Setup,Tilting"    : round(HDF['entry1/SANS/Dornier-VS/tilt'][0],3)})
         if 'entry1/SANS/Dornier-VS/lambda' in HDF.keys():
             self.BerSANS.update({"%Setup,Lambda"     : round(HDF['entry1/SANS/Dornier-VS/lambda'][0],4)})
         if 'entry1/SANS/collimator/length' in HDF.keys():
@@ -453,10 +459,14 @@ class SANSdata:
             self.BerSANS.update({"%Counter,Moni8" : int(moni8)})
         if 'entry1/SANS/detector/counting_time' in HDF.keys():
             self.BerSANS.update({"%Counter,Time" : round(time,3)})
+        if 'entry1/tof_monitors' in HDF.keys():
+            tof_monitors = np.array(HDF['entry1/tof_monitors'])
+            self.BerSANS.update({"%Counter,TOFMonitors": tof_monitors})
         self.BerSANS.update({"%Counter,Sum"         : np.sum(detector_counts)})
         self.BerSANS.update({"%Counter,Sum/Time"    : round(np.sum(detector_counts)/time, int(round(max([4,4-np.log10(np.sum(detector_counts)/time )]),0)))})
         self.BerSANS.update({"%Counter,Sum/Moni1"   : round(np.sum(detector_counts)/moni1,int(round(max([4,4-np.log10(np.sum(detector_counts)/moni1)]),0)))})
         self.BerSANS.update({"%Counter,Sum/Moni2"   : round(np.sum(detector_counts)/moni2,int(round(max([4,4-np.log10(np.sum(detector_counts)/moni2)]),0)))}) 
+        self.BerSANS.update({})
         HDF.close()
     
     def getHDFinstr(self):
