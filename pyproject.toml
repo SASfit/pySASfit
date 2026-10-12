@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysasfit"
+version = "0.2.0"
+description = "Python tools for small-angle scattering from the SASfit project: SASfit plugin functions, Ornstein-Zernike structure factors, SLD profiles, size distributions and p(r) by inversion, shared resolution/background/IO."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Joachim Kohlbrecher", email = "joachim.kohlbrecher@psi.ch" }]
+keywords = ["small-angle scattering", "SANS", "SAXS", "SASfit", "SLD profile",
+            "size distribution", "pair distance distribution", "indirect Fourier transform"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = ["numpy>=2.0", "scipy>=1.10"]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.7"]
+gui = ["PySide6>=6.5", "matplotlib>=3.7"]
+# Ornstein-Zernike extras: mpmath (high-precision Golub-Welsch nodes for log-normal and Weibull
+# size distributions), sundials4py (KINSOL solvers), bumps (global fitting / DREAM), mixscatter
+# (analytic Vrij mixture reference in the validation tab), openpyxl (Excel export)
+oz = ["mpmath", "sundials4py", "bumps", "mixscatter", "openpyxl"]
+dev = ["pytest>=7.0", "matplotlib>=3.7", "PySide6>=6.5"]
+
+[project.scripts]
+pysasfit-gui = "pysasfit.gui.launcher:main"
+pysasfit-sldprofile = "pysasfit.sldprofile.gui:main"
+pysasfit-inversion = "pysasfit.inversion.gui.app:main"
+pysasfit-studio = "pysasfit.studio.cli:main"
+pysasfit-oz = "pysasfit.oz.gui.main_window:main"
+
+[project.urls]
+Repository = "https://github.com/SASfit/pySASfit"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"pysasfit.oz" = ["*.dll", "*.so", "*.dylib"]
+"pysasfit.studio" = ["headers/*.h", "templates/*", "sasfit_lib/*", "sasfit_lib/plugins/*", "sasfit_lib/plugins/FrolovPoints/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
