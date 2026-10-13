@@ -30,6 +30,11 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 
+
+#Evaluation budget of the background curve fit (pySASfit preferences:
+#inversion.opt.background_maxfev).
+FIT_MAXFEV = 10000
+
 def background_model(q: np.ndarray, backgr: float, c: float, alpha: float) -> np.ndarray:
     """backgr + c * q^(-alpha)."""
     return backgr + c * np.asarray(q, dtype=float) ** (-alpha)
@@ -117,7 +122,7 @@ def fit_background(
 
     popt, pcov = curve_fit(
         background_model, q_fit, I_fit, p0=p0, sigma=sigma,
-        absolute_sigma=sigma is not None, maxfev=10_000,
+        absolute_sigma=sigma is not None, maxfev=int(FIT_MAXFEV),
     )
     perr = np.sqrt(np.diag(pcov)) if pcov is not None and np.all(np.isfinite(pcov)) else np.full(3, np.nan)
 

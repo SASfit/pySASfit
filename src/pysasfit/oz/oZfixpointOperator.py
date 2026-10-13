@@ -129,6 +129,12 @@ def bestGridSize(n, transformType=1):
     return (1 << k) if int(transformType) == 4 else (1 << k) - 1
 
 
+
+# Radial grid points per hard-sphere diameter sigma when none is given (the
+# "auto" of the OZ solver tab's "Points per sigma"). The real-space range is
+# numberOfRadialSamplingPoints / DEFAULT_POINTS_PER_SIGMA diameters.
+DEFAULT_POINTS_PER_SIGMA = 100
+
 class OZfixpointOperator:
     #Init needs to be given by constructor, all other members can be set via RPC later
     #but port needs to be known in advance by the client. (Will be defined by the client)
@@ -188,7 +194,8 @@ class OZfixpointOperator:
               pass
       #self.hardSphereDiameterInPoints = self.numberOfRadialSamplingPoints/2**3
       self.hardSphereDiameterInPoints = (hardSphereDiameterInPoints
-                                          if hardSphereDiameterInPoints is not None else 100)
+                                          if hardSphereDiameterInPoints is not None
+                                          else DEFAULT_POINTS_PER_SIGMA)
       #Named "diameter", not "radius": what this grid parameter
       #actually measures is sigma, the pairwise CONTACT distance
       #between two touching spheres -- i.e. the diameter, not a single

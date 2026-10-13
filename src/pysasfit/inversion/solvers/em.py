@@ -39,6 +39,10 @@ from .base import SolverResult, chi2_r, g_test
 from . import acceleration
 
 
+
+#Default start vector level (pySASfit preferences: inversion.opt.em_x0).
+X0_LEVEL = 1e-6
+
 def _smoothing_matrix(n: int, h: float) -> np.ndarray:
     """
     Tridiagonal smoothing operator S^(h), eq. 43. 0 < h <~ 0.3.
@@ -106,7 +110,7 @@ def solve(
           through to acceleration.biggs_andrews when accelerate=True.
     """
     n = A.shape[1]
-    x = x0.copy() if x0 is not None else np.full(n, 1e-6)
+    x = x0.copy() if x0 is not None else np.full(n, X0_LEVEL)
 
     S = _smoothing_matrix(n, smoothing_h) if smoothing_h is not None else None
 

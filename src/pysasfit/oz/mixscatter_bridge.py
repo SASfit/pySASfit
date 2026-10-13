@@ -75,6 +75,10 @@ WHAT IT DOES NOT DO
 import numpy as np
 
 
+#Solves whose max|G(gamma) - gamma| exceeds this are rejected (pySASfit
+#preferences: oz.mixture.accept_residual).
+ACCEPT_RESIDUAL = 1e-3
+
 class OZLiquidStructure:
     """A `LiquidStructureLike` backed by this package's OZ solver.
 
@@ -390,7 +394,7 @@ class OZLiquidStructure:
         #from its fixed point than the coarse one and look worse. Exposing
         #the number lets a caller see that rather than infer it.
         self.residual = res
-        if res > 1e-3:
+        if res > ACCEPT_RESIDUAL:
             raise RuntimeError(f"{self.closure} did not converge "
                                f"(max|G(gamma)-gamma| = {res:.3e})")
 

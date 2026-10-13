@@ -237,7 +237,32 @@ class DensityProfileFit:
         prior is evaluated on the actual node positions (smoothness in r).
     background_value : fixed flat background added to the model when
         ``background`` is False (e.g. a value determined elsewhere).
+    options : dict overriding entries of :attr:`DEFAULT_OPTIONS` (numerical
+        details of the alpha path, the minimiser and the output; the GUI fills
+        them from the user preferences).
     """
+
+    #: Numerical details that are not model choices. Keys:
+    #: log_alpha_hi / log_alpha_lo -- alpha path, ln alpha relative to ln(tr B / tr A);
+    #: alpha_step -- ln alpha step (also the marginalisation step); stop_drop -- the path
+    #: stops when ln Ev has fallen this far below its maximum (once chi2 < stop_chi2 M);
+    #: retry_chi2 / retry_every -- restart from the other starting profiles every
+    #: retry_every steps while chi2 > retry_chi2 M; alpha_xatol -- refinement of the best
+    #: ln alpha; max_iter / tol / lm_lambda0 -- Levenberg-Marquardt; ridge -- smoothness
+    #: ridge (x tr/N; enters log det A); keep_weight -- relative evidence weight below
+    #: which a solution is dropped from the averages; n_out / r_out_factor -- output r
+    #: grid (n_out cells on [0, r_out_factor * largest r_max]); guinier_qrg -- q Rg limit
+    #: of the Guinier estimate; truncated_min -- shortest step profile tried as a start,
+    #: as a fraction of N; extend_fraction -- points added per upward extension of the
+    #: r_max scan (x n_coarse); fine_sd / fine_steps -- half width of the fine r_max grid,
+    #: max(fine_sd posterior s.d., fine_steps coarse steps).
+    DEFAULT_OPTIONS = dict(
+        log_alpha_hi=6.0, log_alpha_lo=-16.0, alpha_step=0.5, stop_drop=25.0, stop_chi2=1.5,
+        retry_chi2=2.0, retry_every=4, alpha_xatol=1e-3,
+        max_iter=300, tol=1e-10, lm_lambda0=1e-3,
+        ridge=1e-6, keep_weight=1e-6, n_out=300, r_out_factor=1.05, guinier_qrg=1.3,
+        truncated_min=0.25, extend_fraction=0.5, fine_sd=4.0, fine_steps=1.5,
+    )
 
     def __init__(
         self,
@@ -254,7 +279,12 @@ class DensityProfileFit:
         basis="rho",
         background_value: float = 0.0,
         grid=None,
+        options=None,
     ):
+        unknown = set(options or {}) - set(self.DEFAULT_OPTIONS)
+        if unknown:
+            raise ValueError(f"unknown options {sorted(unknown)}")
+        self.opt = {**self.DEFAULT_OPTIONS, **(options or {})}
         self.q = np.asarray(q, float)
         self.I = np.asarray(I, float)
         self.sigma = np.asarray(sigma, float)
@@ -288,7 +318,8 @@ class DensityProfileFit:
         self.pref = geo.prefactor(self.qf, geometry)
         self.sw = 1.0 / self.sigma
         self.grid = self._make_grid(grid)
-        self._smooth = Smoothness(self.n, outer, grid=self.grid) if regularization == "smooth" else None
+        self._smooth = (Smoothness(self.n, outer, ridge=self.opt["ridge"], grid=self.grid)
+                        if regularization == "smooth" else None)
         self._cache = {}
         #: optional progress hook, called as progress(message_or_None). It is
         #: called once per alpha step (message None) and once per r_max (text);
@@ -467,7 +498,7 @@ class DensityProfileFit:
         """
         w = self.sw**2
         best = (np.inf, None)
-        for k in range(max(self.n // 4, 3), self.n + 1):
+        for k in range(max(int(self.opt["truncated_min"] * self.n), 3), self.n + 1):
             shape = self._homogeneous_coef(r_max, k)
             m = self.model(shape, r_max, with_background=False)
             I = self.I - self.bg.value(self.q)
@@ -485,9 +516,11 @@ class DensityProfileFit:
     # ------------------------------------------------------------------ #
     # one solution
     # ------------------------------------------------------------------ #
-    def solve(self, alpha, r_max, x0=None, reg=None, max_iter=300, tol=1e-10) -> ProfileSolution:
+    def solve(self, alpha, r_max, x0=None, reg=None, max_iter=None, tol=None) -> ProfileSolution:
         """Minimise alpha S + chi^2/2 for fixed (alpha, r_max)."""
         n = self.n
+        max_iter = self.opt["max_iter"] if max_iter is None else max_iter
+        tol = self.opt["tol"] if tol is None else tol
         reg = self.regularizer(r_max) if reg is None else reg
         x = self.start(r_max) if x0 is None else np.array(x0, float)
         if not reg.feasible(x[:n]):
@@ -506,7 +539,7 @@ class DensityProfileFit:
             return alpha * reg.value(x[:n]) + 0.5 * float(res @ res)
 
         f = phi(x)
-        lam = 1e-3
+        lam = self.opt["lm_lambda0"]
         converged = False
         nx = x.size
         logvar = reg.name == "maxent"  # max-ent: iterate in z = ln(rho) (keeps rho > 0)
@@ -604,13 +637,17 @@ class DensityProfileFit:
     # ------------------------------------------------------------------ #
     # hyper-parameters
     # ------------------------------------------------------------------ #
-    def alpha_path(self, r_max, log_alpha_range=(6.0, -16.0), step=0.5, stop_drop=25.0):
+    def alpha_path(self, r_max, log_alpha_range=None, step=None, stop_drop=None):
         """Continuation in alpha (large -> small) at fixed r_max.
 
         Returns the list of solutions along the path (each warm-started from
         the previous one). The path stops once the evidence has fallen by
         ``stop_drop`` below its running maximum.
         """
+        o = self.opt
+        log_alpha_range = (o["log_alpha_hi"], o["log_alpha_lo"]) if log_alpha_range is None else log_alpha_range
+        step = o["alpha_step"] if step is None else step
+        stop_drop = o["stop_drop"] if stop_drop is None else stop_drop
         la0 = np.log(self.alpha_scale(r_max))
         reg = self.regularizer(r_max)
         las = la0 + np.arange(log_alpha_range[0], log_alpha_range[1] - 1e-9, -abs(step))
@@ -629,7 +666,7 @@ class DensityProfileFit:
             starts = cands if x is None else [x]
             trial = [self.solve(np.exp(la), r_max, x0=x0, reg=reg) for x0 in starts]
             s = min(trial, key=lambda t: t.alpha * t.S + 0.5 * t.chi2)
-            if x is not None and s.chi2 > 2.0 * M and il % 4 == 0:
+            if x is not None and s.chi2 > o["retry_chi2"] * M and il % max(int(o["retry_every"]), 1) == 0:
                 # possibly trapped in a wrong branch: try the other starting points as well
                 for x0 in cands:
                     t = self.solve(np.exp(la), r_max, x0=x0, reg=reg)
@@ -639,7 +676,7 @@ class DensityProfileFit:
             x = s.x
             best = max(best, s.log_evidence)
             # stop only once the data are fitted (chi2 ~ M) and the evidence has clearly dropped
-            if s.chi2 < 1.5 * M and s.log_evidence < best - stop_drop:
+            if s.chi2 < o["stop_chi2"] * M and s.log_evidence < best - stop_drop:
                 break
         return sols
 
@@ -659,7 +696,8 @@ class DensityProfileFit:
                 return -s.log_evidence
 
             lo, hi = np.log(path[i + 1].alpha), np.log(path[i - 1].alpha)
-            r = optimize.minimize_scalar(f, bounds=(lo, hi), method="bounded", options={"xatol": 1e-3})
+            r = optimize.minimize_scalar(f, bounds=(lo, hi), method="bounded",
+                                         options={"xatol": self.opt["alpha_xatol"]})
             s = cache.get(r.x) or self.solve(np.exp(r.x), r_max, x0=x0, reg=reg)
             if s.log_evidence > path[i].log_evidence:
                 return s, path
@@ -675,7 +713,7 @@ class DensityProfileFit:
         fac = {"sphere": 3.0, "cylinder": 2.0, "lamella": 1.0}[self.geometry]
         rg = 1.0 / q.min()
         for _ in range(30):
-            sel = q * rg < 1.3
+            sel = q * rg < self.opt["guinier_qrg"]
             if sel.sum() < 4:
                 sel = np.arange(q.size) < 4
             c = np.polyfit(q[sel] ** 2, y[sel], 1, w=(I[sel] / s[sel]))
@@ -775,7 +813,7 @@ class DensityProfileFit:
                 if int(np.argmax(post)) < rg.size - 2:
                     break
                 step = rg[1] - rg[0]
-                ext = rg[-1] + step * np.arange(1, max(n_coarse // 2, 3) + 1)
+                ext = rg[-1] + step * np.arange(1, max(int(self.opt["extend_fraction"] * n_coarse), 3) + 1)
                 self._report(f"evidence maximum at upper end of the r_max scan -> extending to {ext[-1]:.5g}", verbose)
                 rg2, _, bests2, alls2 = self.scan_r_max(ext, verbose)
                 # recompute the posterior on the union (log Z is not returned; rescan is cheap enough)
@@ -788,7 +826,7 @@ class DensityProfileFit:
             mean = np.trapezoid(post * rg, rg)
             std = np.sqrt(max(np.trapezoid(post * (rg - mean) ** 2, rg), 0))
             step = rg[1] - rg[0]
-            half = max(4 * std, 1.5 * step)
+            half = max(self.opt["fine_sd"] * std, self.opt["fine_steps"] * step)
             fine = np.linspace(max(rg[i] - half, 1e-6), rg[i] + half, n_fine)
             self._report(f"coarse r_max = {mean:.5g} +/- {std:.2g}; refining on [{fine[0]:.5g}, {fine[-1]:.5g}]", verbose)
             rg, post, bests, alls = self.scan_r_max(fine, verbose)
@@ -796,7 +834,7 @@ class DensityProfileFit:
         sols = alls
         le = np.array([s.log_evidence for s in sols])
         w = np.exp(le - le.max())
-        keep = w > 1e-6
+        keep = w > self.opt["keep_weight"]
         sols = [s for s, k in zip(sols, keep) if k]
         w = w[keep] / w[keep].sum()
         best = max(bests, key=lambda s: s.log_evidence)
@@ -809,7 +847,7 @@ class DensityProfileFit:
         r_hi = max(s.r_max for s in sols)
         if r_out is None:
             # cell centres (avoids r = 0, where rho diverges for basis='mass')
-            e = np.linspace(0, 1.05 * r_hi, 301)
+            e = np.linspace(0, self.opt["r_out_factor"] * r_hi, int(self.opt["n_out"]) + 1)
             r = 0.5 * (e[1:] + e[:-1])
         else:
             r = np.asarray(r_out, float)

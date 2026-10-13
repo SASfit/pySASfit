@@ -31,6 +31,7 @@ from PySide6 import QtCore, QtWidgets
 from . import qtkit
 from .qtkit import asksaveasfilename, showerror, showwarning
 from .tab_controls import PolydisperseTabControls
+from ...core import settings as prefs
 
 
 def _solverChoices():
@@ -554,7 +555,8 @@ class RYPolydisperseYukawaTab(PolydisperseTabControls, QtWidgets.QWidget):
             # radius", "R min", "R max"); the RY solver takes hard-sphere
             # DIAMETERS. The Tk tab used the radius values as diameters,
             # i.e. particles half the size entered. sigma = 2R.
-            R, weights = discretize(dist, p["nbins"])
+            ry_prefs = prefs.values("oz.ry")
+            R, weights = discretize(dist, p["nbins"], nsig=ry_prefs["nsig"])
             sigmas = 2.0*R
 
             # Number densities from volume fraction
@@ -584,7 +586,8 @@ class RYPolydisperseYukawaTab(PolydisperseTabControls, QtWidgets.QWidget):
             # for Interrupt.
             alphaSolver = self._trackedSolverClass(rypw._solverClasses()[0][1])
             alpha, alpha_res = rypw.solve_alpha(sigmas, x_array, p["z"], p["K"],
-                                                bracket=(0.02, 3.0),
+                                                bracket=(ry_prefs["alpha_lo"], ry_prefs["alpha_hi"]),
+                                                tol=ry_prefs["alpha_tol"],
                                                 progress=progress,
                                                 solverClass=alphaSolver)
             self._checkInterrupt()
@@ -593,7 +596,8 @@ class RYPolydisperseYukawaTab(PolydisperseTabControls, QtWidgets.QWidget):
             # A large leftover residual means no alpha in the bracket makes the
             # two routes agree -- report it rather than quietly presenting the
             # nearest endpoint as if it were a solution.
-            res.alpha_converged = abs(alpha_res) < 1e-3
+            res.alpha_converged = abs(alpha_res) < ry_prefs["alpha_accept"]
+            res.alpha_bracket = (ry_prefs["alpha_lo"], ry_prefs["alpha_hi"])
             progress(f"alpha = {alpha:.4f}" if res.alpha_converged else
                      f"alpha = {alpha:.4f} (NOT consistent, residual {alpha_res:+.3g})")
             #PASS THE SELECTED SOLVER. The dropdown was built from
@@ -649,7 +653,7 @@ class RYPolydisperseYukawaTab(PolydisperseTabControls, QtWidgets.QWidget):
                          + ("  [thermodynamically consistent,"
                             f" residual {res.alpha_residual:+.2e}]"
                             if res.alpha_converged else
-                            "  [NO consistent alpha found in [0.02, 3];"
+                            f"  [NO consistent alpha found in [{res.alpha_bracket[0]:g}, {res.alpha_bracket[1]:g}];"
                             f" best residual {res.alpha_residual:+.3g}]"))
 
             res.summary = "\n".join(lines)

@@ -81,6 +81,10 @@ from scipy.optimize import minimize
 from .base import SolverResult, chi2_r
 
 
+
+#L-BFGS-B settings of solve_lbfgsb (pySASfit preferences: inversion.opt.lbfgs_*).
+LBFGS_DEFAULTS = dict(ftol=1e-16, gtol=1e-12, maxcor=30)
+
 def flat_prior_level(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> float:
     """Constant x = m that best fits the data in the 1/dI-weighted sense;
     used as the MaxEnt default model (w = 1/m) and starting point."""
@@ -168,7 +172,8 @@ def solve_lbfgsb(
         fg, x_start * s, jac=True, method="L-BFGS-B",
         bounds=[(eps * si, None) for si in s],
         options=dict(maxiter=max_iterations, maxfun=2 * max_iterations,
-                     ftol=1e-16, gtol=1e-12, maxcor=30),
+                     ftol=LBFGS_DEFAULTS["ftol"], gtol=LBFGS_DEFAULTS["gtol"],
+                     maxcor=int(LBFGS_DEFAULTS["maxcor"])),
     )
     x = res.x / s
     x, n_newton = _newton_polish(Aw, bw, lam2, m, x, eps)

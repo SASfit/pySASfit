@@ -94,7 +94,13 @@ def residualNorm(residual, x):
     return float(np.linalg.norm(residual(np.asarray(x, float))))
 
 
-def makeDeflatedClass(baseClass, roots, p=2.0, alpha=1.0, cap=1e6):
+#Shared deflation constants (pySASfit preferences: numerics.deflation.*).
+#p and alpha: Farrell et al. eq. 2.8, eta = prod(1/||x - r||^p + alpha);
+#cap: upper bound of eta (see makeDeflatedClass).
+DEFAULTS = dict(p=2.0, alpha=1.0, cap=1e6)
+
+
+def makeDeflatedClass(baseClass, roots, p=None, alpha=None, cap=None):
     """Subclass `baseClass` so its solver sees the DEFLATED residual.
 
     Works with ANY OZsolver subclass -- it only wraps `rootOperator` -- so
@@ -114,6 +120,9 @@ def makeDeflatedClass(baseClass, roots, p=2.0, alpha=1.0, cap=1e6):
     its own callers are unaffected.
     """
     import numpy as _np
+    p = DEFAULTS["p"] if p is None else p
+    alpha = DEFAULTS["alpha"] if alpha is None else alpha
+    cap = DEFAULTS["cap"] if cap is None else cap
 
     class Deflated(baseClass):
         #WRAP fixPointOperator, NOT rootOperator.

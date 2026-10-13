@@ -167,7 +167,7 @@ class RYPolydisperseYukawa:
     def __init__(self, sigma, rho, z, K, alpha=0.5, delta=None,
                  gridN=_GRID_N, pointsPerSigma=_POINTS_PER_SIGMA,
                  maxIterations=None, converged_tol=1e-6,
-                 solverClass=None, checkPhysical=True, _retrying=False,
+                 solverClass=None, checkPhysical=True, _retrying=False, _fallback=False,
                  deflateOnUnphysical=0,
                  closure="Rogers-Young", closureParam2=None):
         sigma = np.atleast_1d(np.asarray(sigma, dtype=float)).ravel()
@@ -205,6 +205,11 @@ class RYPolydisperseYukawa:
         # (== 1 by construction), so everything is scaled by Dref here and
         # scaled back in S_matrix(). Using the number-averaged diameter keeps
         # the scaled diameters O(1) for any distribution.
+        #"auto" mode (solverClass=None): remember it BEFORE substituting the
+        #first candidate. The fallback below tests for it; it used to test
+        #solverClass itself, which had already been replaced here, so the
+        #fallback chain could never run.
+        self.autoSolver = solverClass is None
         if solverClass is None:
             solverClass = _solverClasses()[0][1]
         self.solverName = solverClass.__name__
@@ -307,10 +312,15 @@ class RYPolydisperseYukawa:
         # nonetheless fails to satisfy its relative convergence criterion
         # because the solution is so close to gamma = 0.
         if solveError is not None or not hasattr(sol, "gammaMatrixMulticomponent"):
-            if solverClass is None and not _retrying:
+            if self.autoSolver and not _retrying and not _fallback:
                 # "auto": fall through to the next candidate solver rather than
                 # giving up. Robustness varies enormously with state point --
                 # see the table above _solverClasses().
+                #Every argument is passed on -- the closure, its second
+                #parameter and the deflation count were dropped before, so a
+                #fallback solve would have been Rogers-Young without deflation
+                #whatever was asked for.
+                tried = [self.solverName]
                 for _, cls in _solverClasses()[1:]:
                     try:
                         self.__init__(sigma, rho, z, K, alpha, delta,
@@ -319,9 +329,14 @@ class RYPolydisperseYukawa:
                                       converged_tol=converged_tol,
                                       solverClass=cls,
                                       checkPhysical=checkPhysical,
-                                      _retrying=True)
+                                      _fallback=True,
+                                      deflateOnUnphysical=deflateOnUnphysical,
+                                      closure=closure, closureParam2=closureParam2)
+                        self.autoSolver = True
+                        self.solverFallback = tried      # solvers that failed first
                         return
                     except Exception:                   # noqa: BLE001
+                        tried.append(cls.__name__)
                         continue
             raise RuntimeError(
                 f"RY solve failed with {self.solverName} at phi={self.phi:.4g}, "

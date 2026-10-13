@@ -25,6 +25,7 @@ from matplotlib.figure import Figure  # noqa: E402
 from .density import DensityProfileFit  # noqa: E402
 from .twostep import two_step_fit  # noqa: E402
 from ..core.io import load_data  # noqa: E402
+from ..core import settings as prefs  # noqa: E402
 from ..core.resolution import Resolution, SlitResolution  # noqa: E402
 from ..core.background import Background, Constant, OrnsteinZernike, PowerLaw  # noqa: E402
 
@@ -104,6 +105,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("pySLDprofile – density profile from SAS data (Hansen 2016)")
+        from ..core.settings_dialog import add_preferences_menu
+        add_preferences_menu(self, "sldprofile")
         self.resize(1400, 860)
         self.raw = None  # (q, I, s, dq) as read
         self.data = None  # (q, I, s, dq) after unit conversion and q-range cut
@@ -501,14 +504,17 @@ class MainWindow(QtWidgets.QMainWindow):
         """Read all settings now (GUI thread) and return grid -> DensityProfileFit."""
         q, I, s, dq = self.data
         ires = self.cb_res.currentIndex()
+        rp = prefs.values("sldprofile.res")
+        rkw = dict(kernel=self.cb_kernel.currentText(), fwhm=self.ck_fwhm.isChecked(),
+                   nSigma=rp["n_sigma"], oversample=rp["oversample"])
         if ires == 1:
             if dq is None:
                 raise ValueError("the data file has no 4th column (σ_q)")
-            res = Resolution(dq, kernel=self.cb_kernel.currentText(), fwhm=self.ck_fwhm.isChecked())
+            res = Resolution(dq, **rkw)
         elif ires == 2:
-            res = Resolution(self.sp_res.value(), kernel=self.cb_kernel.currentText(), fwhm=self.ck_fwhm.isChecked())
+            res = Resolution(self.sp_res.value(), **rkw)
         elif ires == 3:
-            res = SlitResolution(self.sp_res.value())
+            res = SlitResolution(self.sp_res.value(), n_nodes=rp["slit_nodes"])
         else:
             res = None
         n = self.sp_n.value()
@@ -519,19 +525,27 @@ class MainWindow(QtWidgets.QMainWindow):
             if pc == "previous result":
                 if self.result is None:
                     raise ValueError("no previous result to use as prior")
-                prior = np.clip(self.result.best.rho, 1e-3 * np.abs(self.result.best.rho).max(), None)
+                prior = np.clip(self.result.best.rho,
+                                prefs.get("sldprofile.gui.prior_floor") * np.abs(self.result.best.rho).max(), None)
             elif pc == "hollow shell":
-                ri = self.sp_shell.value()
-                prior = lambda x: np.where(x < ri, 0.05, 1.0)  # noqa: E731
+                ri, lev = self.sp_shell.value(), prefs.get("sldprofile.gui.hollow_level")
+                prior = lambda x: np.where(x < ri, lev, 1.0)  # noqa: E731
         geom, outer = self.cb_geom.currentText(), self.cb_outer.currentText()
         basis = ("rho", "mass", float(self.sp_p.value()))[self.cb_basis.currentIndex()]
         bg_template = self._background()  # snapshot of the widget settings
         bgf = lambda: copy.deepcopy(bg_template)  # noqa: E731
+        options = prefs.values("sldprofile.opt")   # Settings -> Preferences, read now
+        # module-level numerics: quadrature of the shells / p(r), background start values
+        from . import geometry as _geo
+        from ..core import background as _bg
+        _geo.DEFAULTS.update(prefs.values("sldprofile.geo"))
+        _bg.START_DEFAULTS.update(prefs.values("numerics.background"))
 
         def make(grid=None):
             return DensityProfileFit(
                 q, I, s, geometry=geom, n=n, regularization=reg, prior=prior,
                 outer=outer, background=bgf(), resolution=res, basis=basis, grid=grid,
+                options=options,
             )
 
         return make
@@ -576,7 +590,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sp_rmax.setValue(rm)
         fix = self.ck_fix.isChecked()
         kw = dict(r_max=rm, fix_r_max=fix, n_coarse=self.sp_nc.value(), n_fine=self.sp_nf.value(),
-                  r_max_range=(self.sp_lo.value() * rm, self.sp_hi.value() * rm))
+                  r_max_range=(self.sp_lo.value() * rm, self.sp_hi.value() * rm),
+                  **prefs.values("sldprofile.fit"))
         nsteps = 1 if fix else kw["n_coarse"] + kw["n_fine"]
         self.progress.setRange(0, nsteps)
         self.progress.setValue(0)
@@ -605,7 +620,10 @@ class MainWindow(QtWidgets.QMainWindow):
                        resolution=fitter.resolution,
                        background=(False, self.sp_bg.value(), True)[bgsel], r_max=rm, fix_r_max=fix,
                        r_max_range=None if fix else kw["r_max_range"], n_D=kw["n_coarse"],
-                       n_r=self.sp_nr.value(), errors=("covariance", "diagonal")[self.cb_perr.currentIndex()])
+                       n_r=self.sp_nr.value(), errors=("covariance", "diagonal")[self.cb_perr.currentIndex()],
+                       options=fitter.opt, ift_options=prefs.values("sldprofile.ift"),
+                       penalty=prefs.get("sldprofile.twostep.penalty"),
+                       n_sub=prefs.get("sldprofile.twostep.n_sub"), **prefs.values("sldprofile.fit"))
             self.progress.setRange(0, 1 if fix else kw["n_coarse"])
             self.log_msg(f"--- two-step (Glatter): IFT with {tkw['n_r']} p(r) points, D_max "
                          + (f"= {2 * rm:.5g} fixed" if fix else
@@ -620,11 +638,15 @@ class MainWindow(QtWidgets.QMainWindow):
         if gmode == 2:
             rm_ad = self.result.best.r_max if self.result is not None else rm
             beta = self.sp_beta.value()
+            ad = prefs.values("sldprofile.adaptive")
 
-            def job(f_uniform, rm_ad=rm_ad, beta=beta, kw=kw, make=make):
+            def job(f_uniform, rm_ad=rm_ad, beta=beta, kw=kw, make=make, ad=ad):
                 # pass 1: over-smoothed uniform solution -> grid; pass 2: full fit on that grid
                 sol_u, _ = f_uniform.best_alpha(rm_ad)
-                g = f_uniform.adaptive_grid(rm_ad, beta=beta, solution=f_uniform.solve(sol_u.alpha * np.exp(2.0), rm_ad, x0=sol_u.x))
+                g = f_uniform.adaptive_grid(
+                    rm_ad, beta=beta, max_ratio=ad["max_ratio"],
+                    min_width=ad["min_width"] if ad["min_width"] > 0 else "auto",
+                    solution=f_uniform.solve(sol_u.alpha * np.exp(ad["smoothing"]), rm_ad, x0=sol_u.x))
                 f_ad = make(g)
                 f_ad.progress = f_uniform.progress
                 sol_a, _ = f_ad.best_alpha(rm_ad)
@@ -679,7 +701,8 @@ class MainWindow(QtWidgets.QMainWindow):
             rm = self.sp_rmax.value() if not self.ck_auto.isChecked() else fitter.guess_r_max()
             src = "r_max field" if not self.ck_auto.isChecked() else "Guinier estimate"
         dim = {"sphere": 3, "cylinder": 2, "lamella": 1}[fitter.geometry]
-        ps = np.round(np.arange(0.0, dim - 0.19, 0.2), 3)
+        st = prefs.get("sldprofile.gui.p_scan_step")
+        ps = np.round(np.arange(0.0, dim - 0.2 + 0.01 * st, st), 3)
         if dim == 3:
             ps = np.unique(np.r_[ps, 4.0 / 3.0])
         self.progress.setRange(0, ps.size)

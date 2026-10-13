@@ -50,6 +50,15 @@ class ParameterSearchResult:
     reachable: bool = True
 
 
+
+#Tolerances of the discrepancy-principle root search (pySASfit preferences:
+#inversion.opt.root_xtol / root_rtol). brentq stops when |x - x*| <= xtol +
+#rtol |x*|. The absolute 1e-6 is the historical value; for regularisation
+#parameters far below 1e-6 it resolves the root only loosely -- set xtol = 0
+#and rtol = 1e-6 for a purely relative criterion.
+ROOT_XTOL = 1e-6
+ROOT_RTOL = 8.881784197001252e-16
+
 def discrepancy_principle_search(
     solve_fn: Callable[[float], SolverResult],
     target_chi2_r: float = 1.0,
@@ -92,7 +101,7 @@ def discrepancy_principle_search(
             "unreachable in this range, or param_start needs to be larger."
         )
 
-    param_opt = brentq(objective, hi, lo, xtol=1e-6)
+    param_opt = brentq(objective, hi, lo, xtol=ROOT_XTOL, rtol=ROOT_RTOL)
     result_opt = solve_fn(param_opt)
     trace.append((param_opt, result_opt))
 
@@ -177,7 +186,7 @@ def discrepancy_principle_search_bidirectional(
         )
 
     lo, hi = (p0, p1) if p0 < p1 else (p1, p0)
-    param_opt = brentq(objective, lo, hi, xtol=1e-6)
+    param_opt = brentq(objective, lo, hi, xtol=ROOT_XTOL, rtol=ROOT_RTOL)
     result_opt = solve_fn(param_opt)
     trace.append((param_opt, result_opt))
 

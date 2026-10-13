@@ -38,11 +38,14 @@ import numpy as np
 from PySide6 import QtCore, QtWidgets
 
 from . import qtkit
-from .qtkit import askdirectory, askopenfilename, asksaveasfilename, showerror, showinfo
+from .qtkit import askdirectory, askopenfilename, asksaveasfilename, showerror, showinfo, showwarning
 from .. import ozLib
-from ..ozLib import CLOSURE_SETTERS, SOLVER_CLASSES, isMulticomponentPotential, multicomponentCapableClosures
+from ..ozLib import (CLOSURE_SETTERS, SOLVER_CLASSES, isMannSolver, isMulticomponentPotential,
+                     multicomponentCapableClosures, resolveSolverName)
+from ..oZfixpointOperator import DEFAULT_POINTS_PER_SIGMA
 from ..picardOZsolver import PicardOZsolver
 from ..sign_convention import strength_hint
+from ...core import settings as prefs
 
 _HAVE_SUNDIALS4PY = ozLib._HAVE_SUNDIALS4PY
 
@@ -69,8 +72,11 @@ MAX_GRID_EXPONENT = 20
 class RunResult:
     """One computed curve set in the run history."""
 
-    def __init__(self, label, r, q, potential, closure, phi):
+    def __init__(self, label, r, q, potential, closure, phi, solver=None, mannAlpha=None, converged=True):
         self.label = label
+        self.converged = converged  # False: last iterate at the iteration limit, not a solution
+        self.solver = solver
+        self.mannAlpha = mannAlpha  # damping a of the Picard / Mann solver, else None
         self.r = r
         self.q = q
         self.potential = potential
@@ -202,6 +208,41 @@ class OZSolverTab(QtWidgets.QWidget):
         solverWidth = max(len(name) for name in SOLVER_CLASSES) + 2
         put("", qtkit.combo(self.solverVar, list(SOLVER_CLASSES), width=solverWidth), span=True)
 
+        # PICARD / MANN DAMPING a: x <- (1-a) x + a T(x). a = 1 is plain Picard;
+        # a < 1 is Mann's iteration, slower but convergent where Picard is
+        # not. Greyed for the other solvers, which control their own step and
+        # would ignore the value.
+        self.mannAlphaVar = qtkit.StringVar(value=repr(float(prefs.get("oz.solve.mann_alpha"))))
+        mannTip = ("Damping a of the Picard / Mann iteration, x ← (1−a)·x + a·T(x), 0 < a ≤ 1.\n"
+                   "a = 1: plain Picard (fastest, diverges for dense or strongly attractive states,\n"
+                   "e.g. hard spheres above φ ≈ 0.42).\n"
+                   "a < 1: Mann's iteration, about 1/a times more iterations but convergent where\n"
+                   "Picard oscillates or diverges; typical 0.2–0.8.\n"
+                   "The iteration limit is N/a, N = Preferences → Ornstein–Zernike →\n"
+                   "'default max. iterations (Picard)' (the limit for a = 1).\n"
+                   "Used only by the Picard / Mann solver; as a verifier it uses the preference\n"
+                   "'verification: damping a' instead.")
+        self.mannAlphaEntry = qtkit.entry(self.mannAlphaVar, 10, tooltip=mannTip)
+        self.mannAlphaLabel = QtWidgets.QLabel("damping a:")
+        self.mannAlphaLabel.setToolTip(mannTip)
+        g.addWidget(self.mannAlphaLabel, row, 0, QtCore.Qt.AlignmentFlag.AlignRight)
+        g.addWidget(self.mannAlphaEntry, row, 1, QtCore.Qt.AlignmentFlag.AlignLeft)
+        row += 1
+        # The iteration limit is not entered here: it comes from the
+        # preferences (accelerated solvers / Picard), and for Picard / Mann it
+        # is scaled by 1/a. This line shows the limit that will apply.
+        self.iterLimitVar = qtkit.StringVar(value="")
+        self.iterLimitLabel = qtkit.label(var=self.iterLimitVar, color="grey", wrap=250)
+        self.iterLimitLabel.setToolTip(
+            "Iteration limit of the next calculation. Set in Settings → Preferences → Ornstein–Zernike\n"
+            "('default max. iterations'). Picard / Mann uses N/a, N being the Picard limit (a = 1).")
+        put("", self.iterLimitLabel, span=True)
+        self.solverVar.trace_add("write", lambda *_: self._syncMannAlpha())
+        self.mannAlphaVar.trace_add("write", lambda *_: self._syncMannAlpha())
+        from ...core.settings_dialog import on_saved
+        on_saved(self._syncMannAlpha)   # the limits are preferences
+        self._syncMannAlpha()
+
         # VERIFICATION, on by default: a converged residual is not evidence the
         # answer is right; a second solve is the only check that catches a
         # solver landing on a different root. Costs about eight times the work.
@@ -235,10 +276,12 @@ class OZSolverTab(QtWidgets.QWidget):
         # n at fixed points per sigma extends the range -- needed for slowly
         # decaying potentials (small-kappa Yukawa/DLVO tails).
         self.pointsPerSigmaVar = qtkit.StringVar(value="auto")
-        put("Points per σ:", qtkit.entry(self.pointsPerSigmaVar, 10))
-
-        self.maxIterVar = qtkit.StringVar(value="1000")
-        put("Max iterations:", qtkit.entry(self.maxIterVar, 10))
+        self.pointsPerSigmaLabelVar = qtkit.StringVar(value="")
+        put("Points per σ:", qtkit.hbox(qtkit.entry(self.pointsPerSigmaVar, 10),
+                                         qtkit.label(var=self.pointsPerSigmaLabelVar, color="grey")))
+        self.pointsPerSigmaVar.trace_add("write", self._updatePointsPerSigmaLabel)
+        self.gridPointsVar.trace_add("write", self._updatePointsPerSigmaLabel)
+        self._updatePointsPerSigmaLabel()
 
         # Empty by default so the auto label "<n>: <potential>, <closure>, phi=.."
         # applies from the first calculation on.
@@ -298,6 +341,35 @@ class OZSolverTab(QtWidgets.QWidget):
         else:
             self.gridSizeLabelVar.set(f"= {gridsize} points")
 
+    def _gridSize(self):
+        """Grid size N the next calculation uses (auto: 2^12 - 1)."""
+        try:
+            n = int(self.gridPointsVar.get().strip())
+        except ValueError:
+            n = 12
+        return 2**min(max(n, MIN_GRID_EXPONENT), MAX_GRID_EXPONENT) - 1
+
+    def _updatePointsPerSigmaLabel(self, *args):
+        """Shows the value 'auto' stands for, and the real-space range N/pps
+        in diameters that follows from it with the current grid size."""
+        if not hasattr(self, "pointsPerSigmaLabelVar"):
+            return
+        text = self.pointsPerSigmaVar.get().strip().lower()
+        if text == "auto":
+            pps, prefix = DEFAULT_POINTS_PER_SIGMA, f"= {DEFAULT_POINTS_PER_SIGMA} (auto),"
+        else:
+            try:
+                pps = int(text)
+                if pps <= 0:
+                    raise ValueError
+            except ValueError:
+                self.pointsPerSigmaLabelVar.set("(enter an integer > 0, or 'auto')")
+                return
+            prefix = ""
+        rng = self._gridSize() / pps
+        self.pointsPerSigmaLabelVar.set((prefix + " " if prefix else "") + f"r up to {rng:.4g} σ")
+        # (range = grid size / points per sigma, in hard-sphere diameters)
+
     @staticmethod
     def _clearLayout(lay):
         while lay.count():
@@ -340,6 +412,44 @@ class OZSolverTab(QtWidgets.QWidget):
             self.potParamVars.append(var)
         if not argNames:
             self.potParamsGrid.addWidget(QtWidgets.QLabel("(no parameters)"), 0, 0)
+
+    def _mannAlpha(self):
+        """The damping a from the field; ValueError unless 0 < a <= 1."""
+        a = float(self.mannAlphaVar.get())
+        if not 0.0 < a <= 1.0:
+            raise ValueError("damping a must satisfy 0 < a ≤ 1")
+        return a
+
+    def _iterationLimit(self, mannAlpha=None):
+        """(limit, text) of the next calculation, from the preferences."""
+        if isMannSolver(self.solverVar.get()):
+            n = int(PicardOZsolver.DEFAULT_MAX_ITERATIONS)
+            a = 1.0 if mannAlpha is None else mannAlpha
+            lim = PicardOZsolver.mannIterationLimit(n, a)
+            return lim, (f"iteration limit {lim}" + ("" if a == 1.0 else f" = {n}/a") + " (Preferences)")
+        cls = SOLVER_CLASSES[resolveSolverName(self.solverVar.get())][0]
+        lim = int(cls.DEFAULT_MAX_ITERATIONS)
+        return lim, f"iteration limit {lim} (Preferences)"
+
+    def _syncMannAlpha(self):
+        """Damping field enabled only for the Picard / Mann solver; validates
+        0 < a <= 1 and shows the iteration limit that will apply."""
+        on = isMannSolver(self.solverVar.get())
+        self.mannAlphaEntry.setEnabled(on)
+        self.mannAlphaLabel.setEnabled(on)
+        if not hasattr(self, "iterLimitVar"):
+            return
+        a, ok = None, True
+        if on:
+            try:
+                a = self._mannAlpha()
+            except ValueError:
+                ok = False
+        self.mannAlphaEntry.setStyleSheet("" if ok else "background: #ffd0d0")
+        if ok:
+            self.iterLimitVar.set(self._iterationLimit(a)[1])
+        else:
+            self.iterLimitVar.set("damping a must satisfy 0 < a ≤ 1")
 
     def _onPotentialChanged(self, probe=None):
         """Rebuild the potential's parameter fields AND narrow the closure list:
@@ -466,10 +576,9 @@ class OZSolverTab(QtWidgets.QWidget):
             return
         try:
             phi = float(self.phiVar.get())
-            maxIter = int(self.maxIterVar.get())
             potArgs = [float(v.get()) for v in self.potParamVars]
         except ValueError:
-            showerror("input error", "potential parameters, phi and max iterations must be numbers")
+            showerror("input error", "potential parameters and phi must be numbers")
             return
 
         # "auto" keeps ozLib.solve()'s default grid (4095 points, 100 per
@@ -514,14 +623,28 @@ class OZSolverTab(QtWidgets.QWidget):
                 showerror("input error", f"closure parameter '{extra[0]}' must be a number")
                 return
 
-        solverName = self.solverVar.get()
+        solverName = resolveSolverName(self.solverVar.get())
+        mannAlpha = None
+        if isMannSolver(solverName):
+            try:
+                mannAlpha = self._mannAlpha()
+            except ValueError:
+                showerror("input error", "damping a must be a number with 0 < a ≤ 1")
+                return
         # Deflation on an unphysical root (S(Q) < 0) with THE SAME solver.
         try:
             deflateAttempts = int(self.deflateVar.get())
         except ValueError:
             deflateAttempts = 0
         verifyResult = bool(self.verifyVar.get())
+        verifyTol = prefs.get("oz.solve.verify_tolerance")
+        verifyMannAlpha = prefs.get("oz.solve.verify_mann_alpha")
+        residualTol = prefs.get("oz.solve.residual_tolerance")
+        tt = prefs.get("oz.solve.transform_type")
+        transformType = None if tt == "auto" else int(tt)
         autoLabel = f"{len(self.runs)+1}: {potentialName}, {closureName}, phi={phi:.3g}"
+        if mannAlpha is not None and mannAlpha < 1.0:
+            autoLabel += f", Mann a={mannAlpha:g}"
         label = self.labelVar.get() or autoLabel
 
         self.calcBtn.setEnabled(False)
@@ -535,13 +658,37 @@ class OZSolverTab(QtWidgets.QWidget):
                     # lets "interrupt" reach the live solver
                     self.solver = solverInstance
 
-                result = ozLib.solve(potential=potentialName, phi=phi, potentialArgs=potArgs, closure=closureName,
-                                     closureParam=closureParam, closureParam2=closureParam2,
-                                     findConsistentParameter=findConsistent, solver=solverName,
-                                     maxIterations=maxIter, deflateOnUnphysical=deflateAttempts, verify=verifyResult,
-                                     onSolverCreated=captureSolverInstance, **gridKwargs)
-                run = RunResult(label, result.r, result.q, potentialName, closureName, phi)
+                unverified = None
+                try:
+                    result = ozLib.solve(potential=potentialName, phi=phi, potentialArgs=potArgs,
+                                         closure=closureName, closureParam=closureParam,
+                                         closureParam2=closureParam2, findConsistentParameter=findConsistent,
+                                         solver=solverName, maxIterations=None,
+                                         deflateOnUnphysical=deflateAttempts, verify=verifyResult,
+                                         verifyTolerance=verifyTol, transformType=transformType,
+                                         mannAlpha=mannAlpha, verifyMannAlpha=verifyMannAlpha,
+                                         residualTolerance=residualTol,
+                                         onSolverCreated=captureSolverInstance, **gridKwargs)
+                except ozLib.VerificationUnavailable as exc:
+                    # No independent verifier converged: show the result, marked
+                    # as unverified, instead of discarding it.
+                    result, unverified = exc.result, str(exc)
+                # A new name: assigning to `label` here would make it local to
+                # work() and raise UnboundLocalError on every calculation.
+                runLabel = label if result.converged else label + " [NOT CONVERGED]"
+                if not getattr(result, "physical", True):
+                    runLabel += " [S(Q)<0]"
+                if unverified:
+                    runLabel += " [UNVERIFIED]"
+                run = RunResult(runLabel, result.r, result.q, potentialName, closureName, phi,
+                                solver=solverName, mannAlpha=result.mannAlpha, converged=result.converged)
+                run.maxIter = result.iterationLimit
+                run.finalRelativeProgress = result.finalRelativeProgress
                 run.curves = result.curves
+                run.unverified = unverified
+                run.minSq = getattr(result, "minSq", None)
+                run.residual = getattr(result, "residual", None)
+                run.convergenceMessage = getattr(result, "convergenceMessage", None)
                 self.resultQueue.put(("done", run))
             except Exception:
                 self.resultQueue.put(("error", traceback.format_exc()))
@@ -566,6 +713,51 @@ class OZSolverTab(QtWidgets.QWidget):
         self.interruptBtn.setEnabled(False)
         self.statusVar.set(f"done: {run.label}")
         self.labelVar.set("")
+        if getattr(run, "minSq", None) is not None and not run.minSq >= 0.0:
+            showwarning("unphysical result",
+                        f"min S(Q) = {run.minSq:.4g} < 0. S(Q) cannot be negative: the solver converged to a "
+                        "root of the closure equations that does not describe a fluid (a negative-"
+                        "compressibility branch, or a state past the spinodal). The curves are shown, "
+                        "marked [S(Q)<0], but they are not a physical solution.\n\n"
+                        "Set 'deflate if S(Q)<0' to 1–3 to search for a physical root with the same "
+                        "solver, or use a fixed-point solver (SUNDIALS Fixed-Point, scipy Anderson, "
+                        "Picard / Mann); Newton–Krylov methods are drawn to these roots near a fold.")
+        if getattr(run, "unverified", None):
+            showwarning("not verified",
+                        "No independent solver converged to check this result, so it is shown "
+                        "unverified (marked [UNVERIFIED]).\n\n" + run.unverified + "\n\n"
+                        "Verifiers: Biggs–Andrews, then Picard / Mann with damping a = "
+                        f"{prefs.get('oz.solve.verify_mann_alpha'):g}; a verifier of the same algorithm "
+                        "family as the chosen solver is skipped. Raise 'default max. iterations (Picard)' "
+                        "or lower 'verification: damping a' in Settings → Preferences → Ornstein–Zernike.")
+        if not run.converged:
+            # The curves are still shown (marked in the label): they show where
+            # the iteration stopped. They are not a solution and change with
+            # the damping and the iteration limit.
+            if run.mannAlpha is not None:
+                hint = ("Raise 'default max. iterations (Picard)' in Settings → Preferences → "
+                        "Ornstein–Zernike; Picard / Mann runs up to that value / a. If it still does not "
+                        "converge (it oscillates), lower the damping a (hard spheres PY at φ = 0.53: "
+                        "a ≤ 0.6 converges, a ≥ 0.7 does not)")
+            else:
+                hint = ("Raise 'default max. iterations' in Settings → Preferences → Ornstein–Zernike, "
+                        "or choose another solver")
+            prog = getattr(run, "finalRelativeProgress", None)
+            msg = getattr(run, "convergenceMessage", None) or ""
+            if "residual" in msg:
+                # The solver claimed success; the independent residual check refused it.
+                showwarning("not converged",
+                            msg + "\n\nThe curves drawn are not a solution. Try another solver (a fixed-point "
+                            "method such as Picard / Mann with damping), a less extreme state point, or "
+                            "check 'independent residual check' in Settings → Preferences → Ornstein–Zernike.")
+                return
+            showwarning("not converged",
+                        f"{run.solver} stopped at the iteration limit ({getattr(run, 'maxIter', '?')})"
+                        + (f" with relative progress {prog:.2e}" if prog is not None else "")
+                        + " instead of reaching the convergence criterion.\n\n"
+                        "The curves drawn are the last iterate, not a solution: they change with the "
+                        f"iteration limit{' and the damping' if run.mannAlpha is not None else ''}.\n\n"
+                        + hint + ".")
 
     def _onCalculateError(self, tb):
         self.calcBtn.setEnabled(True)
@@ -608,6 +800,9 @@ class OZSolverTab(QtWidgets.QWidget):
                     "potential": run.potential,
                     "closure": run.closure,
                     "phi": run.phi,
+                    "solver": run.solver,
+                    "mannAlpha": run.mannAlpha,
+                    "converged": run.converged,
                     "r": np.asarray(run.r).tolist(),
                     "q": np.asarray(run.q).tolist() if run.q is not None else None,
                     "curves": {name: np.asarray(arr).tolist() for name, arr in run.curves.items()},
@@ -636,8 +831,12 @@ class OZSolverTab(QtWidgets.QWidget):
                 return
             for runData in data["runs"]:
                 qArr = np.array(runData["q"]) if runData.get("q") is not None else None
+                solver = runData.get("solver")  # absent in files written before it was saved
                 run = RunResult(runData["label"], np.array(runData["r"]), qArr, runData["potential"],
-                                runData["closure"], runData["phi"])
+                                runData["closure"], runData["phi"],
+                                solver=resolveSolverName(solver) if solver else None,
+                                mannAlpha=runData.get("mannAlpha"),
+                                converged=runData.get("converged", True))
                 run.curves = {name: np.array(arr) for name, arr in runData["curves"].items()}
                 self.runs.append(run)
                 self.historyList.addItem(run.label)

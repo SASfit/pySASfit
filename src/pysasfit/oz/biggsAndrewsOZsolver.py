@@ -57,13 +57,15 @@ import numpy as np
 from .oZsolver import OZsolver
 
 class BiggsAndrewsOZsolver(OZsolver):
+    #Extrapolation order and step formula (class default; see __init__).
+    MAA = 2
     def __init__(self, port, **kwargs):
       OZsolver.__init__(self, port, **kwargs)
       #Extrapolation order (|value|) and step-size formula choice
       #(sign) -- see this file's own docstring. 2 (second-order,
       #sign>0) is used as a reasonable default; SASfit's own GUI
       #exposes this as an adjustable field, same as here.
-      self.KINSetMAA = 2
+      self.KINSetMAA = self.MAA
 
     def solve(self):
       xn = self.x_0.copy()

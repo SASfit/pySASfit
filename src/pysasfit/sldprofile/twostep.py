@@ -141,7 +141,16 @@ class _IFTSolution:
         self.n_good, self.alpha = n_good, alpha
 
 
-def _bayes_ift(A, b, sigma, C):
+#: Numerical details of the step-1 IFT (overridable with ``ift_options``):
+#: log_alpha_lo / log_alpha_hi / n_alpha -- alpha grid, ln alpha relative to
+#: ln(tr B / tr C); alpha_xatol -- refinement of ln alpha; bg_below / bg_above --
+#: flat-background search interval [I_min - bg_below*s, I_min + bg_above*s] with
+#: s = max(|I_min|, median sigma); bg_xatol -- its precision in units of s.
+IFT_DEFAULTS = dict(log_alpha_lo=-40.0, log_alpha_hi=10.0, n_alpha=101, alpha_xatol=1e-4,
+                    bg_below=1.0, bg_above=0.5, bg_xatol=1e-4)
+
+
+def _bayes_ift(A, b, sigma, C, opt=None):
     """Minimise chi^2/2 + alpha p^T C p / 2 with alpha by maximum evidence.
 
     log Z = -alpha S - chi^2/2 - 1/2 logdet(B + alpha C) + 1/2 logdet(alpha C)
@@ -173,13 +182,14 @@ def _bayes_ift(A, b, sigma, C):
         lz = -al * S - 0.5 * chi2 - 0.5 * ldH + 0.5 * (n * la + ldC)
         return lz, x, cH, chi2, al
 
-    las = np.log(a0) + np.linspace(-40, 10, 101)
+    o = {**IFT_DEFAULTS, **(opt or {})}
+    las = np.log(a0) + np.linspace(o["log_alpha_lo"], o["log_alpha_hi"], int(o["n_alpha"]))
     vals = [at(la) for la in las]
     lz = np.array([v[0] if v is not None else -np.inf for v in vals])
     i = int(np.argmax(lz))
     lo, hi = las[max(i - 1, 0)], las[min(i + 1, las.size - 1)]
     o = optimize.minimize_scalar(lambda la: -(at(la) or (-np.inf,))[0], bounds=(lo, hi), method="bounded",
-                                 options={"xatol": 1e-4})
+                                 options={"xatol": o["alpha_xatol"]})
     best = at(o.x)
     if best is None or best[0] < lz[i]:
         best = vals[i]
@@ -189,13 +199,13 @@ def _bayes_ift(A, b, sigma, C):
     return _IFTSolution(x, cov, float(lzb), chi2, n_good, al)
 
 
-def _ift_at(q, I, sigma, geometry, D, n_r, qf, R, bg, penalty):
+def _ift_at(q, I, sigma, geometry, D, n_r, qf, R, bg, penalty, opt=None):
     """One IFT at fixed D_max and flat background bg. Returns (sol, r_half, A)."""
     rf, r, S, fac = _ift_grid(D, n_r, geometry)
     A = fac * ift_kernel(qf, rf, geometry)
     if R is not None:
         A = R @ A
-    sol = _bayes_ift(A, I - bg, sigma, _penalty_factor(rf.size, penalty))
+    sol = _bayes_ift(A, I - bg, sigma, _penalty_factor(rf.size, penalty), opt)
     sol.S = S
     return sol, r, A
 
@@ -206,7 +216,7 @@ def _logz(sol):
 
 def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15, n_r=60,
                 resolution=None, background=False, penalty="hansen_eq19",
-                progress=None) -> PDDFResult:
+                progress=None, ift_options=None) -> PDDFResult:
     """Step 1: p(r) from I(q) by a Bayesian IFT.
 
     D_max : fixed value; with ``D_range`` (lo, hi) the evidence is scanned over
@@ -214,7 +224,12 @@ def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15
         (0.7, 1.5) x 2 r_max of a Guinier estimate when neither is given)
     background : False (none), a number (fixed flat background) or True
         (flat background by maximum evidence at each D_max)
+    ift_options : overrides of :data:`IFT_DEFAULTS`
     """
+    unknown = set(ift_options or {}) - set(IFT_DEFAULTS)
+    if unknown:
+        raise ValueError(f"unknown ift_options {sorted(unknown)}")
+    o = {**IFT_DEFAULTS, **(ift_options or {})}
     q = np.asarray(q, float)
     I = np.asarray(I, float)
     sigma = np.asarray(sigma, float)
@@ -229,17 +244,17 @@ def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15
             cache = {}
 
             def f(b):
-                rr = _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty)
+                rr = _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty, o)
                 cache[b] = rr
                 return -_logz(rr[0])
 
-            o = optimize.minimize_scalar(f, bounds=(Imin - span, Imin + 0.5 * span), method="bounded",
-                                         options={"xatol": 1e-4 * span})
-            b = float(o.x)
-            res, r, A = cache.get(o.x) or _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty)
+            ob = optimize.minimize_scalar(f, bounds=(Imin - o["bg_below"] * span, Imin + o["bg_above"] * span),
+                                          method="bounded", options={"xatol": o["bg_xatol"] * span})
+            b = float(ob.x)
+            res, r, A = cache.get(ob.x) or _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty, o)
         else:
             b = float(background) if background else 0.0
-            res, r, A = _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty)
+            res, r, A = _ift_at(q, I, sigma, geometry, D, n_r, qf, R, b, penalty, o)
         return res, r, A, b
 
     if D_max is not None and D_range is None:
@@ -365,7 +380,8 @@ class DeconvolutionFit(DensityProfileFit):
     """
 
     def __init__(self, r, p, sigma=None, cov=None, geometry="sphere", n=40, regularization="smooth",
-                 prior=None, outer="free", basis="rho", grid=None, errors="covariance", q_max=None, n_sub=6):
+                 prior=None, outer="free", basis="rho", grid=None, errors="covariance", q_max=None, n_sub=6,
+                 options=None):
         r = np.asarray(r, float)
         p = np.asarray(p, float)
         if cov is None and sigma is None:
@@ -390,7 +406,7 @@ class DeconvolutionFit(DensityProfileFit):
         self.n_sub = int(n_sub)
         self.q_max = q_max
         super().__init__(r, Iw, sw, geometry=geometry, n=n, regularization=regularization, prior=prior,
-                         outer=outer, background=False, resolution=None, basis=basis, grid=grid)
+                         outer=outer, background=False, resolution=None, basis=basis, grid=grid, options=options)
 
     # forward model ------------------------------------------------------
     def _V(self, r_max):
@@ -503,8 +519,12 @@ class TwoStepResult:
 def two_step_fit(q, I, sigma, geometry="sphere", n=40, regularization="smooth", prior=None, outer="free",
                  basis="rho", grid=None, resolution=None, background=False, r_max=None, r_max_range=None,
                  fix_r_max=False, n_D=15, n_r=60, errors="covariance", penalty="hansen_eq19",
-                 n_draws=40, seed=0, progress=None, verbose=False) -> TwoStepResult:
+                 n_draws=40, seed=0, progress=None, verbose=False, options=None, ift_options=None,
+                 n_sub=6, max_extend=6) -> TwoStepResult:
     """Glatter's two-step method: IFT (step 1) then deconvolution (step 2).
+
+    options : numerical options of step 2 (see DensityProfileFit.DEFAULT_OPTIONS);
+    ift_options : of step 1 (see IFT_DEFAULTS); n_sub : sub-shells per shell in V.
 
     r_max / r_max_range / fix_r_max mean the same as for the direct fit; they
     are turned into D_max = 2 r_max for step 1. Step 2 uses r_max = D_max / 2.
@@ -525,14 +545,15 @@ def two_step_fit(q, I, sigma, geometry="sphere", n=40, regularization="smooth", 
         D_kw = dict(n_D=n_D)
     report("step 1: indirect Fourier transformation")
     pd = indirect_ft(q, I, sigma, geometry, n_r=n_r, resolution=resolution, background=background,
-                     penalty=penalty, progress=report, **D_kw)
+                     penalty=penalty, progress=report, ift_options=ift_options, **D_kw)
     report(pd.summary())
     report("step 2: deconvolution p(r) -> rho(r)")
     dec = DeconvolutionFit(pd.r, pd.p, cov=pd.cov, geometry=geometry, n=n, regularization=regularization,
                            prior=prior, outer=outer, basis=basis, grid=grid, errors=errors,
-                           q_max=float(np.max(q)))
+                           q_max=float(np.max(q)), n_sub=n_sub, options=options)
     dec.progress = progress
-    prof = dec.fit(r_max=pd.D_max / 2, fix_r_max=True, n_draws=n_draws, seed=seed, verbose=verbose)
+    prof = dec.fit(r_max=pd.D_max / 2, fix_r_max=True, n_draws=n_draws, seed=seed, verbose=verbose,
+                   max_extend=max_extend)
     prof.r_max = (pd.D_max / 2, pd.D_max_err / 2)
     # back to I(q): the direct forward model with the deconvolved profile
     direct = DensityProfileFit(q, np.where(np.asarray(I) > 0, I, 1e-300), sigma, geometry=geometry, n=n,

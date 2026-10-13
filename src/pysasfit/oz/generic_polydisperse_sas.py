@@ -305,9 +305,27 @@ class GenericPolydisperseSAS(PolydisperseSASBase):
     onSolverCreated = None
 
     def _solve(self, srel, nbins, phi):
+        """Build, solve, verify -- and, when deflation is switched on and the
+        root is unphysical, return the rescued solver instead.
+
+        BUG FIX (2026-10-12). The physicality screen's return value used to be
+        ignored, and the deflation retry built a new solver without giving it
+        a density, a potential or a closure and without solving it. With
+        deflation on, an unphysical root therefore came back SILENTLY (the
+        screen's error was suppressed and the rescue thrown away); with it
+        off, the behaviour was correct. Both paths now share
+        _buildAndSolve().
+        """
+        self._solveArgs = (srel, nbins, phi)
+        sol = self._buildAndSolve(self._solverKw["solverClass"], srel, nbins, phi)
+        rescued = self._verifyPhysical(sol)
+        return sol if rescued is None else rescued
+
+    def _buildAndSolve(self, solverClass, srel, nbins, phi):
+        """One complete solve with `solverClass`; convergence verified."""
         kw = self._solverKw
         sol = self._makeSolver(kw["gridN"], kw["pointsPerSigma"],
-                               kw["solverClass"], kw["maxIterations"])
+                               solverClass, kw["maxIterations"])
         sol.setVolumeDensity(phi)
         if self.potential == "PolydisperseHardCoreYukawa":
             #Charge-coupled: NOT reachable through setPolydispersePotential(),
@@ -366,48 +384,58 @@ class GenericPolydisperseSAS(PolydisperseSASBase):
         # failure but returns results anyway, with no flag for callers. Check
         # the residual of the fixpoint map itself.
         self._verify(sol)
-        self._verifyPhysical(sol)
         return sol
 
+    @staticmethod
+    def _minS(sol):
+        try:
+            S = np.real(np.asarray(sol.getSq(), float))
+        except Exception:
+            return None
+        if S.size == 0 or not np.all(np.isfinite(S)):
+            return None
+        return float(np.min(S))
+
     def _deflateRetry(self, sol):
-        """Re-solve with the unphysical root deflated away.
+        """Re-solve with the unphysical root(s) deflated away.
 
-        Returns a solver instance on success, or None when no physical root
-        is reachable -- the caller then raises its own message, which
-        already names the state point and explains what an unphysical root
-        means.
-
-        `_deflating` guards against recursion: each retry runs the same
-        screen, and a second unphysical root should feed the next deflation
-        here rather than start a nested search.
+        Returns a solver on a physical root, or None when none was reached in
+        `deflateOnUnphysical` attempts -- the caller then raises its own
+        message. Each attempt rebuilds the WHOLE problem (density, potential,
+        closure) with a deflated subclass of the chosen solver and solves it
+        from the same start, so the user's solver choice is respected. The
+        unphysical roots found on the way are kept in `self.deflationHistory`
+        as (attempt, min S(Q)).
         """
         from .deflation import makeDeflatedClass
         base = type(sol)
-        kw = dict(self._solverKw)
         roots = []
+        self.deflationHistory = [("initial", self._minS(sol))]
         self._deflating = True
         try:
-            for _ in range(max(1, self._deflateAttempts)):
+            for attempt in range(1, max(1, self._deflateAttempts) + 1):
                 try:
-                    roots.append(np.asarray(
-                        sol.packPairs(sol.gammaMatrixMulticomponent)
-                        if getattr(sol, "numberOfComponents", 1) > 1
-                        else sol.x_fixpoint, float).copy())
-                except Exception:
-                    return None
-                kw["solverClass"] = makeDeflatedClass(base, list(roots))
-                try:
-                    cand = self._makeSolver(kw["gridN"], kw["pointsPerSigma"],
-                                            kw["solverClass"],
-                                            kw["maxIterations"])
+                    if getattr(sol, "numberOfComponents", 1) > 1:
+                        root = sol.packPairs(sol.gammaMatrixMulticomponent)
+                    else:
+                        # one component: the converged Gamma is not stored;
+                        # Gamma = h - c = g - c - 1 (as in ozLib._deriveCurves)
+                        root = (np.asarray(sol.getRDF(), float)
+                                - np.asarray(sol.getDirectCorrelationFunction(), float) - 1.0)
+                    roots.append(np.asarray(root, float).copy())
                 except Exception:
                     return None
                 try:
-                    self._verifyPhysical(cand)
-                except RuntimeError:
-                    sol = cand
-                    continue
-                return cand
+                    cand = self._buildAndSolve(makeDeflatedClass(base, list(roots)),
+                                               *self._solveArgs)
+                except Exception as exc:     # no further root reachable
+                    self.deflationHistory.append((attempt, f"{type(exc).__name__}"))
+                    return None
+                worst = self._minS(cand)
+                self.deflationHistory.append((attempt, worst))
+                if worst is not None and worst >= -1e-6:
+                    return cand
+                sol = cand
         finally:
             self._deflating = False
         return None
@@ -558,12 +586,17 @@ class GenericPolydisperseSAS(PolydisperseSASBase):
                 rescued = self._deflateRetry(sol)
                 if rescued is not None:
                     return rescued
+            hist = getattr(self, "deflationHistory", None)
+            tried = ("" if not hist else
+                     " Deflation tried: " + ", ".join(
+                         f"{a}: " + (f"min S = {v:.4g}" if isinstance(v, float) else str(v))
+                         for a, v in hist) + ".")
             raise RuntimeError(
                 f"{self.closure} converged to an UNPHYSICAL solution for "
                 f"{self.potential} at phi={self.phi:g}: min S(Q) = "
                 f"{worst:.4g} < 0. The residual is small, so this is a "
                 f"genuine root of the closure equations on a "
-                f"negative-compressibility branch, not a failed solve.")
+                f"negative-compressibility branch, not a failed solve." + tried)
 
     def _verify(self, sol):
         tol = self._solverKw["converged_tol"]

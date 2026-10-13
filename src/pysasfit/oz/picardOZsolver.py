@@ -14,7 +14,14 @@ class PicardOZsolver(OZsolver):
     #converging altogether above about phi = 0.42. So 600 would cut off
     #solves that would have succeeded; 3000 does not, while still being a
     #long way below the 6000 and 8000 that callers used to pass.
-    DEFAULT_MAX_ITERATIONS = 3000
+    #
+    #RAISED TO 5000 when Picard / Mann became the damped second verifier: at
+    #hard spheres PY phi = 0.53 it needs about 4170/a iterations, so with
+    #a = 0.5 and N = 3000 (limit 6000) it stopped at 6000 of the 8334
+    #needed, and with Biggs-Andrews also failing there no verifier converged.
+    #N = 5000 gives 10000 at a = 0.5. It is a limit, so it costs nothing on a
+    #solve that converges.
+    DEFAULT_MAX_ITERATIONS = 5000
 
     def __init__(self, port, **kwargs):
       #First run constructor of super class
@@ -45,11 +52,10 @@ class PicardOZsolver(OZsolver):
       #correct 2.164596. A verifier that fails is nearly as unhelpful as one
       #that agrees wrongly.
       #
-      #NOTE the manuscript's implementation section describes the final
-      #fallback as "damped Picard iteration". Until now it was not damped.
-      #With this the description becomes true, but only if an alpha < 1 is
-      #actually chosen somewhere; the default is still undamped so that
-      #nothing silently changes.
+      #Set from ozLib.solve(mannAlpha=...), the "damping a" field of the OZ
+      #solver, polydisperse and mixture tabs, or directly as
+      #self.mannAlpha. The default stays undamped so nothing changes
+      #silently.
       alpha = float(getattr(self, 'mannAlpha', 1.0))
       if not (0.0 < alpha <= 1.0):
           raise ValueError(f"mannAlpha must be in (0, 1], got {alpha}")
@@ -62,12 +68,20 @@ class PicardOZsolver(OZsolver):
       #the residual themselves -- a flag is a claim, a residual is evidence).
       self.converged = False
       self.finalRelativeProgress = float('inf')
+      #ITERATION LIMIT SCALED BY 1/a. A damped step moves only a fraction a
+      #of the way to T(x), so Mann's iteration needs about 1/a times the
+      #iterations of an undamped one (measured: HS/PY phi = 0.53 converges
+      #after about 4170/a steps for every a <= 0.6). The configured limit N
+      #(numberOfIterations: Preferences -> oz.solvers.max_iterations_picard,
+      #or the maxIterations a caller passed) is therefore the limit for
+      #a = 1, and the iteration runs up to ceil(N/a) steps. a = 1 gives N.
+      self.iterationLimit = self.mannIterationLimit(self.numberOfIterations, alpha)
+      self.iterations = 0
       #Start iteration
       x = self.x_0
-      #Simple Picard iteration max number of steps = self.numberOfIterations
       #Converged if relative progress is less than self.convergenceCriterion
       i = 0; previousNorm = 0.0; xPrevious = None
-      while  i < self.numberOfIterations and not self.isInterrupted:
+      while  i < self.iterationLimit and not self.isInterrupted:
           xPrevious = x
           xNew = self.fixPointOperator(x)
           x = xNew if alpha == 1.0 else (1.0 - alpha)*x + alpha*xNew
@@ -85,28 +99,45 @@ class PicardOZsolver(OZsolver):
           #5.2528. The error was only found by evaluating |F| at the claimed
           #solution, which nothing in the pipeline was doing.
           #
-          #||x - x_prev|| is the honest measure of progress. Better still
-          #would be the residual ||T(x) - x||, which is what correctness
-          #actually depends on; that is a larger change because the damped
-          #update means the increment and the residual differ by a factor
-          #alpha, so it is left as a deliberate next step rather than done
-          #silently here.
-          relativeProgress = (np.linalg.norm(x - xPrevious)
+          #CONVERGENCE ON THE RESIDUAL ||T(x) - x||, not on the damped
+          #increment. With damping the increment is a*(T(x) - x): testing
+          #the increment would declare convergence 1/a times too early (at
+          #a = 0.1 a residual ten times the criterion would pass). For
+          #a = 1 the two are identical, so plain Picard and every recorded
+          #regression value are unchanged.
+          relativeProgress = (np.linalg.norm(xNew - xPrevious)
                               / (norm + np.finfo(float).eps))
           previousNorm = norm
           self.finalRelativeProgress = float(relativeProgress)
           if relativeProgress < self.convergenceCriterion: #Defined in super class
               #pass
               self.converged = True
-              print("Picard converged after", i, "steps")
+              print(self._name(alpha), "converged after", i, "steps")
+              self.iterations = i
               break
           i += 1
           
       #endwhile
-      if i == self.numberOfIterations:
-          print("Picard did not converge after", self.numberOfIterations, "steps")
+      if not self.converged:
+          self.iterations = i
+      if i == self.iterationLimit:
+          print(self._name(alpha), "did not converge after", self.iterationLimit, "steps"
+                + ("" if alpha == 1.0 else f" (limit {self.numberOfIterations}/a)"))
 
       self.derivePhysicalQuantitiesFromFixpoint(x)
+    @staticmethod
+    def mannIterationLimit(n, alpha):
+        """Iteration limit of the Picard / Mann iteration: ceil(n / a) for the
+        configured limit n (the limit for a = 1) and the damping 0 < a <= 1."""
+        alpha = float(alpha)
+        if not (0.0 < alpha <= 1.0):
+            raise ValueError(f"mannAlpha must be in (0, 1], got {alpha}")
+        return int(np.ceil(int(n) / alpha - 1e-9))
+
+    @staticmethod
+    def _name(alpha):
+        return "Picard" if alpha == 1.0 else f"Picard/Mann (a = {alpha:g})"
+
     #implement the abstract method such that this class can be instantiated
     def solve(self):
       self.picardIteration()

@@ -41,6 +41,13 @@ GEOMETRIES = ("sphere", "cylinder", "lamella")
 DIM = {"lamella": 1, "cylinder": 2, "sphere": 3}
 
 
+#Quadrature details (pySASfit preferences: sldprofile.geo.*): n_gl -- Gauss
+#nodes per shell for a custom exponent p (neither 0 nor d-1); pddf_n_sub --
+#sub-shells per shell of the output p(r); pddf_raster -- FFT raster of the
+#cylinder p(r). p(r) is output only; n_gl enters the fit.
+DEFAULTS = dict(n_gl=16, pddf_n_sub=8, pddf_raster=256)
+
+
 def _check(geometry):
     if geometry not in GEOMETRIES:
         raise ValueError(f"geometry must be one of {GEOMETRIES}, got {geometry!r}")
@@ -132,12 +139,13 @@ def _kernel(geometry, x):
     return np.cos(x)
 
 
-def _amplitude_numeric(q, r_max, n, geometry, p, n_gl=16, grid=None):
+def _amplitude_numeric(q, r_max, n, geometry, p, n_gl=None, grid=None):
     """Shell integrals  A_d int_shell r^(d-1-p) K(qr) dr  by Gauss quadrature.
 
     The first shell uses Gauss-Jacobi with the weight r^(d-1-p) (integrable
     singularity for p > d-1), the others Gauss-Legendre.
     """
+    n_gl = int(DEFAULTS["n_gl"] if n_gl is None else n_gl)
     q = np.asarray(q, float)
     e = shell_edges(r_max, n, grid)
     beta = DIM[geometry] - 1 - p
@@ -240,7 +248,8 @@ def radius_of_gyration(rho, r_max: float, geometry: str = "sphere", basis="rho",
     return float(np.sqrt(num / den)) if den != 0 and num / den > 0 else float("nan")
 
 
-def pddf(rho, r_max: float, geometry: str = "sphere", r=None, n_sub: int = 8, basis: str = "rho", grid=None):
+def pddf(rho, r_max: float, geometry: str = "sphere", r=None, n_sub: int | None = None, basis: str = "rho",
+         grid=None):
     """Distance distribution p(r) = r^(dim-1) gamma(r)  (Hansen 2016, eqs. 4-5).
 
     ``gamma`` is the (dim-dimensional) autocorrelation of the density.  The
@@ -248,6 +257,7 @@ def pddf(rho, r_max: float, geometry: str = "sphere", r=None, n_sub: int = 8, ba
     Returns (r, p).
     """
     _check(geometry)
+    n_sub = int(DEFAULTS["pddf_n_sub"] if n_sub is None else n_sub)
     rho = np.asarray(rho, float)
     n = rho.size
     D = 2.0 * r_max
@@ -288,7 +298,7 @@ def pddf(rho, r_max: float, geometry: str = "sphere", r=None, n_sub: int = 8, ba
         rg = np.arange(g.size) * dx
         return r, np.interp(r, rg, g, right=0.0)
     # cylinder: 2-D autocorrelation by FFT on a square raster, radially averaged
-    npx = 256
+    npx = int(DEFAULTS["pddf_raster"])
     L = 2 * r_max
     xs = (np.arange(npx) - npx / 2 + 0.5) * (L / npx)
     X, Y = np.meshgrid(xs, xs)

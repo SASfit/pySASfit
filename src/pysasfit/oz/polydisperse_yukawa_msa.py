@@ -73,6 +73,14 @@ def _psi1(x):
     return out if np.iscomplexobj(x) else out.real
 
 
+
+#Numerical details of the analytic MSA solution (pySASfit preferences:
+#numerics.msa.*): amplitude-route iteration tolerance / iterations / fsolve
+#tolerance; Gamma-route root scan over +-span*z with `decades` decades at
+#`per_decade` points each, refined by brentq to gamma_xtol.
+MSA_DEFAULTS = dict(tol=1e-13, maxiter=300, fsolve_xtol=1e-13,
+                    gamma_span=6.0, gamma_decades=10, gamma_per_decade=400, gamma_xtol=1e-15)
+
 class PolydisperseOneYukawaMSA:
     """N species, one Yukawa term (M=1). sigma, rho: length-N arrays.
     z, K: scalars (Yukawa screening length and coupling constant).
@@ -226,13 +234,15 @@ class PolydisperseOneYukawaMSA:
         S2 = np.sum(self.rho*a**2)
         return 2*np.pi*K*delta/z + I@a - (S2/(2*z))*(J@(Pi - z*X) - I@X)
 
-    def solve(self, a0=None, tol=1e-13, maxiter=300):
+    def solve(self, a0=None, tol=None, maxiter=None):
+        tol = MSA_DEFAULTS["tol"] if tol is None else tol
+        maxiter = int(MSA_DEFAULTS["maxiter"] if maxiter is None else maxiter)
         N = self.N
         a = np.zeros(N) if a0 is None else np.array(a0, dtype=float)
         Bhat = np.zeros(N)
         for it in range(maxiter):
             Bhat_new = self._solve_Bhat_given_a(a)
-            a_new = fsolve(lambda x: self._residual_a(x, Bhat_new), a, xtol=1e-13)
+            a_new = fsolve(lambda x: self._residual_a(x, Bhat_new), a, xtol=MSA_DEFAULTS["fsolve_xtol"])
             da = np.max(np.abs(a_new - a))
             dB = np.max(np.abs(Bhat_new - Bhat))
             a, Bhat = a_new, Bhat_new
@@ -359,12 +369,15 @@ class PolydisperseOneYukawaMSA:
                     eq100b_residual=self._gamma_residual(gamma),
                     residual_a=self._residual_a(a, Bhat))
 
-    def _gamma_grid(self, span=6.0, decades=10, per_decade=400):
+    def _gamma_grid(self, span=None, decades=None, per_decade=None):
         """Search grid for Gamma. Gamma has dimensions of inverse length (it
         appears only as z+Gamma), so the grid is scaled by z rather than being
         absolute -- a fixed [-40,40] grid silently misses the root when lengths
         are in physical units (e.g. Gamma ~ -1e-5 for sigma ~ 100 A). Spacing
         is geometric so that roots many decades below z are still resolved."""
+        span = MSA_DEFAULTS["gamma_span"] if span is None else span
+        decades = int(MSA_DEFAULTS["gamma_decades"] if decades is None else decades)
+        per_decade = int(MSA_DEFAULTS["gamma_per_decade"] if per_decade is None else per_decade)
         z = self.z
         mag = np.geomspace(span*z*10.0**(-decades), span*z, decades*per_decade)
         return np.concatenate((-mag[::-1], [0.0], mag))
@@ -384,7 +397,7 @@ class PolydisperseOneYukawaMSA:
             if np.sign(r0) != np.sign(r1):
                 try:
                     g = brentq(self._gamma_residual, grid[i], grid[i+1],
-                               xtol=1e-15, rtol=1e-15, maxiter=200)
+                               xtol=MSA_DEFAULTS["gamma_xtol"], rtol=1e-15, maxiter=200)
                 except (ValueError, RuntimeError):
                     continue
                 if all(abs(g - gg) > 1e-9 for gg in roots):

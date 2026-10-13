@@ -1,5 +1,7 @@
 """
-Flexible loader for 2- or 3-column ASCII scattering data files (q, I[, dI]).
+Flexible loader for 2-, 3- or 4-column ASCII scattering data files
+(q, I[, dI[, dQ]]); the optional 4th column is the instrumental Q resolution
+(standard deviation sigma_Q, as written by most reduction programs).
 
 Real-world SAS data files come in wildly inconsistent formats (comment
 lines starting with #, %, or !, header text, tab/space/comma delimiters,
@@ -22,6 +24,7 @@ class SASData:
     dI: np.ndarray | None
     source_path: str
     n_lines_skipped: int
+    dQ: np.ndarray | None = None      # optional 4th column: Q resolution (sigma_Q)
 
 
 def load_sas_data(path: str) -> SASData:
@@ -39,7 +42,7 @@ def load_sas_data(path: str) -> SASData:
                 n_skipped += 1
                 continue
             parts = stripped.replace(",", " ").split()
-            if len(parts) not in (2, 3):
+            if len(parts) not in (2, 3, 4):
                 n_skipped += 1
                 continue
             try:
@@ -57,7 +60,7 @@ def load_sas_data(path: str) -> SASData:
 
     n_cols = len(rows[0])
     if any(len(r) != n_cols for r in rows):
-        # Mixed 2- and 3-column rows: keep only rows matching the majority column count.
+        # Mixed 2-, 3- and 4-column rows: keep only rows matching the majority column count.
         from collections import Counter
         counts = Counter(len(r) for r in rows)
         n_cols = counts.most_common(1)[0][0]
@@ -67,10 +70,12 @@ def load_sas_data(path: str) -> SASData:
 
     arr = np.array(rows, dtype=float)
     q, I = arr[:, 0], arr[:, 1]
-    dI = arr[:, 2] if n_cols == 3 else None
+    dI = arr[:, 2] if n_cols >= 3 else None
+    dQ = arr[:, 3] if n_cols == 4 else None
 
     order = np.argsort(q)
     q, I = q[order], I[order]
     dI = dI[order] if dI is not None else None
+    dQ = dQ[order] if dQ is not None else None
 
-    return SASData(q=q, I=I, dI=dI, source_path=path, n_lines_skipped=n_skipped)
+    return SASData(q=q, I=I, dI=dI, source_path=path, n_lines_skipped=n_skipped, dQ=dQ)

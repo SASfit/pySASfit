@@ -926,7 +926,10 @@ class MixtureValidationTab(QtWidgets.QWidget):
         to quadruple N alongside pps and the box stayed put by luck; at 800
         it gave only 32767, so r_max halved and low-Q accuracy fell away.
         """
+        from .. import mixscatter_bridge as _bridge
         from ..mixscatter_bridge import OZLiquidStructure
+        from ...core import settings as prefs
+        _bridge.ACCEPT_RESIDUAL = prefs.get("oz.mixture.accept_residual")
 
         class _Mix:                       # minimal MixtureLike
             pass

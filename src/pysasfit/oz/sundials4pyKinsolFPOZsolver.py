@@ -41,6 +41,9 @@ import sundials4py.kinsol as kinsol
 from .oZsolver import OZsolver
 
 class Sundials4pyKinsolFPOZsolver(OZsolver):
+    #Anderson subspace size (class default; see __init__).
+    MAA = 5
+
     def __init__(self, port, **kwargs):
       OZsolver.__init__(self, port, **kwargs)
       #Anderson subspace size -- matches OZd->KINSetMAA's role in the
@@ -48,7 +51,7 @@ class Sundials4pyKinsolFPOZsolver(OZsolver):
       #5 here matches the value shown in SASfit's own "configure OZ
       #solver" dialog (shared directly by the user), not this file's
       #own earlier guess of 3.
-      self.KINSetMAA = 5
+      self.KINSetMAA = self.MAA
 
     def solve(self):
       n = self.x_0.size

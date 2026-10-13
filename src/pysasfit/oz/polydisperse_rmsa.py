@@ -53,11 +53,19 @@ def min_contact(sigma, rho, z, K, lam):
         return np.nan
 
 
-def solve_rmsa(sigma, rho, z, K, lam_max=6.0, nscan=120, tol=1e-12):
+#pySASfit preferences numerics.rmsa.*: largest rescaling factor, scan points,
+#root tolerance.
+RMSA_DEFAULTS = dict(lam_max=6.0, nscan=120, tol=1e-12)
+
+
+def solve_rmsa(sigma, rho, z, K, lam_max=None, nscan=None, tol=None):
     """Find the common lambda making all g_ij non-negative (min = 0).
 
     Returns dict with lambda, the solved system, the contact matrix, the
     rescaled volume fraction, and a status string."""
+    lam_max = RMSA_DEFAULTS["lam_max"] if lam_max is None else lam_max
+    nscan = int(RMSA_DEFAULTS["nscan"] if nscan is None else nscan)
+    tol = RMSA_DEFAULTS["tol"] if tol is None else tol
     sigma = np.asarray(sigma, float); rho = np.asarray(rho, float)
     phi = np.pi/6*np.sum(rho*sigma**3)
     g0 = min_contact(sigma, rho, z, K, 1.0)

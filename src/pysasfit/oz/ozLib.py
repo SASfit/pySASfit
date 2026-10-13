@@ -1,35 +1,28 @@
 # -*- coding: utf-8 -*-
 '''
-Conventional Python library API for this project's whole OZ solver
-ecosystem -- the same calculation workflow oZgui.py's own "calculate"
-button runs, factored out here so it can be called directly from your
-own scripts, without needing the Tkinter GUI at all::
+Library API of the Ornstein-Zernike solvers: the same calculation the OZ
+solver tab's "calculate" button runs (the tab calls solve() from here), so a
+result from the GUI can be reproduced from a script::
 
-    from ozLib import solve
-    result = solve(potential='HardSphere', phi=0.3,
-                    closure='Percus-Yevick',
-                    solver='sundials4py: Newton-Krylov (GMRES)')
-    print(result.gr, result.Sq, result.cr)
+    from pysasfit.oz import ozLib
+    result = ozLib.solve("HardSphere", phi=0.3, closure="Percus-Yevick")
+    print(result.converged, result.physical, result.residual)
+    q, S = result.q, result.Sq
 
-oZgui.py itself now imports SOLVER_CLASSES/CLOSURE_SETTERS and calls
-solve() from this module too (see its own work() function), rather
-than duplicating this logic -- so the GUI and this library always
-produce identical results by construction, not by two independently-
-maintained copies of the same formulas happening to agree.
+SOLVER_CLASSES and CLOSURE_SETTERS below hold the valid ``solver=`` and
+``closure=`` names (``print(list(ozLib.SOLVER_CLASSES))``); SOLVER_ALIASES maps
+former names, SOLVER_FAMILIES the algorithm families used for verification.
 
-See SOLVER_CLASSES and CLOSURE_SETTERS below for the exact valid
-`solver=`/`closure=` argument strings. Both dicts are the project's
-own canonical list (moved here from oZgui.py, which now imports them
-back) -- print(list(SOLVER_CLASSES)) / print(list(CLOSURE_SETTERS))
-to see the current options from a script.
+Every solve is checked three ways (see solve()): the residual of the returned
+solution (``residualTolerance``), min S(Q) >= 0, and -- unless verify=False --
+an independent solver of another algorithm family.
 
-Grid configurability (numberOfRadialSamplingPoints/hardSphereDiameterInPoints,
-see oZfixpointOperator.py's own __init__ for the full rationale --
-important for long-range potentials, where the default grid can
-truncate a slowly-decaying tail before it has actually decayed to
-~0) is exposed here as plain optional solve() arguments, passed
-straight through to whichever solver class gets instantiated.
+The radial grid (numberOfRadialSamplingPoints, hardSphereDiameterInPoints) is
+passed straight through to the solver class; see oZfixpointOperator for why
+long-range potentials may need a larger grid.
 '''
+import warnings
+
 import numpy as np
 
 from .oZsolver import OZsolver
@@ -56,7 +49,11 @@ except ImportError:
 # AVAILABLE_LINEAR_SOLVERS for why this is a post-construction
 # attribute, not a constructor argument).
 _BASE_SOLVER_CLASSES = {
-    "Picard iteration": (PicardOZsolver, None),
+    #PICARD / MANN: x <- (1-a) x + a T(x). a = 1 (default) is plain Picard;
+    #a < 1 is Mann's damped iteration. a is the solve(mannAlpha=...) argument.
+    #Called "Picard iteration" until this name was introduced; the old name
+    #is still accepted (SOLVER_ALIASES), so old scripts and saved runs work.
+    "Picard / Mann iteration": (PicardOZsolver, None),
     #"Anderson acceleration" (andersonOZsolver.AndersonOZsolver) is
     #DELIBERATELY NOT REGISTERED. The module is still present and importable;
     #it is simply not offered, because it duplicates "scipy Anderson" in
@@ -120,11 +117,62 @@ _defaultSolverName = ("sundials4py: Fixed-Point (Anderson)" if _HAVE_SUNDIALS4PY
 # order from _BASE_SOLVER_CLASSES above; only the chosen default moves
 # to the front. (solve()'s own solver= keyword argument default below
 # is set to this same _defaultSolverName, not left hardcoded to
-# "Picard iteration" -- so a script calling ozLib.solve() directly,
+# "Picard / Mann iteration" -- so a script calling ozLib.solve() directly,
 # without going through the GUI at all, gets the same improved default
 # rather than silently falling back to unaccelerated Picard.)
 SOLVER_CLASSES = {_defaultSolverName: _BASE_SOLVER_CLASSES.pop(_defaultSolverName)}
 SOLVER_CLASSES.update(_BASE_SOLVER_CLASSES)
+
+# Former solver names, still accepted everywhere a solver name is (solve(),
+# solveWithConsensus(), verifyWith, the GUI). Not in SOLVER_CLASSES itself so
+# that the dropdowns do not show the same solver twice.
+SOLVER_ALIASES = {"Picard iteration": "Picard / Mann iteration"}
+
+
+def resolveSolverName(name):
+    """Current solver name for ``name`` (maps the SOLVER_ALIASES)."""
+    return SOLVER_ALIASES.get(name, name)
+
+
+# ALGORITHM FAMILIES, for the independence of verification: a solver never
+# verifies one of its own family. Anderson mixing (1965) and Pulay's DIIS
+# (1980) are algebraically equivalent, so SUNDIALS KIN_FP, scipy Anderson
+# and MDIIS form one family. Unlisted names are their own family.
+SOLVER_FAMILIES = {
+    "sundials4py: Fixed-Point (Anderson)": "Anderson/DIIS",
+    "scipy Anderson": "Anderson/DIIS",
+    "MDIIS": "Anderson/DIIS",
+    "Biggs-Andrews": "vector extrapolation",
+    "Picard / Mann iteration": "Picard/Mann",
+    "scipy Newton-Krylov": "Newton-Krylov",
+    "sundials4py: Newton-Krylov (GMRES)": "Newton-Krylov",
+    "sundials4py: Newton-Krylov (FGMRES)": "Newton-Krylov",
+    "sundials4py: Newton-Krylov (TFQMR)": "Newton-Krylov",
+}
+
+
+def solverFamily(name):
+    """Algorithm family of a solver name (see SOLVER_FAMILIES)."""
+    name = resolveSolverName(name)
+    return SOLVER_FAMILIES.get(name, name)
+
+
+class VerificationUnavailable(RuntimeError):
+    """No independent verifier converged. Not a disagreement: ``.result`` is
+    the (unverified) result of the primary solve, ``.attempts`` lists what
+    each verifier did."""
+
+    def __init__(self, message, result=None, attempts=()):
+        super().__init__(message)
+        self.result = result
+        self.attempts = list(attempts)
+
+
+def isMannSolver(name):
+    """True when ``name`` is the Picard / Mann solver (the only one that uses
+    a damping value a)."""
+    entry = SOLVER_CLASSES.get(resolveSolverName(name))
+    return entry is not None and issubclass(entry[0], PicardOZsolver)
 
 # Each value is (closure-setter method name, needsExtraScalarParam).
 # Closures that take one extra scalar parameter share self.alpha's
@@ -359,6 +407,38 @@ def _minSq(curves):
     return float(np.min(y))
 
 
+def _fixpointResidual(inst, curves):
+    """Relative residual ||T(x) - x|| / ||x|| of the returned solution, with T
+    the closure's fixed-point map, evaluated ONCE MORE after the solve.
+
+    This is independent of the solver's own stopping test and of its success
+    flag: it asks the equations, not the solver. x is the fixpoint variable
+    the solver iterated on -- Gamma = h - c (one component, from the derived
+    curves), the packed pair matrix (mixtures) -- and T is applied WITHOUT
+    any deflation factor (a deflated solver's map is scaled near known
+    roots; its fixed points are those of T, which is what is checked).
+    Returns None when the residual cannot be formed (the [h, c] variant of
+    the operator, or no fixpoint stored); then nothing is checked.
+    """
+    try:
+        if inst.isMulticomponent():
+            G = getattr(inst, "gammaMatrixMulticomponent", None)
+            if G is None:
+                return None
+            x = np.asarray(inst.packPairs(G), float)
+            tx = np.asarray(inst.fixPointOperatorForGammaMulticomponent(x)[0], float)
+        elif getattr(inst, "doUseGammaFixPointOperator", True):
+            x = np.asarray(curves["gamma"], float)
+            tx = np.asarray(inst.fixPointOperatorForGamma(x)[0], float)
+        else:
+            return None
+    except Exception:
+        return None
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(tx))):
+        return float("inf")
+    return float(np.linalg.norm(tx - x) / max(np.linalg.norm(x), 1e-300))
+
+
 def _deflateUntilPhysical(solverInstance, curves, buildAndSolve, maxAttempts,
                           deriveCurves):
     """Reject a root with min S(Q) < 0 and re-solve with it deflated away.
@@ -464,9 +544,10 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
           solver=_defaultSolverName, maxIterations=None,
           numberOfRadialSamplingPoints=None, hardSphereDiameterInPoints=None,
           onSolverCreated=None, verify=True,
-          verifyWith=("Biggs-Andrews", "Picard iteration"),
+          verifyWith=("Biggs-Andrews", "Picard / Mann iteration"),
           verifyTolerance=1e-3, residualTolerance=1e-6,
-          deflateOnUnphysical=0):
+          deflateOnUnphysical=0, transformType=None, mannAlpha=None,
+          verifyMannAlpha=0.5):
     '''
     Run one full OZ solve and return an OZResult with every derived
     curve. This is the exact same workflow oZgui.py's own "calculate"
@@ -512,8 +593,9 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     solver : str, optional
         Solver name, see SOLVER_CLASSES. Defaults to SUNDIALS'
         Anderson-accelerated fixed point when sundials4py is installed,
-        otherwise "scipy Anderson". Plain Picard remains available as
-        ``solver="Picard iteration"``, but is no longer the default.
+        otherwise "scipy Anderson". Picard remains available as
+        ``solver="Picard / Mann iteration"`` (the former name
+        "Picard iteration" is still accepted), but is no longer the default.
 
         Prefer a FIXED-POINT method. Near a fold the Jacobian is singular
         and the Newton-Krylov family is drawn onto
@@ -523,7 +605,10 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
         and 1.22 with min S(Q) near -38, all at residuals below 1e-11.
         Every one is a correct answer; one is physical.
     maxIterations : int, optional
-        Upper bound on iterations or function evaluations.
+        Upper bound on iterations or function evaluations. None (default)
+        uses each solver's own limit (Preferences: oz.solvers.max_iterations
+        and oz.solvers.max_iterations_picard). For Picard / Mann the value
+        is the limit at a = 1 and is multiplied by 1/a (see mannAlpha).
     numberOfRadialSamplingPoints : int, optional
         Radial grid size. None keeps this project's original 4095 points.
         Note the real-space range is ``N*sigma/pointsPerSigma``, so raising
@@ -539,7 +624,6 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
         how a caller reaches the live instance while a long solve is in
         progress -- solve() itself returns only once the computation has
         finished -- and how the GUI's Interrupt button works. It is also
-        where a Mann damping factor is set, ``sol.mannAlpha = 0.5``.
         Not needed for normal scripted use.
     verify : bool, optional
         Re-solve with other solvers and raise if they land on different
@@ -547,9 +631,44 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
         equations genuinely admit several solutions, and a solver reporting
         success is not claiming to have found the physical one.
     verifyWith : tuple of str, optional
-        Which solvers to verify against.
+        Verifiers, tried in order. Skipped: the solver being verified and
+        any verifier of the SAME ALGORITHM FAMILY (SOLVER_FAMILIES; e.g.
+        MDIIS, scipy Anderson and SUNDIALS KIN_FP are all Anderson/DIIS
+        acceleration and never verify each other). The first verifier that
+        CONVERGES is used; one that stops at its iteration limit is no
+        reference and the next is tried. Each verifier uses its own
+        iteration limit from the preferences, not maxIterations. If none
+        converges, VerificationUnavailable is raised (it carries the
+        unverified result as ``.result``). Newton-Krylov methods are
+        deliberately absent (see below).
+    verifyMannAlpha : float in (0, 1], optional
+        Damping a of the Picard / Mann iteration when it serves as a
+        verifier (default 0.5; GUI: preference oz.solve.verify_mann_alpha).
+        Undamped Picard diverges above phi ~ 0.42, where Biggs-Andrews also
+        stops converging; damped it remains a verifier for dense states.
+        Its limit is the Picard limit / a.
     verifyTolerance : float, optional
         How far the verifying solutions may differ before raising.
+    residualTolerance : float or None, optional
+        Independent convergence check (default 1e-6; GUI: preference
+        oz.solve.residual_tolerance). After the solve the closure's
+        fixed-point map T is applied once more to the returned solution x;
+        if ||T(x) - x|| / ||x|| exceeds this, the result is marked NOT
+        converged (RuntimeWarning, ``OZResult.converged = False``) whatever
+        the solver reported. ``OZResult.residual`` holds the value. None
+        switches the check off. Converged solves give 1e-16 to 1e-11.
+    mannAlpha : float in (0, 1], optional
+        Damping a of the Picard / Mann iteration,
+        x_{n+1} = (1 - a) x_n + a T(x_n). None or 1 is plain Picard; a < 1 is
+        Mann's iteration (Mann 1953): slower, but it converges where undamped
+        Picard oscillates or diverges (dense or strongly attractive states).
+        Each damped step moves only a fraction a of the way, so the
+        iteration limit is ceil(N/a), N being the limit for a = 1
+        (maxIterations, or the Picard default from the preferences,
+        oz.solvers.max_iterations_picard). It applies to every Picard / Mann solve of this call -- the primary
+        solve, a deflation retry and the Picard fallback verifier -- and is
+        ignored by the other solvers, which control their own step. The value
+        used is stored as ``OZResult.mannAlpha``.
 
     Returns
     -------
@@ -587,8 +706,16 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     '''
     if closure not in CLOSURE_SETTERS:
         raise ValueError(f"unknown closure {closure!r}, must be one of {list(CLOSURE_SETTERS)}")
+    solver = resolveSolverName(solver)
     if solver not in SOLVER_CLASSES:
         raise ValueError(f"unknown solver {solver!r}, must be one of {list(SOLVER_CLASSES)}")
+    verifyMannAlpha = float(verifyMannAlpha)
+    if not (0.0 < verifyMannAlpha <= 1.0):
+        raise ValueError(f"verifyMannAlpha must be in (0, 1], got {verifyMannAlpha}")
+    if mannAlpha is not None:
+        mannAlpha = float(mannAlpha)
+        if not (0.0 < mannAlpha <= 1.0):
+            raise ValueError(f"mannAlpha must be in (0, 1], got {mannAlpha}")
     if closure == "ZSEP" and potential != "HardSphere":
         # OZsolver.fitZSEPparameters() ALSO checks this itself (see that
         # method's own docstring) -- but only via a print()ed warning
@@ -632,8 +759,17 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     #the retry passes a deflated subclass of it.
     def _buildAndSolve(cls=None):
         inst = (cls or solverClass)(port=0, **gridKwargs)
+        #transformType: None = automatic (type 4 for one component, 1 for a
+        #mixture, see resolvedTransformType); 1 or 4 forces it, e.g. to
+        #compare the two. Set BEFORE the potential: the radial grid depends
+        #on it.
+        if transformType is not None:
+            inst.transformType = int(transformType)
         if solverLinearSolver is not None:
             inst.linearSolver = solverLinearSolver
+        #Mann damping: only the Picard / Mann solver reads it.
+        if mannAlpha is not None and isinstance(inst, PicardOZsolver):
+            inst.mannAlpha = mannAlpha
         inst.setNumberOfIterations(maxIterations)
         inst.setVolumeDensity(phi)
         inst.setPotentialByName(potential, *potentialArgs)
@@ -699,6 +835,8 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     #PHYSICALITY SCREEN AND DEFLATION RETRY, before verification: there is no
     #point cross-checking a root that is about to be rejected. See
     #_deflateUntilPhysical for why deflation rather than switching solver.
+    #The screen itself (min S(Q) >= 0) runs on EVERY solve, see below;
+    #deflateOnUnphysical only decides whether an unphysical root is retried.
     if deflateOnUnphysical:
         solverInstance, curves = _deflateUntilPhysical(
             solverInstance, curves, _buildAndSolve,
@@ -707,6 +845,74 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     result = OZResult(solverInstance.getrArray(), solverInstance.getqArray(),
                      potential, tuple(potentialArgs), closure, closureParam,
                      phi, solver, curves, solverInstance)
+    #PHYSICALITY SCREEN, ALWAYS. S(Q) is a variance and cannot be negative,
+    #but no convergence test can see that: Newton-Krylov converges for
+    #Lennard-Jones eps = 0.8, phi = 0.3 (HNC) to a genuine root with
+    #min S(Q) = -35 and converged = True. Before, the screen ran only when
+    #deflateOnUnphysical > 0 (default 0), so such a root came back without
+    #any notice. Now every result carries minSq / physical, and an
+    #unphysical one raises a RuntimeWarning (with deflation on, an
+    #unphysical root that deflation cannot replace has already raised).
+    result.minSq = _minSq(curves)
+    result.physical = bool(result.minSq >= 0.0)
+    if not result.physical:
+        msg = (f"min S(Q) = {result.minSq:.4g} < 0: {solver} converged to a root that is not a "
+               f"fluid (negative compressibility branch, or past a spinodal). Use "
+               f"deflateOnUnphysical > 0 to search for a physical root, or a fixed-point solver.")
+        print("WARNING:", msg)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+    result.convergenceMessage = getattr(result, "convergenceMessage", None)
+    result.verifiedWith = None             # set below when verification ran
+    result.verificationDifference = None
+    #the damping actually used (None for the solvers that have none)
+    result.mannAlpha = ((mannAlpha if mannAlpha is not None else 1.0)
+                        if isMannSolver(solver) else None)
+    #NOT CONVERGED IS REPORTED, not hidden. A solve that stops at the
+    #iteration limit still returns its last iterate, which looks like a
+    #solution: for hard spheres (PY, phi = 0.53) Picard/Mann after 1000
+    #iterations gave g_max between 4.35 and 6.77 depending on a, while the
+    #converged root is 5.556220 for every a <= 0.6. The flag lets callers
+    #(and the GUI) tell such an iterate from a solution.
+    result.converged = bool(getattr(solverInstance, "converged", False))
+    result.finalRelativeProgress = getattr(solverInstance, "finalRelativeProgress", None)
+    #the iteration limit that applied (Picard / Mann: ceil(N/a)) and, where
+    #the solver counts them, the iterations used
+    result.iterationLimit = getattr(solverInstance, "iterationLimit",
+                                    getattr(solverInstance, "numberOfIterations", None))
+    result.iterations = getattr(solverInstance, "iterations", None)
+    #INDEPENDENT RESIDUAL CHECK. The solver's own flag is a claim; the
+    #residual of the returned solution is evidence. T is applied once more to
+    #the returned fixpoint and the result is NOT converged when
+    #||T(x) - x|| / ||x|| > residualTolerance, whatever the solver reported.
+    #Example: polydisperse hard-core Yukawa (HNC, phi = 0.1) under KIN_FP
+    #reports success and returns S(Q) = NaN everywhere; the residual is
+    #infinite. Converged solves give 1e-16 ... 1e-11, so 1e-6 rejects only
+    #real failures.
+    result.residual = _fixpointResidual(solverInstance, curves)
+    result.residualTolerance = residualTolerance
+    residualFailed = (residualTolerance is not None and result.residual is not None
+                      and not result.residual <= residualTolerance)
+    #only a CLAIMED convergence can be overruled; an iteration that stopped at
+    #its limit is reported as such (its residual is then expected to be large)
+    residualFailed = residualFailed and result.converged
+    if residualFailed:
+        result.converged = False
+    if not result.converged:
+        prog = result.finalRelativeProgress
+        if residualFailed:
+            msg = (f"{solver} reported convergence, but the residual of the returned solution is "
+                   f"||T(x)-x||/||x|| = {result.residual:.3g} > residualTolerance = "
+                   f"{residualTolerance:g}; the result is not a solution.")
+        else:
+            msg = (f"{solver} did not converge"
+                   + (f" within {result.iterationLimit} iterations" if result.iterationLimit else "")
+                   + (f" (relative progress {prog:.2e})" if prog is not None and np.isfinite(prog) else "")
+                   + (f", residual ||T(x)-x||/||x|| = {result.residual:.3g}"
+                      if result.residual is not None else "")
+                   + "; the result is the last iterate, not a solution.")
+        result.convergenceMessage = msg
+        print("WARNING:", msg)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     #VERIFICATION IS ON BY DEFAULT. A converged residual is not evidence that
     #the answer is right: the closure equations admit multiple fixed points,
@@ -751,13 +957,24 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
         #report disagreement everywhere near a fold, and be wrong itself.
         names = ([verifyWith] if isinstance(verifyWith, str)
                  else list(verifyWith))
-        names = [n for n in names if n != solver and n in SOLVER_CLASSES]
+        names = [resolveSolverName(n) for n in names]
+        #INDEPENDENCE: a verifier from the same algorithm family as the
+        #primary is no check (SUNDIALS KIN_FP, scipy Anderson and MDIIS are
+        #all Anderson/DIIS acceleration -- Pulay's DIIS and Anderson mixing
+        #are algebraically equivalent -- so they can share a failure mode and
+        #agree on a wrong answer). Such verifiers are skipped.
+        fam = solverFamily(solver)
+        skipped = [n for n in names if n in SOLVER_CLASSES and n != solver
+                   and solverFamily(n) == fam]
+        names = [n for n in names if n != solver and n in SOLVER_CLASSES
+                 and solverFamily(n) != fam]
         if not names:
             raise ValueError(
-                f"no usable verifier for solver {solver!r}: tried "
-                f"{verifyWith!r}. Pass verify=False to accept an unverified "
-                f"result.")
-        check, lastExc = None, None
+                f"no independent verifier for solver {solver!r}: tried "
+                f"{verifyWith!r}"
+                + (f" ({', '.join(skipped)} skipped: same algorithm family)" if skipped else "")
+                + ". Pass verify=False to accept an unverified result.")
+        check, attempts = None, []
         for nm in names:
             try:
                 #Announce the verifier before it runs. Its own solve() prints
@@ -769,46 +986,67 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
                 #caller chose, and this second solve only cross-checks it.
                 print(f"verifying with {nm} (independent cross-check; the "
                       f"result returned is still {solver}'s)")
-                check = solve(potential, phi, potentialArgs, closure,
+                #Each verifier runs with ITS OWN iteration limit from the
+                #preferences (maxIterations was chosen for the primary). The
+                #Picard / Mann verifier is DAMPED with verifyMannAlpha:
+                #undamped Picard diverges above phi ~ 0.42, exactly where
+                #Biggs-Andrews also stops converging, which left no verifier
+                #for dense states. Its limit is scaled by 1/a as usual.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    c = solve(potential, phi, potentialArgs, closure,
                               closureParam, closureParam2,
                               findConsistentParameter, solver=nm,
-                              maxIterations=maxIterations,
                               numberOfRadialSamplingPoints=numberOfRadialSamplingPoints,
                               hardSphereDiameterInPoints=hardSphereDiameterInPoints,
-                              verify=False)
-                b = np.real(np.asarray(check.curves["Sq"], float))
-                if np.all(np.isfinite(b)):
-                    verifyWith = nm
+                              verify=False, transformType=transformType,
+                              mannAlpha=verifyMannAlpha if isMannSolver(nm) else None,
+                              residualTolerance=residualTolerance)
+                b = np.real(np.asarray(c.curves["Sq"], float))
+                if not np.all(np.isfinite(b)):
+                    attempts.append(f"{nm}: non-finite S(Q)")
+                elif not c.converged:
+                    #A verifier that stopped at its iteration limit is no
+                    #reference: comparing with it would report an unfinished
+                    #iteration as a disagreement. Try the next one.
+                    attempts.append(f"{nm}: not converged within {c.iterationLimit} iterations"
+                                    + (f" (a = {c.mannAlpha:g})" if c.mannAlpha is not None else ""))
+                else:
+                    check, verifyWith = c, nm
                     break
-                lastExc = RuntimeError(f"{nm} returned a non-finite S(Q)")
-                check = None
             except Exception as exc:
-                lastExc, check = exc, None
-        try:
-            if check is None:
-                raise lastExc or RuntimeError("no verifier succeeded")
-            a = np.real(np.asarray(curves["Sq"], float))
-            b = np.real(np.asarray(check.curves["Sq"], float))
-            scale = max(float(np.max(np.abs(a))), 1e-30)
-            d = float(np.max(np.abs(a - b)))/scale
-            if d > verifyTolerance:
-                raise ValueError(
-                    f"solver {solver!r} and {verifyWith!r} disagree by "
-                    f"{d:.3g} (tolerance {verifyTolerance:g}) on S(Q) for "
-                    f"{potential} at phi={phi}, closure {closure}. Both "
-                    f"'converged'. This is the signature of multiple fixed "
-                    f"points -- do not use either result without an "
-                    f"independent reference. Pass verify=False to override.")
-        except ValueError:
-            raise
-        except Exception as exc:
-            #The verifier failing is not the same as a disagreement, and must
-            #not silently pass as agreement.
+                attempts.append(f"{nm}: {type(exc).__name__}: {exc}")
+        if check is None:
+            #NO INDEPENDENT VERIFIER CONVERGED. This is not a disagreement, and
+            #must not pass silently as agreement either: the result is
+            #returned on the exception so a caller (the GUI) can still show
+            #it, clearly marked as unverified.
+            raise VerificationUnavailable(
+                f"could not verify the result of {solver!r}: no independent "
+                f"verifier converged ({'; '.join(attempts)}"
+                + (f"; skipped as same algorithm family: {', '.join(skipped)}" if skipped else "")
+                + "). Raise the iteration limits in the preferences, or pass "
+                  "verify=False to accept the unverified result.",
+                result=result, attempts=attempts)
+        result.verifiedWith = verifyWith
+        a = np.real(np.asarray(curves["Sq"], float))
+        b = np.real(np.asarray(check.curves["Sq"], float))
+        scale = max(float(np.max(np.abs(a))), 1e-30)
+        d = float(np.max(np.abs(a - b)))/scale
+        result.verificationDifference = d
+        if d > verifyTolerance:
             raise ValueError(
-                f"could not verify the result of {solver!r}: the independent "
-                f"solver {verifyWith!r} failed with "
-                f"{type(exc).__name__}: {exc}. Pass verify=False to accept "
-                f"the unverified result.") from exc
+                f"solver {solver!r} and {verifyWith!r} disagree by "
+                f"{d:.3g} (tolerance {verifyTolerance:g}) on S(Q) for "
+                f"{potential} at phi={phi}, closure {closure}. "
+                + (f"Both converged. This is the signature of multiple "
+                   f"fixed points -- do not use either result without an "
+                   f"independent reference. "
+                   if result.converged else
+                   f"{solver} did NOT converge, so this is an unfinished "
+                   f"iteration, not a second root: raise the iteration limit"
+                   + (" or lower the damping a" if isMannSolver(solver) else "") + ". ")
+                + "Pass verify=False to override.")
 
     return result
 
@@ -830,7 +1068,7 @@ def solveWithConsensus(potential, potentialArgs=(), closure="doPYclosure",
                        #between independent routes. Two copies of one
                        #algorithm agreeing would prove nothing.
                        solvers=("scipy Anderson", "Biggs-Andrews",
-                                "Picard iteration"),
+                                "Picard / Mann iteration"),
                        tolerance=1e-3, gridN=4095, pointsPerSigma=100,
                        maxIterations=None, transformType=1, quantity="Sq"):
     """Solve with several solvers and return a result only if they AGREE.
@@ -887,6 +1125,7 @@ def solveWithConsensus(potential, potentialArgs=(), closure="doPYclosure",
     """
     results, failures = {}, {}
     for name in solvers:
+        name = resolveSolverName(name)
         if name not in SOLVER_CLASSES:
             failures[name] = "not installed"
             continue

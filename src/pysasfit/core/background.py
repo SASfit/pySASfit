@@ -64,6 +64,15 @@ class BackgroundTerm:
         return [1.0] * len(self.names)
 
 
+#Start values of the fitted background terms (pySASfit preferences:
+#numerics.background.*). The fit is a local Levenberg-Marquardt, so the start
+#decides which minimum is found when the background and the particle term
+#compete. constant_level x median of the highest-q constant_tail fraction of
+#the points; power law: amplitude powerlaw_level x I(q_min) q_min^n;
+#Ornstein-Zernike: I_L = oz_level x max I, xi = 1/median q.
+START_DEFAULTS = dict(constant_level=0.5, constant_tail=0.05, powerlaw_level=0.05, oz_level=0.05)
+
+
 class Constant(BackgroundTerm):
     names = ("c",)
     positive = (False,)
@@ -78,8 +87,9 @@ class Constant(BackgroundTerm):
         return np.ones((q.size, 1))
 
     def guess(self, q, I):
-        tail = np.sort(I[np.argsort(q)[-max(3, q.size // 20):]])
-        return [max(0.5 * float(np.median(tail)), 0.0)]
+        d = START_DEFAULTS
+        tail = np.sort(I[np.argsort(q)[-max(3, int(q.size * d["constant_tail"])):]])
+        return [max(d["constant_level"] * float(np.median(tail)), 0.0)]
 
 
 class PowerLaw(BackgroundTerm):
@@ -101,7 +111,7 @@ class PowerLaw(BackgroundTerm):
     def guess(self, q, I):
         n = self.values[1] if self.values[1] is not None else 4.0
         i = int(np.argmin(q))
-        return [0.05 * max(I[i], 1e-30) * q[i] ** n, n]
+        return [START_DEFAULTS["powerlaw_level"] * max(I[i], 1e-30) * q[i] ** n, n]
 
 
 class OrnsteinZernike(BackgroundTerm):
@@ -121,7 +131,7 @@ class OrnsteinZernike(BackgroundTerm):
         return np.c_[1.0 / d, -th[0] * 2.0 * q**2 * th[1] / d**2]
 
     def guess(self, q, I):
-        return [0.05 * float(np.max(I)), 1.0 / np.median(q)]
+        return [START_DEFAULTS["oz_level"] * float(np.max(I)), 1.0 / np.median(q)]
 
 
 class FunctionTerm(BackgroundTerm):

@@ -50,6 +50,10 @@ class OZsolver(OZfixpointOperator):
     #accelerated method here; PicardOZsolver raises it to 3000. See the note
     #in __init__ for the measurements behind both numbers.
     DEFAULT_MAX_ITERATIONS = 600
+    #Relative-progress stopping criterion of the fixed-point solvers (class
+    #default; pySASfit preferences may change it, setConvergenceCriterion()
+    #per instance).
+    CONVERGENCE_CRITERION = 1e-12
 
     #Init needs to be given by constructor, all other members can be set via RPC later
     #but port needs to be known in advance by the client. (Will be defined by the client)
@@ -59,7 +63,7 @@ class OZsolver(OZfixpointOperator):
       #We set the convergence Criterion hard coded, this could also be handed over to constructor 
       #(or set via setter). It is here (and not in the derived classes) since it is to be equal
       # for all algorithms. (To allow for a fair comparison)
-      self.convergenceCriterion = 1e-12
+      self.convergenceCriterion = self.CONVERGENCE_CRITERION
       #ITERATION LIMIT, taken from the solver's own class attribute rather
       #than fixed here, because the right number differs by two orders of
       #magnitude between families. Measured counts for a solve that does
@@ -408,6 +412,13 @@ class OZsolver(OZfixpointOperator):
               converged = True
               break
       self.derivePhysicalQuantitiesFromFixpoint(x)
+      #The instance's own flag follows the LAST solve, so after solveRMSA(),
+      #fitZSEPparameters() and the consistent-parameter search (which all end
+      #with this inline solve) `converged` describes the returned result.
+      #Without this it stayed False and every such result was reported as
+      #not converged.
+      self.converged = converged
+      self.finalRelativeProgress = float(relativeProgress) if maxIterations > 0 else float('inf')
       return converged, x
 
     def solveRMSA(self):
@@ -752,9 +763,18 @@ class OZsolver(OZfixpointOperator):
               return False
       return True
 
+    #Defaults of the consistent-parameter search (pySASfit preferences:
+    #oz.consistency.*).
+    CONSISTENCY_SCAN_STEPS = 28
+    CONSISTENCY_TOLERANCE = 1e-5
+
     def findThermodynamicallyConsistentParameter(self, closureName, bracket=None,
-                                                   scanSteps=28, tolerance=1e-5,
+                                                   scanSteps=None, tolerance=None,
                                                    method='brentq'):
+      if scanSteps is None:
+          scanSteps = int(self.CONSISTENCY_SCAN_STEPS)
+      if tolerance is None:
+          tolerance = float(self.CONSISTENCY_TOLERANCE)
       #General port of SASfit's own root_finding() (sasfit_oz_solver.c):
       #adjusts the named closure's own single free parameter until the
       #compressibility-route and virial-route isothermal compressibility

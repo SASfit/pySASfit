@@ -52,6 +52,12 @@ class OZWidget(QtWidgets.QTabWidget):
     def __init__(self, parent=None, extra_tabs=None, redirect_output=True):
         super().__init__(parent)
         self.setDocumentMode(True)
+        #OZ preferences that live on the solver classes (iteration limits,
+        #convergence criterion, Anderson depths): set now and after every save.
+        from ..preferences import apply_solver_settings
+        from ...core.settings_dialog import on_saved
+        apply_solver_settings()
+        on_saved(apply_solver_settings)
         # The OZ solver is index 0 because it is FIRST; the extra tabs carry
         # their own SESSION_TAB_INDEX (used in their session file extension
         # .oz<i>) and are numbered from 1 for the same reason.
@@ -82,6 +88,8 @@ class OZMainWindow(QtWidgets.QMainWindow):
     def __init__(self, extra_tabs=None):
         super().__init__()
         self.setWindowTitle("Ornstein-Zernike solver (pySASfit)")
+        from ...core.settings_dialog import add_preferences_menu
+        add_preferences_menu(self, "oz")
         self.oz = OZWidget(extra_tabs=extra_tabs)
         self.setCentralWidget(self.oz)
         self.resize(1200, 776)

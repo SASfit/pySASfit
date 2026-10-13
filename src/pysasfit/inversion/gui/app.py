@@ -44,6 +44,8 @@ from pysasfit.inversion.kernels import (
 from pysasfit.inversion.solver_registry import SOLVER_REGISTRY, SplineOptions, run_solver
 from pysasfit.inversion.uncertainty import bootstrap_uncertainty
 from pysasfit.inversion.goodness_of_fit import estimate_errors, fit_statistics
+from pysasfit.inversion import solver_registry as _solver_registry
+from pysasfit.core import settings as prefs
 
 try:
     from pysasfit.inversion.gui import help_texts
@@ -148,6 +150,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("pySASfitInversion")
+        from pysasfit.core.settings_dialog import add_preferences_menu
+        add_preferences_menu(self, "inversion")
         self.resize(1200, 800)
 
         self.data: SASData | None = None
@@ -349,7 +353,20 @@ class MainWindow(QMainWindow):
         self.error_window_spin.valueChanged.connect(lambda _: self._on_error_model_changed())
         self.error_window_label = QLabel("combined over:")
         err_form.addRow(self.error_window_label, self.error_window_spin)
+        # instrumental resolution from the optional 4th column (sigma_Q)
+        self.res_check = QCheckBox("smear the kernel with σ_Q (4th column)")
+        self.res_check.setEnabled(False)
+        self.res_kernel_combo = QComboBox()
+        self.res_kernel_combo.addItem("Rician (pinhole, 2-D detector)", "rician")
+        self.res_kernel_combo.addItem("Gaussian", "gaussian")
+        self.res_kernel_combo.setEnabled(False)
+        self.res_check.toggled.connect(lambda on: self.res_kernel_combo.setEnabled(
+            on and self.data is not None and self.data.dQ is not None))
+        err_form.addRow("Resolution:", self.res_check)
+        err_form.addRow("resolution kernel:", self.res_kernel_combo)
         file_layout.addLayout(err_form)
+        self._help(self.res_check, "resolution", err_form)
+        self._help(self.res_kernel_combo, "resolution_kernel", err_form)
         self._help(self.error_model_combo, "error_model", err_form)
         self._help(self.error_rel_spin, "error_rel", err_form)
         self._help(self.error_window_spin, "error_window", err_form)
@@ -593,6 +610,10 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Load failed", str(exc))
             return
 
+        has_dQ = bool(self.data.dQ is not None and np.all(self.data.dQ > 0))
+        self.res_check.setEnabled(has_dQ)
+        self.res_check.setChecked(has_dQ)       # a file that has sigma_Q gets it used
+        self.res_kernel_combo.setEnabled(has_dQ)
         has_dI = self.data.dI is not None and np.all(self.data.dI > 0)
         model = self.error_model_combo.findData("file" if has_dI else "poly")
         self.error_model_combo.blockSignals(True)
@@ -672,7 +693,7 @@ class MainWindow(QMainWindow):
         # override it.
         n_shannon = (self.data.q.max() - self.data.q.min()) * r_max_suggested / np.pi
         suggested_n_r = int(np.clip(
-            round(n_shannon), self.r_n_spin.minimum(), self.r_n_spin.maximum()
+            round(n_shannon * prefs.get("inversion.gui.r_points_factor")), self.r_n_spin.minimum(), self.r_n_spin.maximum()
         ))
         self.r_n_spin.setValue(suggested_n_r)
         self._help_dynamic["r_n"] = (
@@ -751,6 +772,7 @@ class MainWindow(QMainWindow):
     def _on_fit_background(self):
         if self.data is None:
             return
+        _solver_registry.apply_options(prefs.values("inversion.opt"))
         try:
             self.bg_result = fit_background(
                 self.data.q, self.data.I,
@@ -791,23 +813,35 @@ class MainWindow(QMainWindow):
             r_interp = self.r_interp_combo.currentData()
             if self.solver_combo.currentData() in self._LINEAR_ONLY_SOLVERS or len(r_grid) < 4:
                 r_interp = "linear"
+            # INSTRUMENTAL RESOLUTION: the kernel is evaluated on the extended
+            # q grid of the resolution operator and smeared onto the measured
+            # q, I_meas = R @ (K p); everything downstream (fit, chi2,
+            # bootstrap) then works with the smeared kernel unchanged.
+            q_k, R_res = self.data.q, None
+            if self.res_check.isChecked() and self.data.dQ is not None:
+                from pysasfit.core.resolution import Resolution
+                rp = prefs.values("inversion.res")
+                q_k, R_res = Resolution(self.data.dQ, kernel=self.res_kernel_combo.currentData(),
+                                        fwhm=rp["fwhm"], nSigma=rp["n_sigma"],
+                                        oversample=rp["oversample"]).setup(self.data.q)
+            smear = (lambda K: K) if R_res is None else (lambda K: R_res @ K)
             fine_nodes = (not use_spline) and (
                 r_spacing != "uniform" or r_interp != "linear"
-                or dr_max > 1.1 * np.pi / self.data.q.max())
+                or dr_max > prefs.get("inversion.gui.fine_grid_factor") * np.pi / q_k.max())
             if fine_nodes:
                 # p(r) linear or cubic between the grid points, kernel
                 # integrated on a fine grid (see kernels.build_kernel_on_nodes)
-                A = build_kernel_on_nodes(self.data.q, r_grid, kernel_func, alpha=alpha,
-                                          interpolation=r_interp)
+                A = smear(build_kernel_on_nodes(q_k, r_grid, kernel_func, alpha=alpha,
+                                                interpolation=r_interp))
             else:
-                A = build_size_distribution_kernel(self.data.q, r_grid, kernel_func, alpha=alpha)
+                A = smear(build_size_distribution_kernel(q_k, r_grid, kernel_func, alpha=alpha))
 
             solver_key = self.solver_combo.currentData()
             solver_kwargs = {}
             for name in (SOLVER_REGISTRY[solver_key].options or {}):
                 solver_kwargs[name] = self.option_widgets[name][1].currentData()
             if solver_key in self._TARGET_CHI2_SOLVERS and self.target_chi2_check.isChecked():
-                solver_kwargs["target_chi2_r"] = 1.0
+                solver_kwargs["target_chi2_r"] = prefs.get("inversion.gui.target_chi2")
             spline = None
             if solver_key in self._SPLINE_SOLVERS or self.spline_check.isChecked():
                 # Integrate the spline basis on a 4x finer r grid (same
@@ -816,16 +850,18 @@ class MainWindow(QMainWindow):
                 # At least 4x the r grid AND at least 4 points per Shannon
                 # interval pi/q_max, so the kernel's fastest oscillation is
                 # resolved however few r grid points are chosen.
-                n_quad = quadrature_points(self.r_max_spin.value(), self.data.q.max(),
+                n_quad = quadrature_points(self.r_max_spin.value(), q_k.max(),
                                            self.r_n_spin.value())
                 r_quad = np.linspace(0.0, self.r_max_spin.value(), n_quad)
                 spline = SplineOptions(
                     n_coeffs=self.spline_n_coeffs_spin.value(),
                     spacing=self.spline_spacing_combo.currentData(),
-                    A_quad=build_size_distribution_kernel(
-                        self.data.q, r_quad, kernel_func, alpha=alpha
-                    ),
+                    A_quad=smear(build_size_distribution_kernel(
+                        q_k, r_quad, kernel_func, alpha=alpha
+                    )),
                 )
+            # numerical options from Settings -> Preferences, read at each solve
+            _solver_registry.apply_options(prefs.values("inversion.opt"))
             t_start = time.perf_counter()
             result = run_solver(solver_key, A, I_sub, self.sigma, spline=spline, **solver_kwargs)
         except Exception:
@@ -852,6 +888,9 @@ class MainWindow(QMainWindow):
         else:
             representation = (f"uniform r grid, {len(r_grid)} points (step {dr_max:.3g}), "
                               f"kernel evaluated at the points")
+        if R_res is not None:
+            representation += (f"; kernel smeared with σ_Q from the file "
+                               f"({self.res_kernel_combo.currentData()}, {len(q_k)} q points)")
         warnings = []
         if solver_key in self._POSITIVE_KERNEL_SOLVERS and np.any(A < 0):
             warnings.append(
@@ -877,9 +916,11 @@ class MainWindow(QMainWindow):
             try:
                 def solve_fn(b_rep):
                     return run_solver(solver_key, A, b_rep, self.sigma, spline=spline, **solver_kwargs)
+                seed = prefs.get("inversion.gui.bootstrap_seed")
                 boot = bootstrap_uncertainty(
                     solve_fn, I_sub, self.sigma, n_boot=n_boot,
                     center=result.fitted_b,
+                    rng=None if seed < 0 else np.random.default_rng(seed),
                 )
                 self._last_boot = boot
                 self._update_result_info()
@@ -925,7 +966,9 @@ class MainWindow(QMainWindow):
         else:
             self.sigma = estimate_errors(self.data.q, self.data.I, model,
                                          relative=self.error_rel_spin.value() / 100.0,
-                                         window=self.error_window_spin.value())
+                                         window=self.error_window_spin.value(),
+                                         degree=prefs.get("inversion.gui.poly_degree"),
+                                         half_width=prefs.get("inversion.gui.poly_half_width"))
 
     def _on_error_model_changed(self) -> None:
         self._update_sigma()
@@ -954,13 +997,19 @@ class MainWindow(QMainWindow):
                 rows.append(("q spacing", f"{'' if cv_lin < 0.1 else 'roughly '}linear, "
                                           f"Δq ≈ {np.mean(dq):.3g}"))
         rows.append(("I range", f"{I.min():.4g} – {I.max():.4g}"))
+        if d.dQ is not None:
+            rel = d.dQ / np.maximum(q, 1e-300)
+            rows.append(("resolution σ_Q", f"{d.dQ.min():.3g} – {d.dQ.max():.3g} "
+                                           f"(σ_Q/q {rel.min():.1%} – {rel.max():.1%})"))
         model = self.error_model_combo.currentData()
         rows.append(("error bars", self.error_model_combo.currentText()
                      + (f" {self.error_rel_spin.value():g} %" if model == "relative" else "")
                      + (f", combined over {self.error_window_spin.value()} points"
                         if model in ("poly", "scatter") else "")))
         if dI is not None and np.all(dI > 0) and len(q) >= 5:
-            ratio = estimate_errors(q, I, "poly", window=self.error_window_spin.value()) / dI
+            ratio = estimate_errors(q, I, "poly", window=self.error_window_spin.value(),
+                                    degree=prefs.get("inversion.gui.poly_degree"),
+                                    half_width=prefs.get("inversion.gui.poly_half_width")) / dI
             rows.append(("cubic-fit estimate / file ΔI",
                          f"median {np.median(ratio):.2f} (low/mid/high q "
                          + " / ".join(f"{np.median(t):.2f}" for t in np.array_split(ratio, 3))

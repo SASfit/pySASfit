@@ -50,6 +50,7 @@ import numpy as np
 from PySide6 import QtCore, QtWidgets
 
 from . import qtkit
+from ...core import settings as prefs
 
 # The solver stack lives in the parent package. Import failure must not take
 # the whole GUI down -- the tab shows a placeholder notice instead.
@@ -141,7 +142,7 @@ class _Result:
         self.label = ""
 
 
-def _apply_rmsa(sas, K, lam_max=6.0):
+def _apply_rmsa(sas, K, lam_max=None):
     """Swap a solved RMSA system into an already-built PolydisperseYukawaSAS.
 
     S_partials() and hence I_exact() route through sas.sq, so replacing
@@ -627,7 +628,7 @@ class PolydisperseYukawaTab(QtWidgets.QWidget):
 
             lines, notes = [], []
             if rmsa:
-                rm = _apply_rmsa(sas, p["K"])
+                rm = _apply_rmsa(sas, p["K"], lam_max=None)
                 if rm.get("lam") is None:
                     raise RuntimeError("RMSA: " + rm.get("status", "no solution"))
                 lines.append(f"RMSA: lambda = {rm['lam']:.6f}   "

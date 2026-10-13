@@ -37,6 +37,95 @@ from .regularization import (
 from . import spline_basis
 
 
+# ---------------------------------------------------------------------------
+# Numerical options (pySASfit preferences). The GUI updates OPTIONS before a
+# solve; scripts may do the same. Values here are the factory defaults.
+# ---------------------------------------------------------------------------
+OPTIONS: dict = dict(
+    # Bayesian evidence: lambda grid. "trace" centres the grid on
+    # tr(B)/tr(2 L^T L) (B = A^T W A, the data Hessian), the natural scale of the
+    # posterior; "median" is the pre-2026-10-11 rule median(singular values of
+    # A)^2, which for a finely sampled p(r) (most singular values ~1e-15) puts
+    # the whole grid far below the evidence maximum and returns an unregularised
+    # p(r).
+    evidence_lambda_scale="trace",
+    evidence_decades_below=12.0, evidence_decades_above=4.0, evidence_points=97,
+    evidence_refine=True,           # bounded 1-D refinement of ln lambda around the grid maximum
+    max_lambda_reduction=1e-3,      # chi2 target may lower lambda by at most this factor
+    noise_scale_lo=1e-2, noise_scale_hi=1e2,   # range of the estimated error-scale factor s
+    # GCV (Tikhonov / general Tikhonov): grid s_min*10^-below ... s_max*10^above
+    gcv_decades_below=3.0, gcv_decades_above=1.0, gcv_points=100,
+    tsvd_k_max=40,
+    # EM + smoothing (also signed-kernel EM)
+    em_max_iterations=10000, em_tol=1e-8, em_h_start=0.3, em_h_floor=1e-9, em_general_h_floor=1e-7,
+    lcurve_points=25, lcurve_reduction=1.2,
+    # EM + MaxEnt (grid targeting chi2_r = 1)
+    maxent_lambda_min=1e-9, maxent_lambda_max=1.0, maxent_points=24, maxent_max_iterations=50000,
+    maxent_sigma2=1.0,
+    # signed-kernel EM with MaxEnt regularisation
+    signed_maxent_lambda_start=1e-5, signed_maxent_lambda_floor=1e-12, signed_maxent_lambda_ceil=1.0,
+    # Hansen MaxEnt
+    hansen_maxent_target_chi2=1.0, hansen_maxent_start=1.0, hansen_maxent_factor=4.0,
+    lbfgs_ftol=1e-16, lbfgs_gtol=1e-12, lbfgs_maxcor=30,
+    # start vectors / floors
+    em_x0=1e-6, maxent_prior_floor=1e-6,
+    # discrepancy-principle root search (brentq): |x - x*| <= xtol + rtol |x*|
+    root_xtol=1e-6, root_rtol=8.881784197001252e-16,
+    # background curve fit
+    background_maxfev=10000,
+)
+OPTION_DEFAULTS = dict(OPTIONS)
+
+
+def apply_options(values=None):
+    """Update OPTIONS (e.g. from the preferences) and push the entries that
+    live in other modules: EM start level, L-BFGS-B settings, root-search
+    tolerances, background-fit budget."""
+    if values:
+        OPTIONS.update(values)
+    from .solvers import em as _em, hansen_maxent as _hm, lambda_search as _ls
+    from . import background as _bg
+    _em.X0_LEVEL = OPTIONS["em_x0"]
+    _hm.LBFGS_DEFAULTS.update(ftol=OPTIONS["lbfgs_ftol"], gtol=OPTIONS["lbfgs_gtol"],
+                              maxcor=OPTIONS["lbfgs_maxcor"])
+    _ls.ROOT_XTOL, _ls.ROOT_RTOL = OPTIONS["root_xtol"], OPTIONS["root_rtol"]
+    _bg.FIT_MAXFEV = OPTIONS["background_maxfev"]
+
+
+def _evidence_grid(A, db, L, A_for_median=None, widen=0.0):
+    """lambda grid for the Bayesian-evidence solvers (see OPTIONS)."""
+    o = OPTIONS
+    if o["evidence_lambda_scale"] == "median":
+        sv = svd_methods.compute_svd(A if A_for_median is None else A_for_median).s
+        c = float(np.median(sv)) ** 2
+        lo, hi, npts = 6.0 + widen, 6.0 + widen, 60 + int(10 * widen)
+    else:
+        Aw = A / np.asarray(db, float)[:, None]
+        c = float(np.sum(Aw * Aw)) / max(2.0 * float(np.sum(L * L)), 1e-300)
+        lo, hi = o["evidence_decades_below"] + widen, o["evidence_decades_above"] + widen
+        npts = int(o["evidence_points"]) + int(10 * widen)
+    return np.geomspace(max(c * 10.0 ** -lo, 1e-300), c * 10.0 ** hi, npts)
+
+
+def _evidence_best(A, b, db, L, lam_grid, ridge=0.0):
+    """Grid maximum of the evidence, optionally refined in ln lambda."""
+    from scipy.optimize import minimize_scalar
+    best, res = bayesian_evidence.evidence_search(A, b, db, L, lam_grid, ridge=ridge)
+    if not OPTIONS["evidence_refine"]:
+        return best, res
+    lams = np.asarray(lam_grid, float)
+    i = int(np.argmin(np.abs(lams - best.lam)))
+    if 0 < i < lams.size - 1:
+        o = minimize_scalar(lambda la: -bayesian_evidence.log_evidence(A, b, db, L, float(np.exp(la)),
+                                                                        ridge=ridge).log_evidence,
+                            bounds=(np.log(lams[i - 1]), np.log(lams[i + 1])), method="bounded",
+                            options={"xatol": 1e-3})
+        r = bayesian_evidence.log_evidence(A, b, db, L, float(np.exp(o.x)), ridge=ridge)
+        if r.log_evidence > best.log_evidence:
+            best = r
+    return best, res
+
+
 @dataclass
 class SolverSpec:
     label: str
@@ -85,12 +174,15 @@ def _run_em_discrepancy(
     hadn't converged where the accelerated version converges properly in
     ~2000-3000, ~4x faster wall-clock for the whole discrepancy-principle
     search including all its trial smoothing values."""
+    o = OPTIONS
+
     def solve_fn(h):
-        return em.solve(A, b, db, max_iterations=10000, smoothing_h=h, accelerate=True)
+        return em.solve(A, b, db, max_iterations=int(o["em_max_iterations"]), tol=o["em_tol"],
+                        smoothing_h=h, accelerate=True)
 
     try:
         search = lambda_search.discrepancy_principle_search(
-            solve_fn, target_chi2_r=1.0, param_start=0.3, param_floor=1e-9
+            solve_fn, target_chi2_r=1.0, param_start=o["em_h_start"], param_floor=o["em_h_floor"]
         )
         result = search.result
         result.diagnostics["lambda_selection"] = f"discrepancy principle, h={search.param:.4g}"
@@ -103,10 +195,14 @@ def _run_em_lcurve(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> SolverResult
     """EM + smoothing, smoothing parameter chosen via the L-curve corner
     (Menger curvature). Doesn't assume chi2_r=1 is achievable. Also uses
     Biggs-Andrews acceleration -- see _run_em_discrepancy's docstring."""
-    def solve_fn(h):
-        return em.solve(A, b, db, max_iterations=10000, smoothing_h=h, accelerate=True)
+    o = OPTIONS
 
-    lc = lambda_search.l_curve_search(solve_fn, param_start=0.3, n_points=25)
+    def solve_fn(h):
+        return em.solve(A, b, db, max_iterations=int(o["em_max_iterations"]), tol=o["em_tol"],
+                        smoothing_h=h, accelerate=True)
+
+    lc = lambda_search.l_curve_search(solve_fn, param_start=o["em_h_start"], n_points=int(o["lcurve_points"]),
+                                      reduction_factor=o["lcurve_reduction"])
     result = lc.result
     result.diagnostics["lambda_selection"] = f"L-curve corner, h={lc.param:.4g}"
     return result
@@ -127,7 +223,9 @@ def _em_fallback(solve_fn, fallback: str) -> SolverResult:
             f"achievable chi2_r={result.chi2_r_history[-1]:.4g})"
         )
         return result
-    lc = lambda_search.l_curve_search(solve_fn, param_start=0.3, n_points=25)
+    lc = lambda_search.l_curve_search(solve_fn, param_start=OPTIONS["em_h_start"],
+                                      n_points=int(OPTIONS["lcurve_points"]),
+                                      reduction_factor=OPTIONS["lcurve_reduction"])
     result = lc.result
     result.diagnostics["lambda_selection"] = (
         f"L-curve fallback (discrepancy principle unreachable), h={lc.param:.4g}"
@@ -155,12 +253,15 @@ def _run_em_general(
     (which forced every discrepancy-principle trial to run the full
     max_iterations with no early exit at all, now unnecessary and wasteful
     since acceleration converges each trial quickly)."""
+    o = OPTIONS
+
     def solve_fn(h):
-        return em_general.solve(A, b, db, max_iterations=10000, smoothing_h=h, tol=1e-8, accelerate=True)
+        return em_general.solve(A, b, db, max_iterations=int(o["em_max_iterations"]), smoothing_h=h,
+                                tol=o["em_tol"], accelerate=True)
 
     try:
         search = lambda_search.discrepancy_principle_search(
-            solve_fn, target_chi2_r=1.0, param_start=0.3, param_floor=1e-7
+            solve_fn, target_chi2_r=1.0, param_start=o["em_h_start"], param_floor=o["em_general_h_floor"]
         )
         result = search.result
         result.diagnostics["lambda_selection"] = f"discrepancy principle, h={search.param:.4g}"
@@ -192,12 +293,15 @@ def _run_em_general_regularized(
     prior = regularization.split("_")[1]
     t = em_general.default_offset(A, b)
 
+    o = OPTIONS
+
     def solve_fn(lam):
-        return em_general.solve(A, b, db, t=t, max_iterations=10000, tol=1e-8,
+        return em_general.solve(A, b, db, t=t, max_iterations=int(o["em_max_iterations"]), tol=o["em_tol"],
                                 accelerate=True, entropy_lam=lam, entropy_prior=prior)
 
     search = lambda_search.discrepancy_principle_search_bidirectional(
-        solve_fn, target_chi2_r=1.0, param_start=1e-5, param_floor=1e-12, param_ceil=1.0)
+        solve_fn, target_chi2_r=1.0, param_start=o["signed_maxent_lambda_start"],
+        param_floor=o["signed_maxent_lambda_floor"], param_ceil=o["signed_maxent_lambda_ceil"])
     result = search.result
     note = f"discrepancy principle, MaxEnt ({prior} prior) lambda={search.param:.4g}"
     if not search.reachable:
@@ -239,7 +343,8 @@ def _run_tikhonov_standard_gcv(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> 
     multi-modal distributions."""
     Aw, bw = _weighted(A, b, db)
     svd = svd_methods.compute_svd(Aw)
-    lam_grid = np.geomspace(svd.s.min() * 1e-3 + 1e-300, svd.s.max() * 10, 100)
+    lam_grid = np.geomspace(svd.s.min() * 10.0 ** -OPTIONS["gcv_decades_below"] + 1e-300,
+                            svd.s.max() * 10.0 ** OPTIONS["gcv_decades_above"], int(OPTIONS["gcv_points"]))
     lam_opt, _ = svd_methods.gcv_select_tikhonov(svd, bw, lam_grid)
     x = svd_methods.tikhonov(svd, bw, lam_opt)
     fitted_b = A @ x
@@ -254,7 +359,7 @@ def _run_tsvd_gcv(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> SolverResult:
     """Truncated SVD, truncation k chosen via GCV."""
     Aw, bw = _weighted(A, b, db)
     svd = svd_methods.compute_svd(Aw)
-    k_max = max(2, min(40, len(svd.s) - 1))
+    k_max = max(2, min(int(OPTIONS["tsvd_k_max"]), len(svd.s) - 1))
     k_opt, _ = svd_methods.gcv_select_tsvd(svd, bw, k_max)
     x = svd_methods.tsvd(svd, bw, k_opt)
     fitted_b = A @ x
@@ -277,7 +382,8 @@ def _run_general_tikhonov_gcv(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> S
     Aw, bw = _weighted(A, b, db)
     transform = general_tikhonov.std_form(Aw, L, bw)
     svd_s = svd_methods.compute_svd(transform.A_s)
-    lam_grid = np.geomspace(svd_s.s.min() * 1e-3 + 1e-300, svd_s.s.max() * 10, 100)
+    lam_grid = np.geomspace(svd_s.s.min() * 10.0 ** -OPTIONS["gcv_decades_below"] + 1e-300,
+                            svd_s.s.max() * 10.0 ** OPTIONS["gcv_decades_above"], int(OPTIONS["gcv_points"]))
     lam_opt, _ = general_tikhonov.general_tikhonov_gcv(Aw, L, bw, lam_grid)
     x = general_tikhonov.general_tikhonov(Aw, L, bw, lam_opt)
     fitted_b = A @ x
@@ -327,7 +433,7 @@ def _bayesian_evidence_pick_lambda(
 
     Returns (p_map, lam_used, selection_note).
     """
-    best, _ = bayesian_evidence.evidence_search(A, b, db, L, lam_grid, ridge=ridge)
+    best, _ = _evidence_best(A, b, db, L, lam_grid, ridge=ridge)
     if target_chi2_r is None:
         return best.p_map, best.lam, (
             f"{selection_label}, lambda={best.lam:.4g}, Ng={best.n_good_params:.1f}"
@@ -343,7 +449,7 @@ def _bayesian_evidence_pick_lambda(
 
     search = lambda_search.discrepancy_principle_search_bidirectional(
         solve_fn, target_chi2_r=target_chi2_r, param_start=best.lam,
-        param_floor=best.lam * _MAX_LAMBDA_REDUCTION,
+        param_floor=best.lam * OPTIONS["max_lambda_reduction"],
     )
     c2_evidence = chi2_r(b, A @ best.p_map, db)
     note = (
@@ -382,9 +488,7 @@ def _run_bayesian_evidence(
     what happens at the r=0/Dmax boundary specifically."""
     n = A.shape[1]
     L = second_derivative_operator(n).toarray()
-    svd_A = svd_methods.compute_svd(A)
-    scale = float(np.median(svd_A.s)) ** 2
-    lam_grid = np.geomspace(max(scale * 1e-6, 1e-300), scale * 1e6, 60)
+    lam_grid = _evidence_grid(A, db, L)
     p_map, lam_used, selection_note = _bayesian_evidence_pick_lambda(
         A, b, db, L, lam_grid, target_chi2_r, "Bayesian evidence",
     )
@@ -449,9 +553,7 @@ def _run_bayesian_evidence_hansen(
     boundary treatment (hard Hansen vs. Hann-tapered) is used."""
     n = A.shape[1]
     L = hansen_smoothness_cholesky(n)
-    svd_A = svd_methods.compute_svd(A)
-    scale = float(np.median(svd_A.s)) ** 2
-    lam_grid = np.geomspace(max(scale * 1e-6, 1e-300), scale * 1e6, 60)
+    lam_grid = _evidence_grid(A, db, L)
     p_map, lam_used, selection_note = _bayesian_evidence_pick_lambda(
         A, b, db, L, lam_grid, target_chi2_r, "Bayesian evidence (Hansen boundary-constrained)",
     )
@@ -767,9 +869,7 @@ def _run_bayesian_evidence_spline(
     m = B.shape[1]
     L = second_derivative_operator(m).toarray()
 
-    svd_spline = svd_methods.compute_svd(A_spline)
-    scale = float(np.median(svd_spline.s)) ** 2
-    lam_grid = np.geomspace(max(scale * 1e-6, 1e-300), scale * 1e6, 60)
+    lam_grid = _evidence_grid(A_spline, db, L)
 
     c_map, lam_used, selection_note = _bayesian_evidence_pick_lambda(
         A_spline, b, db, L, lam_grid, target_chi2_r,
@@ -890,13 +990,14 @@ def _run_maxent_constant_prior(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> 
     unchanged from before the fix, so the entropy penalty genuinely adds
     little for this dataset; it isn't an artifact of the old iteration cap."""
     n = A.shape[1]
-    prior = np.full(n, max(float(np.mean(b)) / n, 1e-6))
-    x0 = np.full(n, 1e-6)
+    prior = np.full(n, max(float(np.mean(b)) / n, OPTIONS["maxent_prior_floor"]))
+    x0 = np.full(n, OPTIONS["em_x0"])
     best_result, best_diff = None, np.inf
-    for lam in np.geomspace(1e-9, 1.0, 24):
+    o = OPTIONS
+    for lam in np.geomspace(o["maxent_lambda_min"], o["maxent_lambda_max"], int(o["maxent_points"])):
         result = maxent_em.solve_constant_prior(
             A, b, db, prior=prior, lam=lam, x0=x0,
-            max_iterations=50_000, tol=1e-8, accelerate=True,
+            max_iterations=int(o["maxent_max_iterations"]), tol=o["em_tol"], accelerate=True,
         )
         if not result.chi2_r_history:
             continue
@@ -919,12 +1020,13 @@ def _run_maxent_adaptive_prior(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> 
     testing), which is exactly why running every trial to real convergence
     here -- rather than a fixed small cap -- matters more for this solver."""
     n = A.shape[1]
-    x0 = np.full(n, 1e-6)
+    x0 = np.full(n, OPTIONS["em_x0"])
     best_result, best_diff = None, np.inf
-    for lam in np.geomspace(1e-9, 1.0, 24):
+    o = OPTIONS
+    for lam in np.geomspace(o["maxent_lambda_min"], o["maxent_lambda_max"], int(o["maxent_points"])):
         result = maxent_em.solve_adaptive_prior(
-            A, b, db, lam=lam, sigma2=1.0, x0=x0,
-            max_iterations=50_000, tol=1e-8, accelerate=True,
+            A, b, db, lam=lam, sigma2=o["maxent_sigma2"], x0=x0,
+            max_iterations=int(o["maxent_max_iterations"]), tol=o["em_tol"], accelerate=True,
         )
         if not result.chi2_r_history:
             continue
@@ -938,7 +1040,7 @@ def _run_maxent_adaptive_prior(A: np.ndarray, b: np.ndarray, db: np.ndarray) -> 
 
 
 def _run_hansen_maxent(
-    A: np.ndarray, b: np.ndarray, db: np.ndarray, target_chi2_r: float = 1.0,
+    A: np.ndarray, b: np.ndarray, db: np.ndarray, target_chi2_r: float | None = None,
 ) -> SolverResult:
     """Maximum entropy with Hansen/Elfving's functional (regu.zip maxent.m),
     reformulated 2026-10-10 (see hansen_maxent.py DIAGNOSIS): 1/dI-weighted
@@ -949,6 +1051,8 @@ def _run_hansen_maxent(
     of a fixed lambda grid. If the target is unreachable the closest
     achievable fit is returned with a warning. x > 0 always: suitable for
     size distributions and positive p(r), not for sign-changing p(r)."""
+    if target_chi2_r is None:
+        target_chi2_r = OPTIONS["hansen_maxent_target_chi2"]
     m = hansen_maxent.flat_prior_level(A, b, db)
     state = {"x": None}
 
@@ -958,7 +1062,8 @@ def _run_hansen_maxent(
         return res
 
     search = lambda_search.discrepancy_principle_search_bidirectional(
-        solve_fn, target_chi2_r=target_chi2_r, param_start=1.0, factor=4.0,
+        solve_fn, target_chi2_r=target_chi2_r, param_start=OPTIONS["hansen_maxent_start"],
+        factor=OPTIONS["hansen_maxent_factor"],
     )
     result = search.result
     note = (f"discrepancy principle (target chi2_r={target_chi2_r:.3g}), "
@@ -1033,7 +1138,7 @@ def _penalty_operator(penalty: str, n: int) -> np.ndarray:
 
 def estimate_noise_scale(
     A: np.ndarray, b: np.ndarray, db: np.ndarray, L: np.ndarray,
-    s_range: tuple[float, float] = (1e-2, 1e2),
+    s_range: tuple[float, float] | None = None,
 ) -> tuple[float, float]:
     """Overall error scale s (sigma_i = s * db_i) maximizing the Bayesian
     evidence jointly with lambda (2026-10-10).
@@ -1049,12 +1154,14 @@ def estimate_noise_scale(
     Returns (s, E(s))."""
     from scipy.optimize import minimize_scalar
     M = len(b)
-    scale = float(np.median(svd_methods.compute_svd(A).s)) ** 2
-    lam_grid = np.geomspace(max(scale * 1e-8, 1e-300), scale * 1e8, 80)
+    if s_range is None:
+        s_range = (OPTIONS["noise_scale_lo"], OPTIONS["noise_scale_hi"])
+    # the error scale s moves the optimum by up to s^2: widen the grid by 2 decades
+    lam_grid = _evidence_grid(A, db, L, widen=2.0)
 
     def neg_E(ln_s):
         s = float(np.exp(ln_s))
-        best, _ = bayesian_evidence.evidence_search(A, b, db * s, L, lam_grid)
+        best, _ = _evidence_best(A, b, db * s, L, lam_grid)
         return -(best.log_evidence - M * np.log(s))
 
     res = minimize_scalar(neg_E, bounds=(np.log(s_range[0]), np.log(s_range[1])),
@@ -1108,9 +1215,7 @@ def _run_bayesian_evidence_merged(
                           A, b, db, second_derivative_operator(n).toarray(), penalty)
     if penalty == "hansen_eq19":
         L = _hansen_eq19_factor(n)
-        svd_A = svd_methods.compute_svd(A)
-        scale = float(np.median(svd_A.s)) ** 2
-        lam_grid = np.geomspace(max(scale * 1e-6, 1e-300), scale * 1e6, 60)
+        lam_grid = _evidence_grid(A, db, L)
         p_map, lam_used, note = _bayesian_evidence_pick_lambda(
             A, b, db, L, lam_grid, target_chi2_r, "Bayesian evidence")
         fitted_b = A @ p_map

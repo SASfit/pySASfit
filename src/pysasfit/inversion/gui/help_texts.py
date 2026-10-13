@@ -38,7 +38,7 @@ HELP: dict[str, str] = {
     # ---------------------------------------------------------------- data
     "load": (
         "<b>Load data file</b><br>ASCII file with columns q, I(q) and optionally "
-        "ΔI(q); without ΔI the errors come from an error model (see 'Error bars'). "
+        "ΔI(q) and σ<sub>Q</sub> (resolution); without ΔI the errors come from an error model (see 'Error bars'). "
         "Header and comment lines are skipped. After loading, r<sub>max</sub> "
         "and the number of r grid points are suggested from the q range "
         "(see those fields)."
@@ -64,6 +64,20 @@ HELP: dict[str, str] = {
         "orders of magnitude. They are combined by a running median over N "
         "points (scaled to be unbiased; ×1.4826 for one degree of freedom). "
         "N = 1 gives the plain per-point estimate. Default 15."
+    ),
+    "resolution": (
+        "<b>Instrumental resolution</b><br>Available when the file has a 4th "
+        "column σ<sub>Q</sub> (q, I, ΔI, σ<sub>Q</sub>). The kernel is evaluated on an "
+        "extended q grid and smeared onto the measured q, so the solution is the "
+        "unsmeared p(r) or size distribution and the fit is compared with the "
+        "measured, smeared I(q). Kernel width and grid density: Settings → "
+        "Preferences."
+    ),
+    "resolution_kernel": (
+        "<b>Resolution kernel</b><br><i>Rician</i>: distribution of |Q| for a "
+        "Gaussian spread in the 2-D detector plane, radially averaged -- correct "
+        "also where σ<sub>Q</sub> is not small against Q. <i>Gaussian</i>: its "
+        "large-Q limit."
     ),
     "error_rel": (
         "<b>Relative error</b><br>σ<sub>i</sub> = r·|I<sub>i</sub>| for the "

@@ -510,7 +510,14 @@ class PolydisperseFit:
                  fixedScale=None, fixedBackground=None, solverClass=None,
                  linkedArg=None, usePorod=False, fixedPorodAmplitude=None,
                  porodQmin=None, onProgress=None, progressInterval=1.0,
-                 warmStart=False, mannAlpha=None):
+                 warmStart=False, mannAlpha=None, sasOptions=None, diffStep=1e-3):
+        #sasOptions: numerical settings passed to every GenericPolydisperseSAS
+        #(gridN, pointsPerSigma, maxIterations, transformType). The GUI passes
+        #the SAME values as for Compute, so a fitted curve reproduces exactly
+        #on recalculation; before, the fit always used the defaults.
+        self.sasOptions = dict(sasOptions or {})
+        #diffStep: relative finite-difference step of least_squares.
+        self.diffStep = float(diffStep)
         #mannAlpha: damping for the Picard/Mann iteration, passed through to
         #every solve. None leaves the solver's default (undamped Picard).
         self.mannAlpha = mannAlpha
@@ -763,7 +770,7 @@ class PolydisperseFit:
                 solverClass=self.solverClass,
                 mannAlpha=self.mannAlpha,
                 onSolverCreated=onSolver if self.warmStart else None,
-                distribution=self.distribution)
+                distribution=self.distribution, **self.sasOptions)
             self.nEvaluations += 1
             if self.resolution is not None:
                 return self.resolution(sas.I_exact(self.resolution.Qext))
@@ -1035,7 +1042,7 @@ class PolydisperseFit:
             res = least_squares(self._residuals, x0, bounds=(lo, hi),
                                 method="trf", max_nfev=maxNfev,
                                 verbose=2 if verbose else 0,
-                                diff_step=1e-3)
+                                diff_step=self.diffStep)
             xbest = res.x
             success, message = bool(res.success), res.message
         except FitAborted as exc:

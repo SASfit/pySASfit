@@ -59,6 +59,7 @@ from PySide6 import QtCore, QtWidgets
 from . import qtkit
 from .qtkit import askdirectory, askokcancel, askopenfilename, showerror, showinfo
 from .tab_controls import PolydisperseTabControls
+from ...core import settings as prefs
 
 IMPORT_ERROR = None
 try:
@@ -144,7 +145,15 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
     #Evaluation budget handed to least_squares (and to each start of the
     #multi-start fit). 200 is what the Tk original hard-coded; a class
     #attribute so a test or a script can lower it without editing the code.
-    FIT_MAX_NFEV = 200
+    @property
+    def FIT_MAX_NFEV(self):
+        """Evaluation budget of a fit (preferences: oz.generic.fit_max_nfev,
+        factory 200); assigning it overrides the preference for this tab."""
+        return self.__dict__.get("_fitMaxNfev") or prefs.get("oz.generic.fit_max_nfev")
+
+    @FIT_MAX_NFEV.setter
+    def FIT_MAX_NFEV(self, v):
+        self.__dict__["_fitMaxNfev"] = int(v)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1355,12 +1364,26 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
     #not reachable from this tab at all, so type 4 -- second order, and
     #cheaper on a power-of-two grid -- could not be selected despite being
     #implemented.
-    SETTINGS_DEFAULTS = {
+    FACTORY_SETTINGS = {
         "gridN": 4095,
         "pointsPerSigma": 100,
         "maxIterations": 8000,
         "transformType": 1,
     }
+
+    @property
+    def SETTINGS_DEFAULTS(self):
+        """Start values of the numerical settings: the user's preferences
+        (Settings -> Preferences, 'Polydisperse (any potential) tab'), whose
+        factory values are those listed in FACTORY_SETTINGS. A session file
+        overrides them."""
+        g = prefs.values("oz.generic")
+        t = int(g["transform_type"])
+        k = int(g["grid_exponent"])
+        return {"gridN": 2**k if t == 4 else 2**k - 1,
+                "pointsPerSigma": int(g["points_per_sigma"]),
+                "maxIterations": int(g["max_iterations"]),
+                "transformType": t}
 
     def _onSettings(self):
         """Open the numerical-settings dialog.
@@ -1501,7 +1524,7 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
         def defaults():
             for k_, v in vars_.items():
                 v.set(str(self.SETTINGS_DEFAULTS[k_]))
-            kVar.set("12")
+            kVar.set(str(prefs.get("oz.generic.grid_exponent")))
 
         frm.addWidget(qtkit.hbox(None, qtkit.button("Defaults", defaults),
                                  qtkit.button("Cancel", dlg.reject),
@@ -2153,7 +2176,13 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
                 #thread. Throttled to one per second inside the fitter.
                 onProgress=lambda d: self.resultQueue.put(("fitProgress", d)),
                 progressInterval=1.0,
-                shouldStop=lambda: getattr(self, "_abortFit", False))
+                shouldStop=lambda: getattr(self, "_abortFit", False),
+                #The SAME numerical settings as Compute: before, the fit
+                #always ran at 4095 points / 100 per diameter / type 1 and
+                #solver-default iterations, whatever the dialog said, so a
+                #fitted curve did not reproduce on recalculation.
+                sasOptions=p["settings"],
+                diffStep=prefs.get("oz.generic.diff_step"))
             self.resultQueue.put(("status", f"fitting {len(params)} parameters..."))
             #Dispatch to the chosen optimiser. Both return the same result
             #dict, so everything downstream -- the plot, the write-back, the
@@ -2173,13 +2202,17 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
                 #thicker than the core it sits on, and the constrained fit
                 #found the right answer with a LOWER chi-squared.
                 from ..polydisperse_fit import fitWithNLopt
+                nl = prefs.values("numerics.nlopt")
                 out = fitWithNLopt(
-                    fitter, method=name.split()[1],
+                    fitter, method=name.split()[1], maxNfev=nl["max_nfev"], ftol=nl["ftol"],
                     constraints=("shellInsideSmallestCore",)
                     if p["ff"] == "Core-shell" else ())
             elif name.startswith("bumps "):
                 from ..polydisperse_fit import fitWithBumps
-                out = fitWithBumps(fitter, method=name.split(None, 1)[1])
+                bp = prefs.values("numerics.bumps")
+                out = fitWithBumps(fitter, method=name.split(None, 1)[1],
+                                   steps=bp["steps"] or None, pop=bp["pop"],
+                                   burn=bp["burn"], samples=bp["samples"])
             elif "starts" in name:
                 #Multi-start: the cheap way to ask whether the minimum is
                 #unique. Ten local fits cost ~300 evaluations against the
@@ -2189,7 +2222,7 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
                 #attractive well (epsilon > 0), nor between contrast signs, so it reports
                 #whichever branch it started on.
                 out = fitter.runMultiStart(
-                    nStarts=10, maxNfev=self.FIT_MAX_NFEV,
+                    nStarts=prefs.get("oz.generic.n_starts"), maxNfev=self.FIT_MAX_NFEV,
                     onProgress=lambda d: self.resultQueue.put((
                         "status",
                         f"start {d['start']}/{d['of']}: "
@@ -2350,7 +2383,9 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
         if self.smearVar.get() and getattr(self, "dQ", None) is not None:
             Q = self.data[0]
             p["resolution"] = Resolution(Q, self.dQ,
-                                         kernel=self.kernelVar.get())
+                                         kernel=self.kernelVar.get(),
+                                         nSigma=prefs.get("oz.generic.res_n_sigma"),
+                                         oversample=prefs.get("oz.generic.res_oversample"))
         p["solverClass"] = self.selectedSolverClass()
         #Damping for the Picard/Mann iteration. Read here so it is carried
         #with the rest of the parameter set and recorded in the session:
@@ -2410,14 +2445,21 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
                                 meanRadius=p["meanRadius"],
                                 distribution=p["distribution"],
                                 mannAlpha=p.get("mannAlpha"),
-                                formfactor=ff, solverClass=p["solverClass"])
+                                formfactor=ff, solverClass=p["solverClass"],
+                                #the Compute grid, not the defaults
+                                gridN=p["settings"]["gridN"],
+                                pointsPerSigma=p["settings"]["pointsPerSigma"],
+                                maxIterations=p["settings"]["maxIterations"],
+                                transformType=p["settings"]["transformType"])
+                g = prefs.values("oz.generic")
                 alpha, resid, scale = _gsas.solveAlpha(
+                    bracket=(g["alpha_lo"], g["alpha_hi"]), tol=g["alpha_tol"],
                     progress=lambda m: self.resultQueue.put(("status", m)),
                     **searchKw)
                 p["closureParam"] = alpha
                 #Relative test: chi^-1 sets the scale (order 10 for a dense
                 #fluid), so an absolute residual of 1e-3 is a relative 1e-4.
-                if abs(resid) < 1e-3*scale:
+                if abs(resid) < g["alpha_accept"]*scale:
                     alphaNote = (f"alpha = {alpha:.4f} [consistent: residual "
                                  f"{resid:+.2e}, relative {abs(resid)/scale:.1e}]")
                 else:
