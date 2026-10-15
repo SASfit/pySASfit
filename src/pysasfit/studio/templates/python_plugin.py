@@ -13,6 +13,10 @@ import math
 
 LABEL = "PLUGIN_NAME"
 
+# menu group of the function: the name of a group defined in a *.def file (see groups_example.def, which
+# defines 'example_group'); empty = listed under "other"
+GROUP = ""
+
 # one entry per parameter, in the order of p[0], p[1], ...: (name, description, default, (lower, upper))
 PARAMETERS = [
     ("I0", "forward scattering", 1.0, (0.0, math.inf)),

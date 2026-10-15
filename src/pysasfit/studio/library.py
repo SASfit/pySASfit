@@ -29,9 +29,10 @@ import sys
 import threading
 
 from . import paths
-from ._ctypes import DO_INIT_ARGS, SASFIT_PLUGIN_DEP_ERR, SEARCH_T, plugin_functions
+from ._ctypes import DO_INIT_ARGS, FUNC_ONE, P_PARAM, SASFIT_PLUGIN_DEP_ERR, SEARCH_T, SasfitParam, plugin_functions
 
-__all__ = ["SASfitLibrary", "SASfitLibraryNotFound", "get_library", "DEFAULT_PRECISION", "QUADRATURE"]
+__all__ = ["SASfitLibrary", "SASfitLibraryNotFound", "get_library", "reset_library", "configure_precision", "reset_precision",
+           "user_precision", "DEFAULT_PRECISION", "QUADRATURE"]
 
 
 class SASfitLibraryNotFound(RuntimeError):
@@ -50,7 +51,12 @@ SPHAVG = {
     "SPHAVG_PCUBATURE": 4, "SPHAVG_MC_MISER": 5, "SPHAVG_MC_VEGAS": 6, "SPHAVG_MC_PLAIN": 7,
     "SPHAVG_SPHERICAL_T_DESIGN": 8,
 }  # fmt: skip
-HANKEL = {"HANKEL_OOURA_DEO": 0, "HANKEL_OGATA_2005": 1, "HANKEL_FBT0": 2, "HANKEL_QWE": 12}
+HANKEL = {
+    "HANKEL_OOURA_DEO": 0, "HANKEL_OGATA_2005": 1, "HANKEL_FBT0": 2, "HANKEL_FBT1": 3, "HANKEL_FBT2": 4,
+    "HANKEL_GSL_QAWF": 5, "HANKEL_GUPTASARMA_97": 6, "HANKEL_GUPTASARMA_97_FAST": 7, "HANKEL_KEY_51": 8,
+    "HANKEL_KEY_101": 9, "HANKEL_KEY_201": 10, "HANKEL_ANDERSON_801": 11, "HANKEL_QWE": 12, "HANKEL_CHAVE": 13,
+    "HANKEL_SINC_SEO": 14, "HANKEL_BESTLIME": 15, "HANKEL_FFTLOG": 16, "HANKEL_QDHT": 17,
+}  # fmt: skip
 ROOTALG = {"BISECTION": 0, "FALSE_POSITION": 1, "BRENT": 2, "NEWTON": 3, "SECANT": 4, "STEFFENSON": 5}
 
 # name: (setter, getter, ctype, SASfit default) -- defaults from SASstudio dev/sasfit_function_dict.ipynb
@@ -73,22 +79,81 @@ _EPS = {
     "iter_4_mc": ("sasfit_eps_set_iter_4_mc", "sasfit_eps_get_iter_4_mc", ctypes.c_int, 1001),
     "sg_level": ("sasfit_set_sg_level", "sasfit_get_sg_level", ctypes.c_int, 8),
     "rootalg": ("sasfit_set_rootalg", "sasfit_get_rootalg", ctypes.c_int, ROOTALG["BRENT"]),
+    # Ogata Hankel transform (SASfit settings dialog: N_Ogata >= 2 [default 50], h_Ogata [default 0.01]);
+    # the setters take doubles; the getters are only used if libsasfit exports them
+    "N_Ogata": ("sasfit_set_N_Ogata", "sasfit_get_N_Ogata", ctypes.c_double, 50.0),
+    "h_Ogata": ("sasfit_set_h_Ogata", "sasfit_get_h_Ogata", ctypes.c_double, 0.01),
 }  # fmt: skip
 DEFAULT_PRECISION = {k: v[3] for k, v in _EPS.items()}
+
+_USER_PRECISION = {}  # chosen by the user in this session (script or GUI); applied whenever libsasfit is (re)loaded
+
+
+def user_precision():
+    """The integration settings chosen by the user: the remembered ones (``paths``), updated by this session's."""
+    saved = paths.get_setting("precision")
+    out = {k: v for k, v in saved.items() if k in _EPS} if isinstance(saved, dict) else {}
+    out.update(_USER_PRECISION)
+    return out
+
+
+def configure_precision(save=False, **values):
+    """Choose libsasfit integration settings (names and values as in :data:`DEFAULT_PRECISION`).
+
+    ``configure_precision(int_strategy='GSL_QAGS', nriq=1e-8)``: applied at once if the library is loaded and
+    again whenever it is (re)loaded, e.g. after another SASfit folder was chosen. ``save=True`` remembers
+    them for later sessions too. Raises KeyError for an unknown setting, OSError if saving fails.
+    """
+    unknown = [k for k in values if k not in _EPS]
+    if unknown:
+        raise KeyError(f"unknown setting {', '.join(unknown)}; known: {', '.join(_EPS)}")
+    names = {**QUADRATURE, **SPHAVG, **HANKEL, **ROOTALG}
+    clean = {}
+    for k, v in values.items():  # check everything first: a bad value stored here would break every later load
+        if isinstance(v, str):
+            if v not in names:
+                raise KeyError(f"unknown value '{v}' for setting '{k}'")
+            clean[k] = v
+        else:
+            clean[k] = int(v) if _EPS[k][2] is ctypes.c_int else float(v)
+    values = clean
+    _USER_PRECISION.update(values)
+    if save:
+        saved = paths.get_setting("precision")
+        saved = dict(saved) if isinstance(saved, dict) else {}
+        saved.update(values)
+        paths.set_setting("precision", saved)
+    with _LIB_LOCK:
+        lib = _LIB
+    if lib is not None:
+        lib.set_precision(**values)
+
+
+def reset_precision():
+    """Back to the SASfit defaults: forget this session's and the remembered settings."""
+    _USER_PRECISION.clear()
+    paths.set_setting("precision", None)
+    with _LIB_LOCK:
+        lib = _LIB
+    if lib is not None:
+        lib.set_precision(**DEFAULT_PRECISION)
 
 
 class SASfitLibrary:
     """libsasfit plus the initialised plugin functions (use :func:`get_library`)."""
 
     def __init__(self, lib_dir=None, precision=None):
-        lib_dir = os.path.abspath(lib_dir) if lib_dir else paths.lib_dir()
+        lib_dir = (paths.find_lib_dir(lib_dir) or os.path.abspath(lib_dir)) if lib_dir else paths.lib_dir()
         core = os.path.join(lib_dir, f"libsasfit.{paths.LIB_EXT}") if lib_dir else None
         if not core or not os.path.isfile(core):
             raise SASfitLibraryNotFound(
                 "SASfit libraries not found. Install them once with\n"
                 "    pysasfit-studio install-binaries <SASstudio or SASfit folder>\n"
                 "or set PYSASFIT_SASFIT_LIB to a folder containing "
-                f"libsasfit.{paths.LIB_EXT} (and plugins/libsasfit_*.{paths.LIB_EXT})."
+                f"libsasfit.{paths.LIB_EXT} (and plugins/libsasfit_*.{paths.LIB_EXT}),\n"
+                "or choose the folder of a local SASfit installation in the explorer "
+                "(Settings -> SASfit installation) or with pysasfit.studio.paths.set_lib_dir().\n"
+                "Places searched:\n" + paths.describe_lib_dir_sources()
             )
         self.lib_dir = lib_dir
         self.plugin_dirs = [d for d in (os.path.join(lib_dir, "plugins"), lib_dir) if os.path.isdir(d)]
@@ -105,6 +170,7 @@ class SASfitLibrary:
         self._search_cb = SEARCH_T(self._search)  # keep a reference
         self._lock = threading.RLock()
         p = dict(DEFAULT_PRECISION)
+        p.update(user_precision())
         p.update(precision or {})
         self.set_precision(**p)
 
@@ -123,6 +189,38 @@ class SASfitLibrary:
             f.argtypes = [ct]
             f.restype = None
             f(ct(v))
+
+    def integrate(self, f, a, b, limit=10000, epsabs=0.0, epsrel=None):
+        """∫_a^b f(x) dx with libsasfit's ``sasfit_integrate_ctm`` (strategy: setting ``int_strategy``).
+
+        ``f(x)`` is a Python function returning a float. ``limit``: maximum number of subdivisions; ``epsrel``
+        defaults to the ``aniso`` setting (what the C macro ``sasfit_integrate`` uses). An exception in ``f`` is
+        re-raised here; a SASfit error is raised as RuntimeError.
+        """
+        fn = self.core.sasfit_integrate_ctm
+        fn.argtypes = [ctypes.c_double, ctypes.c_double, FUNC_ONE, P_PARAM, ctypes.c_int, ctypes.c_double, ctypes.c_double]
+        fn.restype = ctypes.c_double
+        if epsrel is None:
+            epsrel = self.get_precision().get("aniso", DEFAULT_PRECISION["aniso"])
+        errors = []
+
+        def kernel(x, _param):
+            if errors:
+                return 0.0
+            try:
+                return float(f(x))
+            except BaseException as exc:  # noqa: BLE001 -- must not propagate through C
+                errors.append(exc)
+                return 0.0
+
+        callback = FUNC_ONE(kernel)  # keep a reference during the call
+        param = SasfitParam()
+        value = fn(float(a), float(b), callback, ctypes.pointer(param), int(limit), float(epsabs), float(epsrel))
+        if errors:
+            raise errors[0]
+        if param.errStatus:
+            raise RuntimeError(param.error)
+        return value
 
     def get_precision(self):
         out = {}
@@ -244,9 +342,24 @@ _LIB_LOCK = threading.Lock()
 
 
 def get_library(lib_dir=None):
-    """The process-wide :class:`SASfitLibrary` (created on first use)."""
+    """The process-wide :class:`SASfitLibrary` (created on first use).
+
+    It is created again when ``lib_dir`` -- or, without argument, the folder given by
+    :mod:`pysasfit.studio.paths` -- differs from the one in use.
+    """
     global _LIB
     with _LIB_LOCK:
-        if _LIB is None or (lib_dir and os.path.abspath(lib_dir) != _LIB.lib_dir):
+        want = (paths.find_lib_dir(lib_dir) or lib_dir) if lib_dir else paths.lib_dir()
+        if _LIB is None or (want and os.path.abspath(want) != _LIB.lib_dir):
             _LIB = SASfitLibrary(lib_dir)
         return _LIB
+
+
+def reset_library():
+    """Forget the loaded libraries; the next :func:`get_library` loads from the current folder.
+
+    Functions created earlier keep working (they point into the libraries they were loaded from).
+    """
+    global _LIB
+    with _LIB_LOCK:
+        _LIB = None

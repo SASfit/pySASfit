@@ -43,16 +43,20 @@ class SASfitError(RuntimeError):
 _PYTHON_FUNCTIONS = {}
 
 
-def register_python_function(name, intensity, amplitude=None, volume=None, parameters=(), label=None, defaults=None):
+def register_python_function(
+    name, intensity, amplitude=None, volume=None, parameters=(), label=None, defaults=None, group=""
+):
     """Make a Python function available as SASfit function ``name``.
 
     ``name`` carries the type prefix: 'ff_...', 'sq_...' or 'sd_...'. The
     callables are ``intensity(x, p)``, ``amplitude(x, p)`` and
     ``volume(x, p, dist)`` with ``p`` the parameter vector (length MAXPAR).
+    ``group`` is the menu group of the function, the name of a group defined in a ``*.def`` file
+    (see :mod:`pysasfit.studio.groups`).
     """
     defaults = list(defaults) if defaults is not None else [0.0] * len(parameters)
     pinfo = [headers.ParameterInfo(n, "", d) for n, d in zip(parameters, defaults)]
-    info = headers.PluginInfo(name=name, label=label or name, collection="python", parameters=pinfo)
+    info = headers.PluginInfo(name=name, label=label or name, collection="python", parameters=pinfo, group=group)
     _PYTHON_FUNCTIONS[name] = (info, intensity, amplitude, volume)
     return info
 
@@ -83,6 +87,7 @@ def _load_python_plugin(name, short):
                     collection=os.path.basename(fn),
                     parameters=[headers.ParameterInfo(n, "", v) for n, v in zip(names, defs)],
                     header=fn,
+                    group=getattr(mod, "GROUP", ""),
                 )
                 return (
                     info,

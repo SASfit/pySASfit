@@ -4,6 +4,8 @@
     pysasfit-studio search sphere shell
     pysasfit-studio info ff_sphere
     pysasfit-studio eval ff_sphere --q 0.01 0.1 0.5 --set R=50 eta=1
+    pysasfit-studio explore [ff_sphere] [--sq sq_hardsphere] [--sd sd_LogNorm]   # interactive plot, needs PySide6
+    pysasfit-studio tree [ff|sq|sd]          # menu tree of the functions (groups from the .def files)
     pysasfit-studio new-plugin my_gauss [--dir DIR]
     pysasfit-studio sasview-adapter ff_sphere [--dir DIR]
     pysasfit-studio profiles OUTDIR [--source SASfitGit/src/plugins]
@@ -78,6 +80,7 @@ def _menu():
         print("\nSASstudio utilities (pysasfit.studio):\n")
         print("1. Create new Python plugin [and its test]")
         print("2. Create SasView adapter for an existing plugin")
+        print("3. Explore a model interactively (sliders + plot)")
         print("6. Search all plugin names for key word(s)")
         print("7. List names of all available plugins")
         print("8. Get parameter info for a plugin")
@@ -90,6 +93,10 @@ def _menu():
                 print("created", *new_plugin(input("name (underscores instead of spaces): ").strip()))
             elif mode == "2":
                 print("created", sasview_adapter(input("SASfit function name: ").strip()))
+            elif mode == "3":
+                from .explorer import explore
+
+                explore(input("form factor [ff_sphere]: ").strip() or "ff_sphere")
             elif mode == "6":
                 for p in headers.search(*input("key word(s): ").split()):
                     print(f"{p.name:45s} {p.label}")
@@ -102,6 +109,14 @@ def _menu():
 
 
 def main(argv=None):
+    args = sys.argv[1:] if argv is None else list(argv)
+    if args[:1] == ["explore"]:  # own argument parser, see explorer.main
+        try:
+            from .explorer import main as explore_main
+        except ImportError as e:
+            print(f"the explorer needs PySide6 and matplotlib (pip install pysasfit[gui]): {e}")
+            return 1
+        return explore_main(args[1:])
     ap = argparse.ArgumentParser(prog="pysasfit-studio", description="Access to the SASfit plugin functions.")
     sub = ap.add_subparsers(dest="cmd")
     s = sub.add_parser("list")
@@ -128,9 +143,12 @@ def main(argv=None):
     s.add_argument("source")
     s.add_argument("--dest")
     s.add_argument("--frolov", action="store_true", help="also copy the FrolovPoints tables (~100 MB)")
+    sub.add_parser("explore", help="interactive model plot with sliders (pysasfit-studio explore -h)")
+    s = sub.add_parser("tree", help="menu tree of the functions, from the headers and the .def group files")
+    s.add_argument("type", nargs="?", choices=["ff", "sq", "sd"])
     sub.add_parser("status")
     sub.add_parser("menu")
-    a = ap.parse_args(argv)
+    a = ap.parse_args(args)
 
     if a.cmd == "list":
         _list(a.type)
@@ -156,12 +174,26 @@ def main(argv=None):
         from .install import install_binaries
 
         install_binaries(a.source, a.dest, frolov=a.frolov)
+    elif a.cmd == "tree":
+        from . import groups
+
+        defs = groups.load_groups()
+        entries = list(headers.catalogue().values())
+        for key, types in (("ff", ("ff", "peak", "peaks")), ("sq", ("sq",)), ("sd", ("sd",))):
+            if a.type in (None, key):
+                print(f"{headers.PLUGIN_TYPES[key]}s:")
+                print("\n".join("  " + s for s in groups.tree_lines(groups.build_menu(entries, types, defs))))
+        if not defs.files:
+            print("\n(no *.def files found in: " + ", ".join(paths.def_dirs()) + ")")
     elif a.cmd == "status":
         cat = headers.catalogue()
         print(f"header folders: {paths.header_dirs()}")
         print(f"functions documented: {len(cat)}")
         print(f"SASfit libraries: {paths.lib_dir() or 'not installed (pysasfit-studio install-binaries SOURCE)'}")
         print(f"Python plugin folders: {paths.python_plugin_dirs()}")
+        from . import groups
+
+        print(f"group files (*.def): {len(groups.load_groups().files)}  (searched: {paths.def_dirs()})")
     elif a.cmd == "menu":
         _menu()
     else:

@@ -12,8 +12,11 @@ structure factor S(q). With a size distribution:
   R_V = (3V(x)/4π)^(1/3) of the '_v' function
 * without a structure factor:          I = ∫ N(x) P(q;x) dx
 
-The x integral uses Gauss-Legendre nodes on the support of N(x) (found
-automatically or given as ``x_range``).
+The x integral is done on the support of N(x) (found automatically or given as
+``x_range``) with Gauss-Legendre nodes (default) or another method of
+:mod:`pysasfit.studio.integration` (``method``, ``n_x``, ``rtol``, ``atol``,
+``limit``; scipy ``quad_vec``, ``simpson``, ...). The integrals inside the SASfit
+functions follow :func:`pysasfit.studio.library.configure_precision`.
 
 A :class:`ModelFunction` sums contributions (with scale factors) and an
 optional background (a :class:`pysasfit.core.background.Background` or a
@@ -39,6 +42,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .functions import SASfitFunction, function
+from .integration import size_integral
 
 __all__ = ["ScatteringContribution", "ModelFunction", "Pipeline", "FitResult"]
 
@@ -64,6 +68,12 @@ class ScatteringContribution:
         approach="monodisperse",
         x_range=None,
         n_x=96,
+        method="gauss-legendre",
+        rtol=1e-6,
+        atol=0.0,
+        limit=200,
+        x_power=6.0,
+        tail=1e-10,
     ):
         self.ff = _as_function(form_factor)
         self.sd = _as_function(size_distribution)
@@ -75,6 +85,13 @@ class ScatteringContribution:
         self.set_approach(approach)
         self.x_range = x_range
         self.n_x = int(n_x)
+        self.method = method  # integration over the size distribution, see pysasfit.studio.integration
+        self.rtol = float(rtol)
+        self.atol = float(atol)
+        self.limit = int(limit)
+        self.x_power = float(x_power)  # the range search weighs N(x) with x**x_power (form factor ~ x^2 ... x^6)
+        self.tail = float(tail)  # ... and cuts where N(x) x**x_power falls below tail * its maximum
+        self.last_integration = None  # info of the last size-distribution integration (method, neval, ...)
 
     @staticmethod
     def _vec(f, params):
@@ -108,7 +125,12 @@ class ScatteringContribution:
 
     # --------------------------------------------------------- integration
     def support(self):
-        """Integration range of the size distribution."""
+        """Integration range of the size distribution (``x_range``, or found from N(x) x**x_power).
+
+        The intensity of a particle grows like x^2 ... x^6, so a small amount of large particles can
+        still dominate I(q): the cut-off is applied to N(x) x**x_power (``x_power``, default 6),
+        not to N(x) alone, at the relative level ``tail``.
+        """
         if self.x_range is not None:
             return tuple(self.x_range)
         x0 = abs(self.ff_p[self.distributed]) or 1.0
@@ -116,10 +138,10 @@ class ScatteringContribution:
             if p > 0:
                 x0 = max(x0, p)
         x = np.geomspace(x0 * 1e-4, x0 * 1e3, 1400)
-        w = np.abs(self.sd.evaluate_p(x, self.sd_p))
+        w = np.abs(self.sd.evaluate_p(x, self.sd_p)) * x**self.x_power
         if not np.any(w > 0):
             raise ValueError("size distribution is zero everywhere; give x_range")
-        keep = np.nonzero(w > 1e-12 * w.max())[0]
+        keep = np.nonzero(w > self.tail * w.max())[0]
         lo, hi = x[max(keep[0] - 1, 0)], x[min(keep[-1] + 1, x.size - 1)]
         return lo, hi
 
@@ -152,26 +174,7 @@ class ScatteringContribution:
             if S is not None:
                 I = I * S  # manual 4.1.1 without distribution
             return I
-        x, w = self.nodes()
-        N = self.sd.evaluate_p(x, self.sd_p)
-        wN = w * N
-        P = self._ff_matrix(q, x)
-        if self.sq is None:
-            return P @ wN
-        if self.approach == "monodisperse":
-            return (P @ wN) * S
-        if self.approach == "decoupling":
-            F = self._ff_matrix(q, x, "amplitude")
-            return P @ wN + (F @ wN) ** 2 / np.sum(wN) * (S - 1.0)
-        # local monodisperse approximation
-        V = np.array([self.ff.volume(xj, self.ff_p, dist=self.distributed) for xj in x])
-        RV = np.cbrt(np.abs(V) * 3.0 / (4.0 * np.pi))
-        Sx = np.empty_like(P)
-        sp = self.sq_p.copy()
-        for j, r in enumerate(RV):
-            sp[0] = r
-            Sx[:, j] = self.sq.evaluate_p(q, sp)
-        return (P * Sx) @ wN
+        return size_integral(self, q, S)  # the three approaches of the manual, method chosen by self.method
 
     __call__ = intensity
 
