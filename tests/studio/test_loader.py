@@ -55,7 +55,7 @@ def test_size_distribution_plugin(studio_lib):
     assert np.allclose(box([0.5, 1.5, 2.5], N=4, xmin=1, xmax=2), [0, 4, 0])
 
 
-def test_missing_library_message(monkeypatch, tmp_path):
+def test_missing_library_message(monkeypatch, tmp_path, isolated_settings):
     from pysasfit.studio import library, paths
 
     monkeypatch.setenv("PYSASFIT_SASFIT_LIB", str(tmp_path))

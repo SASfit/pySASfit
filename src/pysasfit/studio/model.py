@@ -37,6 +37,7 @@ parameters with ``scipy.optimize.least_squares``::
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -92,6 +93,8 @@ class ScatteringContribution:
         self.x_power = float(x_power)  # the range search weighs N(x) with x**x_power (form factor ~ x^2 ... x^6)
         self.tail = float(tail)  # ... and cuts where N(x) x**x_power falls below tail * its maximum
         self.last_integration = None  # info of the last size-distribution integration (method, neval, ...)
+        self.cache = None  # ContributionCache while a fit runs with cache=True (see FitProblem.fit)
+        self.snap = 0.0  # > 0: the automatic integration range is rounded outwards to a geometric grid of this step
 
     @staticmethod
     def _vec(f, params):
@@ -143,7 +146,26 @@ class ScatteringContribution:
             raise ValueError("size distribution is zero everywhere; give x_range")
         keep = np.nonzero(w > self.tail * w.max())[0]
         lo, hi = x[max(keep[0] - 1, 0)], x[min(keep[-1] + 1, x.size - 1)]
+        if self.snap > 0:  # same nodes for nearby parameters: the form factor on them can be reused
+            r = math.log1p(self.snap)
+            lo, hi = math.exp(math.floor(math.log(lo) / r) * r), math.exp(math.ceil(math.log(hi) / r) * r)
         return lo, hi
+
+    def amplitude_index(self):
+        """Index of the amplitude ``N`` among the size-distribution parameters (the intensity is proportional to it)."""
+        if self.sd is None or "N" not in self.sd.parameter_names:
+            return None
+        return list(self.sd.parameter_names).index("N")
+
+    def enable_cache(self, snap=0.0):
+        """Remember intensities and form factors at the integration nodes (``None``/``disable_cache`` to stop)."""
+        from .integration import ContributionCache
+
+        self.cache = ContributionCache()
+        self.snap = float(snap)
+
+    def disable_cache(self):
+        self.cache, self.snap = None, 0.0
 
     def nodes(self):
         a, b = self.support()
@@ -164,8 +186,26 @@ class ScatteringContribution:
             M[:, j] = self.ff.evaluate_p(q, p, kind)
         return M
 
+    def _cache_key(self, q):
+        vec = lambda v: None if v is None else np.asarray(v, float).tobytes()  # noqa: E731
+        return (q.tobytes(), vec(self.ff_p), vec(self.sd_p), vec(self.sq_p), self.approach, self.method, self.n_x, self.rtol,
+                self.atol, self.limit, self.x_power, self.tail, None if self.x_range is None else tuple(self.x_range),
+                self.distributed, self.snap)  # fmt: skip
+
     def intensity(self, q):
         q = np.asarray(q, dtype=float)
+        cache = self.cache
+        if cache is None:
+            return self._intensity(q)
+        key = self._cache_key(q)
+        hit = cache.get(key)
+        if hit is not None:
+            return hit.copy()
+        I = np.asarray(self._intensity(q), dtype=float)
+        cache.put(key, I.copy())
+        return I
+
+    def _intensity(self, q):
         S = None
         if self.sq is not None and not (self.sd is not None and self.approach == "lma"):
             S = self.sq.evaluate_p(q, self.sq_p)
@@ -212,6 +252,28 @@ class ModelFunction:
                 self._bg_z = b.z0()
             return b.value(q, self._bg_z)
         return b(q)
+
+    def components(self, q, unit_amplitude=()):
+        """``([I_i(q)], background)``: every contribution without its scale factor, resolution applied.
+
+        For the contributions in ``unit_amplitude`` the size-distribution amplitude N is set to 1 while
+        evaluating (variable projection solves for it). The background is a scalar or an array like q.
+        """
+        q = np.asarray(q, dtype=float)
+        qe, W = (q, None) if self.resolution is None else self.resolution.setup(q)
+        parts = []
+        for i, c in enumerate(self.contributions):
+            k = c.amplitude_index() if i in unit_amplitude else None
+            if k is not None:
+                old = c.sd_p[k]
+                c.sd_p[k] = 1.0
+            try:
+                v = np.asarray(c.intensity(qe), dtype=float)
+            finally:
+                if k is not None:
+                    c.sd_p[k] = old
+            parts.append(v if W is None else W @ v)
+        return parts, self._background(q)
 
     def particles(self, q):
         q = np.asarray(q, dtype=float)

@@ -44,7 +44,8 @@ fitting.
 :link: studio
 :link-type: doc
 
-SASfit's plugin and libsasfit model functions via ctypes, combined into models and fitted.
+SASfit's plugin and libsasfit model functions via ctypes, combined into mixtures, plotted and fitted in an
+interactive explorer (`pysasfit-explorer`) with several optimisers and saved projects.
 :::
 
 :::{grid-item-card} Preferences

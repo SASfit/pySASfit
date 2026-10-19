@@ -7,8 +7,16 @@
 - the **built-in** functions of `libsasfit`: 136 functions, among them sphere, LogNorm, Schulz–Zimm, Percus–Yevick
   hard spheres and the Hayter–Penfold MSA.
 
-It combines them into models (size distribution, structure factor, resolution, background) and fits them. The code
-started as a copy of SASstudio (github.com/ISISNeutronMuon/SASstudio) and was reworked; see "Changes" below.
+It combines them into models (size distribution, structure factor, resolution, background) and fits them, from a
+script or in an interactive GUI, the **model explorer** (`pysasfit-explorer`). The code started as a copy of
+SASstudio (github.com/ISISNeutronMuon/SASstudio) and was reworked; see "Changes" below.
+
+| you want to | use |
+|---|---|
+| plot and fit models by hand, with data | [model explorer](#model-explorer) |
+| fit from a script | [`Pipeline`](#models-and-fitting) or the [fitting engine](#fitting-engine-and-optimisers) |
+| compare optimisers, constraints, several data sets | [fitting engine](#fitting-engine-and-optimisers) |
+| keep a session and continue later | [projects](#projects) |
 
 ## Installation of the SASfit libraries
 
@@ -83,7 +91,217 @@ The x integral uses Gauss–Legendre nodes on the support of N(x), or on `x_rang
 `examples/studio/example_script.py` fits the bimodal-sphere test data and reproduces SASfit's parameters from
 `data/SASfitTestData/SASfit_test.sas` to six digits.
 
-### Python plugins
+## Model explorer
+
+```
+pip install -e ".[gui]"
+pysasfit-explorer                                              # a sphere
+pysasfit-explorer ff_sphere --sd sd_LogNorm --sq sq_hardsphere
+pysasfit-explorer ff_sphere --add ff_cylinder,sd_LogNorm       # second contribution of a mixture
+pysasfit-explorer --project my.sasstudio                       # a saved session
+```
+
+The explorer plots I(q) of a model and lets you change its parameters and fit it to data.
+
+**Model.** The model is a mixture, I(q) = Σ scale<sub>i</sub> · I<sub>i</sub>(q) + background. Every contribution
+is a tab with a form factor, an optional size distribution and an optional structure factor, picked from cascading
+menus that follow SASfit's groups (the `.def` files of the installation). *Add*, *Copy* and *Remove* above the tabs
+change the number of contributions.
+
+- With a size distribution, the *distr.* radio button selects the form-factor parameter that is integrated over
+  the distribution. That parameter is disabled and cannot be fitted. The scale is fixed to 1 and hidden, because the
+  amplitude N of the distribution is the scale. Without a size distribution, the contribution is monodisperse and
+  only multiplied by its scale.
+- With a size distribution and a structure factor, the approach buttons select *monodisperse*, *decoupling* or
+  *lma* (see above).
+- Parameters named `dummy` are not used by the function; their fields are disabled.
+- *show* chooses P·S, P or S. "show contributions" draws every scale<sub>i</sub> · I<sub>i</sub> as a dotted curve.
+
+**Parameters.** Values are typed into the fields. *View → Sliders* adds a slider to every field. The check box
+next to a parameter selects it for fitting; when it is ticked, two fields below it take the lower and upper bound.
+The selection and the bounds belong to the row, so they are reset when the function of that column changes.
+
+**Integration.** *Settings → Integration…* sets how the size-distribution integral is computed. It either uses
+SASfit's own integrators (the "sasfit" method) or scipy / Gauss–Legendre. It also sets the Hankel strategies of the
+library and the search range with an x<sup>power</sup> tail. *Settings → SASfit installation…* selects the SASfit
+folder. Both settings can be remembered between sessions.
+
+**Data and fit.** The *Fit* panel (*View → Fit*) loads a data file (`pysasfit.core.load_data`; q × factor for
+unit conversion), takes an optional fit q range and shows the parameters ticked for fitting. The residuals
+Δ/σ appear below the plot. *Fit* runs the optimiser in a thread (*Stop* cancels it), *Undo fit* restores the values
+before it. The *Constraints* tab takes inequalities (`c1_ff_R + c1_ff_L < 100`; names are the parameter labels with
+`.` replaced by `_`), the *Priors* tab Gaussian priors (`name  mean  sigma`) and the *Result* tab shows values,
+errors, χ²/dof and the constraints. *Copy Python* copies code that reproduces the model, *Export…* saves the curve
+and the parameters.
+
+The explorer fits one data set. The engine below can fit several at once.
+
+## Fitting engine and optimisers
+
+`pysasfit.studio.fitting.FitProblem` is the engine behind the Fit panel. It can also be used on its own:
+
+```python
+from pysasfit.studio import fitting
+
+prob = fitting.FitProblem()
+prob.add_dataset("a.dat", model_a, name="a")                # a file or (q, I, sigma); repeat for more data sets
+prob.add_common("0.ff.R", lower=1, upper=200)              # one value for all data sets
+prob.add_local("background", lower=0)                      # one value per data set
+prob.add_local("scale.0", lower=0)
+prob.add_constraint("ff_R < 100")                          # inequality, see the Constraints tab
+res = prob.fit("scipy")                                    # or "nlopt", "cma", ...
+print(res.text())
+```
+
+Parameters can be common to all data sets or local to each, fixed or bounded. Constraints and Gaussian priors are
+supported. Errors come from the numerical Jacobian at the minimum and are scaled by √χ²<sub>red</sub> unless
+`scale_errors=False`. The result (`FitSummary`) holds values, errors, covariance, χ², the fitted curves and the state
+of the constraints.
+
+**Optimisers.** A backend is selected by name, then an algorithm. The Fit panel lists the backends whose package
+is installed.
+
+| backend | package | algorithms | notes |
+|---|---|---|---|
+| `scipy` | scipy | `trf`, `dogbox`, `lm` | least squares; the default. Constraints by penalty. |
+| `scipy-global` | scipy | `differential_evolution`, `dual_annealing`, `shgo`, `basinhopping` | global; finite bounds needed (basinhopping excepted). |
+| `nlopt` | `nlopt` | local and global NLopt algorithms (`LN_BOBYQA`, `LN_SBPLX`, `LD_SLSQP`, ...) | derivative-free and gradient-based; handles constraints natively. |
+| `iminuit` | `iminuit` | `migrad`, `simplex`, `migrad+minos` | MINOS gives asymmetric errors, printed as `(−a / +b)`. |
+| `bumps` | `bumps` | `lm`, `amoeba`, `de`, `dream` | DREAM returns errors from the posterior samples. `de` and `dream` need finite bounds. |
+| `cma` | `cma` | CMA-ES | derivative-free, robust against noise. |
+
+Optional packages: `pip install nlopt bumps iminuit cma` (or `pip install "pysasfit[fit]"`).
+
+Options common to all backends: `maxeval` (maximum number of model evaluations) and `polish=True`. With `polish`,
+the best point is refined by a least-squares fit, which gives the exact minimum and the errors; the Fit panel's
+"refine" check box sets it for all optimisers except scipy least_squares. Another optimiser can be added with
+`fitting.register_backend(name, runner)`.
+
+**Noise.** The SASfit integrals are adaptive, so the model has a relative noise of about 1e-6 to 1e-5. Numerical
+derivatives therefore use large steps (scipy: `diff_step=1e-4`; NLopt: 1e-3), and the iminuit errors are taken from
+the least-squares Jacobian, because MINUIT's HESSE is too sensitive to the noise. Gradient-free optimisers
+(CMA-ES, `LN_BOBYQA`, differential evolution) are less affected. `LN_COBYLA`, `LN_PRAXIS` and `LN_SBPLX` sometimes
+stall when started far from the minimum; use "refine".
+
+### Choosing an optimiser
+
+The optimisers differ in what they need (a good start, finite bounds), what they cost (number of model
+evaluations) and what they return (a point, or also an error estimate). A model evaluation with a size
+distribution and a structure factor takes some 10 ms to 1 s, so the number of evaluations decides how long a fit
+takes. The numbers below come from a small test (4 parameters, 60 points, 1e-5 integration noise,
+`tests/studio/test_fitting.py`) and show the order of magnitude only; they are not a benchmark of real SASfit models.
+
+| optimiser | evaluations (4 parameters) | start | bounds | errors | use it for |
+|---|---|---|---|---|---|
+| scipy `trf` | 30 to 100 | must be reasonable | yes | covariance | the default: fast local fit with good errors |
+| scipy `dogbox` | 30 to 100 | must be reasonable | yes | covariance | many parameters at their bounds |
+| scipy `lm` | 30 to 100 | must be reasonable | ignored | covariance | unbounded problems, smooth model |
+| `differential_evolution` | 1 000 to 3 000 | any | finite, required | after refine | finding the right region when the start is poor |
+| `dual_annealing` | 2 000 and more | any | finite, required | after refine | rugged landscapes; needs many evaluations to converge |
+| `shgo` | 1 000 to 4 000 | any | finite, required | after refine | few parameters (up to about 5), smooth model |
+| `basinhopping` | 10 000 and more | any | optional | after refine | a few separate local minima; most expensive |
+| NLopt `LN_BOBYQA` | 100 to 400 | reasonable | yes | after refine | smooth model, no derivatives, noise tolerated |
+| NLopt `LN_SBPLX`, `LN_NELDERMEAD` | 200 to 1 000 | reasonable | yes | after refine | noisy model |
+| NLopt `LN_COBYLA` | 100 to 500 | reasonable | yes | after refine | native inequality constraints |
+| NLopt `LD_SLSQP` | 50 to 200 | reasonable | yes | after refine | equality and inequality constraints, smooth model |
+| NLopt `GN_*` (`GN_CRS2_LM`, `GN_ISRES`, ...) | 2 000 and more | any | finite, required | after refine | global search (`GN_ISRES` also with constraints) |
+| iminuit `migrad` | 200 to 1 500 | reasonable | yes | covariance | strongly correlated parameters |
+| iminuit `simplex` | 300 to 1 500 | poor is acceptable | yes | covariance | rough first step before `migrad` |
+| iminuit `migrad+minos` | 1 000 to 3 000 | reasonable | yes | **asymmetric** (profile) | skewed or non-Gaussian errors |
+| bumps `lm` | 50 to 150 | reasonable | yes | covariance | like scipy `trf` |
+| bumps `amoeba` | 200 to 600 | reasonable | yes | covariance | derivative-free local search |
+| bumps `de` | 5 000 to 20 000 | any | finite, required | covariance | global search; slower than scipy's |
+| bumps `dream` | 4 000 and more | any | finite, required | **posterior** | full uncertainty, correlations, several minima |
+| CMA-ES | 1 000 to 5 000 | any | optional | after refine | noisy or multimodal model, up to some dozens of parameters |
+
+"After refine" means: the optimiser returns a point only; with the "refine" box ticked (`polish=True`) a
+least-squares fit starts at that point and supplies the errors.
+
+**scipy least squares (`trf`, `dogbox`, `lm`).** They use the residuals Δ/σ directly (a Jacobian by finite
+differences), so they need far fewer evaluations than any other method and give the covariance matrix. They are
+local: from a poor start they stop in the nearest minimum, which for size distributions often means a wrong width or
+mean. `trf` is the all-rounder; `dogbox` is better when several parameters sit at a bound; `lm` ignores bounds and
+only suits well-posed, unbounded problems. Constraints are enforced by a penalty, so they may be violated by a
+small amount (the Result tab says whether they hold).
+
+**scipy global (`differential_evolution`, `dual_annealing`, `shgo`, `basinhopping`).** They need no good start.
+The price is evaluations, and all but `basinhopping` need a lower and an upper bound for every fitted parameter;
+without them the fit stops with a message. `differential_evolution` is the most dependable: it works with noisy
+models and many parameters. `dual_annealing` converged badly within a small evaluation budget in the test, so give it
+more evaluations. `shgo` is efficient for few, smooth parameters and does not scale to many. `basinhopping` starts
+from your values and hops, so it is a local method with an escape route, not a global search. Combine any of them
+with "refine".
+
+**NLopt.** The package offers dozens of algorithms; the Fit panel lists those of your installation. `LN_` are
+derivative-free local, `LD_` gradient-based local (the gradient comes from central differences with a step that is
+large compared with the integration noise), `GN_` global. `LN_BOBYQA` is the best derivative-free choice for a
+smooth model. `LN_SBPLX` and `LN_NELDERMEAD` tolerate noise. `LN_COBYLA` and `LD_SLSQP` handle constraints natively
+(`LD_SLSQP` also equalities, for example fractions that add up to 1), without a penalty. In the test,
+`LN_COBYLA`, `LN_PRAXIS` and `LN_SBPLX` sometimes stopped at chi²/dof of 2 to 3.5 when started far from the
+minimum, so use "refine" with them.
+
+**iminuit (MINUIT).** `migrad` is a variable-metric method that copes well with strongly correlated parameters,
+such as the mean and the width of a size distribution or R and the volume fraction. `simplex` needs no gradient and
+is a robust first step for a poor start (the panel runs `migrad` after it). `migrad+minos` also computes asymmetric
+errors by profiling χ²: use it when the error of a parameter is clearly not symmetric (a width close to zero, a
+parameter at a bound). The errors in the table stay those of the least-squares Jacobian, because MINUIT's own
+HESSE estimate reacts to the noise of adaptive integrals. With a noisy model MIGRAD often ends with "stopped, EDM ..."
+instead of "converged"; the point is still usually good (check χ²/dof and the Result tab). MINOS needs a valid
+minimum and the panel restarts MIGRAD up to three times for it; if it still fails, the message says so.
+
+**bumps.** `lm` and `amoeba` are local methods like the scipy and NLopt ones; `de` is a global search. `dream` is
+different in kind: it samples the posterior distribution of the parameters (MCMC). The Result tab shows the best point
+found, the standard deviation of the samples and the 68 % interval for each parameter. Use it when you want the
+whole uncertainty, the correlations between parameters, or when you suspect several solutions. It needs many
+evaluations (thousands per parameter) and finite bounds, and its intervals are only reliable if the chain has
+converged: check that a longer run (*max evaluations*) gives the same intervals. For routine fitting it is too slow.
+
+**CMA-ES (`pip install cma`).** An evolution strategy that learns the shape of the χ² valley. It needs no
+gradient, so integration noise hardly matters, and it finds the right basin from a poor start. It uses more
+evaluations than a local method but scales well to a few dozen parameters, which makes it a good global method for
+mixtures. With "refine" the result is the exact least-squares minimum with errors.
+
+**Recipes**
+
+1. *Normal fit, good start:* scipy `trf`.
+2. *Poor start, or the result depends on the start:* CMA-ES or `differential_evolution` with bounds and "refine",
+   then check with `trf` from the result. For a mixture, give every size and fraction a sensible range.
+3. *Constraints (sum of fractions, one radius smaller than another):* `LD_SLSQP` or `LN_COBYLA` with "refine", or
+   any optimiser with the constraint as a penalty and a check of the Result tab.
+4. *Errors that are not symmetric:* iminuit `migrad+minos`; for correlations and multiple solutions, bumps `dream`.
+5. *Noisy model (coarse integration precision):* CMA-ES, `LN_SBPLX` or `differential_evolution`; tighten the
+   integration settings if the gradient-based methods stall.
+6. *Slow model:* keep the number of free parameters small, use a fit q range, start with `trf`, and use a global
+   method only when needed. *Max evaluations* limits the work of every optimiser (for `differential_evolution` it sets
+   the number of generations; the evaluations are rounded to whole generations).
+
+Degenerate parameters limit every optimiser: the scale and the amplitude N of a size distribution, or the volume
+fraction and the scale, cannot be fitted together. Fix one of them, or give a Gaussian prior (Priors tab). A very
+large error on a parameter, or a parameter stuck at a bound, points to this and not to the optimiser.
+
+So far the choice rests on the test model. Benchmark the optimisers on your own SASfit problems, for example with
+FitBenchmarking, before you rely on one for a long series of fits.
+
+## Projects
+
+*File → Save project* (Ctrl+S) writes the session to a `.sasstudio` file; *Open project…* (Ctrl+O) or
+`pysasfit-explorer --project FILE` restores it. A project is a JSON file with:
+
+- the contributions (functions, approach, distributed parameter) and all parameter values, scales and the background,
+  with their fit check boxes and bounds;
+- the data (embedded in the file);
+- the plot settings (q range, number of points, log axes, display mode);
+- the fit settings: optimiser, algorithm, max evaluations, "refine", fit q range, constraints, priors and the last
+  result;
+- the integration settings of the size-distribution integral.
+
+The SASfit installation is not stored. A function that is missing in the installation used for loading is
+reported in the status line.
+
+The same functions are available from Python: `pysasfit.studio.project.save(explorer, path)` and
+`project.load(explorer, path)`.
+
+## Python plugins
 
 Python plugins override C plugins of the same name. There are two ways to provide one:
 
@@ -93,7 +311,7 @@ Python plugins override C plugins of the same name. There are two ways to provid
 
 `pysasfit-studio new-plugin <name>` creates the plugin file and a test.
 
-### Command line
+## Command line
 
 ```
 pysasfit-studio list [--type ff|sq|sd|peak]      pysasfit-studio search hard sphere
@@ -140,6 +358,8 @@ Change them with `studio.get_library().set_precision(nriq=1e-8, int_strategy="GS
   `run_integrator` returned 0 and the code used undefined names.
 - **Fitting:** `Pipeline.fit` uses least squares with SASfit-compatible errors. Data are read with
   `pysasfit.core.load_data`, and the resolution comes from `pysasfit.core`.
+- **Model explorer and fitting engine:** mixtures, a compact SASfit-style parameter editor, a fit panel,
+  constraints and priors, several optimiser packages and saved projects (see above). SASstudio has none of these.
 - **Tools:**
   - the header parser tolerates malformed tables, such as the `</tr></tr>` in `ff_boucher_cyl`;
   - the templates produce working plugins and SasView adapters;
@@ -155,5 +375,10 @@ Change them with `studio.get_library().set_precision(nriq=1e-8, int_strategy="GS
 - **Parameter names:** take the names of the remaining built-in libsasfit functions from the SASfit Tcl GUI
   (`sasfit.vfs`). Today only `ff_sphere`, `sd_LogNorm` and `sq_HardSphere` have names; the others are addressed as
   `p0`, `p1`, ...
-- **GUI:** add a studio tab to `pysasfit-gui`.
-- **Testing:** test against a real Linux build of SASfit (`libsasfit.so`).
+- **GUI:**
+  - add a studio tab to `pysasfit-gui`;
+  - fit several data sets in the explorer (the engine can do it already);
+  - use the resolution (dq) in the explorer's fit.
+- **Testing:**
+  - test against a real Linux build of SASfit (`libsasfit.so`);
+  - benchmark the optimisers on real SASfit models (for example with FitBenchmarking) to choose the defaults.

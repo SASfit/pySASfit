@@ -10,4 +10,5 @@ Shared infrastructure (core) <../core_api>
 SLD profile <../sldprofile/api>
 Size distribution / p(r) <../inversion/api/index>
 Ornstein–Zernike <../oz/api>
+studio <../studio_api>
 ```

@@ -16,11 +16,12 @@ per x and handles all q together.
 from __future__ import annotations
 
 import math
+from collections import OrderedDict
 
 import numpy as np
 from scipy import integrate as _si
 
-__all__ = ["METHODS", "DEFAULTS", "PANELS", "integrate", "size_integral", "load_settings", "save_settings"]
+__all__ = ["METHODS", "DEFAULTS", "PANELS", "ContributionCache", "integrate", "size_integral", "load_settings", "save_settings"]
 
 METHODS = {
     "gauss-legendre": "Gauss-Legendre, fixed nodes (n_x per panel, 4 panels)",
@@ -113,6 +114,56 @@ def integrate(f, a, b, method="gauss-legendre", n_x=96, rtol=1e-6, atol=0.0, lim
     return np.asarray(value, dtype=float), info
 
 
+class ContributionCache:
+    """What a contribution remembers during a fit (see ``FitProblem.fit(cache=True)``).
+
+    * ``result``: the finished intensity for identical parameters (a change of another contribution, of a scale or
+      of the background does not recompute it);
+    * ``scope``: the form factor P(q, x) at the integration nodes x for identical *other* form-factor parameters
+      (a change of the size distribution does not recompute it).
+
+    Both are small LRU memories. The cache must be discarded when the SASfit precision settings change.
+    """
+
+    def __init__(self, max_results=128, max_scopes=24):
+        self.max_results, self.max_scopes = int(max_results), int(max_scopes)
+        self._results, self._scopes = OrderedDict(), OrderedDict()
+        self.result_hits = self.result_misses = self.node_hits = self.node_misses = 0
+
+    def get(self, key):
+        v = self._results.get(key)
+        if v is None:
+            self.result_misses += 1
+            return None
+        self._results.move_to_end(key)
+        self.result_hits += 1
+        return v
+
+    def put(self, key, value):
+        self._results[key] = value
+        while len(self._results) > self.max_results:
+            self._results.popitem(last=False)
+
+    def scope(self, key):
+        """The dictionary ``{(kind, x): P(q, x)}`` for the form-factor parameters ``key``."""
+        s = self._scopes.get(key)
+        if s is None:
+            s = self._scopes[key] = {}
+            while len(self._scopes) > self.max_scopes:
+                self._scopes.popitem(last=False)
+        else:
+            self._scopes.move_to_end(key)
+        return s
+
+    def clear(self):
+        self._results.clear()
+        self._scopes.clear()
+
+    def text(self):
+        r, n = self.result_hits + self.result_misses, self.node_hits + self.node_misses
+        return f"intensities reused {self.result_hits}/{r}, form-factor nodes reused {self.node_hits}/{n}"
+
+
 def size_integral(c, q, S):
     """Intensity of contribution ``c`` (with a size distribution) at ``q``; ``S`` = S(q) or None (LMA).
 
@@ -126,9 +177,23 @@ def size_integral(c, q, S):
     def weight(x):
         return float(c.sd.evaluate_p(x, c.sd_p))
 
+    cache = getattr(c, "cache", None)
+    scope = None
+    if cache is not None:  # form factor at the nodes: depends on q and the form-factor parameters except x
+        scope = cache.scope((q.tobytes(), np.delete(np.asarray(c.ff_p, float), c.distributed).tobytes()))
+
     def P(x, kind="intensity"):
+        if scope is not None:
+            v = scope.get((kind, x))
+            if v is not None:
+                cache.node_hits += 1
+                return v
+            cache.node_misses += 1
         p[c.distributed] = x
-        return c.ff.evaluate_p(q, p, kind)
+        v = c.ff.evaluate_p(q, p, kind)
+        if scope is not None:
+            v = scope[(kind, x)] = np.array(v, dtype=float)
+        return v
 
     if c.sq is None or c.approach == "monodisperse":  # manual 4.1.1:  S(q) ∫ N P dx
         def f(x):
