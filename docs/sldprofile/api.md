@@ -16,6 +16,13 @@ Generated from the docstrings.
    :members:
 ```
 
+## B-spline representation
+
+```{eval-rst}
+.. automodule:: pysasfit.sldprofile.bspline
+   :members: BSplines, BSplineBasis
+```
+
 ## Geometry and regularisation
 
 ```{eval-rst}

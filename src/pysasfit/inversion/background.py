@@ -96,8 +96,8 @@ def fit_background(
         selector.
     dI : optional uncertainties, used as curve_fit's sigma (absolute_sigma=True)
         if given.
-    p0 : optional initial guess (backgr, c, alpha). If not given, a
-        heuristic guess is constructed from the data in the fit range:
+    p0 : tuple, optional
+        Initial guess (backgr, c, alpha). If not given, a heuristic guess is constructed from the data in the fit range:
         backgr ~ min(I) in range, alpha ~ 4 (Porod-like default), c solved
         from the highest-q point in range given that alpha and backgr guess.
     """

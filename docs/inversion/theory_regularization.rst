@@ -114,7 +114,23 @@ Hansen (2000) eq. 19 (``hansen_eq19``, default)
     :math:`-236.2` on the 95-point grid, :math:`-118.8` vs :math:`-134.1`
     with 20 B-splines), which made it the default.
 
-In all three cases :math:`\mathbf L` is a factor with
+Eq. 19 with :math:`p(0)` free (``hansen_eq19_even``)
+    For the lamella kernel, whose :math:`p_t(0)>0` and :math:`p_t'(0)=0`
+    (:doc:`theory_forward_model`), the curvature term at :math:`r=0` uses
+    the mirror point :math:`p_0=p_2` of the even extension:
+
+    .. math::
+
+       S_{19,e}(\mathbf p) = (p_1-p_2)^2
+       + \sum_{j=2}^{N-1}\left[p_j-\tfrac12(p_{j-1}+p_{j+1})\right]^2
+       + \tfrac12 p_N^2 .
+
+    Only :math:`p(D_{max})=0` is imposed. The Hessian is positive definite
+    (the only function with zero curvature, zero slope at 0 and
+    :math:`p_N=0` is zero), so the normalized evidence exists. This is the
+    "free end point" option of Hansen (2016).
+
+In all four cases :math:`\mathbf L` is a factor with
 :math:`\mathbf L^T\mathbf L` = Hessian of :math:`S`
 (Cholesky factor for the Hansen penalties).
 
@@ -201,6 +217,35 @@ Unknown error scale (``noise_scale="estimate"``)
     identical to the one with the file errors (correlation 1.0000); with
     errors from the local cubic fits :math:`s=0.91`. :math:`\chi^2_r` is
     reported for the unscaled :math:`\sigma`.
+
+Fast evaluation over :math:`\lambda`
+    With :math:`\mathbf P=\mathbf L^T\mathbf L` positive definite (all
+    Hansen penalties) one Cholesky factor :math:`\mathbf P=\mathbf R^T\mathbf R`
+    and one eigen-decomposition
+    :math:`\mathbf R^{-T}\mathbf B\mathbf R^{-1}=\mathbf V\,\mathrm{diag}(\mu)\,\mathbf V^T`
+    give, for every :math:`\lambda`,
+
+    .. math::
+
+       \ln\det(2\lambda\mathbf P+\mathbf B) = \ln\det\mathbf P
+       + \sum_j\ln(2\lambda+\mu_j),\qquad
+       \mathbf p_\lambda = \mathbf R^{-1}\mathbf V\,
+       \mathrm{diag}\!\left(\frac{1}{2\lambda+\mu_j}\right)
+       \mathbf V^T\mathbf R^{-T}\mathbf A^T\mathbf W\mathbf b ,
+
+    i.e. :math:`O(MN)` work per :math:`\lambda` instead of a solve, a
+    determinant and an eigen-decomposition
+    (:class:`pysasfit.inversion.solvers.bayesian_evidence.FastEvidence`).
+    Every :math:`\lambda` is checked through the residual of its normal
+    equations: where :math:`\mathbf P` is ill-conditioned (e.g. the
+    "p(0) free" penalty, which pins only one end) the decomposition loses
+    digits at small :math:`\lambda`, and those :math:`\lambda` are
+    evaluated directly (one Cholesky factorization of
+    :math:`2\lambda\mathbf P+\mathbf B`, with the :math:`\lambda`-independent
+    parts precomputed). On test.dat (:math:`j_0`, 95 points) the result is
+    identical (:math:`|\Delta\ln Z|<5\cdot10^{-4}` on the grid, same
+    :math:`\lambda`), and the evidence solver with estimated error scale runs
+    in 0.4–0.6 s instead of 3–3.3 s.
 
 Number of good parameters
     .. math::

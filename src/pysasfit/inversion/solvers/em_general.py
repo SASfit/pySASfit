@@ -11,7 +11,7 @@ kernel is always >= 0, but the j0(qr) = sin(qr)/(qr) kernel (a signed,
 oscillating kernel) is not, and pair-distance-type solutions may be
 negative as well.
 
-The paper's construction (its Section 6), which this module implements:
+The paper's construction (its Section 6), which this module implements::
 
   (a) Signed SOLUTION, non-negative kernel k  (paper eq. 10):
       shift the unknown by a constant t > 0:
@@ -46,6 +46,7 @@ and rebuilding the second half from it -- `structure="first_half"`; an
 antisymmetrized alternative is available as `structure="antisym"`.
 
 Implementation details beyond the paper:
+
   - Columns of the extended kernel that are entirely zero (e.g. a k- column
     for a theta where the kernel is never negative) would give 0/0 in the
     EM correction; those components are simply left unchanged.
@@ -89,7 +90,7 @@ def split_kernel(K: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def default_offset(K: np.ndarray, b: np.ndarray, factor: float = 10.0) -> float:
-    """Generous offset t > max|p|, from a rough automatic signed estimate."""
+    """Generous offset t > max(abs(p)), from a rough automatic signed estimate."""
     p_est = arls.arls(K, b)
     scale = float(np.max(np.abs(p_est)))
     if not np.isfinite(scale) or scale == 0.0:
@@ -165,17 +166,19 @@ def solve(
         (2026-10-10), in the same spirit as SASfit's EM + MaxEnt
         (Kohlbrecher & Bressler 2022, eq. 48-53, maxent.py), but with the
         positive/negative entropy of a signed p (Skilling & Gull; p = h - g
-        with h, g >= 0, default model m for both channels):
+        with h, g >= 0, default model m for both channels)::
+
             S(p) = sum psi - 2m - p asinh(p / 2m),  psi = sqrt(p^2 + 4 m^2),
+
         dS/dp = -asinh(p/2m). The correction ds = lam * psi * dS/dp uses psi
         as metric, the signed analogue of the x-metric of maxent.py
-        (ds = lam * x * dS/dx). For |p| << m it is a ridge pull -lam*p, for
-        |p| >> m the usual -lam |p| log(|p|/m) of MaxEnt.
+        (ds = lam * x * dS/dx). For abs(p) << m it is a ridge pull -lam*p,
+        for abs(p) >> m the usual -lam abs(p) log(abs(p)/m) of MaxEnt.
     entropy_prior : "constant" -- default model: p is pulled towards 0 with
         level m = entropy_m; "adaptive" -- p is pulled towards Pi p, the
         Gaussian point-spread smoothing of maxent.py (eq. 55, width sigma2):
         ds = lam * psi * (asinh(Pi p / 2m) - asinh(p / 2m)).
-    entropy_m : default-model level m (> 0). Default 0.1 * max|p_est|,
+    entropy_m : default-model level m (> 0). Default 0.1 * max(abs(p_est)),
         with p_est the same rough ARLS estimate used for the offset t.
     """
     if structure not in ("first_half", "antisym"):

@@ -13,7 +13,7 @@ not transliterated from Hansen's code -- cited equation numbers refer to
 that manual.
 
 For L = I (standard form, which is what's implemented here -- general-form
-L needs the GSVD, eq. 2.11 in the manual, not yet implemented):
+L needs the GSVD, eq. 2.11 in the manual, not yet implemented)::
 
   SVD:            A = U diag(s) V^T                          (manual notation)
   TSVD (eq 2.45): x_k = sum_{i=1}^k (u_i^T b / s_i) v_i

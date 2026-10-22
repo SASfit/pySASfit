@@ -8,7 +8,9 @@ table of fit parameters:
 * ``fixed`` parameters keep their value, ``lower``/``upper`` are bounds;
 * **constraints** are inequalities or equalities of the parameter names (``"ff_R + ff_t < 100"``,
   ``"c1_scale + c2_scale == 1"``; a dot in a name becomes ``_``, see :meth:`FitProblem.identifiers`);
-* **priors** (``add_prior``) add a Gaussian term ``((x - mean) / sigma)^2`` to chi^2.
+* **priors** (``add_prior``, ``add_prior_text``) add a term to chi^2: ``normal`` (mean, sigma), ``lognormal`` (median, factor > 1),
+  ``halfnormal`` (sigma, for x >= 0) as extra residuals, and ``loguniform`` (flat in ln x, lower bound > 0 needed) as a scalar
+  term ``2 ln x`` that the least-squares backends (``scipy``, ``dfols``) cannot use.
 
 Parameters are addressed like in :class:`~pysasfit.studio.Pipeline`: ``"background"``, ``"scale.<i>"`` and
 ``"<i>.<ff|sd|sq>.<name>"`` for contribution ``i`` of a model.
@@ -104,6 +106,9 @@ def locate(model, address):
         if not np.isscalar(model.background):
             raise ValueError("only a constant background can be fitted")
         return (lambda: float(model.background), lambda v: setattr(model, "background", float(v)))
+    if address in ("bg.A", "bg.alpha"):  # power-law background  A * q**(-alpha)
+        attr = "bg_" + address[3:]
+        return (lambda: float(getattr(model, attr)), lambda v: setattr(model, attr, float(v)))
     parts = address.split(".")
     if parts[0] == "scale":
         i = int(parts[1])
@@ -245,6 +250,35 @@ class FitSummary:
                     lines[-1] += f"   ({lo:+.3g} / {hi:+.3g})"
         for text, g, ok in self.constraints:
             lines.append(f"  constraint {text}: {'ok' if ok else 'VIOLATED'} (lhs - rhs = {g:.4g})")
+        corr = self.correlation_text()
+        if corr:
+            lines += ["", corr]
+        return "\n".join(lines)
+
+    def correlation_text(self, threshold=0.9):
+        """Correlation matrix of the free parameters (lower triangle) and a warning for strongly correlated pairs."""
+        c = self.correlation()
+        n = len(self.free_labels)
+        if c is None or n < 2 or c.shape != (n, n) or not np.all(np.isfinite(c)):
+            return ""
+        w = max(len(label) for label in self.free_labels)
+        lines = ["correlation matrix of the free parameters:", " " * (w + 5) + " ".join(f"{j + 1:>6d}" for j in range(n))]
+        for i, label in enumerate(self.free_labels):
+            cells = " ".join(f"{c[i, j]:6.2f}" if j < i else "      " for j in range(n))
+            lines.append(f"{i + 1:>3d} {label:<{w}s} {cells}")
+        strong = sorted(
+            ((abs(c[i, j]), i, j) for i in range(n) for j in range(i) if abs(c[i, j]) >= threshold), reverse=True
+        )
+        if strong:
+            lines += ["", f"strongly correlated (|r| >= {threshold:g}):"]
+            for _r, i, j in strong:
+                lines.append(f"  {self.free_labels[j]} / {self.free_labels[i]}: r = {c[i, j]:+.3f}")
+            lines += [
+                "  The data do not determine these parameters separately, so their errors are large. Options:",
+                "  - fix one of them at a value known independently (e.g. from another measurement);",
+                "  - give one or both a Gaussian prior from independent knowledge (Priors tab), not from this data;",
+                "  - if only their combination matters (e.g. a product), no action is needed.",
+            ]
         return "\n".join(lines)
 
 
@@ -254,7 +288,9 @@ class FitProblem:
         self.datasets = []
         self.parameters = []
         self.constraints = []
-        self.priors = []  # (parameter index, mean, sigma)
+        self.priors = []  # (parameter index, mean, sigma): Gaussian priors
+        self.prior_extra = []  # (parameter index, kind, a, b): log-normal and half-normal priors (extra residuals)
+        self.log_uniform = []  # parameter indices with a log-uniform prior (scalar term, no residual)
         self._access = {}  # (dataset, address) -> (getter, setter)
         self._base = {}  # (dataset, address) -> value of the model before the fit
         self.last_error = None
@@ -352,11 +388,88 @@ class FitProblem:
         self.constraints.append(c)
         return c
 
-    def add_prior(self, label, mean, sigma):
-        """Gaussian prior: adds ``((value - mean) / sigma)^2`` to chi^2."""
-        if not sigma > 0:
-            raise ValueError("sigma of a prior must be > 0")
-        self.priors.append((self.parameters.index(self.parameter(label)), float(mean), float(sigma)))
+    PRIOR_USAGE = {
+        "normal": "name  mean  sigma", "lognormal": "name  lognormal  median  factor", "halfnormal": "name  halfnormal  sigma",
+        "loguniform": "name  loguniform",
+    }  # fmt: skip
+
+    def add_prior(self, label, *args, kind="normal"):
+        """Add a prior to the parameter ``label``; the term is added to chi^2.
+
+        * ``add_prior(label, mean, sigma)`` -- Gaussian: ``((x - mean) / sigma)^2``;
+        * ``add_prior(label, median, factor, kind="lognormal")`` -- ``(ln(x / median) / ln(factor))^2``, factor > 1 (positive
+          parameters known to a factor, e.g. 2 = within a factor 2 at one sigma);
+        * ``add_prior(label, sigma, kind="halfnormal")`` -- ``(x / sigma)^2``: small values preferred, for x >= 0;
+        * ``add_prior(label, kind="loguniform")`` -- flat in ln x (every decade equally likely), adds ``2 ln x``; the lower bound
+          of the parameter must be > 0. This term is not a residual: the backends ``scipy`` and ``dfols`` refuse it.
+        """
+        kind = kind.lower()
+        if kind not in self.PRIOR_USAGE:
+            raise ValueError(f"unknown prior '{kind}' (use {', '.join(self.PRIOR_USAGE)})")
+        need = {"normal": 2, "lognormal": 2, "halfnormal": 1, "loguniform": 0}[kind]
+        if len(args) != need:
+            raise ValueError(f"write  {self.PRIOR_USAGE[kind]}")
+        i = self.parameters.index(self.parameter(label))
+        a = [float(v) for v in args]
+        if kind == "normal":
+            if not a[1] > 0:
+                raise ValueError("sigma of a prior must be > 0")
+            self.priors.append((i, a[0], a[1]))
+        elif kind == "lognormal":
+            if not (a[0] > 0 and a[1] > 1):
+                raise ValueError("a log-normal prior needs median > 0 and factor > 1")
+            self.prior_extra.append((i, kind, a[0], a[1]))
+        elif kind == "halfnormal":
+            if not a[0] > 0:
+                raise ValueError("sigma of a prior must be > 0")
+            self.prior_extra.append((i, kind, a[0], 0.0))
+        else:
+            if not self.parameters[i].lower > 0:
+                raise ValueError("a log-uniform prior needs a lower bound > 0 (and a finite upper bound)")
+            self.log_uniform.append(i)
+
+    def add_prior_text(self, line):
+        """Add a prior from a text line: ``name mean sigma``, ``name lognormal median factor``, ``name halfnormal sigma``
+        or ``name loguniform``."""
+        parts = [t for t in re.split(r"[\s,;=±]+|\+-", line.strip()) if t]
+        kind = "normal"
+        if len(parts) > 1 and parts[1].lower() in self.PRIOR_USAGE:
+            kind = parts.pop(1).lower()
+        if not parts:
+            raise ValueError("empty prior")
+        try:
+            nums = [float(t) for t in parts[1:]]
+            self.add_prior(parts[0], *nums, kind=kind)
+        except KeyError as exc:
+            raise ValueError(f"prior '{line.strip()}': unknown parameter {exc.args[0]}") from None
+        except ValueError as exc:
+            msg = str(exc)
+            if msg.startswith("could not convert"):
+                msg = f"write  {self.PRIOR_USAGE[kind]}"
+            raise ValueError(f"prior '{line.strip()}': {msg}") from None
+
+    def n_prior_rows(self):
+        """Number of residual rows of the priors (the log-uniform prior has none)."""
+        return len(self.priors) + len(self.prior_extra)
+
+    def _prior_rows(self, vals):
+        rows = [np.array([(vals[i] - mean) / sigma]) for i, mean, sigma in self.priors]
+        for i, kind, a, b in self.prior_extra:
+            x = vals[i]
+            if kind == "lognormal":
+                r = (math.log(x / a) / math.log(b)) if x > 0 else BIG
+            else:
+                r = x / a
+            rows.append(np.array([r]))
+        return rows
+
+    def prior_penalty(self, vals):
+        """Scalar term of the log-uniform priors, ``2 ln x`` (0 without them)."""
+        t = 0.0
+        for i in self.log_uniform:
+            x = vals[i]
+            t += 2.0 * math.log(x) if x > 0 else BIG
+        return t
 
     # ------------------------------------------------------------ evaluation
     def apply(self, k, values=None):
@@ -383,8 +496,7 @@ class FitProblem:
                 self.last_error = f"{type(exc).__name__}: {exc}"
                 r = np.full(d.q.size, BIG)
             out.append(np.where(np.isfinite(r), r, BIG))
-        for i, mean, sigma in self.priors:
-            out.append(np.array([(vals[i] - mean) / sigma]))
+        out.extend(self._prior_rows(vals))
         return np.concatenate(out)
 
     def _constraint_values(self, vals):
@@ -396,7 +508,7 @@ class FitProblem:
         """Indices of the free parameters that variable projection can eliminate (see the module docstring)."""
         cand = range(len(self.parameters)) if candidates is None else candidates
         used = set().union(*[c.names for c in self.constraints]) if self.constraints else set()
-        prior = {i for i, _m, _s in self.priors}
+        prior = {i for i, _m, _s in self.priors} | {i for i, _k, _a, _b in self.prior_extra} | set(self.log_uniform)
         kinds = {}
         for i in cand:
             p = self.parameters[i]
@@ -421,6 +533,8 @@ class FitProblem:
         try:
             if p.address == "background":
                 return ("bg", None)
+            if p.address == "bg.A":
+                return ("bgA", None)
             if parts[0] == "scale":
                 return ("scale", int(parts[1]))
             if len(parts) >= 3 and parts[1] == "sd":
@@ -445,12 +559,12 @@ class FitProblem:
         nl = len(lin)
         col = {pi: j for j, pi in enumerate(lin)}
         nrows = sum(d.q.size for d in self.datasets)
-        total = nrows + len(self.priors)
+        total = nrows + self.n_prior_rows()
         Ms, bs = [], []
         for k, d in enumerate(self.datasets):
             self.apply(k, vals)
             wt = math.sqrt(d.weight) / d.sigma
-            sc_cols, n_cols, bg_col = {}, {}, None
+            sc_cols, n_cols, bg_col, pw_col = {}, {}, None, None
             for pi, j in col.items():
                 if k in self.parameters[pi].datasets:
                     kind, ci = self._lin_kinds[pi]
@@ -458,6 +572,8 @@ class FitProblem:
                         sc_cols[ci] = j
                     elif kind == "N":
                         n_cols[ci] = j
+                    elif kind == "bgA":
+                        pw_col = j
                     else:
                         bg_col = j
             try:
@@ -472,6 +588,12 @@ class FitProblem:
                         M[:, n_cols[i]] = scales[i] * part
                     else:
                         off = off + scales[i] * part
+                pw = d.model.power_term(d.q)  # bg is the constant part plus this power-law term
+                bg = bg - pw
+                if pw_col is None:
+                    off = off + pw
+                else:
+                    M[:, pw_col] = np.asarray(d.q, float) ** (-d.model.bg_alpha)
                 if bg_col is None:
                     off = off + bg
                 else:
@@ -503,13 +625,74 @@ class FitProblem:
             c[ok] = sol / norm[ok]
         vals[lin] = c
         r = [M @ c - b]
-        for i, mean, sigma in self.priors:
-            r.append(np.array([(vals[i] - mean) / sigma]))
+        r.extend(self._prior_rows(vals))
         r = np.concatenate(r)
         return np.where(np.isfinite(r), r, BIG)
 
     def fit(self, backend="scipy", algorithm=None, callback=None, cancel=None, penalty=1e3, scale_errors=True,
-            vp=False, cache=False, snap=0.05, **options):  # fmt: skip
+            vp=False, cache=False, snap=0.05, coarse=False, coarse_factor=4, grid=False, **options):  # fmt: skip
+        """Run the fit; returns a :class:`FitSummary`. Speed-ups (all optional): ``vp`` variable projection,
+        ``cache`` form-factor cache, ``coarse`` coarse to fine, ``grid`` fixed logarithmic size grid (implies ``cache``).
+        See :meth:`_fit_coarse` and :meth:`_fit_once` for the details and the backend ``options``.
+        """
+        if not grid:
+            return self._fit_coarse(backend, algorithm, callback, cancel, penalty, scale_errors, vp, cache, snap, coarse,
+                                    coarse_factor, **options)  # fmt: skip
+        cs = [c for c in {id(c): c for d in self.datasets for c in d.model.contributions}.values() if hasattr(c, "fixed_grid")]
+        state = [(c, c.fixed_grid, c._grid) for c in cs]
+        for c in cs:
+            c.fixed_grid, c._grid = True, None
+        try:
+            return self._fit_coarse(backend, algorithm, callback, cancel, penalty, scale_errors, vp, True, snap, coarse,
+                                    coarse_factor, **options)  # fmt: skip
+        finally:
+            for c, fixed, g in state:
+                c.fixed_grid, c._grid = fixed, g
+
+    def _fit_coarse(self, backend="scipy", algorithm=None, callback=None, cancel=None, penalty=1e3, scale_errors=True,
+                    vp=False, cache=False, snap=0.05, coarse=False, coarse_factor=4, **options):  # fmt: skip
+        """Run the fit, optionally coarse to fine; see :meth:`_fit_once` for the arguments.
+
+        ``coarse=True``: first fit with a cheap size-distribution integral (``n_x`` divided by ``coarse_factor``,
+        ``rtol`` at least 1e-3), then repeat from that result with the real settings. A global optimiser is
+        replaced by the least-squares ``trf`` in the second stage (the first stage did the global search). The
+        evaluations and times of both stages are added in the summary.
+        """
+        if not coarse:
+            return self._fit_once(backend, algorithm, callback, cancel, penalty, scale_errors, vp, cache, snap, **options)
+        targets = {id(c): c for d in self.datasets for c in d.model.contributions
+                   if getattr(c, "sd", None) is not None and hasattr(c, "n_x")}.values()  # fmt: skip
+        if not targets:  # no size distribution: nothing to coarsen
+            return self._fit_once(backend, algorithm, callback, cancel, penalty, scale_errors, vp, cache, snap, **options)
+        saved = [(c, c.n_x, c.rtol) for c in targets]
+        n_coarse = ", ".join(str(max(8, int(c.n_x) // max(int(coarse_factor), 1))) for c in targets)
+        try:
+            for c in targets:
+                c.n_x = max(8, int(c.n_x) // max(int(coarse_factor), 1))
+                c.rtol = max(c.rtol, 1e-3)
+            first = self._fit_once(backend, algorithm, callback, cancel, penalty, scale_errors, vp, cache, snap, **options)
+        finally:
+            for c, n_x, rtol in saved:
+                c.n_x, c.rtol = n_x, rtol
+        if first.message == "cancelled":
+            return first
+        second_backend, second_alg = (backend, algorithm)
+        if not self.log_uniform and (backend in ("scipy-global", "cma") or (backend == "bumps" and algorithm in ("de", "dream"))):
+            second_backend, second_alg, options = "scipy", "trf", {k: v for k, v in options.items() if k == "maxeval"}
+        elif backend == "scipy":
+            options = {k: v for k, v in options.items() if k != "start"}
+        second = self._fit_once(second_backend, second_alg, callback, cancel, penalty, scale_errors, vp, cache, snap, **options)
+        second.message = (
+            f"coarse to fine: stage 1 {first.nfev} evaluations (chi2/dof {first.chi2_red:.4g}, "
+            f"n_x {n_coarse}), "
+            f"stage 2 {second.nfev} evaluations; {second.message}"
+        )
+        second.nfev += first.nfev
+        second.seconds += first.seconds
+        return second
+
+    def _fit_once(self, backend="scipy", algorithm=None, callback=None, cancel=None, penalty=1e3, scale_errors=True,
+                  vp=False, cache=False, snap=0.05, **options):  # fmt: skip
         """Run the fit; returns a :class:`FitSummary` (the parameters keep the fitted values).
 
         ``callback(nfev, chi2_red)`` is called for every evaluation; ``cancel`` is a ``threading.Event`` that stops
@@ -519,13 +702,14 @@ class FitProblem:
         ``xtol_rel``, ``ftol_rel`` for NLopt; ``rhobeg``, ``rhoend`` for DFO-LS).
         """
         contribs = {id(c): c for d in self.datasets for c in d.model.contributions}.values()
+        contribs = [c for c in contribs if hasattr(c, "enable_cache")]  # (simple stand-in models have no cache)
         state = [(c, c.cache, c.snap) for c in contribs]
         if cache:
             for c in contribs:
                 c.enable_cache(snap)
         try:
             summary = self._fit(backend, algorithm, callback, cancel, penalty, scale_errors, vp, **options)
-            if cache:
+            if cache and contribs:
                 summary.message += "; cache: " + ", ".join(c.cache.text() for c in contribs if c.cache is not None)
         finally:
             for c, cc, sn in state:
@@ -537,6 +721,11 @@ class FitProblem:
             raise ValueError(f"unknown backend '{backend}' (available: {', '.join(BACKENDS)})")
         if not self.datasets:
             raise ValueError("no data set")
+        if self.log_uniform and backend in ("scipy", "dfols"):
+            raise ValueError(
+                f"the log-uniform prior is a scalar term that the least-squares backend '{backend}' cannot use: choose another "
+                "optimiser (scipy global, NLopt, iminuit, CMA-ES, bumps) or a log-normal prior"
+            )
         ctx = _Context(self, cancel, callback, penalty, vp)
         if not ctx.all_free:
             raise ValueError("no free parameter")
@@ -563,16 +752,18 @@ class FitProblem:
         self.apply(0)
         r = self._residuals(vals)
         chi2 = float(np.sum(r**2))
-        n = sum(d.q.size for d in self.datasets) + len(self.priors)
+        n = sum(d.q.size for d in self.datasets) + self.n_prior_rows()
         dof = max(n - len(ctx.all_free), 1)
         cov, err = ctx.covariance(vals, chi2 / dof if scale_errors else 1.0)
         free_labels = [self.parameters[i].label for i in ctx.all_free]
         errors = dict(zip(free_labels, err))
-        at_bounds = [
-            self.parameters[i].label
-            for i, x in zip(ctx.all_free, vals[ctx.all_free])
-            if x <= self.parameters[i].lower + 1e-6 * max(abs(x), 1) or x >= self.parameters[i].upper - 1e-6 * max(abs(x), 1)
-        ]
+        at_bounds = []
+        for i, x in zip(ctx.all_free, vals[ctx.all_free]):
+            lo, hi = self.parameters[i].lower, self.parameters[i].upper
+            # trust-region methods stop slightly inside a bound: 1e-4 relative to the value or 1e-6 of the range
+            tol = max(1e-4 * abs(x), 1e-6 * (hi - lo if math.isfinite(hi - lo) else 0.0), 1e-9)
+            if x <= lo + tol or x >= hi - tol:
+                at_bounds.append(self.parameters[i].label)
         per_set, pos = [], 0
         for d in self.datasets:
             rk = r[pos : pos + d.q.size]
@@ -614,8 +805,20 @@ class _Context:
         self.cov_u = None  # covariance in the scaled variables, if the backend has one (DREAM)
         self.asym = {}  # free index -> (minus, plus) interval in the scaled variables
         self.best_chi2, self.best_u = math.inf, None
-        self.ndata = sum(d.q.size for d in problem.datasets) + len(problem.priors)
+        self.ndata = sum(d.q.size for d in problem.datasets) + problem.n_prior_rows()
         self.dof = max(self.ndata - len(self.all_free), 1)
+
+    def rescale_to_bounds(self):
+        """Global search: scale every variable with finite bounds by its range (a box of width 1).
+
+        The default scale is the start value, which makes the box of a parameter that starts near 0 (or far from the
+        middle of its range) huge or tiny; a global optimiser samples the box, so it needs the range as the unit.
+        Variables without finite bounds keep their scale."""
+        x0, lo, hi = self.u0 * self.scale, self.lb * self.scale, self.ub * self.scale
+        width = hi - lo
+        ok = np.isfinite(width) & (width > 0)
+        scale = np.where(ok, width, self.scale)
+        self.scale, self.u0, self.lb, self.ub = scale, x0 / scale, lo / scale, hi / scale
 
     def _prep(self, idx):
         """Start values (clipped to the bounds), scales and bounds of the parameters ``idx``."""
@@ -653,6 +856,8 @@ class _Context:
         else:
             r = self.problem._residuals(self.vals(u))
         chi2 = float(np.sum(r**2))
+        if self.problem.log_uniform:  # the point is judged by chi2 plus the scalar prior term
+            chi2 += self.problem.prior_penalty(self.vals(u))
         self.nfev += 1
         if chi2 < self.best_chi2 and not self.constraints_violated(u):
             self.best_chi2, self.best_u = chi2, np.array(u, float)
@@ -661,7 +866,8 @@ class _Context:
         return r
 
     def chi2(self, u):
-        return float(np.sum(self.residual(u) ** 2))
+        c = float(np.sum(self.residual(u) ** 2))
+        return c + self.problem.prior_penalty(self.vals(u)) if self.problem.log_uniform else c
 
     def covariance(self, vals, factor):
         """Covariance and standard errors of all free parameters from the numerical Jacobian of the full problem."""
@@ -799,7 +1005,7 @@ def _run_nlopt(ctx, algorithm, options):
         raise
     except Exception as exc:  # noqa: BLE001 -- generic NLopt failure (nlopt.runtime_error), e.g. a gradient method on a noisy function
         u, text, ok = best(), f"NLopt stopped ({exc or 'failure'}); best point so far", False
-    if options.get("polish"):  # finish with a least-squares fit: reaches the minimum, gives the errors
+    if options.get("polish") and not ctx.problem.log_uniform:  # finish with a least-squares fit: reaches the minimum, gives the errors
         u2, text2, ok2 = _run_scipy(ctx, "trf", {"start": u})
         u, text, ok = best(), f"{text}; refined with least_squares: {text2}", ok2
     return u, text, ok
@@ -821,7 +1027,7 @@ def _penalised(ctx):
 def _finish(ctx, u, text, ok, options):
     """The best point seen; with ``polish`` a least-squares fit from there (exact minimum and errors)."""
     best = lambda x: ctx.best_u if ctx.best_u is not None else x  # noqa: E731
-    if options.get("polish"):
+    if options.get("polish") and not ctx.problem.log_uniform:
         _u, text2, ok2 = _run_scipy(ctx, "trf", {"start": best(u)})
         return best(u), f"{text}; refined with least_squares: {text2}", ok2
     return best(u), text, ok
@@ -829,6 +1035,7 @@ def _finish(ctx, u, text, ok, options):
 
 _GLOBAL_ALGORITHMS = {
     "differential_evolution": "global, population based (finite bounds needed)",
+    "multistart": "global, many least-squares fits from spread-out start points, reports the minima found (finite bounds needed)",
     "dual_annealing": "global, simulated annealing (finite bounds needed)",
     "shgo": "global, simplicial homology (finite bounds needed)",
     "basinhopping": "global, random hops + local search (bounds optional)",
@@ -844,6 +1051,9 @@ def _run_scipy_global(ctx, algorithm, options):
     finite = bool(np.all(np.isfinite(ctx.lb)) and np.all(np.isfinite(ctx.ub)))
     if name != "basinhopping" and not finite:
         raise ValueError(f"{name}: set a lower and an upper bound for every fitted parameter")
+    ctx.rescale_to_bounds()
+    if name == "multistart":
+        return _run_multistart(ctx, options)
     f = _penalised(ctx)
     n = len(ctx.u0)
     bounds = list(zip(ctx.lb, ctx.ub))
@@ -865,6 +1075,52 @@ def _run_scipy_global(ctx, algorithm, options):
         mk = {"method": "Powell", "bounds": bounds} if finite else {"method": "Nelder-Mead"}
         res = so.basinhopping(f, x0, niter=int(options.get("niter", 30)), stepsize=0.2, seed=seed, minimizer_kwargs=mk)
     return _finish(ctx, res.x, str(res.message).strip("[]' ") or name, bool(getattr(res, "success", True)), options)
+
+
+def _run_multistart(ctx, options):
+    """Least-squares fits from ``starts`` (default 20) points spread over the bounds; the best one is returned.
+
+    The start points are a Latin hypercube (uniform in a parameter, log-uniform when its bounds are positive and span
+    more than two decades); the first start is the current parameter set. The message lists the distinct minima found
+    (chi2/dof, number of starts that ended in each): a minimum found by one start only is a warning sign."""
+    from scipy.stats import qmc
+
+    if ctx.problem.log_uniform:
+        raise ValueError("multistart uses least-squares fits, which cannot use a log-uniform prior")
+    n = len(ctx.u0)
+    k = max(int(options.get("starts", 20)), 1)
+    seed = options.get("seed", 1)
+    lo, hi = ctx.lb * ctx.scale, ctx.ub * ctx.scale
+    U = qmc.LatinHypercube(d=n, seed=seed).random(max(k - 1, 0)) if k > 1 else np.empty((0, n))
+    X = lo + U * (hi - lo)
+    wide = (lo > 0) & (hi > 100 * lo)
+    X[:, wide] = np.exp(np.log(lo[wide]) + U[:, wide] * (np.log(hi[wide]) - np.log(lo[wide])))
+    starts = [ctx.u0] + [x / ctx.scale for x in X]
+    maxeval = int(options.get("maxeval") or 0)
+    per = {"maxeval": max(maxeval // k, 50)} if maxeval else {}
+    f = _penalised(ctx)
+    found = []
+    for s in starts:
+        try:
+            u, _msg, _ok = _run_scipy(ctx, "trf", {"start": s, **per})
+        except FitCancelled:
+            raise
+        except Exception:  # noqa: BLE001 -- a start in a region where the model cannot be evaluated
+            continue
+        found.append((float(f(u)), np.asarray(u, float)))
+    if not found:
+        raise ValueError("multistart: no start point gave a usable fit")
+    found.sort(key=lambda t: t[0])
+    groups = []  # [chi2/dof of the best of the group, count]
+    for c, _u in found:
+        if groups and c <= groups[-1][0] * (1 + 1e-3) + 1e-12:
+            groups[-1][1] += 1
+        else:
+            groups.append([c, 1])
+    shown = ", ".join(f"{c:.4g} (x{m})" for c, m in groups[:4]) + (" ..." if len(groups) > 4 else "")
+    text = (f"multistart: {len(found)} of {len(starts)} fits ended, {len(groups)} distinct minima; "
+            f"chi2/dof (starts): {shown}")  # fmt: skip
+    return found[0][1], text, True
 
 
 _MINUIT_ALGORITHMS = {
@@ -918,7 +1174,44 @@ _BUMPS_ALGORITHMS = {
     "amoeba": "simplex",
     "de": "differential evolution (finite bounds needed)",
     "dream": "DREAM MCMC: best point + posterior errors (finite bounds needed; many evaluations)",
+    "newton": "quasi-Newton BFGS (gradient, local minimum only)",
+    "pt": "parallel tempering MCMC (experimental; finite bounds needed)",
 }
+
+#: options of the bumps fitters that can be given to ``problem.fit("bumps", ..., bumps={...})`` or typed into the
+#: "bumps options" box of the Fit panel (``steps=2000, pop=20, init=lhs``): steps samples burn pop thin init alpha
+#: outliers trim (dream); steps pop CR F ftol xtol (de); steps starts radius xtol ftol jump (amoeba); steps starts ftol
+#: xtol jump (lm, newton); steps nT Tmin Tmax CR burn (pt). Unknown keys of the chosen method raise a ValueError.
+_BUMPS_NEEDS_BOUNDS = ("de", "dream", "pt")
+
+
+def parse_option_text(text):
+    """``"steps=2000, pop=20, init=lhs"`` -> ``{"steps": 2000, "pop": 20, "init": "lhs"}`` (numbers, True/False, else text)."""
+    import ast
+
+    out = {}
+    for part in re.split(r"[,;\n]+", text or ""):
+        part = part.strip()
+        if not part:
+            continue
+        key, sep, val = part.partition("=")
+        key, val = key.strip(), val.strip()
+        if not sep or not key:
+            raise ValueError(f"option '{part}': write it as name=value")
+        try:
+            out[key] = ast.literal_eval(val)
+        except (ValueError, SyntaxError):
+            out[key] = val
+    return out
+
+
+def _bumps_settings(name):
+    from bumps.fitters import FITTERS
+
+    for f in FITTERS:
+        if f.id == name:
+            return dict(f.settings)
+    return {}
 
 
 class _BumpsFitness:
@@ -953,7 +1246,11 @@ class _BumpsFitness:
         return self._residuals()
 
     def nllf(self):
-        return 0.5 * float(np.sum(self._residuals() ** 2))
+        v = 0.5 * float(np.sum(self._residuals() ** 2))
+        if self.ctx.problem.log_uniform:
+            u = np.array([p.value for p in self.pars])
+            v += 0.5 * self.ctx.problem.prior_penalty(self.ctx.vals(u))
+        return v
 
     def numpoints(self):
         return self.ctx.ndata
@@ -975,7 +1272,7 @@ def _run_bumps(ctx, algorithm, options):
     name = algorithm or "lm"
     if name not in _BUMPS_ALGORITHMS:
         raise ValueError(f"unknown bumps method '{name}' (use {', '.join(_BUMPS_ALGORITHMS)})")
-    if name in ("de", "dream") and not (np.all(np.isfinite(ctx.lb)) and np.all(np.isfinite(ctx.ub))):
+    if name in _BUMPS_NEEDS_BOUNDS and not (np.all(np.isfinite(ctx.lb)) and np.all(np.isfinite(ctx.ub))):
         raise ValueError(f"bumps {name}: set a lower and an upper bound for every fitted parameter")
     maxeval = int(options.get("maxeval") or 0)
     kw = {}
@@ -984,6 +1281,12 @@ def _run_bumps(ctx, algorithm, options):
         kw = {"pop": pop, "burn": burn, "samples": int(options.get("samples", maxeval or 4000 * len(ctx.u0))), "thin": 1}
     elif maxeval:
         kw = {"steps": max(1, maxeval // max(len(ctx.u0), 1))}
+    allowed = _bumps_settings(name)
+    given = {k: v for k, v in (options.get("bumps") or {}).items()}
+    unknown = sorted(set(given) - set(allowed))
+    if unknown:
+        raise ValueError(f"bumps {name}: unknown option(s) {', '.join(unknown)} (known: {', '.join(allowed)})")
+    kw.update(given)  # explicit bumps options win over the defaults above
     problem = FitProblem(_BumpsFitness(ctx))
     import warnings
 
@@ -991,14 +1294,14 @@ def _run_bumps(ctx, algorithm, options):
         warnings.simplefilter("ignore")
         res = fit(problem, method=name, verbose=False, **kw)
     text, ok = str(res.message or name), bool(res.success)
-    if name == "dream":
+    if name in ("dream", "pt") and getattr(res, "state", None) is not None:
         try:  # posterior: covariance and 68 % intervals around the best point
             pts = np.asarray(res.state.draw().points, float)
             ctx.cov_u = np.cov(pts.T) if pts.shape[0] > 2 else None
             best = ctx.best_u if ctx.best_u is not None else np.asarray(res.x, float)
             lo, hi = np.percentile(pts, [15.87, 84.13], axis=0)
             ctx.asym = {j: (float(lo[j] - best[j]), float(hi[j] - best[j])) for j in range(pts.shape[1])}
-            text = f"DREAM: {pts.shape[0]} posterior samples"
+            text = f"{name.upper() if name == 'pt' else 'DREAM'}: {pts.shape[0]} posterior samples"
         except Exception:  # noqa: BLE001 -- a failed state export must not lose the fit
             pass
         ok = True
@@ -1008,6 +1311,7 @@ def _run_bumps(ctx, algorithm, options):
 def _run_cma(ctx, algorithm, options):
     import cma
 
+    ctx.rescale_to_bounds()
     n = len(ctx.u0)
     f = _penalised(ctx)
     x0 = np.clip(ctx.u0, ctx.lb, ctx.ub)

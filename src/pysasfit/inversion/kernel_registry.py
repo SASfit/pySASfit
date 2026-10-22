@@ -35,6 +35,20 @@ class KernelSpec:
     uses_alpha: bool = True
     # y-axis label for the recovered function when uses_alpha is False
     result_label: str = "p(r)"
+    # Symmetry of the PDDF-type kernels (Hansen 2016, eqs. 1-3):
+    # "sphere" (3D), "cylinder" (cross-section of a long rod, per unit
+    # length) or "lamella" (thickness of a flat sheet, per unit area).
+    # None for size-distribution kernels.
+    geometry: str | None = None
+    # Forward value of the reduced intensity q^k I(q) for q -> 0, as a
+    # multiple of int p(r) dr: k = 0, 1, 2 for sphere, cylinder, lamella.
+    forward_factor: float = 4.0 * np.pi
+    forward_label: str = "I(0) = 4π∫p dr"
+    # name of the radius of gyration obtained from int p r^2 / (2 int p)
+    rg_label: str = "R<sub>g</sub>"
+    # True when p(0) != 0 (lamella: p(r) = gamma(r), gamma(0) = int rho^2 dx);
+    # the GUI then preselects a smoothness penalty that does not pin p(0) = 0.
+    p0_free: bool = False
 
 
 def sinc_kernel(q: np.ndarray, r: float) -> np.ndarray:
@@ -65,7 +79,7 @@ def sphere_rayleigh_gans_intensity(q: np.ndarray, r: float) -> np.ndarray:
     """
     Scattered intensity of a homogeneous sphere of radius r, Rayleigh-Gans
     (= exact form factor for a sphere in the Born/RG approximation, which
-    for a sphere coincides with the standard exact form factor):
+    for a sphere coincides with the standard exact form factor)::
 
         |F(qr)|^2 = r^6 * [3 (sin(qr) - qr cos(qr)) / (qr)^3]^2
 
@@ -103,9 +117,47 @@ def sphere_rayleigh_gans_intensity(q: np.ndarray, r: float) -> np.ndarray:
     return (r**6) * F**2
 
 
+def cylinder_pddf_kernel(q: np.ndarray, r: float) -> np.ndarray:
+    """
+    Kernel of the cross-section PDDF of a long cylinder (rod), Hansen
+    (2016) eq. 2 per unit length:
+
+        I(q) = (2 pi^2 / q) * integral p_c(r) J0(qr) dr,
+
+    with p_c(r) = r * gamma_c(r) the pair-distance distribution of the
+    cross-section (2D), J0 the cylindrical Bessel function of order 0.
+    The 1/q factor is the 1/(qL) of the orientational average of a
+    long rod (valid for q >> 2 pi/L).  Same normalization as
+    pysasfit.sldprofile.twostep.ift_kernel(geometry="cylinder").
+    """
+    from scipy.special import j0
+
+    q = np.asarray(q, dtype=float)
+    q_safe = np.where(q == 0, np.finfo(float).tiny, q)
+    return 2.0 * np.pi**2 * j0(q * r) / q_safe
+
+
+def lamella_pddf_kernel(q: np.ndarray, r: float) -> np.ndarray:
+    """
+    Kernel of the thickness PDDF of a flat lamella (sheet), Hansen (2016)
+    eq. 3 per unit area:
+
+        I(q) = (4 pi / q^2) * integral p_t(r) cos(qr) dr,
+
+    with p_t(r) = gamma_t(r) the 1D autocorrelation of the density profile
+    across the sheet (p_t(0) = int rho^2 dx > 0, i.e. NOT zero at r = 0).
+    The 1/q^2 factor is the Lorentz factor of the orientational average of a
+    large flat sheet (valid for q >> 2 pi/sqrt(A)).  Same normalization as
+    pysasfit.sldprofile.twostep.ift_kernel(geometry="lamella").
+    """
+    q = np.asarray(q, dtype=float)
+    q_safe = np.where(q == 0, np.finfo(float).tiny, q)
+    return 4.0 * np.pi * np.cos(q * r) / q_safe**2
+
+
 KERNEL_REGISTRY: dict[str, KernelSpec] = {
     "sinc_4pi": KernelSpec(
-        label="4\u03c0 j\u2080(qr)  [j\u2080(x)=sin(x)/x, spherical Bessel]",
+        label="Sphere: 4\u03c0 j\u2080(qr)  [j\u2080(x)=sin(x)/x, spherical Bessel]",
         func=sinc_kernel,
         description="Fourier-sine (Debye/IFT-style) kernel relating a radial "
                      "distribution p(r) to I(q), via the zeroth-order spherical "
@@ -113,6 +165,35 @@ KERNEL_REGISTRY: dict[str, KernelSpec] = {
         default_alpha=0.0,
         uses_alpha=False,
         result_label="p(r)",
+        geometry="sphere",
+    ),
+    "cylinder_pddf": KernelSpec(
+        label="Cylinder cross-section: 2\u03c0\u00b2 J\u2080(qr)/q  [Hansen 2016]",
+        func=cylinder_pddf_kernel,
+        description="Cross-section pair-distance distribution p_c(r) of a long "
+                     "rod (per unit length): I(q) = 2 pi^2/q int p_c(r) J0(qr) dr.",
+        default_alpha=0.0,
+        uses_alpha=False,
+        result_label="$p_c(r)$",
+        geometry="cylinder",
+        forward_factor=2.0 * np.pi**2,
+        forward_label="lim q·I(q) = 2π²∫p<sub>c</sub> dr",
+        rg_label="R<sub>c</sub> (cross-section)",
+    ),
+    "lamella_pddf": KernelSpec(
+        label="Lamella thickness: 4\u03c0 cos(qr)/q\u00b2  [Hansen 2016]",
+        func=lamella_pddf_kernel,
+        description="Thickness pair-distance distribution p_t(r) = gamma_t(r) of a "
+                     "flat sheet (per unit area): I(q) = 4 pi/q^2 int p_t(r) cos(qr) dr; "
+                     "p_t(0) > 0.",
+        default_alpha=0.0,
+        uses_alpha=False,
+        result_label="$p_t(r)$",
+        geometry="lamella",
+        forward_factor=4.0 * np.pi,
+        forward_label="lim q²·I(q) = 4π∫p<sub>t</sub> dr",
+        rg_label="R<sub>t</sub> (thickness)",
+        p0_free=True,
     ),
     "sphere_rg": KernelSpec(
         label="Sphere (Rayleigh-Gans)",

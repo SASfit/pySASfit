@@ -8,7 +8,7 @@ Fourier transformation in small-angle scattering", J. Appl. Cryst. 39,
 
 Their setup (their eq. 3-6, notation p for the solution vector, their S is
 our L2 smoothness penalty p^T L^T L p matching their eq. 5, their A = grad-
-grad S, B = grad-grad (chi2/2)):
+grad S, B = grad-grad (chi2/2))::
 
     Q = lambda*S + chi2                                  (eq. 3)
     chi2 = sum_i [Im(qi) - I(qi)]^2 / sigma_i^2            (eq. 4)
@@ -112,6 +112,96 @@ def log_evidence(K: np.ndarray, b: np.ndarray, sigma: np.ndarray, L: np.ndarray,
     return EvidenceResult(lam=lam, log_evidence=log_p, p_map=p_map, n_good_params=n_good)
 
 
+class FastEvidence:
+    """log_evidence() for many lambda at the cost of one decomposition
+    (2026-10-21). Same formula and same results as log_evidence().
+
+    With P = L^T L + ridge I positive definite (all Hansen penalties; not the
+    plain 2nd-difference operator without ridge), P = R^T R (Cholesky) and
+    M = R^-T B R^-1 = V diag(mu) V^T, B = K^T W K::
+
+        H(lambda) = 2 lambda P + B = R^T (2 lambda I + M) R
+        log det H = log det P + sum_j log(2 lambda + mu_j)
+        p_MAP     = R^-1 V diag(1/(2 lambda + mu)) V^T R^-T K^T W b
+
+    so every lambda costs O(M n) (the explicit residual) instead of an
+    O(n^3) solve, a slogdet and an eigen-decomposition. ``ok`` is False when
+    P is not positive definite; callers then use log_evidence(). Each lambda
+    is checked through the residual of its normal equations; a lambda that
+    fails the check (small lambda with an ill-conditioned P) is evaluated by
+    log_evidence() instead (counted in ``n_exact``).
+    """
+
+    #: relative residual of the normal equations above which a lambda is
+    #: evaluated exactly (test.dat, j0 kernel: below 1e-11 the fast ln Z agrees
+    #: with the exact one to < 1e-3)
+    tol = 1e-11
+
+    def __init__(self, K, b, sigma, L, ridge: float = 0.0):
+        self.L, self.ridge, self.n_exact = L, ridge, 0
+        K = np.asarray(K, float)
+        self.K, self.b, self.sigma = K, np.asarray(b, float), np.asarray(sigma, float)
+        n = K.shape[1]
+        self.n = n
+        W = 1.0 / self.sigma**2
+        LtL = L.T @ L
+        self.LtL = LtL
+        P = LtL + ridge * np.eye(n)
+        try:
+            R = np.linalg.cholesky(P).T            # P = R^T R
+        except np.linalg.LinAlgError:
+            self.ok = False
+            return
+        B = K.T @ (W[:, None] * K)
+        self.B, self.P = B, P
+        self.rhs = K.T @ (W * self.b)
+        self._rhs_norm = float(np.linalg.norm(self.rhs))
+        Rinv = sla.solve_triangular(R, np.eye(n))
+        Mm = Rinv.T @ B @ Rinv
+        mu, V = np.linalg.eigh(0.5 * (Mm + Mm.T))
+        self.mu = np.clip(mu, 0.0, None)
+        self.T = Rinv @ V                          # p = T y
+        self.g = self.T.T @ (K.T @ (W * self.b))
+        self.logdetP = 2.0 * float(np.sum(np.log(np.diag(R)))) + n * np.log(2.0)
+        self.eig_B = np.clip(sla.eigh(B, eigvals_only=True), 0, None)
+        self.ok = bool(np.all(np.isfinite(self.mu)))
+
+    def exact(self, lam: float) -> EvidenceResult:
+        """log_evidence() with the lambda-independent parts precomputed: one
+        Cholesky factorization of H gives p_MAP and log det H."""
+        self.n_exact += 1
+        lam = float(lam)
+        H = 2.0 * lam * self.P + self.B
+        try:
+            c = sla.cho_factor(H, check_finite=False)
+        except np.linalg.LinAlgError:
+            return log_evidence(self.K, self.b, self.sigma, self.L, lam, ridge=self.ridge)
+        p = sla.cho_solve(c, self.rhs, check_finite=False)
+        logdet = 2.0 * float(np.sum(np.log(np.diag(c[0]))))
+        S_val = float(p @ self.LtL @ p)
+        chi2_val = float(np.sum(((self.K @ p - self.b) / self.sigma) ** 2))
+        log_p = 0.5 * (self.n - 1) * np.log(lam) - 0.5 * logdet - lam * S_val - chi2_val / 2
+        n_good = float(np.sum(self.eig_B / (lam + self.eig_B)))
+        return EvidenceResult(lam=lam, log_evidence=log_p, p_map=p, n_good_params=n_good)
+
+    def at(self, lam: float) -> EvidenceResult:
+        lam = float(lam)
+        d = 1.0 / (2.0 * lam + self.mu)
+        p = self.T @ (d * self.g)
+        # accuracy check: where P (and so R^-1) is ill-conditioned the
+        # decomposition loses digits at small lambda -- then the exact route
+        res = self.rhs - (2.0 * lam * (self.P @ p) + self.B @ p)
+        if not np.linalg.norm(res) <= self.tol * self._rhs_norm:
+            return self.exact(lam)
+        S_val = float(p @ self.LtL @ p)
+        chi2_val = float(np.sum(((self.K @ p - self.b) / self.sigma) ** 2))
+        # log det(lam * 2P + B) = log det(2P) + sum log(lam + mu/2)
+        logdet = self.logdetP + float(np.sum(np.log(lam + 0.5 * self.mu)))
+        log_p = 0.5 * (self.n - 1) * np.log(lam) - 0.5 * logdet - lam * S_val - chi2_val / 2
+        n_good = float(np.sum(self.eig_B / (lam + self.eig_B)))
+        return EvidenceResult(lam=lam, log_evidence=log_p, p_map=p, n_good_params=n_good)
+
+
 def evidence_search(
     K: np.ndarray,
     b: np.ndarray,
@@ -123,7 +213,11 @@ def evidence_search(
     """Evaluate log-evidence over a grid of lambda and return the maximizer.
     ridge: see log_evidence's docstring; passed through unchanged, default
     0 keeps existing callers' behavior identical."""
-    results = [log_evidence(K, b, sigma, L, lam, ridge=ridge) for lam in lam_grid]
+    fe = FastEvidence(K, b, sigma, L, ridge=ridge)
+    if fe.ok:
+        results = [fe.at(lam) for lam in lam_grid]
+    else:
+        results = [log_evidence(K, b, sigma, L, lam, ridge=ridge) for lam in lam_grid]
     best = max(results, key=lambda r: r.log_evidence)
     return best, results
 
@@ -185,8 +279,10 @@ def log_evidence_blocks(
     well-sized fit across both the low/mid-q and high-q regions on this
     kernel.
 
-    Each A_blocks[k] is an n x n matrix such that the combined penalty is
+    Each A_blocks[k] is an n x n matrix such that the combined penalty is::
+
         S(p; lams) = sum_k lams[k] * p^T A_blocks[k] p
+
     (NOT a Cholesky factor -- unlike log_evidence's L argument, which
     required L^T L = A because that single-block code solved via L
     directly; here, with multiple blocks, it's simpler to work with the

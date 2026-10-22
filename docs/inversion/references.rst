@@ -17,6 +17,39 @@ Small-angle scattering: indirect Fourier transformation and size distributions
   method. *J. Appl. Cryst.* **13**, 7–11.
   https://doi.org/10.1107/S0021889880011429
   -- Size distributions with the IFT approach (sphere kernel).
+* O. Glatter (1979). The interpretation of real-space information from
+  small-angle scattering experiments. *J. Appl. Cryst.* **12**, 166–175.
+  -- Pair-distance distributions of the cross-section and the thickness
+  (rods and lamellae) and the corresponding transforms.
+* O. Glatter (1981). Convolution square root of band-limited symmetrical
+  functions and its application to small-angle scattering data. *J. Appl.
+  Cryst.* **14**, 101–108. doi:10.1107/S002188988100887X
+  -- Deconvolution of :math:`p(r)` into the radial density profile
+  (DECON); two-step route of :mod:`pysasfit.sldprofile`.
+* O. Glatter & B. Hainisch (1984). Improvements in real-space deconvolution
+  of small-angle scattering data. *J. Appl. Cryst.* **17**, 435–441.
+  doi:10.1107/S0021889884011894
+  -- DECON with steps of variable width, influence of background.
+* D. I. Svergun, L. A. Feigin & B. M. Schedrin (1982). Small-angle
+  scattering: direct structure analysis. *Acta Cryst.* **A38**, 827–835.
+  -- Direct determination of radial density profiles of centro-symmetric
+  particles.
+* S. Hansen (2016). Estimation of the density distribution from
+  small-angle scattering data. *J. Appl. Cryst.* **49**, 856–865.
+  https://doi.org/10.1107/S1600576716004969
+  -- Kernels of the sphere, cylinder and lamella PDDFs (eqs. 1–5; the
+  ``sinc_4pi``, ``cylinder_pddf`` and ``lamella_pddf`` kernels), free end
+  points for the lamella (``hansen_eq19_even``), and the direct Bayesian
+  estimate of the density profile implemented in :mod:`pysasfit.sldprofile`.
+* R. Mittelbach & O. Glatter (1998). Direct structure analysis of
+  small-angle scattering data from polydisperse colloidal particles.
+  *J. Appl. Cryst.* **31**, 600–608.
+  -- Density profiles from polydisperse systems.
+* C. L. P. Oliveira, B. B. Gerbelli, E. R. T. Silva, F. Nallet, L. Navailles,
+  E. A. Oliveira & J. S. Pedersen (2012). Gaussian deconvolution: a useful
+  method for a form-free modeling of scattering data from mono- and
+  multilayered planar systems. *J. Appl. Cryst.* **45**, 1278–1286.
+  -- Lamellar density profiles; comparison for the lamella kernel.
 * P. B. Moore (1980). Small-angle scattering. Information content and
   error analysis. *J. Appl. Cryst.* **13**, 168–175.
   -- Shannon sampling of :math:`I(q)`, number of independent parameters,

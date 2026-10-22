@@ -21,9 +21,14 @@ they can be compared on the same data:
   fit (shells, bases, smoothness or max-ent, alpha by evidence), with the
   data I(q) replaced by p(r) and the forward model by the quadratic form
   p_j = rho^T V_j rho. r_max = D_max / 2 is fixed by step 1, as in Glatter's
-  method. The p(r) errors are by default taken with their full posterior
-  covariance from step 1 (``errors="covariance"``); ``errors="diagonal"`` uses
-  only the standard deviations, as Glatter's DECON did.
+  method. The p(r) errors are by default only the standard deviations of step 1
+  (``errors="diagonal"``), as in Glatter's DECON. ``errors="covariance"`` uses
+  the full posterior covariance; it is not recommended: the covariance of the
+  regularised IFT is nearly singular (condition number ~1e7 on 60 points) and
+  in its small-variance directions p(r) is fixed by the smoothness prior, not
+  by the data. Model differences there count enormously -- even the exact
+  p(r) of the true particle then gives chi2/M of 6-200 (homogeneous / core-shell
+  sphere tests, 2026-10-21), against 0.2-1.4 with diagonal errors.
 
 Transforms (normalisation identical to :func:`pysasfit.sldprofile.geometry.pddf`):
 
@@ -45,28 +50,58 @@ from . import geometry as geo
 from .density import DensityProfileFit, ProfileResult
 from ..core.resolution import NoResolution
 
-__all__ = ["ift_kernel", "pddf_matrices", "PDDFResult", "indirect_ft", "DeconvolutionFit",
+__all__ = ["shannon_points", "resample_pddf", "ift_kernel", "pddf_matrices", "PDDFResult", "indirect_ft", "DeconvolutionFit",
            "TwoStepResult", "two_step_fit"]
 
 
 # ---------------------------------------------------------------------- #
 # step 1: indirect Fourier transformation
 # ---------------------------------------------------------------------- #
-def ift_kernel(q, r, geometry="sphere"):
+def _ift_K(q, r, geometry):
+    x = q[:, None] * r[None, :]
+    if geometry == "sphere":
+        return 4 * np.pi * np.sinc(x / np.pi)
+    if geometry == "cylinder":
+        return (np.pi / q[:, None]) * 2 * np.pi * special.j0(x)
+    return (2 * np.pi / q[:, None] ** 2) * 2 * np.cos(x)
+
+
+def ift_kernel(q, r, geometry="sphere", quadrature="hat"):
     """Matrix A with I(q_i) = sum_j A_ij p(r_j) for p on the uniform grid ``r``
-    (interior points of [0, D_max]; p(0) = p(D_max) = 0)."""
+    (interior points of [0, D_max]; p(0) = p(D_max) = 0).
+
+    ``quadrature="hat"`` (default since 2026-10-21): p(r) is piecewise linear
+    between the points (zero one step outside the grid) and the kernel is
+    integrated on a sub-grid with at least 4 points per half period of the
+    fastest oscillation at q_max, so the number of points can be as small as
+    the Shannon number q_max D_max / pi. ``"points"``: rectangle rule K(q, r_j) dr
+    (the former behaviour; needs ~3x more points for the same accuracy).
+    """
     geo._check(geometry)
-    q = np.asarray(q, float)[:, None]
+    q = np.asarray(q, float)
     r = np.asarray(r, float)
     dr = r[1] - r[0] if r.size > 1 else r[0]
-    x = q * r[None, :]
-    if geometry == "sphere":
-        K = 4 * np.pi * np.sinc(x / np.pi)
-    elif geometry == "cylinder":
-        K = (np.pi / q) * 2 * np.pi * special.j0(x)
-    else:
-        K = (2 * np.pi / q**2) * 2 * np.cos(x)
-    return K * dr
+    if quadrature == "points":
+        return _ift_K(q, r, geometry) * dr
+    if quadrature != "hat":
+        raise ValueError("quadrature must be 'hat' or 'points'")
+    m = max(2, int(np.ceil(4.0 * float(np.max(np.abs(q))) * dr / np.pi)))      # sub-steps per interval
+    n = r.size
+    # nodes incl. the two zero end points, sub-grid with m steps per interval
+    rf = np.linspace(r[0] - dr, r[-1] + dr, (n + 1) * m + 1)
+    w = np.full(rf.size, dr / m)
+    w[0] = w[-1] = 0.5 * dr / m
+    t = (rf - (r[0] - dr)) / dr                    # position in node units (0 ... n+1)
+    k = np.clip(np.floor(t).astype(int), 0, n)     # interval index
+    f = t - k
+    H = np.zeros((rf.size, n))
+    rows = np.arange(rf.size)
+    left, right = k - 1, k                         # node j sits at t = j + 1
+    ok = (left >= 0) & (left < n)
+    H[rows[ok], left[ok]] += 1.0 - f[ok]
+    ok = (right >= 0) & (right < n)
+    H[rows[ok], right[ok]] += f[ok]
+    return (_ift_K(q, rf, geometry) * w[None, :]) @ H
 
 
 @dataclass
@@ -87,6 +122,7 @@ class PDDFResult:
     D_grid: np.ndarray = field(default_factory=lambda: np.zeros(0))
     D_posterior: np.ndarray = field(default_factory=lambda: np.zeros(0))
     note: str = ""
+    n_good: float = float("nan")  # number of good parameters of the IFT at the best D_max
 
     def summary(self) -> str:
         return (f"step 1, IFT ({self.geometry}): D_max = {self.D_max:.5g} +/- {self.D_max_err:.2g}, "
@@ -214,17 +250,31 @@ def _logz(sol):
     return sol.log_evidence if np.isfinite(sol.log_evidence) else -np.inf
 
 
-def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15, n_r=60,
+def shannon_points(q_max, D_max, minimum=15) -> int:
+    """Shannon number N_s = q_max D_max / pi (rounded up): the number of independent
+    p(r) values on [0, D_max] that data up to q_max determine -- the default number
+    of IFT points (with fewer points p(r) is under-sampled, see the theory page)."""
+    return max(int(minimum), int(np.ceil(float(q_max) * float(D_max) / np.pi)))
+
+
+def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15, n_r=None,
                 resolution=None, background=False, penalty="hansen_eq19",
                 progress=None, ift_options=None) -> PDDFResult:
     """Step 1: p(r) from I(q) by a Bayesian IFT.
 
-    D_max : fixed value; with ``D_range`` (lo, hi) the evidence is scanned over
+    D_max
+        fixed value; with ``D_range`` (lo, hi) the evidence is scanned over
         ``n_D`` values and the posterior mean is used (default range
         (0.7, 1.5) x 2 r_max of a Guinier estimate when neither is given)
-    background : False (none), a number (fixed flat background) or True
+    background
+        False (none), a number (fixed flat background) or True
         (flat background by maximum evidence at each D_max)
-    ift_options : overrides of :data:`IFT_DEFAULTS`
+    n_r
+        number of p(r) points; default (None) the Shannon number
+        :func:`shannon_points` for the largest D_max of the scan (the same for
+        all D_max, so that their evidences compare like with like)
+    ift_options
+        overrides of :data:`IFT_DEFAULTS`
     """
     unknown = set(ift_options or {}) - set(IFT_DEFAULTS)
     if unknown:
@@ -264,6 +314,9 @@ def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15
             guess = DensityProfileFit(q, np.clip(I, 1e-300, None), sigma, geometry=geometry, n=4).guess_r_max()
             D_range = (0.7 * 2 * guess, 1.5 * 2 * guess)
         Ds = np.linspace(D_range[0], D_range[1], int(n_D))
+    if n_r is None:
+        n_r = shannon_points(np.max(q), np.max(Ds))
+    n_r = int(n_r)
     sols = []
     for D in Ds:
         s = solve_D(D)
@@ -295,12 +348,38 @@ def indirect_ft(q, I, sigma, geometry="sphere", D_max=None, D_range=None, n_D=15
     cov = S @ np.asarray(cov, float) @ S.T
     return PDDFResult(geometry=geometry, r=r, p=p, p_err=np.sqrt(np.clip(np.diag(cov), 0, None)),
                       cov=cov, D_max=mean, D_max_err=sd, background=b, q=q, I_fit=Ifit,
-                      chi2_red=chi2 / q.size, log_evidence=_logz(res), D_grid=Ds, D_posterior=post, note=note)
+                      chi2_red=chi2 / q.size, log_evidence=_logz(res), D_grid=Ds, D_posterior=post, note=note,
+                      n_good=float(getattr(res, "n_good", np.nan)))
 
 
 # ---------------------------------------------------------------------- #
 # step 2: deconvolution p(r) -> rho(r)
 # ---------------------------------------------------------------------- #
+def resample_pddf(pd, factor=4):
+    """(r, p, sigma) of the IFT p(r) on a ``factor`` times finer grid of [0, D_max].
+
+    The IFT represents p(r) as piecewise linear between its points (zero at
+    D_max, and at r = 0 except for the lamella), so the values in between follow
+    linearly; the errors are the diagonal of T Cov T^T."""
+    D = float(pd.D_max)
+    n0 = pd.r.size
+    lam = pd.r[0] == 0.0
+    nd = int(factor) * (n0 + (0 if lam else 1)) - (0 if lam else 1)
+    if lam:
+        r = D * np.arange(nd) / nd
+        rr = np.r_[pd.r, D]
+    else:
+        r = D * np.arange(1, nd + 1) / (nd + 1)
+        rr = np.r_[0.0, pd.r, D]
+    T = np.zeros((r.size, n0))
+    for j in range(n0):
+        e = np.zeros(n0)
+        e[j] = 1.0
+        T[:, j] = np.interp(r, rr, np.r_[e, 0.0] if lam else np.r_[0.0, e, 0.0])
+    p = T @ pd.p
+    s = np.sqrt(np.clip(np.einsum("ij,jk,ik->i", T, pd.cov, T), 1e-300, None))
+    return r, p, s
+
 def _sub_shells(r_max, n, geometry, basis, grid, n_sub):
     """Thin uniform sub-shells (centres, width) and the linear map B from the
     shell coefficients to rho on them."""
@@ -373,14 +452,16 @@ class DeconvolutionFit(DensityProfileFit):
 
     Same options as :class:`DensityProfileFit` (geometry, n, regularization,
     prior, outer, basis, grid); there is no background and no resolution.
-    ``cov`` is the covariance of ``p`` (``errors="covariance"``) -- with
-    ``errors="diagonal"`` only its diagonal, or ``sigma``, is used.
+    With ``errors="diagonal"`` (default, Glatter's DECON) only the standard
+    deviations (diagonal of ``cov``, or ``sigma``) are used; ``errors="covariance"``
+    uses the full covariance of ``p`` (see the module docstring for why that is
+    not recommended).
     ``q_max`` (of the measured data) sets the smallest meaningful shell width
     pi/q_max for adaptive grids.
     """
 
     def __init__(self, r, p, sigma=None, cov=None, geometry="sphere", n=40, regularization="smooth",
-                 prior=None, outer="free", basis="rho", grid=None, errors="covariance", q_max=None, n_sub=6,
+                 prior=None, outer="free", basis="rho", grid=None, errors="diagonal", q_max=None, n_sub=6,
                  options=None):
         r = np.asarray(r, float)
         p = np.asarray(p, float)
@@ -452,7 +533,10 @@ class DeconvolutionFit(DensityProfileFit):
         if r_max is None:
             r_max = self.guess_r_max()
             kw.setdefault("fix_r_max", True)
-        res = super().fit(r_max=r_max, **kw)
+        return self.finish(super().fit(r_max=r_max, **kw))
+
+    def finish(self, res) -> ProfileResult:
+        """Express a result of this fit in p(r) terms (q / I_fit = r / fitted p(r))."""
         res.method = ("deconvolution of p(r), Glatter 1981; p(r) errors "
                       + ("with full covariance" if self._Linv is not None else "diagonal"))
         res.q = self.r_data
@@ -467,6 +551,31 @@ class TwoStepResult:
     profile: ProfileResult        # step 2; its q / I_fit are r and the fitted p(r)
     I_from_profile: np.ndarray    # I(q) recomputed from the deconvolved rho (incl. step-1 background)
     chi2_red_profile: float = float("nan")   # chi2/M of I_from_profile against the data
+    step2_data: tuple = None      # (r, p, dp) fitted in step 2 (dp incl. sigma_scale; None = pddf)
+    sigma_scale: float = 1.0      # factor sqrt(M / N_s) applied to the p(r) errors in step 2
+    alpha_from: str = "evidence"  # how alpha of step 2 was chosen ('intensity' or 'evidence')
+    alpha_scan: dict = None       # chi2/M of I(q) from rho and ln Ev along the step-2 alpha path, the
+    #                               threshold and the alphas chosen by each criterion (see two_step_fit)
+
+    def __getstate__(self):
+        # fitters and the step-2 alpha path are kept for re-solving at another alpha
+        # (GUI), but not stored
+        st = dict(self.__dict__)
+        for k in ("_dec", "_direct", "_path"):
+            st.pop(k, None)
+        return st
+
+    def solve_at(self, log_alpha):
+        """Step 2 at another ln alpha (r_max = D_max/2): returns (solution, I(q) from rho,
+        p(r) of rho). Needs the fitters (not after unpickling)."""
+        dec, direct = self.__dict__.get("_dec"), self.__dict__.get("_direct")
+        if dec is None or direct is None:
+            raise RuntimeError("the fitters of this result are not available (result loaded from a file)")
+        rm = self.profile.best.r_max
+        cands = list(self.__dict__.get("_path") or []) + [self.profile.best]
+        x0 = min(cands, key=lambda s_: abs(np.log(s_.alpha) - log_alpha)).x
+        sol = dec.solve(np.exp(log_alpha), rm, x0=x0)
+        return sol, direct.model(sol.rho, rm), dec.p_model(sol.rho, rm)
 
     def summary(self) -> str:
         pd = self.pddf
@@ -477,11 +586,23 @@ class TwoStepResult:
             f"        background = {pd.background:.5g}",
             f"        chi2/M     = {pd.chi2_red:.4g}    ln Z = {pd.log_evidence:.6g}",
             f"        {pd.note}",
-            f"step 2  chi2/M of I(q) from rho(r) = {self.chi2_red_profile:.4g}",
+            f"step 2  chi2/M of p(r) (deconvolution) = {self.profile.chi2_red:.4g}"
+            + ("" if self.profile.chi2_red <= 3.0 else
+               "   <-- p(r) is not the self-convolution of one centro-symmetric profile within its errors "
+               "(polydisperse or non-centro-symmetric particles, aggregates?)"),
+            f"        p(r) errors x {self.sigma_scale:.3g} in step 2 (sqrt(points / N_s): p(r) holds about N_s independent values)"
+            if self.sigma_scale != 1.0 else "",
+            (f"        alpha of step 2 from I(q): smoothest rho with chi2/M of I(q) <= {self.alpha_scan['threshold']:.4g}; "
+             f"ln alpha = {np.log(self.alpha_scan['chosen']):.4g} (evidence of p(r): "
+             f"{np.log(self.alpha_scan['evidence_alpha']):.4g})")
+            if self.alpha_from == "intensity" and self.alpha_scan else "",
+            f"        chi2/M of I(q) from rho(r) = {self.chi2_red_profile:.4g}"
+            + ("   (often >> 1 with alpha from the p(r) evidence: p(r) carries little of the "
+               "high-q information)" if self.alpha_from == "evidence" else ""),
             "",
             self.profile.summary(),
         ]
-        return "\n".join(lines)
+        return "\n".join(ln for i, ln in enumerate(lines) if ln or i == len(lines) - 2)
 
     def as_profile_result(self) -> ProfileResult:
         """The step-2 result in the layout of a direct fit, for display: q / I_fit /
@@ -504,12 +625,17 @@ class TwoStepResult:
 
     def save(self, prefix: str) -> None:
         """As :meth:`ProfileResult.save` (the IFT fit in ``_fit.dat``, the D_max posterior as
-        r_max in ``_rmax.dat``), plus ``_ift_pr.dat`` (r, p, dp, p of the deconvolved rho)
+        r_max in ``_rmax.dat``), plus ``_ift_pr.dat`` (r, p, dp of the IFT),
+        ``_pr_from_rho.dat`` (r, p and dp as fitted in step 2, p of the deconvolved rho)
         and ``_I_from_rho.dat``."""
         self.as_profile_result().save(prefix)
         pd = self.pddf
-        np.savetxt(f"{prefix}_ift_pr.dat", np.c_[pd.r, pd.p, pd.p_err, self.profile.I_fit],
-                   header="r p(r)_IFT dp(r) p(r)_from_deconvolved_rho")
+        np.savetxt(f"{prefix}_ift_pr.dat", np.c_[pd.r, pd.p, pd.p_err],
+                   header="r p(r)_IFT dp(r)")
+        # step 2 may see p(r) on a finer grid (dec_oversample): its own file
+        r2, p2, s2 = self.step2_data if self.step2_data is not None else (pd.r, pd.p, pd.p_err)
+        np.savetxt(f"{prefix}_pr_from_rho.dat", np.c_[r2, p2, s2, self.profile.I_fit],
+                   header="r p(r)_seen_by_step2 dp(r) p(r)_from_deconvolved_rho")
         np.savetxt(f"{prefix}_I_from_rho.dat", np.c_[pd.q, pd.I_fit, self.I_from_profile],
                    header="q I_IFT_fit I_from_deconvolved_rho")
         with open(f"{prefix}_params.txt", "w") as fh:
@@ -518,13 +644,28 @@ class TwoStepResult:
 
 def two_step_fit(q, I, sigma, geometry="sphere", n=40, regularization="smooth", prior=None, outer="free",
                  basis="rho", grid=None, resolution=None, background=False, r_max=None, r_max_range=None,
-                 fix_r_max=False, n_D=15, n_r=60, errors="covariance", penalty="hansen_eq19",
+                 fix_r_max=False, n_D=15, n_r=None, errors="diagonal", penalty="hansen_eq19",
                  n_draws=40, seed=0, progress=None, verbose=False, options=None, ift_options=None,
-                 n_sub=6, max_extend=6) -> TwoStepResult:
+                 n_sub=6, max_extend=6, dec_oversample=1, scale_errors=True, alpha_from="intensity",
+                 intensity_tolerance=1.0) -> TwoStepResult:
     """Glatter's two-step method: IFT (step 1) then deconvolution (step 2).
 
     options : numerical options of step 2 (see DensityProfileFit.DEFAULT_OPTIONS);
-    ift_options : of step 1 (see IFT_DEFAULTS); n_sub : sub-shells per shell in V.
+    ift_options : of step 1 (see IFT_DEFAULTS); n_sub : sub-shells per shell in V;
+    n_r : IFT points, default the Shannon number for the largest D_max (:func:`shannon_points`);
+    dec_oversample : with diagonal errors, step 2 sees the (piecewise linear) IFT p(r)
+    on a grid this many times finer (:func:`resample_pddf`; 1 = the IFT points, default);
+    scale_errors : with diagonal errors, multiply the p(r) errors by sqrt(M / N_s) when
+    M > N_s (M points handed to step 2, N_s = :func:`shannon_points` at the final
+    D_max, i.e. the default number of IFT points): the M values of p(r) hold only
+    about N_s independent pieces of information; counting more points as
+    independent measurements makes step 2 choose too little smoothing. At the
+    default (n_r = N_s, no resampling) the factor is 1.
+    alpha_from : how the smoothing of step 2 is chosen. ``"intensity"`` (default since
+    2026-10-21): the smoothest rho whose I(q), computed with the direct forward model,
+    fits the measured data within chi2 <= chi2_min + intensity_tolerance * sqrt(2 M)
+    (see the theory page); ``"evidence"``: maximum evidence of the p(r)
+    fit, averaged over alpha (Glatter's p(r)-only route).
 
     r_max / r_max_range / fix_r_max mean the same as for the direct fit; they
     are turned into D_max = 2 r_max for step 1. Step 2 uses r_max = D_max / 2.
@@ -548,17 +689,117 @@ def two_step_fit(q, I, sigma, geometry="sphere", n=40, regularization="smooth", 
                      penalty=penalty, progress=report, ift_options=ift_options, **D_kw)
     report(pd.summary())
     report("step 2: deconvolution p(r) -> rho(r)")
-    dec = DeconvolutionFit(pd.r, pd.p, cov=pd.cov, geometry=geometry, n=n, regularization=regularization,
-                           prior=prior, outer=outer, basis=basis, grid=grid, errors=errors,
-                           q_max=float(np.max(q)), n_sub=n_sub, options=options)
+    sigma_scale = 1.0
+    if errors == "diagonal":
+        if dec_oversample and int(dec_oversample) > 1:
+            r_d, p_d, s_d = resample_pddf(pd, int(dec_oversample))
+        else:
+            r_d, p_d, s_d = pd.r, pd.p, pd.p_err
+        if scale_errors:
+            # 2026-10-21: the IFT p(r) has ~N_s independent values, whatever the number
+            # of points. Weighting M > N_s points as independent overfitted step 2 in
+            # simulations (R = 300, q_max D_max / pi = 74: the profile error grew with
+            # the number of IFT points and with resampling); with this scaling it no
+            # longer depends on them.
+            n_ind = shannon_points(np.max(q), pd.D_max)
+            sigma_scale = float(np.sqrt(max(1.0, r_d.size / n_ind)))
+            s_d = s_d * sigma_scale
+        step2 = (r_d, p_d, s_d)
+        dec = DeconvolutionFit(r_d, p_d, sigma=s_d, geometry=geometry, n=n, regularization=regularization,
+                               prior=prior, outer=outer, basis=basis, grid=grid, errors="diagonal",
+                               q_max=float(np.max(q)), n_sub=n_sub, options=options)
+    else:
+        step2 = None
+        dec = DeconvolutionFit(pd.r, pd.p, cov=pd.cov, geometry=geometry, n=n, regularization=regularization,
+                               prior=prior, outer=outer, basis=basis, grid=grid, errors=errors,
+                               q_max=float(np.max(q)), n_sub=n_sub, options=options)
     dec.progress = progress
-    prof = dec.fit(r_max=pd.D_max / 2, fix_r_max=True, n_draws=n_draws, seed=seed, verbose=verbose,
-                   max_extend=max_extend)
-    prof.r_max = (pd.D_max / 2, pd.D_max_err / 2)
     # back to I(q): the direct forward model with the deconvolved profile
-    direct = DensityProfileFit(q, np.where(np.asarray(I) > 0, I, 1e-300), sigma, geometry=geometry, n=n,
-                               basis=basis, grid=grid, resolution=resolution,
+    # (same representation as step 2: the B-spline basis depends on the outer end condition)
+    Iarr, sarr = np.asarray(I, float), np.asarray(sigma, float)
+    direct = DensityProfileFit(q, np.where(Iarr > 0, Iarr, 1e-300), sarr, geometry=geometry, n=n,
+                               outer=outer, basis=basis, grid=dec.grid, resolution=resolution,
                                background_value=pd.background)
+    rm = pd.D_max / 2
+
+    def chi2_I(sol):
+        return float(np.sum(((direct.model(sol.rho, rm) - Iarr) / sarr) ** 2))
+
+    alpha_scan = None
+    if alpha_from == "intensity":
+        prof, alpha_scan = _alpha_from_intensity(dec, rm, chi2_I, q.size if hasattr(q, "size") else len(q),
+                                                 intensity_tolerance, n_draws, seed, report)
+    elif alpha_from == "evidence":
+        prof = dec.fit(r_max=rm, fix_r_max=True, n_draws=n_draws, seed=seed, verbose=verbose,
+                       max_extend=max_extend)
+        # the chi2 of I(q) along the alpha path, for comparison (and the plot of chi2(alpha))
+        M = q.size if hasattr(q, "size") else len(q)
+        path, c2s, les, _, thr, i = _intensity_scan(dec, rm, chi2_I, M, intensity_tolerance)
+        alpha_scan = _scan_dict(path, c2s, les, thr, M, prof.best.alpha, path[i].alpha, "evidence")
+        prof._step2_path = path
+    else:
+        raise ValueError("alpha_from must be 'intensity' or 'evidence'")
+    prof.r_max = (pd.D_max / 2, pd.D_max_err / 2)
     I_rho = direct.model(prof.best.rho, prof.best.r_max)
-    c2 = float(np.mean(((I_rho - np.asarray(I)) / np.asarray(sigma)) ** 2))
-    return TwoStepResult(pddf=pd, profile=prof, I_from_profile=I_rho, chi2_red_profile=c2)
+    c2 = float(np.mean(((I_rho - Iarr) / sarr) ** 2))
+    out = TwoStepResult(pddf=pd, profile=prof, I_from_profile=I_rho, chi2_red_profile=c2,
+                        step2_data=step2, sigma_scale=sigma_scale, alpha_from=alpha_from,
+                        alpha_scan=alpha_scan)
+    out._dec, out._direct, out._path = dec, direct, prof.__dict__.pop("_step2_path", None)
+    return out
+
+
+def _intensity_scan(dec, r_max, chi2_I, M, tol):
+    """chi2 of I(q) from rho along the full alpha path of step 2 (large -> small alpha).
+    Returns (path, chi2, ln Ev, index of the first chi2 minimum, threshold, index of
+    the smoothest solution with chi2 <= threshold)."""
+    path = dec.alpha_path(r_max, stop_drop=np.inf)
+    c2 = np.array([chi2_I(s) for s in path])
+    le = np.array([s.log_evidence for s in path])
+    # reference: the first minimum of chi2 along the path (from large to small alpha).
+    # Further, deeper minima can appear at much smaller alpha with an oscillating rho.
+    j = next((k for k in range(c2.size - 1) if c2[k + 1] >= c2[k]), c2.size - 1)
+    thr = float(c2[j] + tol * np.sqrt(2.0 * M))
+    i = int(np.nonzero(c2 <= thr)[0][0])
+    return path, c2, le, j, thr, i
+
+
+def _scan_dict(path, c2, le, thr, M, chosen, intensity_alpha, alpha_from):
+    return dict(alpha=np.array([s.alpha for s in path]), chi2_I=c2 / M, log_evidence=le, threshold=thr / M,
+                chosen=float(chosen), intensity_alpha=float(intensity_alpha),
+                evidence_alpha=float(path[int(np.argmax(le))].alpha), alpha_from=alpha_from)
+
+
+def _alpha_from_intensity(dec, r_max, chi2_I, M, tol, n_draws, seed, report, n_bisect=8):
+    """Step-2 alpha from the measured I(q): the smoothest solution on the alpha path
+    whose I(q), computed from rho with the direct forward model, fits the data within
+    chi2 <= chi2_ref + tol * sqrt(2 M) (one standard deviation of chi2 for tol = 1),
+    chi2_ref = the first minimum of chi2 along the path (from large to small alpha).
+
+    The minimum of chi2(alpha) alone is no criterion: below some alpha rho oscillates
+    while p(r), and so I(q), hardly change, and chi2 can have a second, deeper
+    minimum there. Returns (ProfileResult, alpha_scan) with alpha_scan = dict(alpha,
+    chi2_I (per point), log_evidence, threshold, chosen, intensity_alpha, evidence_alpha).
+    """
+    path, c2, le, j, thr, i = _intensity_scan(dec, r_max, chi2_I, M, tol)
+    best = path[i]
+    if i > 0:
+        # bisection in ln alpha between the last solution above and the first below the threshold
+        reg = dec.regularizer(r_max)
+        hi, lo = np.log(path[i - 1].alpha), np.log(path[i].alpha)
+        for _ in range(n_bisect):
+            mid = 0.5 * (hi + lo)
+            s = dec.solve(np.exp(mid), r_max, x0=best.x, reg=reg)
+            if chi2_I(s) <= thr:
+                best, lo = s, mid
+            else:
+                hi = mid
+    iev = int(np.argmax(le))
+    report(f"step 2 alpha from I(q): log alpha = {np.log(best.alpha):.4g} (evidence of p(r) would give "
+           f"{np.log(path[iev].alpha):.4g}); chi2/M of I(q) from rho = {chi2_I(best) / M:.4g}, "
+           f"threshold {thr / M:.4g} (first minimum {c2[j] / M:.4g} + {tol:g} sqrt(2/M))")
+    prof = dec.finish(dec.assemble_result(np.array([r_max]), np.array([1.0]), [best], [best],
+                                          n_draws=n_draws, seed=seed, weights=[1.0]))
+    prof.method = prof.method + "; alpha from the fit of I(q)"
+    prof._step2_path = path
+    return prof, _scan_dict(path, c2, le, thr, M, best.alpha, best.alpha, "intensity")

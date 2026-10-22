@@ -4,6 +4,7 @@
 cd pySASfit
 pip install -e ".[gui,dev]"     # library + PySide6/matplotlib GUIs + pytest
 pip install -e ".[gui,oz]"      # + optional OZ dependencies (sundials4py, mpmath, bumps, mixscatter, openpyxl)
+pip install -e ".[gui,fit,export]"  # + studio: optional optimisers (nlopt, bumps, iminuit, cma, DFO-LS), Excel export
 pip install -e .                # library only (numpy, scipy)
 pip install -e ".[docs]"        # Sphinx, MyST and the theme, to build this documentation
 ```
@@ -20,12 +21,18 @@ pysasfit-studio install-binaries <SASstudio folder or unpacked SASfit release>
 
 | command | opens |
 |---|---|
-| `pysasfit-gui [datafile]` | all tools as tabs of one window |
-| `pysasfit-sldprofile [datafile]` | SLD profile |
-| `pysasfit-inversion` | size distribution / p(r) |
+| `pysasfit-gui [datafile \| project.pysasfit]` | all tools as tabs of one window |
+| `pysasfit-sldprofile [datafile \| project.pysasfit]` | SLD profile |
+| `pysasfit-inversion [datafile \| project.pysasfit]` | size distribution / p(r) |
 | `pysasfit-oz` | Ornstein–Zernike tabs |
-| `pysasfit-studio` | studio command line |
+| `pysasfit-explorer [ff_sphere]` | studio model explorer with fit panel (also `pysasfit-studio explore`) |
+| `pysasfit-studio` | studio command line (`list`, `search`, `info`, `eval`, `tree`, `status`, `new-plugin`, ...) |
 | `python run_gui.py [datafile]` | the launcher without installing (finds `./src` itself) |
+
+Without a file argument the SLD-profile and size-distribution tools reopen their last session (data, panel
+settings, last result and, for the SLD profile, the window layout); **Settings → Forget last session** starts empty.
+**File → Save project… / Open project…** keep a piece of work in a versioned `*.pysasfit` file (see the GUI pages
+of the two tools and `pysasfit.core.project` in {doc}`core_api`).
 
 Numerical settings that are not on the main panels are under **Settings → Preferences…**; see
 {doc}`preferences`.

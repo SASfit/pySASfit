@@ -13,7 +13,7 @@ Minimal example
    from pysasfit.inversion.kernels import build_size_distribution_kernel
    from pysasfit.inversion.solver_registry import run_solver
 
-   data = load_sas_data("tests/data/test.dat")
+   data = load_sas_data("tests/inversion/data/test.dat")
 
    # flat background from a fit of backgr + c*q^-alpha (only backgr is
    # subtracted, see the theory chapter)
@@ -61,7 +61,8 @@ Solvers and options
      - Hansen functional, :math:`x>0`
    * - ``bayesian_evidence``
      - ``penalty``: ``"hansen_eq19"`` | ``"hansen_printed"`` |
-       ``"second_derivative"``; ``noise_scale``: ``"given"`` |
+       ``"second_derivative"`` | ``"hansen_eq19_even"`` (p(0) free, lamella);
+       ``noise_scale``: ``"given"`` |
        ``"estimate"``; ``target_chi2_r`` (None)
      - recommended for the PDDF; Laplace error band, :math:`\ln Z`
    * - ``general_tikhonov_gcv``
@@ -99,6 +100,17 @@ Kernel and solver compatibility
   ``arlsnn`` (only if :math:`p\ge0` is acceptable) and
   ``em_general_signed_kernel``. ``em_discrepancy`` and ``maxent_em``
   diverge with a signed kernel.
+* ``cylinder_pddf`` and ``lamella_pddf`` (signed): as ``sinc_4pi``. For
+  the lamella use ``bayesian_evidence`` with ``penalty="hansen_eq19_even"``
+  (:math:`p_t(0)>0`):
+
+  .. code-block:: python
+
+     from pysasfit.inversion.kernels import build_kernel_on_nodes
+     f = KERNEL_REGISTRY["lamella_pddf"].func     # 4*pi*cos(qr)/q^2
+     A = build_kernel_on_nodes(data.q, r, f, interpolation="cubic")
+     res = run_solver("bayesian_evidence", A, b, db, penalty="hansen_eq19_even")
+
 * ``sphere_rg`` (non-negative): every solver; ``em_discrepancy`` is the
   best validated. Use :math:`\alpha=6`.
 

@@ -64,13 +64,15 @@ def interior_knots(n_coeffs: int, degree: int = 3, spacing: str = "uniform") -> 
     The clamped basis has n_coeffs + 2 control points (the two endpoint ones
     are dropped later), hence n_coeffs + 2 - degree - 1 interior knots.
 
-    spacing:
+    spacing::
+
       "uniform"   -- equidistant in r (Glatter 1977; uniform Shannon
                      resolution pi/q_max along r).
       "quadratic" -- t_k = u_k^2 with u uniform: knot density ~ 1/sqrt(t),
                      denser at small r.
       "log"       -- geometric from t_min = 1/(2*n_coeffs) to 1: denser at
                      small r, sparse in the tail.
+
     On test.dat (2026-10-10) quadratic/log gave chi2_r ~1.0 with balanced
     low/mid/high-q residuals at 20 coefficients, uniform needed ~25 (p(r)
     rises steeply to its peak and has a long smooth tail). Data-dependent:

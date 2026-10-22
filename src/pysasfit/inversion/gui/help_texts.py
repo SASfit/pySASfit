@@ -112,18 +112,47 @@ HELP: dict[str, str] = {
     ),
     # -------------------------------------------------------------- kernel
     "kernel": (
-        "<b>Kernel</b><br>Forward model I(q) = ∫ K(q,r) x(r) dr. The j₀ "
-        "kernel gives the pair-distance distribution p(r) (signed kernel); "
-        "the sphere kernel gives a size distribution (non-negative kernel). "
+        "<b>Kernel</b><br>Forward model I(q) = ∫ K(q,r) x(r) dr. The three "
+        "PDDF kernels (Hansen 2016) give the pair-distance distribution of a "
+        "globular particle (j₀), of the cross-section of a long rod (J₀) or "
+        "of the thickness of a flat sheet (cos); all three are signed "
+        "kernels. The sphere kernel gives a size distribution (non-negative "
+        "kernel). "
         "Changing the kernel re-suggests r<sub>max</sub> and the grid size."
     ),
     "kernel:sinc_4pi": (
-        "<b>Kernel 4π j₀(qr)</b><br>I(q) = 4π ∫<sub>0</sub><sup>D<sub>max</sub></sup> "
+        "<b>Kernel: sphere 4π j₀(qr)</b><br>Globular particle: I(q) = 4π ∫<sub>0</sub><sup>D<sub>max</sub></sup> "
         "p(r) sin(qr)/(qr) dr. Unknown: pair-distance distribution p(r), "
         "r = pair distance, p(0) = p(D<sub>max</sub>) = 0. The kernel changes "
         "sign for qr &gt; π, so only the signed-kernel solvers apply: "
         "Bayesian evidence, Tikhonov/TSVD, ARLS, EM for signed kernels. "
         "No size weighting α."
+    ),
+    "kernel:cylinder_pddf": (
+        "<b>Kernel: cylinder cross-section 2π² J₀(qr)/q</b><br>Long rod "
+        "(length L ≫ 2π/q), per unit length: I(q) = (2π²/q) ∫<sub>0</sub>"
+        "<sup>D<sub>max</sub></sup> p<sub>c</sub>(r) J₀(qr) dr (Hansen 2016, "
+        "eq. 2). Unknown: p<sub>c</sub>(r) = r·γ<sub>c</sub>(r), the "
+        "pair-distance distribution of the cross-section; D<sub>max</sub> = "
+        "cross-section diameter, p<sub>c</sub>(0) = p<sub>c</sub>(D<sub>max</sub>) "
+        "= 0. Derived: q·I(q) → 2π²∫p<sub>c</sub> dr and the cross-section "
+        "radius of gyration R<sub>c</sub>. Signed kernel: use the Bayesian "
+        "evidence, Tikhonov/TSVD, ARLS or EM for signed kernels. p<sub>c</sub> "
+        "can be negative for particles with regions of opposite contrast. "
+        "The radial density profile ρ(r) itself: <i>pysasfit sldprofile</i>."
+    ),
+    "kernel:lamella_pddf": (
+        "<b>Kernel: lamella thickness 4π cos(qr)/q²</b><br>Flat sheet (area "
+        "A ≫ (2π/q)²), per unit area: I(q) = (4π/q²) ∫<sub>0</sub>"
+        "<sup>D<sub>max</sub></sup> p<sub>t</sub>(r) cos(qr) dr (Hansen 2016, "
+        "eq. 3). Unknown: p<sub>t</sub>(r) = γ<sub>t</sub>(r), the 1D "
+        "autocorrelation of the density profile across the sheet; "
+        "D<sub>max</sub> = thickness. <b>p<sub>t</sub>(0) = ∫ρ² dx &gt; 0</b>: "
+        "with the Bayesian-evidence solver the penalty \"p(0) free\" is "
+        "selected automatically (the other penalties pin p(0) to 0 and bias "
+        "the result). Derived: q²·I(q) → 4π∫p<sub>t</sub> dr and the thickness "
+        "radius of gyration R<sub>t</sub> (thickness T = √12·R<sub>t</sub> for "
+        "a homogeneous sheet). The density profile ρ(x): <i>pysasfit sldprofile</i>."
     ),
     "kernel:sphere_rg": (
         "<b>Kernel: sphere (Rayleigh-Gans)</b><br>I(q) = ∫ N(R) V(R)² "
@@ -145,7 +174,9 @@ HELP: dict[str, str] = {
         "r = 0). Suggested from Glatter's consistency condition "
         "q<sub>min</sub> ≤ π/D<sub>max</sub>, i.e. D<sub>max</sub> ≈ "
         "π/q<sub>min</sub>; for the sphere kernel r is a radius, so "
-        "r<sub>max</sub> = D<sub>max</sub>/2. Override freely.{dynamic}"
+        "r<sub>max</sub> = D<sub>max</sub>/2. For the cylinder and lamella "
+        "kernels D<sub>max</sub> is the cross-section diameter or the "
+        "thickness. Override freely.{dynamic}"
     ),
     "r_n": (
         "<b>r grid points</b><br>Number of unknowns on the point grid (or "
@@ -174,7 +205,9 @@ HELP: dict[str, str] = {
         "→ 1.2). The cubic spline can overshoot between points, so the "
         "solvers that need p ≥ 0 or a non-negative kernel (EM + smoothing, "
         "EM + MaxEnt, Hansen MaxEnt, ARLS ≥ 0) always use linear; for those "
-        "use the B-spline option for a smooth representation."
+        "use the B-spline option for a smooth representation. For those "
+        "solvers the list is greyed out and marked \"linear only for this "
+        "solver\"."
     ),
     # -------------------------------------------------------------- solver
     "solver": (
@@ -259,7 +292,11 @@ HELP: dict[str, str] = {
         "paper's text, i.e. ½Σ(p<sub>j</sub> − p<sub>j+1</sub>)² + "
         "p<sub>1</sub>²/2 + p<sub>N</sub>²/2 (1st difference). 2nd derivative: "
         "Σ(p<sub>j−1</sub> − 2p<sub>j</sub> + p<sub>j+1</sub>)², free ends "
-        "(improper prior, no ln Z)."
+        "(improper prior, no ln Z). p(0) free: eq. 19 with the mirror point "
+        "p<sub>0</sub> = p<sub>2</sub> at r = 0 (p even, p′(0) = 0), i.e. "
+        "(p<sub>1</sub> − p<sub>2</sub>)² replaces p<sub>1</sub>²/2; only "
+        "p(D<sub>max</sub>) is pulled to 0. Selected automatically for the "
+        "lamella kernel, whose p<sub>t</sub>(0) &gt; 0."
     ),
     "option:noise_scale": (
         "<b>Error bars (Bayesian evidence)</b><br>as given: σ as supplied by "

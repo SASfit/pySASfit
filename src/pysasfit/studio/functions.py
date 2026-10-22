@@ -48,7 +48,7 @@ def register_python_function(
 ):
     """Make a Python function available as SASfit function ``name``.
 
-    ``name`` carries the type prefix: 'ff_...', 'sq_...' or 'sd_...'. The
+    ``name`` carries the type prefix: ``ff_...``, ``sq_...`` or ``sd_...``. The
     callables are ``intensity(x, p)``, ``amplitude(x, p)`` and
     ``volume(x, p, dist)`` with ``p`` the parameter vector (length MAXPAR).
     ``group`` is the menu group of the function, the name of a group defined in a ``*.def`` file

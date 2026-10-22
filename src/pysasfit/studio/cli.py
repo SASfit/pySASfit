@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import sys
 
@@ -44,13 +45,20 @@ def new_plugin(name, directory=None):
     return plugin, test
 
 
+def _py(value):
+    """Python source of a number; infinities become ``float("inf")`` (and only those: texts stay untouched)."""
+    if isinstance(value, float) and math.isinf(value):
+        return 'float("inf")' if value > 0 else '-float("inf")'
+    return repr(value)
+
+
 def sasview_adapter(name, directory="."):
     """Write a SasView plugin model file wrapping SASfit function ``name``."""
     p = headers.info(name)
     params = ",\n".join(
-        f'    ["{q.name}", "", {q.default!r}, [{q.bounds[0]!r}, {q.bounds[1]!r}], "", {q.description!r}]'
+        f'    ["{q.name}", "", {_py(q.default)}, [{_py(q.bounds[0])}, {_py(q.bounds[1])}], "", {q.description!r}]'
         for q in p.parameters
-    ).replace("inf", 'float("inf")')
+    )
     text = (
         _template("sasview_adapter.py")
         .replace("NAME_STR", p.name)

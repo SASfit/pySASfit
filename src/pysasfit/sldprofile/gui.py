@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import copy
 import os
+import time
+import warnings
 import sys
 import traceback
 
@@ -22,8 +24,11 @@ matplotlib.use("QtAgg")
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 
+from .bspline import BSplines  # noqa: E402
+from ..core.project_gui import ProjectMixin  # noqa: E402
+from ..core.docking import DockMixin  # noqa: E402
 from .density import DensityProfileFit  # noqa: E402
-from .twostep import two_step_fit  # noqa: E402
+from .twostep import shannon_points, two_step_fit  # noqa: E402
 from ..core.io import load_data  # noqa: E402
 from ..core import settings as prefs  # noqa: E402
 from ..core.resolution import Resolution, SlitResolution  # noqa: E402
@@ -31,6 +36,9 @@ from ..core.background import Background, Constant, OrnsteinZernike, PowerLaw  #
 
 Q_UNITS = [("as in file", 1.0), ("file in 1/nm  ->  1/Å", 0.1), ("file in 1/Å  ->  1/nm", 10.0)]
 
+
+# a hidden or momentarily tiny panel cannot be laid out; matplotlib warns on every draw
+warnings.filterwarnings("ignore", message="constrained_layout not applied")
 
 class _Abort(Exception):
     pass
@@ -101,7 +109,53 @@ def _ispin(value, lo, hi):
     return w
 
 
-class MainWindow(QtWidgets.QMainWindow):
+def _slim_result(res):
+    """Copy of a result for a project file: of the alpha-path solutions only those
+    at the best r_max are kept (for the evidence-vs-ln-alpha plot), without their
+    covariance matrices (they make up most of the size)."""
+    import copy
+    import dataclasses
+
+    def slim(r):
+        r = copy.copy(r)
+        b = r.best.r_max
+        r.solutions = [dataclasses.replace(s_, cov=np.zeros((0, 0))) for s_ in (r.solutions or [])
+                       if s_.r_max == b and s_ is not r.best]
+        r.weights = None
+        return r
+
+    out = slim(res)
+    ts = getattr(res, "twostep", None)
+    if ts is not None:
+        ts = copy.copy(ts)
+        ts.profile = slim(ts.profile)
+        out.twostep = ts
+    return out
+
+
+#: relative deviation of the IFT points from the Shannon number that is marked (bold + comment)
+IFT_POINTS_TOLERANCE = 0.25
+
+def _wrap_to_width(parts, fig, fontsize):
+    """Join text parts with spaces, breaking lines so that each fits the figure width
+    (estimated 0.6 em per character); keeps titles readable in narrow panels."""
+    width_px = max(fig.bbox.width, 50.0)
+    max_chars = max(int(width_px / (0.6 * fontsize * fig.dpi / 72.0)), 20)
+    lines, cur = [], ""
+    for p_ in parts:
+        cand = (cur + "  " + p_) if cur else p_
+        if cur and len(cand) > max_chars:
+            lines.append(cur)
+            cur = p_
+        else:
+            cur = cand
+    lines.append(cur)
+    return "\n".join(lines)
+
+
+class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
+    _project_tool = "sldprofile"
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("pySLDprofile – density profile from SAS data (Hansen 2016)")
@@ -135,6 +189,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lbl_npts = QtWidgets.QLabel("")
         f.addRow(self.btn_load)
         f.addRow(self.lbl_file)
+        # folder of the loaded file, in grey below the name (wraps when long, selectable)
+        self.lbl_path = QtWidgets.QLabel("")
+        self.lbl_path.setWordWrap(True)
+        self.lbl_path.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.lbl_path.setStyleSheet("color: palette(mid);")
+        self.lbl_path.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.lbl_path.setVisible(False)
+        f.addRow(self.lbl_path)
         f.addRow("q units", self.cb_units)
         f.addRow("q min", self.sp_qmin)
         f.addRow("q max", self.sp_qmax)
@@ -153,16 +215,40 @@ class MainWindow(QtWidgets.QMainWindow):
             "  The r_max scan range sets the D_max range of step 1.")
         self.cb_method.currentIndexChanged.connect(self._update_enabled)
         self.cb_perr = QtWidgets.QComboBox()
-        self.cb_perr.addItems(["full covariance", "diagonal  (DECON)"])
-        self.cb_perr.setToolTip("Errors of p(r) used in step 2: the full posterior covariance of the IFT,\n"
-                                "or only its standard deviations, as in Glatter's DECON")
-        self.sp_nr = _ispin(60, 15, 300)
-        self.sp_nr.setToolTip("number of p(r) points of the IFT (step 1)")
+        self.cb_perr.addItems(["diagonal  (DECON)", "full covariance"])
+        self.cb_perr.setToolTip("Errors of p(r) used in step 2: the standard deviations of the IFT, as in\n"
+                                "Glatter's DECON (default), or its full posterior covariance. The covariance\n"
+                                "of the regularised IFT is nearly singular and its small-variance directions\n"
+                                "are set by the smoothness prior, not the data: even the exact p(r) of the\n"
+                                "true particle then fits with chi2/M >> 1. Not recommended.\n"
+                                "With diagonal errors they are multiplied by sqrt(points / N_s): p(r) holds\n"
+                                "only about N_s independent values, whatever the number of IFT points.")
+        self.cb_alpha2 = QtWidgets.QComboBox()
+        self.cb_alpha2.addItems(["fit of the measured I(q)", "evidence of the p(r) fit"])
+        self.cb_alpha2.setToolTip(
+            "How the smoothing (alpha) of step 2 is chosen.\n"
+            "fit of the measured I(q) (default): the smoothest rho(r) whose I(q), computed with the\n"
+            "  direct forward model, fits the data within one standard deviation of chi2\n"
+            "  (chi2 <= first minimum along the alpha path + sqrt(2M)).\n"
+            "evidence of the p(r) fit: Glatter's p(r)-only route, alpha by maximum evidence of step 2.\n"
+            "  It often smooths too much or too little because the regularised p(r) is not data\n"
+            "  with independent errors.")
+        self.sp_nr = _ispin(60, 15, 2000)
+        self.sp_nr.setToolTip("number of p(r) points of the IFT (step 1). Default: the Shannon number\n"
+                              "N_s = q_max D_max / pi for the largest D_max of the scan (2 x scan end x r_max,\n"
+                              "or 2 r_max when r_max is fixed). Shown in bold with a comment when the value\n"
+                              "differs from N_s by more than 25 %.")
+        self.lbl_nr = QtWidgets.QLabel("")
+        self.lbl_nr.setWordWrap(True)
+        self._nr_suggested = None
+        self._nr_guess_cache = None
         f.addRow("method", self.cb_method)
         f.addRow("   p(r) errors / IFT points", self._pair(self.cb_perr, self.sp_nr))
+        f.addRow("", self.lbl_nr)
+        f.addRow("   step-2 smoothing from", self.cb_alpha2)
         self.cb_geom = QtWidgets.QComboBox()
         self.cb_geom.addItems(["sphere", "cylinder", "lamella"])
-        self.sp_n = _ispin(80, 10, 400)
+        self.sp_n = _ispin(80, 4, 400)
         self.cb_reg = QtWidgets.QComboBox()
         self.cb_reg.addItems(["smooth", "maxent"])
         self.cb_prior = QtWidgets.QComboBox()
@@ -196,6 +282,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cb_prior.currentTextChanged.connect(self._update_enabled)
         f.addRow("geometry", self.cb_geom)
         f.addRow("number of points N", self.sp_n)
+        self.cb_rep = QtWidgets.QComboBox()
+        self.cb_rep.addItems(["shells (step profile)", "cubic B-spline", "quadratic B-spline"])
+        self.cb_rep.setToolTip(
+            "How rho(r) (or r^p rho) is represented.\n"
+            "shells: N piecewise-constant shells (Hansen 2016). Every shell boundary is a small\n"
+            "  step and adds its own Porod-like high-q tail.\n"
+            "B-spline: a clamped spline with N coefficients, smooth inside (C2 for cubic), even\n"
+            "  at r = 0 and with one step at r_max for outer end 'free' (sharp surface) or 0 at\n"
+            "  r_max for 'zero'. The smoothness prior is exactly int c''^2. 15-25 coefficients are\n"
+            "  usually enough. The r grid below then sets the knot spacing.")
+        self.cb_rep.currentIndexChanged.connect(self._update_enabled)
+        f.addRow("representation", self.cb_rep)
         self.cb_grid = QtWidgets.QComboBox()
         self.cb_grid.addItems(["uniform", "power law  t = (k/N)^γ", "adaptive (two-pass)"])
         self.cb_grid.setToolTip(
@@ -209,9 +307,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cb_grid.currentIndexChanged.connect(self._update_enabled)
         self.sp_gamma = _dspin(1.5, 0.2, 5.0, 2, 0.1)
         self.sp_beta = _dspin(3.0, 0.0, 50.0, 1, 0.5)
-        self.sp_beta.setToolTip("adaptivity strength beta in M = 1 + beta |c'|/<|c'|>")
-        self.ck_ticks = QtWidgets.QCheckBox("show shells")
-        self.ck_ticks.setToolTip("mark the shell boundaries on the profile plot")
+        self.sp_beta.setToolTip("adaptivity strength beta in M = 1 + beta |c'|/<|c'|> (shells) or\n"
+                                "M = 1 + beta sqrt|c''|/<sqrt|c''|> (B-spline knots)")
+        self.ck_ticks = QtWidgets.QCheckBox("show shells / knots")
+        self.ck_ticks.setToolTip("mark the shell boundaries (or the spline knots) on the profile plot")
         self.ck_ticks.toggled.connect(self.redraw)
         f.addRow("r grid", self.cb_grid)
         f.addRow("   γ  /  adaptivity β", self._pair(self.sp_gamma, self.sp_beta))
@@ -354,12 +453,40 @@ class MainWindow(QtWidgets.QMainWindow):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidget(ctrl)
         scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(410)
+        # wide enough for the controls: no horizontal scroll bar
+        scroll.setMinimumWidth(max(410, ctrl.minimumSizeHint().width()
+                                   + scroll.verticalScrollBar().sizeHint().width() + 4))
 
-        # ---------------- plots + text
-        self.fig = Figure(figsize=(10, 7), layout="constrained")
-        self.canvas = FigureCanvasQTAgg(self.fig)
-        toolbar = NavigationToolbar2QT(self.canvas, self)
+        # ---------------- plots + text: every panel is a detachable dock (View menu)
+        self.figs, self.canvases = {}, {}
+        for key, size in (("iq", (6, 5)), ("profile", (6, 5)), ("rmax", (5, 3)), ("evidence", (5, 3)),
+                          ("alpha2", (5, 3))):
+            self.figs[key] = Figure(figsize=size, layout="constrained")
+            self.canvases[key] = FigureCanvasQTAgg(self.figs[key])
+        self.fig = self.figs["iq"]          # compatibility: the I(q) figure
+        self._iq_title_parts = None
+        # re-break the title of the I(q) panel when the panel width changes
+        self.canvases["iq"].mpl_connect("resize_event", lambda _e: self._rewrap_iq_title())
+        # manual ln alpha (an add-on: the automatic result stays; the solution at the chosen
+        # alpha is drawn in addition). Click on the Evidence or χ²(α) plot, or type a value.
+        self._manual = None
+        self.ck_man = QtWidgets.QCheckBox("manual ln α:")
+        self.ck_man.setToolTip(
+            "Show, in addition to the automatic result, the solution at another regularisation\n"
+            "parameter (at the best r_max; two-step: step 2 at r_max = D_max/2). Click on the Evidence\n"
+            "or the χ²(α) plot (no pan/zoom mode active) or type ln α. The automatic result is not changed.")
+        self.sp_man = _dspin(0.0, -1000.0, 1000.0, 2, 0.25)
+        self.btn_auto = QtWidgets.QPushButton("automatic")
+        self.btn_auto.setToolTip("Hide the manual solution and set ln α back to the automatic value")
+        self.lbl_man = QtWidgets.QLabel("")
+        self.lbl_man.setWordWrap(True)
+        self.lbl_man.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.ck_man.toggled.connect(lambda *_: self._update_manual())
+        self.sp_man.valueChanged.connect(lambda *_: self._update_manual() if self.ck_man.isChecked() else None)
+        self.btn_auto.clicked.connect(self._manual_off)
+        for key in ("evidence", "alpha2"):
+            self.canvases[key].mpl_connect("button_press_event", self._on_alpha_click)
+        self.canvas = self.canvases["iq"]
         self.summary = QtWidgets.QPlainTextEdit()
         self.summary.setReadOnly(True)
         self.summary.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
@@ -370,38 +497,109 @@ class MainWindow(QtWidgets.QMainWindow):
         tabs.addTab(self.summary, "Result")
         tabs.addTab(self.log, "Log")
 
-        right = QtWidgets.QWidget()
-        rl = QtWidgets.QVBoxLayout(right)
         bar = QtWidgets.QHBoxLayout()
-        bar.addWidget(toolbar)
-        bar.addStretch(1)
         for lab, w in (("I(q):", None), (None, self.ck_logx), (None, self.ck_logy)):
             if lab:
                 bar.addWidget(QtWidgets.QLabel(lab))
             if w is not None:
                 bar.addWidget(w)
-        rl.addLayout(bar)
+        bar.addStretch(1)
         bar2 = QtWidgets.QHBoxLayout()
         for lab, w in (("profile:", self.cb_main), (None, self.ck_plogr), ("  y:", self.cb_pys),
-                       ("threshold:", self.le_pthr), ("     overlay (right axis):", self.cb_over),
-                       ("  y:", self.cb_oys), ("threshold:", self.le_othr)):
+                       ("threshold:", self.le_pthr)):
             if lab:
                 bar2.addWidget(QtWidgets.QLabel(lab))
             bar2.addWidget(w)
         bar2.addStretch(1)
-        rl.addLayout(bar2)
-        split = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        split.addWidget(self.canvas)
-        split.addWidget(tabs)
-        split.setSizes([650, 200])
-        rl.addWidget(split)
+        bar3 = QtWidgets.QHBoxLayout()
+        for lab, w in (("overlay (right):", self.cb_over), ("  y:", self.cb_oys), ("threshold:", self.le_othr)):
+            bar3.addWidget(QtWidgets.QLabel(lab))
+            bar3.addWidget(w)
+        bar3.addStretch(1)
 
-        main = QtWidgets.QSplitter()
-        main.addWidget(scroll)
-        main.addWidget(right)
-        main.setSizes([420, 980])
-        self.setCentralWidget(main)
+        from ..core.docking import plot_panel
+        L, R, B = (QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+                   QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
+        d_in = self._add_dock("input", "Input", scroll, L)
+        d_iq = self._add_dock("iq", "I(q) and residuals", plot_panel(self.canvases["iq"], self, [bar]), R)
+        d_pr = self._add_dock("profile", "Density profile",
+                              plot_panel(self.canvases["profile"], self, [bar2, bar3]), R)
+        d_rm = self._add_dock("rmax", "Posterior of r_max", plot_panel(self.canvases["rmax"], self), R)
+        bar_man = QtWidgets.QHBoxLayout()
+        for w_ in (self.ck_man, self.sp_man, self.btn_auto):
+            bar_man.addWidget(w_)
+        bar_man.addStretch(1)
+        d_ev = self._add_dock("evidence", "Evidence",
+                              plot_panel(self.canvases["evidence"], self, [bar_man, self.lbl_man]), R)
+        d_tx = self._add_dock("text", "Result / log", tabs, B)
+        # optional panel (View menu): chi2 of I(q) along the step-2 alpha path of the two-step route
+        d_a2 = self._add_dock("alpha2", "Two-step: χ²(α) of I(q)", plot_panel(self.canvases["alpha2"], self), R)
+        self.splitDockWidget(d_in, d_iq, QtCore.Qt.Orientation.Horizontal)
+        self.splitDockWidget(d_iq, d_pr, QtCore.Qt.Orientation.Horizontal)
+        self.splitDockWidget(d_iq, d_rm, QtCore.Qt.Orientation.Vertical)
+        self.splitDockWidget(d_pr, d_ev, QtCore.Qt.Orientation.Vertical)
+        # input panel wide enough for its controls (no horizontal scroll bar at start)
+        w_in = max(450, ctrl.sizeHint().width() + scroll.verticalScrollBar().sizeHint().width() + 12)
+        self.resizeDocks([d_in, d_iq, d_pr], [w_in, 500, 500], QtCore.Qt.Orientation.Horizontal)
+        self.resizeDocks([d_iq, d_rm], [450, 220], QtCore.Qt.Orientation.Vertical)
+        self.resizeDocks([d_tx], [170], QtCore.Qt.Orientation.Vertical)
+        self.tabifyDockWidget(d_ev, d_a2)
+        d_ev.raise_()
+        d_a2.hide()                          # not shown by default: View -> "Two-step: χ²(α) of I(q)"
+        self._finish_docks()
+        # which copy of the program runs (an installed, non-editable copy is not updated
+        # by changes in the source folder)
+        from .. import __version__ as _ver
+        _here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.log_msg(f"pySASfit {_ver} running from {_here} (gui.py modified "
+                     f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(__file__)))})")
 
+        self._update_enabled()
+        self.redraw()
+        for w in (self.sp_rmax, self.sp_hi):
+            w.valueChanged.connect(lambda *_: self._update_ift_points())
+        for w in (self.ck_auto, self.ck_fix):
+            w.toggled.connect(lambda *_: self._update_ift_points())
+        self.cb_method.currentIndexChanged.connect(lambda *_: self._update_ift_points())
+        self.cb_geom.currentIndexChanged.connect(lambda *_: self._update_ift_points(new_data=True))
+        self.sp_nr.valueChanged.connect(lambda *_: self._update_ift_points(follow=False))
+        self._init_project()
+
+    # ------------------------------------------------------------------ project hooks
+    def _project_columns(self):
+        if self.raw is None:
+            return None
+        q, I, s, dq = self.raw
+        return {"q": q, "I": I, "sigma": s, "dq": dq}
+
+    def _project_data_path(self):
+        return self.filename
+
+    def _project_load_data(self, path):
+        self.load_file(path)
+
+    def _project_clear(self):
+        self.result = None
+        self.p_scan = None
+        self._manual = None
+        self.summary.setPlainText("")
+
+    def _project_note(self, msg):
+        self.log_msg(msg)
+        self.statusBar().showMessage(msg, 8000)
+
+    def _project_result(self):
+        if self.result is None and self.p_scan is None:
+            return None
+        return {"result": _slim_result(self.result) if self.result is not None else None, "p_scan": self.p_scan}
+
+    def _project_set_result(self, st):
+        self.result = st.get("result")
+        self.p_scan = st.get("p_scan")
+        self._manual_off_silent()
+        if self.result is not None:
+            res = self.result
+            self.summary.setPlainText(res.twostep.summary() if hasattr(res, "twostep") else res.summary())
         self._update_enabled()
         self.redraw()
 
@@ -428,8 +626,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sp_bg.setEnabled(self.cb_bg.currentIndex() == 1)
         two = self.cb_method.currentIndex() == 1
         self.cb_perr.setEnabled(two)
+        self.cb_alpha2.setEnabled(two)
         self.sp_nr.setEnabled(two)
+        self.lbl_nr.setVisible(two)
         self.btn_bg_take.setEnabled(self.cb_bg.currentIndex() == 1 and self.result is not None)
+        ok = self.result is not None and self.p_scan is None
+        for w_ in (self.ck_man, self.sp_man, self.btn_auto):
+            w_.setEnabled(ok)
         for w in (self.sp_pl_n, self.ck_pl_fitn):
             w.setEnabled(self.ck_pl.isChecked())
         for w in (self.sp_oz_xi, self.ck_oz_fitxi):
@@ -463,10 +666,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.raw = (q, I, s, dq)
         self.result = None
         self.lbl_file.setText(os.path.basename(fn) + ("   (4 columns: σ_q found)" if dq is not None else ""))
+        folder = os.path.dirname(os.path.abspath(fn))
+        # zero-width spaces after the separators let a long folder wrap over several lines
+        self.lbl_path.setText(folder.replace("\\", "\\\u200b").replace("/", "/\u200b"))
+        self.lbl_path.setToolTip(os.path.abspath(fn))
+        self.lbl_path.setVisible(True)
         self.log_msg(f"loaded {fn}: {q.size} points")
         if dq is not None:
             self.cb_res.setCurrentIndex(1)
         self.on_units()
+        self._autosave()
 
     def on_units(self, *args):
         if self.raw is None:
@@ -494,8 +703,66 @@ class MainWindow(QtWidgets.QMainWindow):
         m = (q >= self.sp_qmin.value() - 1e-12) & (q <= self.sp_qmax.value() + 1e-12)
         self.data = (q[m], I[m], s[m], dq[m] if dq is not None else None)
         self.lbl_npts.setText(f"{m.sum()} of {q.size} points used")
+        if hasattr(self, "lbl_nr"):
+            self._update_ift_points(new_data=True)
         self._update_enabled()
         self.redraw()
+
+    # ------------------------------------------------------------------ IFT points
+    def _scan_r_max(self):
+        """r_max the IFT scan is built on: the r_max field, or the Guinier estimate."""
+        if not self.ck_auto.isChecked():
+            return self.sp_rmax.value()
+        if self._nr_guess_cache is None and self.data is not None:
+            q, I, s, _ = self.data
+            try:
+                self._nr_guess_cache = DensityProfileFit(q, np.clip(I, 1e-300, None), s, n=4,
+                                                         geometry=self.cb_geom.currentText()).guess_r_max()
+            except Exception:  # noqa: BLE001
+                self._nr_guess_cache = self.sp_rmax.value()
+        return self._nr_guess_cache or self.sp_rmax.value()
+
+    def shannon_ift_points(self, r_max=None):
+        """(N_s, D_max) for the largest D_max of the two-step scan."""
+        if self.data is None:
+            return None, None
+        rm = self._scan_r_max() if r_max is None else r_max
+        D = 2.0 * rm * (1.0 if self.ck_fix.isChecked() else self.sp_hi.value())
+        return shannon_points(float(np.max(self.data[0])), D), D
+
+    def _update_ift_points(self, follow=True, new_data=False):
+        """Default the IFT points to the Shannon number; mark values more than
+        IFT_POINTS_TOLERANCE (25 %) away from it."""
+        if new_data:
+            self._nr_guess_cache = None
+        ns, D = self.shannon_ift_points()
+        if ns is None:
+            self.lbl_nr.setText("")
+            return
+        cur = self.sp_nr.value()
+        if follow and (self._nr_suggested is None or cur == self._nr_suggested):
+            self.sp_nr.blockSignals(True)
+            self.sp_nr.setValue(max(self.sp_nr.minimum(), min(ns, self.sp_nr.maximum())))
+            self.sp_nr.blockSignals(False)
+            cur = self.sp_nr.value()
+        self._nr_suggested = ns
+        dev = (cur - ns) / ns
+        font = self.sp_nr.font()
+        font.setBold(abs(dev) > IFT_POINTS_TOLERANCE)
+        self.sp_nr.setFont(font)
+        raw = float(np.max(self.data[0])) * D / np.pi
+        base = f"Shannon number N<sub>s</sub> = q<sub>max</sub>·D<sub>max</sub>/π = {raw:.1f} (D<sub>max</sub> = {D:.4g})"
+        if raw < ns:
+            base += f"; at least {ns} points are used"
+        if dev < -IFT_POINTS_TOLERANCE:
+            self.lbl_nr.setText(f"<b>{cur} IFT points: {100 * -dev:.0f} % below N<sub>s</sub> = {ns} -- p(r) is "
+                                f"under-sampled, the deconvolution loses information.</b>")
+        elif dev > IFT_POINTS_TOLERANCE:
+            self.lbl_nr.setText(f"<b>{cur} IFT points: {100 * dev:.0f} % above N<sub>s</sub> = {ns} -- more points "
+                                f"than the data determine: no gain, only slower (the smoothness prior fills them; "
+                                f"step 2 counts them as N<sub>s</sub> independent values).</b>")
+        else:
+            self.lbl_nr.setText(f"<small>{base}</small>")
 
     def _fitter(self, grid=None):
         return self._fitter_factory()(grid)
@@ -541,7 +808,11 @@ class MainWindow(QtWidgets.QMainWindow):
         _geo.DEFAULTS.update(prefs.values("sldprofile.geo"))
         _bg.START_DEFAULTS.update(prefs.values("numerics.background"))
 
+        degree = (None, 3, 2)[self.cb_rep.currentIndex()]
+
         def make(grid=None):
+            if degree is not None and not isinstance(grid, BSplines):
+                grid = BSplines(degree, grid)      # None / ('power', gamma) -> knot spacing
             return DensityProfileFit(
                 q, I, s, geometry=geom, n=n, regularization=reg, prior=prior,
                 outer=outer, background=bgf(), resolution=res, basis=basis, grid=grid,
@@ -601,7 +872,8 @@ class MainWindow(QtWidgets.QMainWindow):
             bgtxt += f" + A q^-n (n {'fit, start ' if self.ck_pl_fitn.isChecked() else '= '}{self.sp_pl_n.value():.3g})"
         if self.ck_oz.isChecked():
             bgtxt += " + OZ" + (" (xi fit)" if self.ck_oz_fitxi.isChecked() else " (xi fixed)")
-        self.log_msg(f"--- run: {fitter.geometry}, N={fitter.n}, {fitter.regularization}, outer={fitter.outer}, "
+        rep = ("shells", "cubic B-spline", "quadratic B-spline")[self.cb_rep.currentIndex()]
+        self.log_msg(f"--- run: {fitter.geometry}, N={fitter.n} ({rep}), {fitter.regularization}, outer={fitter.outer}, "
                      f"represented r^{geo_exponent(fitter)}*rho, background {bgtxt}, r_max start {rm:.5g}" + (" (fixed)" if fix else "")
                      + ("", f", power-law grid gamma={self.sp_gamma.value():.3g}", ", adaptive grid")[gmode])
         if self.cb_method.currentIndex() == 1:
@@ -620,7 +892,8 @@ class MainWindow(QtWidgets.QMainWindow):
                        resolution=fitter.resolution,
                        background=(False, self.sp_bg.value(), True)[bgsel], r_max=rm, fix_r_max=fix,
                        r_max_range=None if fix else kw["r_max_range"], n_D=kw["n_coarse"],
-                       n_r=self.sp_nr.value(), errors=("covariance", "diagonal")[self.cb_perr.currentIndex()],
+                       n_r=self.sp_nr.value(), errors=("diagonal", "covariance")[self.cb_perr.currentIndex()],
+                       alpha_from=("intensity", "evidence")[self.cb_alpha2.currentIndex()],
                        options=fitter.opt, ift_options=prefs.values("sldprofile.ift"),
                        penalty=prefs.get("sldprofile.twostep.penalty"),
                        n_sub=prefs.get("sldprofile.twostep.n_sub"), **prefs.values("sldprofile.fit"))
@@ -628,7 +901,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.log_msg(f"--- two-step (Glatter): IFT with {tkw['n_r']} p(r) points, D_max "
                          + (f"= {2 * rm:.5g} fixed" if fix else
                             f"in [{2 * kw['r_max_range'][0]:.5g}, {2 * kw['r_max_range'][1]:.5g}]")
-                         + f", p(r) errors: {self.cb_perr.currentText()}")
+                         + f", p(r) errors: {self.cb_perr.currentText()}"
+                         + f", step-2 smoothing from the {self.cb_alpha2.currentText()}"
+                         + f"; Shannon number for the largest D_max: N_s = {self.shannon_ift_points(rm)[0]}")
 
             def job2(f_, tkw=tkw, q=q, I=I, s=s):
                 return two_step_fit(q, I, s, progress=f_.progress, **tkw).as_profile_result()
@@ -724,14 +999,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progress.setValue(self.progress.maximum())
             self.statusBar().showMessage(f"best exponent p = {p[i]:.4g}", 8000)
             self.redraw()
+            self._autosave()
             return
         self.result = res
+        self._manual_off_silent()
         self.progress.setValue(self.progress.maximum())
         text = res.twostep.summary() if hasattr(res, "twostep") else res.summary()
         self.summary.setPlainText(text)
         self.log_msg(text)
         self.statusBar().showMessage("done", 5000)
         self.redraw()
+        self._autosave()
 
     def on_failed(self, msg):
         self.log_msg(msg)
@@ -752,12 +1030,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.result.twostep.save(prefix)
             else:
                 self.result.save(prefix)
-            self.fig.savefig(prefix + ".png", dpi=150)
+            for key, f_ in self.figs.items():
+                f_.savefig(f"{prefix}_{key}.png", dpi=150)
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Save error", str(e))
             return
         extra = ", _ift_pr.dat, _I_from_rho.dat" if hasattr(self.result, "twostep") else ""
-        self.log_msg(f"saved {prefix}_rho.dat, _fit.dat, _pr.dat, _rmax.dat, _params.txt{extra}, .png")
+        self.log_msg(f"saved {prefix}_rho.dat, _fit.dat, _pr.dat, _rmax.dat, _params.txt{extra} and the plots as _iq/_profile/_rmax/_evidence.png")
 
     # ------------------------------------------------------------------ plots
     @staticmethod
@@ -830,14 +1109,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 ax.set_ylim(max(lo * 1.1, -0.3 * top), 1.15 * top)
 
     def redraw(self, *args):
-        fig = self.fig
-        fig.clear()
-        gs = fig.add_gridspec(3, 2, height_ratios=[3, 1, 3])
+        self._iq_title_parts = None
+        for f_ in self.figs.values():
+            f_.clear()
+        fig = self.figs["iq"]
+        gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
         axI = fig.add_subplot(gs[0, 0])
         axR = fig.add_subplot(gs[1, 0], sharex=axI)
-        axP = fig.add_subplot(gs[0:2, 1])
-        axE = fig.add_subplot(gs[2, 0])
-        axD = fig.add_subplot(gs[2, 1])
+        axP = self.figs["profile"].add_subplot(111)
+        axE = self.figs["rmax"].add_subplot(111)
+        axD = self.figs["evidence"].add_subplot(111)
         res = self.result
         if self.data is not None:
             q, I, s, _ = self.data
@@ -872,6 +1153,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 axP.plot(ed, np.zeros_like(ed), "|", color="0.3", ms=8, mew=0.8, transform=axP.get_xaxis_transform(),
                          clip_on=False, label=None)
             axP.text(res.r_max[0], axP.get_ylim()[1], " $r_{max}$", va="top", color="0.4", fontsize=8)
+            m = self._manual
+            if m is not None:
+                rr = res.r
+                ym = m["sol"].rho_on(rr) if main == "rho" else m["sol"].mass_on(rr)
+                axP.plot(rr, ym, color="C6", ls="-.", lw=1.3, label=f"ln α = {m['la']:.2f} (manual)")
+                axI.plot(m["q"], m["I"], color="C6", ls="-.", lw=1.3, zorder=5,
+                         label=f"ln α = {m['la']:.2f} (manual)" + (" from ρ(r)" if ts is not None else ""))
+                if self.data is not None and len(self.data[0]) == len(m["q"]):
+                    axR.plot(m["q"], (self.data[1] - m["I"]) / self.data[2], "x", color="C6", ms=3)
             handles, labels = axP.get_legend_handles_labels()
             over = (None, "pr", "rho", "mass")[self.cb_over.currentIndex()]
             if over is not None and over != main:
@@ -883,7 +1173,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._apply_yscale(ax2, x2, y2, over, res, self.cb_oys.currentText(), self.le_othr)
                 ts = getattr(res, "twostep", None)
                 if over == "pr" and ts is not None:
-                    ax2.plot(ts.pddf.r, ts.profile.I_fit, color="C3", lw=1.0, ls=":", label="p(r) of deconvolved ρ")
+                    ax2.plot(ts.profile.q, ts.profile.I_fit, color="C3", lw=1.0, ls=":", label="p(r) of deconvolved ρ")
                 ax2.set_ylabel(self._profile_ylabel(res, over), color="C4")
                 ax2.tick_params(axis="y", colors="C4")
                 h2, l2 = ax2.get_legend_handles_labels()
@@ -901,12 +1191,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     o = np.argsort(la[sel])
                     axD.plot(la[sel][o], le[sel][o] - le.max(), "o-", ms=3, color="C5")
             axI.legend(fontsize=8)
-            fig.suptitle(
-                ("two-step (Glatter), " if hasattr(res, "twostep") else "")
-                + f"{res.geometry}, {res.regularization}:  r_max = {res.r_max[0]:.4g} ± {res.r_max[1]:.2g},  "
-                f"Rg = {res.Rg[0]:.4g} ± {res.Rg[1]:.2g},  χ²/M = {res.chi2_red:.3g}",
-                fontsize=10,
-            )
+            parts = [("two-step (Glatter), " if hasattr(res, "twostep") else "")
+                     + f"{res.geometry}, {res.regularization}:", f"r_max = {res.r_max[0]:.4g} ± {res.r_max[1]:.2g},",
+                     f"Rg = {res.Rg[0]:.4g} ± {res.Rg[1]:.2g},", f"χ²/M = {res.chi2_red:.3g}"]
+            self._iq_title_parts = parts
+            fig.suptitle(_wrap_to_width(parts, fig, 9), fontsize=9)
         axI.set_xscale("log" if self.ck_logx.isChecked() else "linear")
         axI.set_yscale("log" if self.ck_logy.isChecked() else "linear")
         from matplotlib.ticker import NullFormatter
@@ -935,8 +1224,195 @@ class MainWindow(QtWidgets.QMainWindow):
             axD.set_ylim(lo - 2, 2)
         else:
             axD.set_xlabel(r"ln $\alpha$  (at best $r_{max}$)")
-        axD.set_ylabel("ln evidence (rel.)")
-        self.canvas.draw_idle()
+        axD.set_ylabel("ln Ev (rel.)")
+        self._mark_evidence_maxima(axD)
+        self._draw_alpha2(res, axD)
+        if self._manual is not None:
+            if axD.lines:
+                axD.axvline(self._manual["la"], color="C6", ls="-.", lw=1.4)
+            ts_ = getattr(res, "twostep", None)
+            if ts_ is not None and ts_.alpha_scan and self.figs["alpha2"].axes:
+                self.figs["alpha2"].axes[0].axvline(self._manual["la"], color="C6", ls="-.", lw=1.4)
+        from ..core.docking import adapt_fonts
+        for f_ in self.figs.values():
+            adapt_fonts(f_)
+        for c in self.canvases.values():
+            c.draw_idle()
+
+    # ------------------------------------------------------------------ manual alpha
+    @staticmethod
+    def _mark_evidence_maxima(ax):
+        """Mark the local maxima of the evidence curve; with more than one, label them."""
+        if not ax.lines:
+            return
+        x, y = (np.asarray(v, float) for v in ax.lines[0].get_data())
+        if x.size < 3:
+            return
+        i = [k for k in range(1, x.size - 1) if y[k] > y[k - 1] and y[k] >= y[k + 1]]
+        if len(i) < 2:
+            return
+        ax.plot(x[i], y[i], "v", color="k", ms=6, zorder=6)
+        for k in i:
+            ax.annotate(f"{x[k]:.1f}", (x[k], y[k]), textcoords="offset points", xytext=(0, 6),
+                        ha="center", fontsize=7)
+        ax.set_title(f"{len(i)} evidence maxima (ln α marked); click to inspect one", fontsize=8)
+
+    def _on_alpha_click(self, event):
+        if self.result is None or self.p_scan is not None or event.button != 1:
+            return
+        if event.inaxes is None or event.xdata is None:
+            return
+        tb = getattr(event.canvas, "toolbar", None)
+        if tb is not None and str(getattr(tb, "mode", "")):
+            return                                   # pan / zoom active
+        self.set_manual_alpha(float(event.xdata))
+
+    def set_manual_alpha(self, log_alpha):
+        """Show the solution at ln alpha in addition to the automatic result."""
+        self.sp_man.blockSignals(True)
+        self.ck_man.blockSignals(True)
+        self.sp_man.setValue(log_alpha)
+        self.ck_man.setChecked(True)
+        self.sp_man.blockSignals(False)
+        self.ck_man.blockSignals(False)
+        self._update_manual()
+
+    def _auto_log_alpha(self):
+        res = self.result
+        ts = getattr(res, "twostep", None) if res is not None else None
+        if ts is not None and ts.alpha_scan:
+            return float(np.log(ts.alpha_scan["chosen"]))
+        return float(np.log(res.best.alpha)) if res is not None else 0.0
+
+    def _manual_off_silent(self):
+        """New result: manual alpha off, ln alpha set to the automatic value (no redraw)."""
+        self._manual = None
+        self.ck_man.blockSignals(True)
+        self.ck_man.setChecked(False)
+        self.ck_man.blockSignals(False)
+        self.lbl_man.setText("")
+        if self.result is not None:
+            self.sp_man.blockSignals(True)
+            self.sp_man.setValue(self._auto_log_alpha())
+            self.sp_man.blockSignals(False)
+        self._update_enabled()
+
+    def _manual_off(self):
+        self.ck_man.blockSignals(True)
+        self.ck_man.setChecked(False)
+        self.ck_man.blockSignals(False)
+        if self.result is not None:
+            self.sp_man.blockSignals(True)
+            self.sp_man.setValue(self._auto_log_alpha())
+            self.sp_man.blockSignals(False)
+        self._update_manual()
+
+    def _update_manual(self):
+        self._manual = None
+        res = self.result
+        if not self.ck_man.isChecked() or res is None or self.p_scan is not None:
+            self.lbl_man.setText("")
+            self.redraw()
+            return
+        la = self.sp_man.value()
+        ts = getattr(res, "twostep", None)
+        try:
+            if ts is not None:
+                sol, Iq, pr = ts.solve_at(la)
+                q = res.q
+                le_ref = (float(np.max(ts.alpha_scan["log_evidence"])) if ts.alpha_scan
+                          else ts.profile.best.log_evidence)
+                if self.data is not None and len(self.data[0]) == len(q):
+                    c2 = float(np.mean(((Iq - self.data[1]) / self.data[2]) ** 2))
+                else:
+                    c2 = float("nan")
+                extra = f", χ²/M of p(r) = {sol.chi2 / len(ts.profile.q):.3g}"
+            else:
+                sol = res.solve_at(la)
+                q, Iq = res.q, sol.I_fit
+                c2 = sol.chi2 / len(q)
+                le_ref = res.best.log_evidence
+                extra = ""
+        except RuntimeError as e:
+            self.lbl_man.setText(f"<i>{e}; run the fit again to inspect other α.</i>")
+            self.redraw()
+            return
+        ev = sol.log_evidence - le_ref
+        self._manual = dict(la=la, sol=sol, q=q, I=Iq)
+        txt = (f"ln α = {la:.2f} at r_max = {sol.r_max:.4g}: Δln Ev = {ev:+.2f} (vs. maximum), "
+               f"χ²/M of I(q) = {c2:.3g}{extra}, Rg = {sol.Rg():.4g}, N_g = {sol.n_good:.1f}")
+        self.lbl_man.setText(f"<span style='color:#e377c2'>■</span> {txt}  "
+                             f"<i>(automatic: ln α = {self._auto_log_alpha():.2f})</i>")
+        self.log_msg("manual α: " + txt)
+        self.redraw()
+
+    def _stop_worker(self, timeout_ms=5000):
+        """Stop a running fit and wait for its thread (closing the window while a fit
+        runs would otherwise destroy a running QThread)."""
+        w_ = self.worker
+        if w_ is not None and w_.isRunning():
+            w_.stop()
+            w_.wait(timeout_ms)
+
+    def closeEvent(self, event):
+        self._stop_worker()
+        super().closeEvent(event)
+
+    def shutdown(self):
+        self._stop_worker()
+        super().shutdown()
+
+    def _rewrap_iq_title(self):
+        fig = self.figs["iq"]
+        if self._iq_title_parts and fig._suptitle is not None:
+            fig._suptitle.set_text(_wrap_to_width(self._iq_title_parts, fig, 9))
+
+    def _draw_alpha2(self, res, axD):
+        """Two-step route: chi2/M of I(q) from rho(r) along the step-2 alpha path, the
+        threshold of the I(q) criterion and the alphas chosen by both criteria (panel
+        'Two-step: χ²(α) of I(q)'); the step-2 evidence also in the Evidence panel."""
+        ax = self.figs["alpha2"].add_subplot(111)
+        ts = getattr(res, "twostep", None) if res is not None else None
+        sc = getattr(ts, "alpha_scan", None) if ts is not None else None
+        if not sc:
+            ax.text(0.5, 0.5, "only for the two-step method\n(χ² of I(q) from ρ(r) along the step-2 α path)",
+                    ha="center", va="center", transform=ax.transAxes, fontsize=9, color="0.4")
+            ax.set_xticks([])
+            ax.set_yticks([])
+            return
+        la = np.log(sc["alpha"])
+        c2 = np.asarray(sc["chi2_I"])
+        le = np.asarray(sc["log_evidence"])
+        o = np.argsort(la)
+        ax.plot(la[o], c2[o], "o-", ms=3, color="C0", label="χ²/M of I(q) from ρ(r)")
+        ax.axhline(sc["threshold"], color="C0", ls=":", lw=1.0, label="threshold")
+        used = sc.get("alpha_from", ts.alpha_from)
+        for key, col, ls, lab in (("intensity_alpha", "C3", "-", "α from the fit of I(q)"),
+                                  ("evidence_alpha", "C5", "--", "α of max. evidence of p(r)")):
+            sel = (key == "intensity_alpha") == (used == "intensity")
+            ax.axvline(np.log(sc[key]), color=col, ls=ls, lw=2.0 if sel else 1.0,
+                       label=lab + (" (used)" if sel else ""))
+        x0 = np.log(sc["chosen"])
+        ax.plot([x0], [np.interp(x0, la[o], c2[o])], "o", ms=9, mfc="none", mec="k", mew=1.5)
+        ax.set_yscale("log")
+        top = max(float(np.nanmax(c2[np.isfinite(c2)])) if np.any(np.isfinite(c2)) else 10.0, 1.0)
+        ax.set_ylim(max(0.5 * float(np.nanmin(c2)), 1e-3), min(top * 1.5, 50 * sc["threshold"]))
+        ax.set_xlabel(r"ln $\alpha$  (step 2: deconvolution)")
+        ax.set_ylabel("χ²/M of I(q)")
+        ax2 = ax.twinx()
+        ax2.plot(la[o], le[o] - le.max(), color="0.6", lw=1.0)
+        ax2.set_ylim(max(float(np.min(le - le.max())), -60) - 2, 2)
+        ax2.set_ylabel("ln Ev (grey)", color="0.45")
+        ax2.tick_params(axis="y", colors="0.45")
+        ax.set_zorder(ax2.get_zorder() + 1)       # legend above the grey curve
+        ax.patch.set_visible(False)
+        ax.legend(fontsize=7, loc="best", framealpha=0.75)
+        # Evidence panel: step-2 evidence along the same path, with the alpha used
+        if not axD.lines:
+            axD.plot(la[o], le[o] - le.max(), "o-", ms=3, color="C5")
+            axD.axvline(x0, color="C3" if used == "intensity" else "0.5", ls="--", lw=0.8)
+            axD.set_xlabel(r"ln $\alpha$  (step 2; line: $\alpha$ used)")
+            axD.set_ylim(max(float(np.min(le - le.max())), -60) - 2, 2)
 
 
 def main(argv=None):
@@ -945,7 +1421,12 @@ def main(argv=None):
     w = MainWindow()
     w.show()
     if len(argv) > 1 and os.path.isfile(argv[1]):
-        w.load_file(argv[1])
+        if argv[1].endswith(".pysasfit"):
+            w.open_project(argv[1])
+        else:
+            w.load_file(argv[1])
+    else:
+        w.restore_session()
     return app.exec()
 
 

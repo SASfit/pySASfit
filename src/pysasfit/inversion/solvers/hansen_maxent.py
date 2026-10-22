@@ -12,7 +12,11 @@ algorithm:
     correction term each iteration, entropy defined relative to an
     explicit prior m: S = sum[-x ln(x/m) + x - m].
   - This module (Hansen/Elfving style): minimizes
+
+    .. code-block:: text
+
         ||A x - b||^2 + lambda^2 * x^T log(w .* x)
+
     directly via nonlinear conjugate-gradient descent with a step-length
     control that keeps x positive at every iteration (no separate EM step
     at all) -- entropy here is x^T log(w.*x) (relative to a fixed weight

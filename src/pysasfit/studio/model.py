@@ -95,6 +95,9 @@ class ScatteringContribution:
         self.last_integration = None  # info of the last size-distribution integration (method, neval, ...)
         self.cache = None  # ContributionCache while a fit runs with cache=True (see FitProblem.fit)
         self.snap = 0.0  # > 0: the automatic integration range is rounded outwards to a geometric grid of this step
+        self.fixed_grid = False  # True: fixed logarithmic grid for the size-distribution integral (FitProblem.fit(grid=True))
+        self.grid_margin = 1.6  # the fixed grid extends by this factor beyond the support at both ends
+        self._grid = None
 
     @staticmethod
     def _vec(f, params):
@@ -163,6 +166,7 @@ class ScatteringContribution:
 
         self.cache = ContributionCache()
         self.snap = float(snap)
+        self._grid = None
 
     def disable_cache(self):
         self.cache, self.snap = None, 0.0
@@ -228,10 +232,12 @@ class ScatteringContribution:
 
 
 class ModelFunction:
-    def __init__(self, contributions=(), scales=None, background=0.0, resolution=None):
+    def __init__(self, contributions=(), scales=None, background=0.0, resolution=None, bg_A=0.0, bg_alpha=4.0):
         self.contributions = list(contributions)
         self.scales = list(scales) if scales is not None else [1.0] * len(self.contributions)
         self.background = background
+        self.bg_A = float(bg_A)  # power-law term of the background: bg_A * q**(-bg_alpha) (off while bg_A = 0)
+        self.bg_alpha = float(bg_alpha)
         self.resolution = resolution
         self._bg_z = None
 
@@ -240,7 +246,17 @@ class ModelFunction:
         self.scales.append(float(scale))
         return len(self.contributions) - 1
 
+    def power_term(self, q):
+        """The power-law part of the background, ``bg_A * q**(-bg_alpha)`` (0 while ``bg_A`` is 0)."""
+        if not self.bg_A:
+            return 0.0
+        return self.bg_A * np.asarray(q, dtype=float) ** (-self.bg_alpha)
+
     def _background(self, q):
+        """The background: ``background`` (a constant, a Background object or a function of q) + ``bg_A * q**(-bg_alpha)``."""
+        return self._constant_background(q) + self.power_term(q)
+
+    def _constant_background(self, q):
         b = self.background
         if b is None:
             return 0.0
@@ -352,6 +368,9 @@ class Pipeline:
             if not np.isscalar(m.background):
                 raise ValueError("only a constant background can be fitted this way")
             return (lambda: m.background, lambda v: setattr(m, "background", float(v)))
+        if addr in ("bg.A", "bg.alpha"):
+            attr = "bg_" + addr[3:]
+            return (lambda: getattr(m, attr), lambda v: setattr(m, attr, float(v)))
         parts = addr.split(".")
         if parts[0] == "scale":
             i = int(parts[1])

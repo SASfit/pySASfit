@@ -44,7 +44,10 @@ def test_two_step_recovers_profile(geometry):
     T = two_step_fit(q, I, s, geometry=geometry, n=30)
     assert abs(T.pddf.D_max - 10.0) < 3 * max(T.pddf.D_max_err, 0.1) + 0.3
     assert 0.7 < T.pddf.chi2_red < 1.3
-    assert T.chi2_red_profile < 1.5                         # I(q) of the deconvolved rho fits the data
+    # I(q) of the deconvolved rho fits the data (alpha of step 2 from I(q); with the
+    # p(r) evidence the sphere gave chi2/M ~ 5)
+    assert T.chi2_red_profile < (2.0 if geometry == "sphere" else 1.5)
+    assert T.sigma_scale == 1.0 or geometry == "lamella"     # default: n_r = N_s, no scaling
     P = T.profile
     r = P.r
     m = r < 5.5
@@ -69,3 +72,79 @@ def test_diagonal_errors_and_fixed_r_max():
     assert "diagonal" in T.profile.method
     dec = DeconvolutionFit(T.pddf.r, T.pddf.p, sigma=T.pddf.p_err, n=20)
     assert dec.errors == "diagonal" and abs(dec.guess_r_max() - 4.0) < 0.3
+
+
+def _spheres(q, modes):
+    """Polydisperse homogeneous spheres: modes = [(R0, sigma_lognormal, volume fraction)]."""
+    out = np.zeros_like(q)
+    for R0, sg, w in modes:
+        R = np.linspace(R0 * np.exp(-4 * sg), R0 * np.exp(4 * sg), 300)
+        n = np.exp(-np.log(R / R0) ** 2 / (2 * sg**2)) / R
+        V = 4 / 3 * np.pi * R**3
+        n = w * n / np.trapezoid(n * V, R)
+        x = np.outer(q, R)
+        F = 3 * (np.sin(x) - x * np.cos(x)) / x**3
+        out += np.trapezoid((V**2 * F**2) * n[None, :], R, axis=1)
+    return out
+
+
+def test_single_particle_consistent_polydisperse_flagged():
+    """2026-10-21: with the default diagonal p(r) errors a single core-shell sphere
+    is deconvolved with chi2/M ~ 1 (full covariance gave ~170), while bimodal
+    polydisperse spheres (cf. examples/studio/data/test.dat) are flagged."""
+    q = np.geomspace(0.004, 0.385, 91)
+    rng = np.random.default_rng(1)
+    It = models.intensity_from_profile(q, models.core_shell(200, 1.0, 0.4), 300)
+    It = It / It[0] * 3500
+    s = 0.02 * It + 0.002
+    T = two_step_fit(q, It + 0.1 + rng.normal(size=q.size) * s, s, n=40, background=True, r_max=300,
+                     r_max_range=(150, 450), n_D=10)
+    assert T.profile.chi2_red < 2.0
+    assert "not the self-convolution" not in T.summary()
+    It = _spheres(q, [(60, 0.2, 1.9), (180, 0.2, 1.0)])
+    It = It / It[0] * 3500
+    s = 0.02 * It + 0.002
+    T = two_step_fit(q, It + 0.1 + rng.normal(size=q.size) * s, s, n=40, background=True, r_max=300,
+                     r_max_range=(150, 450), n_D=10)
+    assert T.profile.chi2_red > 3.0
+    assert "not the self-convolution" in T.summary()
+
+
+def test_step2_errors_scaled_to_shannon_number():
+    """More IFT points than N_s carry no new information: step 2 multiplies the p(r)
+    errors by sqrt(M / N_s), so the profile hardly depends on the number of points."""
+    from pysasfit.sldprofile.twostep import shannon_points
+    f = lambda r: np.where(r < 3, 1.0, np.where(r < 5, 0.4, 0.0))  # noqa: E731
+    q, I, s = models.simulate(np.linspace(0.1, 2.5, 120), f, 5.0, rel_noise=0.01, abs_noise=1e-4, seed=2)[:3]
+    T = two_step_fit(q, I, s, n=30, r_max=5.0, fix_r_max=True, n_r=60)
+    ns = shannon_points(q.max(), 10.0)
+    assert np.isclose(T.sigma_scale, np.sqrt(60 / ns))
+    r2, p2, s2 = T.step2_data
+    assert np.allclose(s2, T.pddf.p_err * T.sigma_scale)
+    assert "p(r) errors x" in T.summary()
+    T1 = two_step_fit(q, I, s, n=30, r_max=5.0, fix_r_max=True, n_r=60, scale_errors=False)
+    assert T1.sigma_scale == 1.0
+
+
+def test_step2_alpha_from_intensity():
+    """Default: step-2 alpha from the fit of the measured I(q) (smoothest rho within
+    one standard deviation of chi2). The small sphere (q_max D_max / pi = 8) was
+    smoothed too much by the p(r) evidence: I(q) from rho chi2/M ~ 5 -> < 2."""
+    f = lambda r: np.where(r < 3, 1.0, np.where(r < 5, 0.4, 0.0))  # noqa: E731
+    q, I, s = models.simulate(np.linspace(0.1, 2.5, 120), f, 5.0, rel_noise=0.01, abs_noise=1e-4, seed=2)[:3]
+    T = two_step_fit(q, I, s, n=30, r_max=5.0, fix_r_max=True)
+    Te = two_step_fit(q, I, s, n=30, r_max=5.0, fix_r_max=True, alpha_from="evidence")
+    assert T.alpha_from == "intensity" and Te.alpha_from == "evidence"
+    a, ae = T.alpha_scan, Te.alpha_scan
+    assert a["alpha_from"] == "intensity" and np.isclose(a["chosen"], a["intensity_alpha"])
+    assert ae["alpha_from"] == "evidence" and np.isclose(ae["chosen"], Te.profile.best.alpha)
+    assert ae["alpha"].size == ae["chi2_I"].size == ae["log_evidence"].size > 10
+    assert T.chi2_red_profile <= a["threshold"] + 1e-9 and T.chi2_red_profile < 2.0 < Te.chi2_red_profile
+    assert a["chosen"] < a["evidence_alpha"]
+    assert "alpha of step 2 from I(q)" in T.summary() and "fit of I(q)" in T.profile.method
+    P = T.profile
+    m = P.r < 5.5
+    c = P.rho[P.r < 2].mean()
+    assert np.sqrt(np.mean((P.rho[m] - f(P.r[m]) * c) ** 2)) / c < 0.12
+    with pytest.raises(ValueError):
+        two_step_fit(q, I, s, n=10, r_max=5.0, fix_r_max=True, alpha_from="nonsense")

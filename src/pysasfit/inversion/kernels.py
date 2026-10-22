@@ -1,5 +1,5 @@
 """
-Discretization of the Fredholm integral
+Discretization of the Fredholm integral::
 
     I(Q) = integral_0^inf  N(s) |F(Q, s)|^2  ds
 
@@ -47,7 +47,7 @@ def build_size_distribution_kernel(
 ) -> np.ndarray:
     """
     Build the kernel matrix A for a size-distribution inversion, following
-    eq. 32-34 of Kohlbrecher & Bressler (2022):
+    eq. 32-34 of Kohlbrecher & Bressler (2022)::
 
         x_j = N(s_j) * s_j^alpha
         A_ij = ds_j * s_j^-alpha * |F(Q_i, s_j)|^2
@@ -58,8 +58,8 @@ def build_size_distribution_kernel(
         Scattering vector magnitudes.
     s : array (N,)
         Size grid (e.g. radius). Does not need to be uniformly spaced.
-    form_factor_squared : callable(q, s) -> |F(q, s)|^2
-        Squared form factor, vectorized over q for a given s (or fully
+    form_factor_squared : callable
+        (q, s) -> squared modulus of F(q, s): squared form factor, vectorized over q for a given s (or fully
         vectorized over both -- see usage below).
     alpha : float
         0 for number-weighted, 3 for volume-weighted, 6 for

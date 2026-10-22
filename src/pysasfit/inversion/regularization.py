@@ -52,11 +52,11 @@ def hansen_smoothness_cholesky(n: int) -> np.ndarray:
     """
     Cholesky factor L (n x n, dense) such that L^T L = A_hansen, where
     A_hansen is the smoothness-regularization Hessian of Hansen (2000),
-    J. Appl. Cryst. 33, 1415-1421, eq. 19:
+    J. Appl. Cryst. 33, 1415-1421, eq. 19::
 
         S = sum_{j=2}^{N-1} [f_j - (f_{j-1}+f_{j+1})/2]^2 + (1/2) f_1^2 + (1/2) f_N^2
 
-    which Hansen states (text following eq. 19) works out to the matrix
+    which Hansen states (text following eq. 19) works out to the matrix::
 
         a_ij = 1        for i == j
         a_ij = -1/2      for |i - j| == 1
@@ -183,16 +183,20 @@ def hansen_smoothness_two_segment(n: int, split_idx: int) -> tuple[np.ndarray, n
     the high-q Debye/sinc kernel lets small, cheap wiggles in p(r) fit
     noise there almost for free under any uniform smoothing strength.
 
-    Derivation: Hansen's penalty (his eq. 19) is
+    Derivation: Hansen's penalty (his eq. 19) is::
+
         S(p) = (1/2) sum_{i=0}^{n-2} (p_i - p_{i+1})^2
                + (1/2) p_0^2 + (1/2) p_{n-1}^2
+
     which expands to the p^T A p form implemented in
     hansen_smoothness_cholesky (diag=1, off-diag=-1/2). Crucially, S(p) is
     a SUM of independent local terms -- one per consecutive pair, plus the
     two boundary terms -- so it can be partitioned by index with no
-    approximation:
+    approximation::
+
         A_lo = sum_{i=0}^{split_idx-1} (1/2) C_i  +  (1/2) e_0 e_0^T
         A_hi = sum_{i=split_idx}^{n-2} (1/2) C_i  +  (1/2) e_{n-1} e_{n-1}^T
+
     where C_i is the rank-2 matrix representing (p_i - p_{i+1})^2. By
     construction A_lo + A_hi == hansen_smoothness_cholesky(n)'s full
     A_hansen exactly (verified below), so a two-lambda penalty

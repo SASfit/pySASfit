@@ -1,12 +1,13 @@
 """One window for all pysasfit tools.
 
-    pysasfit-gui [datafile]
-    python -m pysasfit.gui.launcher [datafile]
+    pysasfit-gui [datafile | project.pysasfit]
+    python -m pysasfit.gui.launcher [datafile | project.pysasfit]
 
 Every tool keeps its own main window; the launcher hosts them as tabs. A tool
 whose import fails (e.g. a missing optional dependency) gets a tab with the
 error message instead of breaking the whole launcher. A data file given on the
-command line is loaded into the SLD-profile tab.
+command line is loaded into the SLD-profile tab, a project file into its tool.
+The other tools reopen their last session (see :mod:`pysasfit.core.project`).
 
 To add a tool, append ``(title, "module.path", "ClassName")`` to ``TOOLS``.
 """
@@ -58,6 +59,17 @@ class Launcher(QtWidgets.QMainWindow):
                 self.tabs.addTab(_error_tab(title, traceback.format_exc()), title + " (error)")
         self.resize(1500, 950)
         from ..core.settings_dialog import open_preferences
+        # projects: act on the tool in front
+        fmenu = self.menuBar().addMenu("&File")
+        for text, meth, key in (("&Open project…", "on_open_project", QtGui.QKeySequence.StandardKey.Open),
+                                ("&Save project…", "on_save_project", QtGui.QKeySequence.StandardKey.Save)):
+            a = QtGui.QAction(text, self)
+            a.setShortcut(key)
+            a.triggered.connect(lambda _=False, m=meth: self._call_current(m))
+            fmenu.addAction(a)
+        # panels of the tool in front (input, plots): show / hide, reset layout
+        self.view_menu = self.menuBar().addMenu("&View")
+        self.view_menu.aboutToShow.connect(self._fill_view_menu)
         menu = self.menuBar().addMenu("&Settings")
         act = QtGui.QAction("&Preferences…", self)
         act.setShortcut(QtGui.QKeySequence.StandardKey.Preferences)
@@ -66,6 +78,68 @@ class Launcher(QtWidgets.QMainWindow):
             self, _TOOL_KEYS.get(self.tabs.tabText(self.tabs.currentIndex()))))
         menu.addAction(act)
         self.preferences_action = act
+        forget = QtGui.QAction("Forget last session (all tools)", self)
+        forget.triggered.connect(self.forget_sessions)
+        menu.addAction(forget)
+
+    def _fill_view_menu(self):
+        m = self.view_menu
+        m.clear()
+        w = self.tabs.currentWidget()
+        docks = getattr(w, "docks", None)
+        if not docks:
+            a = m.addAction("(no detachable panels in this tool)")
+            a.setEnabled(False)
+            return
+        for a in w.view_actions.values():
+            m.addAction(a)
+        m.addSeparator()
+        if getattr(w, "border_actions", None):
+            sub = m.addMenu("Panel border")
+            for a in w.border_actions.values():
+                sub.addAction(a)
+        m.addAction("Dock all panels", w.dock_all)
+        m.addAction("Reset layout", w.reset_layout)
+
+    def _call_current(self, method):
+        w = self.tabs.currentWidget()
+        f = getattr(w, method, None)
+        if callable(f):
+            f()
+        else:
+            QtWidgets.QMessageBox.information(self, "Projects", "This tool has no project files.")
+
+    def forget_sessions(self):
+        for w in self.windows.values():
+            f = getattr(w, "forget_session", None)
+            if callable(f):
+                f()
+        self.statusBar().showMessage("last sessions deleted", 8000)
+
+    def restore_sessions(self, skip=()):
+        for title, w in self.windows.items():
+            f = getattr(w, "restore_session", None)
+            if callable(f) and title not in skip:
+                f()
+
+    def open_project(self, path):
+        """Open a project file in the tool it belongs to."""
+        import json
+        import zipfile
+        try:
+            with zipfile.ZipFile(path) as z:
+                tool = json.loads(z.read("project.json").decode("utf-8")).get("tool")
+        except Exception as e:  # noqa: BLE001
+            QtWidgets.QMessageBox.critical(self, "Open project", f"{path}: not a pySASfit project ({e})")
+            return None
+        for title, key in _TOOL_KEYS.items():
+            w = self.windows.get(title)
+            if key == tool and hasattr(w, "open_project"):
+                self.tabs.setCurrentWidget(w)
+                w.open_project(path)
+                return title
+        QtWidgets.QMessageBox.critical(self, "Open project", f"{path}: no tool '{tool}' in this window")
+        return None
 
     def window_for(self, title):
         return self.windows.get(title)
@@ -75,6 +149,9 @@ class Launcher(QtWidgets.QMainWindow):
             shutdown = getattr(w, "shutdown", None)  # e.g. the OZ tool restores stdout/stderr
             if callable(shutdown):
                 shutdown()
+            close_detached = getattr(w, "close_detached", None)   # independent panel windows
+            if callable(close_detached):
+                close_detached()
         super().closeEvent(event)
 
 
@@ -83,10 +160,18 @@ def main(argv=None):
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv)
     w = Launcher()
     w.show()
+    skip = set()
     if len(argv) > 1 and os.path.isfile(argv[1]):
-        sld = w.window_for("SLD profile")
-        if sld is not None:
-            sld.load_file(argv[1])
+        if argv[1].endswith(".pysasfit"):
+            t = w.open_project(argv[1])
+            if t:
+                skip.add(t)
+        else:
+            sld = w.window_for("SLD profile")
+            if sld is not None:
+                sld.load_file(argv[1])
+                skip.add("SLD profile")
+    w.restore_sessions(skip)
     return app.exec()
 
 

@@ -35,6 +35,38 @@ work without it are listed here.
       nlopt_algorithms, available_backends, register_backend, locate
 ```
 
+## Saving a fit result
+
+CSV, Excel (with charts) and the summary figure; the size distributions N(x) and N(x)·x^p are included, `dist_power`
+is the exponent p (the explorer's size-distribution dock sets it).
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.export
+   :members: DISTRIBUTION_POWER, distribution_curves, distribution_rows, save_csv, save_xlsx, summary_figure,
+      figure_bytes, save_figure
+```
+
+## Where the libraries, headers and plugins are
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.paths
+   :members:
+```
+
+## Menu tree of the functions
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.groups
+   :members:
+```
+
+## Command line
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.cli
+   :members: main, new_plugin, sasview_adapter
+```
+
 ## Projects
 
 ```{eval-rst}

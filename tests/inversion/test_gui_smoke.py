@@ -27,6 +27,9 @@ def main():
     assert win.data is not None, "data should be loaded"
     assert len(win.data.q) == 91, f"expected 91 points, got {len(win.data.q)}"
     print(f"loaded {len(win.data.q)} points via the GUI's load_file()")
+    # the folder of the file is shown below the file name
+    assert win.data_path_label.isVisibleTo(win)
+    assert win.data_path_label.text().replace("\u200b", "") == os.path.dirname(os.path.abspath(DATA_PATH))
 
     # --- fixed background = 0.1 ---
     win.use_fixed_bg.setChecked(True)
@@ -70,6 +73,10 @@ def main():
 
     # --- check the plots actually got populated (not just computed) ---
     assert len(win.ax_iq.lines) > 0 or len(win.ax_iq.containers) > 0, "I(q) plot should have content"
+    # normalised residuals below the scattering curve
+    res_line = [ln for ln in win.ax_res.lines if ln.get_linestyle() == "None"]
+    assert res_line and np.isfinite(res_line[0].get_ydata()).sum() > 50, "residual panel should show Δ/σ"
+    assert win.ax_res.get_shared_x_axes().joined(win.ax_res, win.ax_iq)
     assert len(win.ax_dist.lines) > 0, "distribution plot should have content"
 
     # --- reduced solver list (2026-10-10) ---
@@ -219,6 +226,28 @@ def main():
     assert not win.error_rel_spin.isHidden()
     assert np.allclose(win.sigma, 0.03 * np.abs(win.data.I))
     ns.setCurrentIndex(ns.findData("given"))
+
+    # --- greyed-out interpolation choice carries a visible note ---
+    win.spline_check.setChecked(False)
+    win.solver_combo.setCurrentIndex(win.solver_combo.findData("em_discrepancy"))
+    assert not win.r_interp_combo.isEnabled() and not win.r_interp_note.isHidden()
+    assert win.r_interp_combo.currentData() == "linear"
+    win.solver_combo.setCurrentIndex(win.solver_combo.findData("bayesian_evidence"))
+    assert win.r_interp_combo.isEnabled() and win.r_interp_note.isHidden()
+
+    # --- cylinder and lamella PDDF kernels (Hansen 2016) ---
+    pen = win.option_widgets["penalty"][1]
+    win.kernel_combo.setCurrentIndex(win.kernel_combo.findData("lamella_pddf"))
+    assert pen.currentData() == "hansen_eq19_even", "lamella: p(0) must be free"
+    assert win.alpha_spin.isHidden()
+    win._on_solve()
+    txt = win.help_text("result")
+    assert "Lamella" in txt and "p(0) free" in txt, txt
+    win.kernel_combo.setCurrentIndex(win.kernel_combo.findData("cylinder_pddf"))
+    assert pen.currentData() == "hansen_eq19", "back to the default penalty"
+    win._on_solve()
+    assert "R<sub>c</sub>" in win.help_text("result") or "≤ 0" in win.help_text("result")
+    assert win.ax_dist.get_ylabel() == "$p_c(r)$"
 
     print("OK -- GUI smoke test passed: load -> fixed background -> kernel/solver "
           "selection -> solve -> plots, all via the real MainWindow class")

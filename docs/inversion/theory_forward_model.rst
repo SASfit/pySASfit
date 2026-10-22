@@ -23,8 +23,10 @@ reduced basis) to obtain a stable, physically meaningful solution.
 Kernels
 -------
 
-Two kernels are registered in
-:data:`pysasfit.inversion.kernel_registry.KERNEL_REGISTRY`.
+Four kernels are registered in
+:data:`pysasfit.inversion.kernel_registry.KERNEL_REGISTRY`: three
+pair-distance kernels for particles of spherical, cylindrical and lamellar
+symmetry (Hansen 2016, eqs. 1-3) and one size-distribution kernel.
 
 Pair-distance distribution (``sinc_4pi``)
     For a particle with excess scattering length density
@@ -52,6 +54,73 @@ Pair-distance distribution (``sinc_4pi``)
       contrast that changes sign (core–shell, contrast variation). No
       positivity is imposed by default.
     * There is no size weighting (``uses_alpha=False``).
+
+Cross-section distribution of a long cylinder (``cylinder_pddf``)
+    For a rod of length :math:`L \gg 2\pi/q` the orientational average
+    factorizes into :math:`\pi/(qL)` times the scattering of the
+    cross-section (Glatter 1979; Hansen 2016, eq. 2). Per unit
+    length
+
+    .. math::
+       :label: pddf_cyl
+
+       I(q)\,\big/\,L = \frac{2\pi^2}{q} \int_0^{D_{max}} p_c(r)\, J_0(qr)\, \mathrm{d}r ,
+
+    with :math:`p_c(r) = r\,\gamma_c(r)`, :math:`\gamma_c` the 2D
+    autocorrelation of the cross-section density and :math:`J_0` the
+    cylindrical Bessel function. :math:`D_{max}` is the largest distance
+    *within the cross-section* (its diameter); :math:`p_c(0)=0`. As for the
+    sphere the kernel is signed and :math:`p_c` may be negative.
+    The kernel diverges like :math:`1/q`; the forward value is that of the
+    reduced intensity, :math:`\lim_{q\to0} q\,I(q) = 2\pi^2\int p_c\,\mathrm{d}r`.
+
+Thickness distribution of a flat lamella (``lamella_pddf``)
+    For a sheet of area :math:`A \gg (2\pi/q)^2` the Lorentz factor is
+    :math:`2\pi/(q^2 A)` (Hansen 2016, eq. 3). Per unit area
+
+    .. math::
+       :label: pddf_lam
+
+       I(q)\,\big/\,A = \frac{4\pi}{q^2} \int_0^{D_{max}} p_t(r)\, \cos(qr)\, \mathrm{d}r ,
+
+    with :math:`p_t(r)=\gamma_t(r)=\int\Delta\rho(x)\,\Delta\rho(x+r)\,\mathrm{d}x`
+    the 1D autocorrelation of the profile across the sheet and
+    :math:`D_{max}` the thickness. **Unlike the other two,**
+    :math:`p_t(0)=\int\Delta\rho^2\,\mathrm{d}x>0`, and :math:`p_t` is the
+    restriction to :math:`r\ge0` of an *even* function, so
+    :math:`p_t'(0)=0`. A smoothness prior that pulls :math:`p(0)` to zero
+    (Hansen 2000, eq. 19) is therefore wrong here; the variant
+    ``hansen_eq19_even`` (see :doc:`theory_regularization`) leaves
+    :math:`p(0)` free and is selected automatically in the GUI. In a test
+    with a core–shell sheet (``tests/inversion/test_cylinder_lamella_kernels.py``)
+    the relative error of :math:`p_t` is 3 % with the free end and 37 % with
+    :math:`p(0)` pinned, and the evidence prefers the free end by
+    :math:`\Delta\ln Z\approx 8.5`.
+
+    General relation (Hansen 2016, eqs. 4-5): :math:`p(r)=r^{d-1}\gamma(r)`
+    with :math:`d=3,2,1` for sphere, cylinder and lamella, and
+
+    .. math::
+
+       \lim_{q\to0} q^{3-d}\,I(q) = c_d \int_0^{D_{max}} p(r)\,\mathrm{d}r,
+       \qquad c_3 = 4\pi,\ c_2 = 2\pi^2,\ c_1 = 4\pi ,
+
+    .. math::
+
+       R_{g,d}^2 = \frac{\int p(r)\, r^2\, \mathrm{d}r}{2\int p(r)\, \mathrm{d}r},
+
+    the radius of gyration of the particle (:math:`R_g`), of the
+    cross-section (:math:`R_c`) or of the thickness (:math:`R_t`). The GUI
+    reports these, plus :math:`R=\sqrt2\,R_c` (homogeneous circular
+    cross-section) and :math:`T=\sqrt{12}\,R_t` (homogeneous sheet).
+
+    The normalization is the same as in :mod:`pysasfit.sldprofile`: a
+    :math:`p(r)` computed with :func:`pysasfit.sldprofile.geometry.pddf` from
+    a radial density profile reproduces the exact intensity of that profile
+    with these kernels (checked in the test above). The density profile
+    :math:`\Delta\rho(r)` itself -- Hansen's direct estimate or Glatter's
+    two-step deconvolution of :math:`p(r)` -- is computed by
+    :mod:`pysasfit.sldprofile` (:doc:`../sldprofile/index`).
 
 Sphere size distribution (``sphere_rg``)
     For a dilute polydisperse system of homogeneous spheres of radius

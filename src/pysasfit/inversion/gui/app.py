@@ -146,7 +146,13 @@ class InfoPanel(QFrame):
             self._update_height()
 
 
-class MainWindow(QMainWindow):
+from pysasfit.core.project_gui import ProjectMixin  # noqa: E402
+from pysasfit.core.docking import adapt_fonts, keep_fonts_adapted, small_toolbar  # noqa: E402
+
+
+class MainWindow(ProjectMixin, QMainWindow):
+    _project_tool = "inversion"
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("pySASfitInversion")
@@ -202,6 +208,55 @@ class MainWindow(QMainWindow):
         self.status = QStatusBar()
         self.setStatusBar(self.status)
         self._refresh_help_sizes()
+        self._init_project()
+
+    # ---------------------------------------------------------------- project hooks
+    def _project_extra_widgets(self) -> dict:
+        return {f"option:{name}": combo for name, (_label, combo) in self.option_widgets.items()}
+
+    def _project_columns(self):
+        if self.data is None:
+            return None
+        d = self.data
+        return {"q": d.q, "I": d.I, "sigma": d.dI, "dq": d.dQ}
+
+    def _project_data_path(self):
+        return self.data.source_path if self.data is not None else None
+
+    def _project_load_data(self, path):
+        self.load_file(path)
+
+    def _project_clear(self):
+        for k in self._RESULT_FIELDS:
+            if hasattr(self, k):
+                delattr(self, k)
+        self.bg_result = None
+        self._help_dynamic["result"] = help_texts.NO_RESULT
+        self.solve_result_label.setText("not solved yet")
+
+    def _project_note(self, msg):
+        self.status.showMessage(msg, 10000)
+
+    _RESULT_FIELDS = ("_last_r_grid", "_last_alpha", "_last_kernel", "_last_result", "_last_I_sub",
+                      "_last_boot", "_last_result_info")
+
+    def _project_result(self):
+        st = {"bg_result": self.bg_result}
+        if getattr(self, "_last_result", None) is not None:
+            st.update({k: getattr(self, k, None) for k in self._RESULT_FIELDS})
+        return st
+
+    def _project_set_result(self, st):
+        self.bg_result = st.get("bg_result")
+        if self.bg_result is not None:
+            self._update_bg_info(show=False)
+        if st.get("_last_result") is not None and st.get("_last_kernel") in KERNEL_REGISTRY:
+            for k in self._RESULT_FIELDS:
+                setattr(self, k, st.get(k))
+            self._update_result_info()
+        self._plot_iq()
+        if getattr(self, "_last_result", None) is not None:
+            self._plot_distribution()
 
     # ---------------------------------------------------------------- help
 
@@ -325,6 +380,15 @@ class MainWindow(QMainWindow):
         self.data_info_label = self._short_label("no data loaded")
         file_layout.addWidget(self.load_button)
         file_layout.addWidget(self.data_info_label)
+        # folder of the loaded file (wraps when long, selectable; no tooltip: this window
+        # explains its controls in the info panel)
+        self.data_path_label = QLabel("")
+        self.data_path_label.setWordWrap(True)
+        self.data_path_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.data_path_label.setStyleSheet("color: palette(mid);")
+        self.data_path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.data_path_label.setVisible(False)
+        file_layout.addWidget(self.data_path_label)
         # error bars: from the file, or an error model when the file has
         # none (or to cross-check them) -- goodness_of_fit.estimate_errors
         err_form = QFormLayout()
@@ -377,6 +441,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(file_group)
         self._help(self.load_button, "load")
         self._help(self.data_info_label, "data_info")
+        self._help(self.data_path_label, "data_info")
 
         # --- background ---
         bg_group = QGroupBox("Background: backgr + c\u00b7q^(-\u03b1)")
@@ -472,8 +537,19 @@ class MainWindow(QMainWindow):
                           ("cubic", "cubic spline (not-a-knot)")]:
             self.r_interp_combo.addItem(text, key)
         self.r_interp_row_label = QLabel("p(r) between grid points:")
-        solve_form.addRow(self.r_interp_row_label, self.r_interp_combo)
-        self._help(self.r_interp_combo, "r_interp", solve_form)
+        # visible reason when the choice is greyed out (solvers needing
+        # p >= 0 / a non-negative kernel always use linear interpolation)
+        self.r_interp_note = QLabel("<i>(linear only for this solver)</i>")
+        self.r_interp_note.setVisible(False)
+        self.r_interp_box = QWidget()
+        box = QHBoxLayout(self.r_interp_box)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.addWidget(self.r_interp_combo, 1)
+        box.addWidget(self.r_interp_note)
+        solve_form.addRow(self.r_interp_row_label, self.r_interp_box)
+        self._help(self.r_interp_box, "r_interp", solve_form)
+        self._help(self.r_interp_combo, "r_interp")
+        self._help(self.r_interp_note, "r_interp")
 
         self.solver_combo = QComboBox()
         for key, spec in SOLVER_REGISTRY.items():
@@ -577,17 +653,23 @@ class MainWindow(QMainWindow):
         # Each figure gets the matplotlib navigation toolbar (home, back,
         # forward, pan, zoom, subplot layout, axes/curve editing, save), as
         # in the SLD-profile and OZ tools.
-        self.fig_iq = Figure(figsize=(5, 4))
+        # constrained layout: labels stay inside the figure whenever the panel is resized
+        self.fig_iq = Figure(figsize=(5, 4), layout="constrained")
         self.canvas_iq = FigureCanvasQTAgg(self.fig_iq)
-        self.ax_iq = self.fig_iq.add_subplot(111)
-        self.toolbar_iq = NavigationToolbar2QT(self.canvas_iq, panel)
+        keep_fonts_adapted(self.canvas_iq)
+        # I(q) with the normalised residuals below (as in the SLD-profile tool)
+        gs = self.fig_iq.add_gridspec(2, 1, height_ratios=[3, 1])
+        self.ax_iq = self.fig_iq.add_subplot(gs[0, 0])
+        self.ax_res = self.fig_iq.add_subplot(gs[1, 0], sharex=self.ax_iq)
+        self.toolbar_iq = small_toolbar(NavigationToolbar2QT(self.canvas_iq, panel))
         layout.addWidget(self.toolbar_iq)
         layout.addWidget(self.canvas_iq)
 
-        self.fig_dist = Figure(figsize=(5, 4))
+        self.fig_dist = Figure(figsize=(5, 4), layout="constrained")
         self.canvas_dist = FigureCanvasQTAgg(self.fig_dist)
+        keep_fonts_adapted(self.canvas_dist)
         self.ax_dist = self.fig_dist.add_subplot(111)
-        self.toolbar_dist = NavigationToolbar2QT(self.canvas_dist, panel)
+        self.toolbar_dist = small_toolbar(NavigationToolbar2QT(self.canvas_dist, panel))
         layout.addWidget(self.toolbar_dist)
         layout.addWidget(self.canvas_dist)
 
@@ -631,10 +713,15 @@ class MainWindow(QMainWindow):
         q = self.data.q
         self.data_info_label.setText(
             f"{os.path.basename(path)} · {len(q)} points · q {q.min():.3g}–{q.max():.3g}")
+        folder = os.path.dirname(os.path.abspath(path))
+        # zero-width spaces after the separators let a long folder wrap over several lines
+        self.data_path_label.setText(folder.replace("\\", "\\\u200b").replace("/", "/\u200b"))
+        self.data_path_label.setVisible(True)
         self._set_info("data_info", self._data_details(path))
 
         self._plot_iq()
         self.status.showMessage(f"Loaded {path}")
+        self._autosave()
 
     def _suggest_r_grid(self):
         """(Re-)suggest r_max and r grid points from the loaded data and the
@@ -666,13 +753,18 @@ class MainWindow(QMainWindow):
         #     so r_max = Dmax/2. Using the diameter-scale Dmax directly here
         #     would suggest a radius range twice too large (Joachim,
         #     2026-10-09).
+        #   - cylinder_pddf / lamella_pddf: r is the pair distance within the
+        #     cross-section / across the sheet, so r_max = Dmax = cross-section
+        #     diameter / thickness (Hansen 2016).
         kernel_key = self.kernel_combo.currentData()
         if kernel_key == "sphere_rg":
             r_max_suggested = dmax / 2.0
             basis_note = "D<sub>max</sub>/2 (radius)"
         else:
             r_max_suggested = dmax
-            basis_note = "D<sub>max</sub> (pair distance)"
+            basis_note = {"cylinder": "D<sub>max</sub> (cross-section diameter)",
+                          "lamella": "D<sub>max</sub> (thickness)"}.get(
+                KERNEL_REGISTRY[kernel_key].geometry, "D<sub>max</sub> (pair distance)")
 
         self.r_max_spin.setValue(r_max_suggested)
         self._help_dynamic["r_max"] = (
@@ -718,6 +810,14 @@ class MainWindow(QMainWindow):
             # distribution (j0 / PDDF): hide the alpha field
             self.alpha_row_label.setVisible(spec.uses_alpha)
             self.alpha_spin.setVisible(spec.uses_alpha)
+            # lamella: p_t(0) > 0 -> smoothness penalty with p(0) free;
+            # other kernels: back to the default if that penalty was set
+            if hasattr(self, "option_widgets") and "penalty" in self.option_widgets:
+                pen = self.option_widgets["penalty"][1]
+                if spec.p0_free:
+                    pen.setCurrentIndex(pen.findData("hansen_eq19_even"))
+                elif pen.currentData() == "hansen_eq19_even":
+                    pen.setCurrentIndex(pen.findData("hansen_eq19"))
         # Re-suggest r_max/r grid points too -- the sphere kernel's r_max
         # (a radius) differs from the PDDF kernel's (a pair-distance) by a
         # factor of 2 for the same data, see _suggest_r_grid. No-op before
@@ -757,9 +857,14 @@ class MainWindow(QMainWindow):
             self.r_spacing_row_label.setVisible(not is_spline)
             self.r_spacing_combo.setVisible(not is_spline)
         if hasattr(self, "r_interp_combo"):
+            linear_only = key in self._LINEAR_ONLY_SOLVERS
             self.r_interp_row_label.setVisible(not is_spline)
-            self.r_interp_combo.setVisible(not is_spline)
-            self.r_interp_combo.setEnabled(key not in self._LINEAR_ONLY_SOLVERS)
+            self.r_interp_box.setVisible(not is_spline)
+            self.r_interp_combo.setEnabled(not linear_only)
+            self.r_interp_note.setVisible(linear_only)
+            if linear_only:
+                # show what is actually used, not the (ignored) previous choice
+                self.r_interp_combo.setCurrentIndex(self.r_interp_combo.findData("linear"))
         self.spline_n_coeffs_row_label.setVisible(is_spline)
         self.spline_n_coeffs_spin.setVisible(is_spline)
         self.spline_spacing_row_label.setVisible(is_spline)
@@ -785,6 +890,7 @@ class MainWindow(QMainWindow):
 
         self._update_bg_info()
         self._plot_iq()
+        self._autosave()
 
     def _get_background_curve(self, q: np.ndarray) -> np.ndarray:
         if self.use_fixed_bg.isChecked():
@@ -937,6 +1043,7 @@ class MainWindow(QMainWindow):
 
         self._plot_iq()
         self._plot_distribution()
+        self._autosave()
 
     # -------------------------------------------------- info panel details
 
@@ -1130,8 +1237,17 @@ class MainWindow(QMainWindow):
             norm = _trapz(x, r)
             if norm > 0:
                 rg = np.sqrt(max(_trapz(x * r ** 2, r) / (2 * norm), 0.0))
-                rows.append(("from p(r)", f"I(0) = 4π∫p dr = {4 * np.pi * norm:.4g}, "
-                                           f"R<sub>g</sub> = {rg:.4g}, maximum at r = {r[np.argmax(x)]:.4g}"))
+                rows.append(("from p(r)", f"{kspec.forward_label} = {kspec.forward_factor * norm:.4g}, "
+                                           f"{kspec.rg_label} = {rg:.4g}, maximum at r = {r[np.argmax(x)]:.4g}"))
+                if kspec.geometry == "lamella":
+                    rows.append(("thickness", f"T = √12·R<sub>t</sub> = {np.sqrt(12) * rg:.4g} "
+                                              f"(homogeneous sheet)"))
+                elif kspec.geometry == "cylinder":
+                    rows.append(("radius", f"R = √2·R<sub>c</sub> = {np.sqrt(2) * rg:.4g} "
+                                           f"(homogeneous circular cross-section)"))
+            else:
+                rows.append(("from p(r)", f"∫p dr = {norm:.4g} ≤ 0: no forward value or "
+                                           f"{kspec.rg_label} (kernel suitable for the data?)"))
         else:
             pos = r > 0
             rows.append(("maximum of x(r)", f"r = {r[np.argmax(x)]:.4g}"))
@@ -1161,6 +1277,7 @@ class MainWindow(QMainWindow):
 
     def _plot_iq(self):
         self.ax_iq.clear()
+        self.ax_res.clear()
         if self.data is not None:
             self.ax_iq.errorbar(
                 self.data.q, self.data.I, yerr=self.sigma,
@@ -1172,13 +1289,22 @@ class MainWindow(QMainWindow):
             if hasattr(self, "_last_result"):
                 fitted_total = self._last_result.fitted_b + bg_curve
                 self.ax_iq.plot(self.data.q, fitted_total, "-", label="fit", color="tab:red")
+                sig = np.asarray(self.sigma, float) if self.sigma is not None else None
+                if sig is not None and sig.shape == np.shape(fitted_total):
+                    ok = sig > 0
+                    res = np.full(sig.shape, np.nan)
+                    res[ok] = (np.asarray(self.data.I, float)[ok] - fitted_total[ok]) / sig[ok]
+                    self.ax_res.plot(self.data.q, res, ".", ms=3, color="tab:red")
 
         self.ax_iq.set_xscale("log")
         self.ax_iq.set_yscale("log")
-        self.ax_iq.set_xlabel("q")
         self.ax_iq.set_ylabel("I(q)")
+        self.ax_iq.tick_params(labelbottom=False)
         self.ax_iq.legend(fontsize=8)
-        self.fig_iq.tight_layout()
+        self.ax_res.axhline(0.0, color="k", lw=0.5)
+        self.ax_res.set_ylabel("Δ/σ")
+        self.ax_res.set_xlabel("q")
+        adapt_fonts(self.fig_iq)
         self.canvas_iq.draw_idle()
 
     def _plot_distribution(self):
@@ -1224,7 +1350,7 @@ class MainWindow(QMainWindow):
                 self.ax_dist.set_ylabel(kspec.result_label)
             else:
                 self.ax_dist.set_ylabel(f"x(r) = N(r)\u00b7r^{self._last_alpha:g}")
-        self.fig_dist.tight_layout()
+        adapt_fonts(self.fig_dist)
         self.canvas_dist.draw_idle()
 
 
@@ -1232,6 +1358,13 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
+        if sys.argv[1].endswith(".pysasfit"):
+            window.open_project(sys.argv[1])
+        else:
+            window.load_file(sys.argv[1])
+    else:
+        window.restore_session()
     sys.exit(app.exec())
 
 

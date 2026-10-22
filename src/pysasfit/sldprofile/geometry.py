@@ -4,17 +4,17 @@ The radial density (scattering-length-density contrast) profile rho(r),
 0 <= r <= r_max, is represented by N piecewise-constant shells with edges
 r_k = k * r_max / N.  For each geometry the orientationally averaged
 intensity of a centro-symmetric scatterer is the square of a *real*
-amplitude that is linear in rho:
+amplitude that is linear in rho::
 
     F(q) = sum_k a_k(q) rho_k ,          I(q) = c_dim(q) F(q)^2
 
-=============  ====================================================  ============
-geometry        a_k(q) = integral over shell k                        c_dim(q)
-=============  ====================================================  ============
-``sphere``      4 pi \int r^2 sin(qr)/(qr) dr                         1
-``cylinder``    2 pi \int r J0(qr) dr          (infinitely long)      pi / q
-``lamella``     2 \int cos(qx) dx              (infinitely extended)  2 pi / q^2
-=============  ====================================================  ============
+============  =================================================  ============
+geometry      a_k(q) = integral over shell k                     c_dim(q)
+============  =================================================  ============
+``sphere``    4 pi \int r^2 sin(qr)/(qr) dr                      1
+``cylinder``  2 pi \int r J0(qr) dr  (infinitely long)            pi / q
+``lamella``   2 \int cos(qx) dx  (infinitely extended)            2 pi / q^2
+============  =================================================  ============
 
 ``cylinder`` is per unit length, ``lamella`` per unit area.
 
@@ -28,6 +28,10 @@ error).  Instrumental smearing turns C_i into a sum of such rank-one terms
 
 The distance distribution p(r) = r^(dim-1) gamma(r) (eq. 4, 5) is still
 available from :func:`pddf` for output and comparison with ordinary IFT.
+
+Instead of shells, a B-spline basis can be passed as ``grid``
+(:class:`~pysasfit.sldprofile.bspline.BSplineBasis`); all functions here then
+use it (amplitudes by Gauss quadrature per knot span).
 """
 
 from __future__ import annotations
@@ -53,9 +57,16 @@ def _check(geometry):
         raise ValueError(f"geometry must be one of {GEOMETRIES}, got {geometry!r}")
 
 
+def _is_spline(grid) -> bool:
+    return getattr(grid, "is_bspline", False)
+
+
 def shell_edges(r_max: float, n: int, grid=None) -> np.ndarray:
     """Shell edges. ``grid`` (optional) are normalised edges 0 = t_0 < ... < t_n = 1
-    (non-uniform grids); default uniform."""
+    (non-uniform grids); default uniform. For a B-spline basis
+    (:class:`~pysasfit.sldprofile.bspline.BSplineBasis`): its knot positions."""
+    if _is_spline(grid):
+        return r_max * grid.breaks
     if grid is None:
         return np.linspace(0.0, r_max, n + 1)
     t = np.asarray(grid, float)
@@ -179,6 +190,8 @@ def amplitude_matrix(q, r_max: float, n: int, geometry: str = "sphere", basis: s
     _check_basis(basis, geometry)
     p = exponent(geometry, basis)
     d = DIM[geometry]
+    if _is_spline(grid):
+        return grid.amplitude(q, r_max, geometry, p, n_gl=int(DEFAULTS["n_gl"]))
     if p == 0.0:
         return np.diff(_primitive(geometry, q, shell_edges(r_max, n, grid), "rho"), axis=1)
     if p == d - 1:
@@ -204,17 +217,20 @@ def volume_weights(r_max: float, n: int, geometry: str = "sphere", basis: str = 
 
 
 def coef_to_rho(c, r, r_max: float, geometry: str = "sphere", basis: str = "rho", grid=None):
-    """rho(r) of the step representation (0 beyond r_max)."""
+    """rho(r) of the shell (step) or B-spline representation (0 beyond r_max)."""
     c = np.asarray(c, float)
     r = np.asarray(r, float)
     n = c.size
-    if grid is None:
-        k = np.floor(r / r_max * n).astype(int)
+    if _is_spline(grid):
+        out = (grid.values(r.ravel() / r_max) @ c).reshape(r.shape)
     else:
-        k = np.searchsorted(shell_edges(r_max, n, grid), r, side="right") - 1
-    out = np.zeros_like(r)
-    m = (k >= 0) & (r <= r_max)
-    out[m] = c[np.clip(k[m], 0, n - 1)]
+        if grid is None:
+            k = np.floor(r / r_max * n).astype(int)
+        else:
+            k = np.searchsorted(shell_edges(r_max, n, grid), r, side="right") - 1
+        out = np.zeros_like(r)
+        m = (k >= 0) & (r <= r_max)
+        out[m] = c[np.clip(k[m], 0, n - 1)]
     p = exponent(geometry, basis)
     if p != 0.0:
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -236,13 +252,17 @@ def coef_to_mass(c, r, r_max: float, geometry: str = "sphere", basis="rho", grid
 def radius_of_gyration(rho, r_max: float, geometry: str = "sphere", basis="rho", grid=None) -> float:
     """Rg of the 3-D object (sphere), of the cross-section (cylinder) or of the thickness (lamella)."""
     rho = np.asarray(rho, float)
-    e = shell_edges(r_max, rho.size, grid)
     d = DIM[geometry]
     # integral of r^2 * r^(d-1) and r^(d-1) over each shell (common angular factors cancel)
     p = exponent(geometry, basis)
-    # rho = c / r^p:  int r^(d-1-p) dr and int r^(d+1-p) dr over each shell
-    m0 = (e[1:] ** (d - p) - e[:-1] ** (d - p)) / (d - p)
-    m2 = (e[1:] ** (d + 2 - p) - e[:-1] ** (d + 2 - p)) / (d + 2 - p)
+    if _is_spline(grid):
+        m0 = grid.moment(r_max, d - 1 - p)
+        m2 = grid.moment(r_max, d + 1 - p)
+    else:
+        e = shell_edges(r_max, rho.size, grid)
+        # rho = c / r^p:  int r^(d-1-p) dr and int r^(d+1-p) dr over each shell
+        m0 = (e[1:] ** (d - p) - e[:-1] ** (d - p)) / (d - p)
+        m2 = (e[1:] ** (d + 2 - p) - e[:-1] ** (d + 2 - p)) / (d + 2 - p)
     num = np.sum(rho * m2)
     den = np.sum(rho * m0)
     return float(np.sqrt(num / den)) if den != 0 and num / den > 0 else float("nan")

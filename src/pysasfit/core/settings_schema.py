@@ -67,6 +67,14 @@ register(T, TT, "Result and error bands", [
       "At least 3.", lo=0.05, hi=5),
     S("sldprofile.opt.fine_sd", 4.0, "fine r_max grid half width: posterior s.d. ×", "", lo=0.5, hi=20),
     S("sldprofile.opt.fine_steps", 1.5, "fine r_max grid half width: at least coarse steps ×", "", lo=0.1, hi=20),
+    S("sldprofile.opt.fine_support", 1e-6, "fine r_max grid: only where the coarse posterior >",
+      "relative to its maximum (plus one coarse step); 0 = no limit", lo=0.0, hi=0.1),
+    S("sldprofile.opt.abandon_plateau", 0.02, "end an α path when χ² stalls (relative change over 3 steps) <",
+      "and ln evidence has dropped by the stop value; 0 = never", lo=0.0, hi=0.5),
+    S("sldprofile.opt.abandon_margin", 50.0, "no restarts at r_max with ln evidence below the best by",
+      "0 = always restart", lo=0.0, hi=1e6),
+    S("sldprofile.opt.n_workers", 0, "parallel processes for the r_max scan",
+      "0 or 1 = serial", kind="int", lo=0, hi=256),
 ])
 register(T, TT, "Grids and scans", [
     S("sldprofile.adaptive.smoothing", 2.0, "adaptive grid: pilot over-smoothing (e-folds in α)", "",

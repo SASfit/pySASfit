@@ -32,7 +32,7 @@ class Resolution:
 
     Rician is the physically correct kernel: the instrument broadens Q
     isotropically in the two-dimensional detector plane and the data are then
-    radially averaged, so the distribution of the magnitude |Q| about the
+    radially averaged, so the distribution of the magnitude ``|Q|`` about the
     nominal Q0 is
 
         P(Q|Q0) = (Q/s^2) exp(-(Q^2 + Q0^2)/2s^2) I0(Q Q0/s^2),

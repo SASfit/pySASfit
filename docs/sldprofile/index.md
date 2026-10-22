@@ -7,6 +7,14 @@ lamellae from small-angle scattering data. Two routes are available:
   smoothness or maximum-entropy constraint and the noise level α and r_max from their posterior;
 - **two-step** (Glatter): indirect Fourier transformation I(q) → p(r), then deconvolution p(r) → ρ(r).
 
+The profile is represented by shells (step profile) or by a quadratic or cubic B-spline, on uniform, power-law
+or adaptive grids. Projects and the last session are saved in versioned files; every panel can be detached into
+its own window.
+
+The distance distribution p(r) alone (sphere, cylinder cross-section or lamella thickness, same normalisation) can
+also be obtained with every solver of the inversion tool, kernels `sinc_4pi`, `cylinder_pddf` and `lamella_pddf`
+({doc}`../inversion/theory_forward_model`).
+
 The GUI is `pysasfit-sldprofile`, or the *SLD profile* tab of `pysasfit-gui`.
 
 ```{toctree}

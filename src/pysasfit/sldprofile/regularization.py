@@ -24,7 +24,7 @@ __all__ = ["smoothness_operator", "Smoothness", "MaxEnt"]
 
 
 def smoothness_operator(n: int, outer: str = "free", grid=None) -> np.ndarray:
-    """Operator D with S = |D f|^2 (eq. 14).  ``outer`` in {'free', 'zero'}.
+    """Operator D with ``S = |D f|^2`` (eq. 14).  ``outer`` in {'free', 'zero'}.
 
     Uniform grid (``grid=None``): exactly Hansen's rows f_j - (f_{j-1}+f_{j+1})/2.
     Non-uniform grid (normalised edges ``grid``): the rows are the second
@@ -84,8 +84,14 @@ class Smoothness:
     name = "smooth"
 
     def __init__(self, n: int, outer: str = "free", ridge: float = 1e-6, grid=None):
-        self.D = smoothness_operator(n, outer, grid)
-        L = self.D.T @ self.D
+        if getattr(grid, "is_bspline", False):
+            # exact (h^3/4) int c''^2 dx of the B-spline representation; the end
+            # conditions are part of the basis
+            L = grid.penalty()
+            self.D = None
+        else:
+            self.D = smoothness_operator(n, outer, grid)
+            L = self.D.T @ self.D
         self.L = L + ridge * np.trace(L) / n * np.eye(n)
         self._logdetL = np.linalg.slogdet(self.L)[1]
 

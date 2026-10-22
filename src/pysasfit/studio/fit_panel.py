@@ -20,9 +20,10 @@ import re
 import threading
 import time
 
+import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from . import fitting
+from . import export, fitting, integration, profiling
 
 __all__ = ["FitPanel"]
 
@@ -65,6 +66,8 @@ class FitPanel(QtWidgets.QWidget):
         self._selection = []  # (address, label, lower text, upper text) of the parameters ticked in the explorer
         self._thread = None
         self._before = None  # parameter values before the last fit (for Undo)
+        self._summary = None  # FitSummary of the last finished fit (for the export)
+        self._problem = None
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(6, 4, 6, 4)
 
@@ -123,7 +126,69 @@ class FitPanel(QtWidgets.QWidget):
             row.addWidget(w)
         row.addWidget(self.status, 1)
         lay.addLayout(row)
+        row = QtWidgets.QHBoxLayout()
+        self.bumps_label = QtWidgets.QLabel("bumps options")
+        self.bumps_opts = QtWidgets.QLineEdit()
+        self.bumps_opts.setPlaceholderText("e.g.  samples=100000, burn=200, pop=20, init=lhs, thin=2   (empty: defaults)")
+        self.bumps_opts.setToolTip(
+            "options of the bumps method, name=value separated by commas.\n"
+            "dream: steps samples burn pop thin init(eps|lhs|cov|random) alpha outliers(none|iqr|grubbs|mahal) trim\n"
+            "de: steps pop CR F ftol xtol     amoeba: steps starts radius xtol ftol jump\n"
+            "lm, newton: steps starts ftol xtol jump     pt: steps nT Tmin Tmax CR burn"
+        )
+        row.addWidget(self.bumps_label)
+        row.addWidget(self.bumps_opts, 1)
+        lay.addLayout(row)
         self._fill_algorithms()
+
+        # ---- speed-ups (both optional; the result is the same)
+        row = QtWidgets.QHBoxLayout()
+        self.vp = QtWidgets.QCheckBox("solve linear parameters (variable projection)")
+        self.vp.setToolTip(
+            "scale factors, the background and the amplitude N of a size distribution are not searched by the "
+            "optimiser but solved exactly by linear least squares for every trial: fewer parameters, faster, "
+            "more robust. Parameters used in a constraint or prior stay with the optimiser."
+        )
+        self.cache = QtWidgets.QCheckBox("cache form factors")
+        self.cache.setToolTip(
+            "remember the intensity of every contribution and the form factor on the integration nodes during the fit: "
+            "a change of the size distribution, a scale or another contribution does not recompute them. "
+            "The automatic integration range is rounded outwards to a 5 % geometric grid while fitting."
+        )
+        self.coarse = QtWidgets.QCheckBox("coarse to fine")
+        self.coarse.setToolTip(
+            "first fit with a cheap size-distribution integral (a quarter of the nodes, rtol >= 1e-3), then repeat from "
+            "that result with the integration settings of the Integration dialog. Needs a size distribution; a global "
+            "optimiser is followed by a least-squares refinement."
+        )
+        self.grid = QtWidgets.QCheckBox("fixed size grid")
+        self.grid.setToolTip(
+            "compute the form factor once on a fixed logarithmic grid of sizes and integrate every trial of the size "
+            "distribution as a weighted sum on it (implies the cache). Fast when the distribution parameters change; "
+            "the grid resolves the distribution with about n_x * 2 nodes (Integration dialog) and is rebuilt when the "
+            "distribution leaves it. Not used with the local monodisperse approximation."
+        )
+        self.profile_btn = QtWidgets.QPushButton("Profile model")
+        self.profile_btn.setToolTip("time one evaluation of the model: form factor, size distribution, structure factor, overhead")
+        self.profile_btn.clicked.connect(self._profile)
+        self.nodes_btn = QtWidgets.QPushButton("Check nodes")
+        self.nodes_btn.setToolTip(
+            "find the smallest number of integration nodes n_x per panel whose result agrees with a much finer integration "
+            "to 1e-4; offers to use it"
+        )
+        self.nodes_btn.clicked.connect(self._check_nodes)
+        self._cache_before = False  # the cache box as the user set it, while the fixed grid forces it on
+        self._coarse_tip = self.coarse.toolTip()
+        self.grid.toggled.connect(self._grid_toggled)
+        self.coarse.toggled.connect(self._coarse_note)
+        row.addWidget(self.vp)
+        row.addWidget(self.cache)
+        row.addWidget(self.coarse)
+        row.addWidget(self.grid)
+        row.addStretch(1)
+        row.addWidget(self.profile_btn)
+        row.addWidget(self.nodes_btn)
+        lay.addLayout(row)
 
         # ---- parameters to fit | constraints, priors, result
         split = QtWidgets.QSplitter()
@@ -141,14 +206,35 @@ class FitPanel(QtWidgets.QWidget):
         )
         self.priors = QtWidgets.QPlainTextEdit()
         self.priors.setPlaceholderText(
-            "Gaussian priors, one per line: name  mean  sigma\n   c1.ff.R  50  2\nadds ((value - mean)/sigma)^2 to chi²"
+            "priors, one per line (a term is added to chi²):\n"
+            "   c1.ff.R  50  2               Gaussian: name mean sigma\n"
+            "   c1.scale lognormal 1e-3 3    positive, known to a factor: name lognormal median factor\n"
+            "   background halfnormal 0.1    small values preferred, >= 0: name halfnormal sigma\n"
+            "   bg.A loguniform              every decade equally likely (lower bound > 0; not with scipy/DFO-LS)"
         )
         self.result = QtWidgets.QPlainTextEdit()
         self.result.setReadOnly(True)
         self.result.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont))
         tabs.addTab(self.constraints, "Constraints")
         tabs.addTab(self.priors, "Priors")
-        tabs.addTab(self.result, "Result")
+        self.result_page = QtWidgets.QWidget()
+        page = QtWidgets.QVBoxLayout(self.result_page)
+        page.setContentsMargins(0, 0, 0, 0)
+        brow = QtWidgets.QHBoxLayout()
+        self.export_btn = QtWidgets.QPushButton("Export result…")
+        self.export_btn.setToolTip(
+            "save the last fit: Excel workbook (parameters, correlation matrix, curve, plot), PDF/PNG summary page or CSV files"
+        )
+        self.export_btn.clicked.connect(self._export)
+        self.copy_btn = QtWidgets.QPushButton("Copy summary image")
+        self.copy_btn.setToolTip("copy the summary page (data, fit, residuals, parameters, correlation matrix) as a PNG to the clipboard")
+        self.copy_btn.clicked.connect(self._copy_image)
+        brow.addWidget(self.export_btn)
+        brow.addWidget(self.copy_btn)
+        brow.addStretch(1)
+        page.addLayout(brow)
+        page.addWidget(self.result, 1)
+        tabs.addTab(self.result_page, "Result")
         self.tabs = tabs
         split.addWidget(tabs)
         split.setSizes([300, 640])
@@ -209,6 +295,8 @@ class FitPanel(QtWidgets.QWidget):
         self.algorithm.clear()
         key = self.backend.currentData()
         self.polish.setVisible(key != "scipy")
+        self.bumps_label.setVisible(key == "bumps")
+        self.bumps_opts.setVisible(key == "bumps")
         algs = self.available.get(key, ("", {}))[1]
         for name, text in algs.items():
             self.algorithm.addItem(name or "default", name)
@@ -220,7 +308,12 @@ class FitPanel(QtWidgets.QWidget):
         self.fit_btn.setEnabled(ready or busy)
         self.fit_btn.setText("Stop" if busy else "Fit")
         self.load_btn.setEnabled(not busy)
+        self.profile_btn.setEnabled(not busy)
+        self.nodes_btn.setEnabled(not busy)
         self.clear_btn.setEnabled(not busy and self.explorer.data is not None)
+        have = self._summary is not None and self._problem is not None
+        self.export_btn.setEnabled(have and not busy)
+        self.copy_btn.setEnabled(have and not busy and export.have_matplotlib())
 
     def _message(self, text, error=False):
         self.status.setStyleSheet("color: #b00020;" if error else "")
@@ -250,13 +343,7 @@ class FitPanel(QtWidgets.QWidget):
         for line in self.priors.toPlainText().splitlines():
             if not line.strip() or line.strip().startswith("#"):
                 continue
-            parts = [t for t in re.split(r"[\s,;=±]+|\+-", line.strip()) if t]
-            if len(parts) != 3:
-                raise ValueError(f"prior '{line.strip()}': write  name  mean  sigma")
-            try:
-                problem.add_prior(parts[0], float(parts[1]), float(parts[2]))
-            except (KeyError, ValueError) as exc:
-                raise ValueError(f"prior '{line.strip()}': {exc.args[0]}") from None
+            problem.add_prior_text(line)
         return problem, model
 
     def _fit_or_stop(self):
@@ -276,6 +363,20 @@ class FitPanel(QtWidgets.QWidget):
             options["maxeval"] = self.max_eval.value()
         if self.backend.currentData() != "scipy" and self.polish.isChecked():
             options["polish"] = True
+        if self.backend.currentData() == "bumps" and self.bumps_opts.text().strip():
+            try:
+                options["bumps"] = fitting.parse_option_text(self.bumps_opts.text())
+            except ValueError as exc:
+                self._message(str(exc), error=True)
+                return
+        if self.vp.isChecked():
+            options["vp"] = True
+        if self.cache.isChecked():
+            options["cache"] = True
+        if self.coarse.isChecked():
+            options["coarse"] = True
+        if self.grid.isChecked():
+            options["grid"] = True
         self._problem, self._model = problem, model
         self._thread = _FitThread(problem, self.backend.currentData(), self.algorithm.currentData(), options, self)
         self._thread.progress.connect(lambda n, c: self._message(f"fitting …  {n} evaluations, chi²/dof ≈ {c:.4g}"))
@@ -297,13 +398,178 @@ class FitPanel(QtWidgets.QWidget):
             self._restore()
             return
         e.apply_model_values(self._model)
+        self._summary = result
         self.result.setPlainText(result.text())
-        self.tabs.setCurrentWidget(self.result)
+        self.tabs.setCurrentWidget(self.result_page)
         self.undo_btn.setEnabled(True)
+        self._update_buttons()
         self._message(
             f"{'converged' if result.success else 'NOT converged: ' + result.message}   chi²/dof = {result.chi2_red:.4g}",
             error=not result.success,
         )
+
+    # ------------------------------------------------- combining the speed-ups
+    def cache_requested(self):
+        """The cache box as the user set it (the fixed grid ticks it without the user asking for it)."""
+        return self._cache_before if self.grid.isChecked() else self.cache.isChecked()
+
+    def _grid_toggled(self, on):
+        """The fixed grid stores its form factors in the cache: tick and lock the cache box meanwhile."""
+        if on:
+            self._cache_before = self.cache.isChecked()
+            self.cache.setChecked(True)
+            self.cache.setEnabled(False)
+            self.cache.setToolTip("switched on by the fixed size grid, which keeps its form factors in the cache")
+        else:
+            self.cache.setEnabled(True)
+            self.cache.setChecked(self._cache_before)
+            self.cache.setToolTip(
+                "remember the intensity of every contribution and the form factor on the integration nodes during the "
+                "fit: a change of the size distribution, a scale or another contribution does not recompute them. "
+                "The automatic integration range is rounded outwards to a 5 % geometric grid while fitting."
+            )
+        self._coarse_note()
+
+    def _coarse_note(self, *_):
+        both = self.grid.isChecked() and self.coarse.isChecked()
+        note = (
+            "\n\nWith the fixed size grid this only helps when form-factor parameters (length, thickness, ...) are "
+            "fitted too: for distribution parameters alone the grid is already cheap, and the second stage would build "
+            "a second, finer grid."
+        )
+        self.coarse.setToolTip(self._coarse_tip + (note if self.grid.isChecked() else ""))
+        if both:
+            self._message("coarse to fine plus fixed grid: useful only if form-factor parameters are fitted")
+
+    # ---------------------------------------------------------- speed analysis
+    def _model_q(self):
+        """q values used for timing and for the node check: the data (inside the fit range) or the curve shown."""
+        d = self.explorer.data
+        if d is not None:
+            q = np.asarray(d["q"], float)
+            rng = self.q_range()
+            if rng is not None:
+                q = q[(q >= rng[0]) & (q <= rng[1])]
+            if q.size:
+                return q
+        return self.explorer._q()
+
+    def _show_text(self, text):
+        self.result.setPlainText(text)
+        self.tabs.setCurrentWidget(self.result_page)
+
+    def _profile(self):
+        if self._thread is not None or not self.explorer.has_model():
+            return
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        try:
+            q = self._model_q()
+            self.refresh_table()
+            res = profiling.profile_model(self.explorer.build_model(), q)
+            text = profiling.format_profile(res, n_free=len(self._selection) or None)
+        except Exception as exc:  # noqa: BLE001 -- shown in the panel
+            self._message(f"{type(exc).__name__}: {exc}", error=True)
+            return
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+        self._show_text(text)
+        self._message(f"one evaluation: {res['total'] * 1e3:.3g} ms")
+
+    def _check_nodes(self):
+        if self._thread is not None or not self.explorer.has_model():
+            return
+        e = self.explorer
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        try:
+            q = self._model_q()
+            results = []
+            for i, c in enumerate(e.build_model().contributions):
+                if c.sd is not None:
+                    label = f"contribution {i + 1} ({c.ff.name} over {c.sd.name})"
+                    results.append((label, integration.suggest_n_x(c, q)))
+        except Exception as exc:  # noqa: BLE001 -- shown in the panel
+            self._message(f"{type(exc).__name__}: {exc}", error=True)
+            return
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+        if not results:
+            self._message("no contribution has a size distribution", error=True)
+            return
+        self._show_text(integration.format_node_check(results))
+        found = [r["n_x"] for _l, r in results if r["n_x"] is not None]
+        current = e.integration["n_x"]
+        if not found or len(found) < sum(1 for _l, r in results if not r.get("note")):
+            self._message("node check done (see Result tab)")
+            return
+        n = max(found)
+        if n == current:
+            self._message(f"n_x = {current} is already the smallest sufficient value")
+            return
+        answer = QtWidgets.QMessageBox.question(
+            self, "Integration nodes", f"n_x = {n} is enough (now {current}). Use it in the integration settings?"
+        )
+        if answer == QtWidgets.QMessageBox.StandardButton.Yes:
+            e.integration = {**e.integration, "n_x": int(n)}
+            for p in e.panels():
+                p.apply_integration(e.integration)
+            e._schedule()
+            self._message(f"n_x = {n} in use (Settings > Integration to change)")
+
+    # ------------------------------------------------------------------ export
+    def _dist_power(self):
+        """The weight p of N(x) x^p set in the explorer's size-distribution dock (default 3 without an explorer dock)."""
+        box = getattr(self.explorer, "dist_xpow", None)
+        try:
+            return float(box.value())
+        except (AttributeError, TypeError, ValueError):
+            return export.DISTRIBUTION_POWER
+
+    def _export(self):
+        if self._summary is None or self._problem is None:
+            return
+        filters = {}
+        if export.have_xlsx():
+            filters["Excel workbook (*.xlsx)"] = ".xlsx"
+        if export.have_matplotlib():
+            filters["PDF summary page (*.pdf)"] = ".pdf"
+            filters["PNG picture (*.png)"] = ".png"
+        filters["CSV files (*.csv)"] = ".csv"
+        name = re.sub(r"\W+", "_", str(self._problem.datasets[0].name)).strip("_") or "fit"
+        fn, chosen = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Export fit result", name + "_fit" + next(iter(filters.values())), ";;".join(filters)
+        )
+        if not fn:
+            return
+        suffix = filters.get(chosen, ".csv")
+        ext = fn[fn.rfind("."):].lower() if "." in fn.replace("\\", "/").rsplit("/", 1)[-1] else ""
+        if ext not in (".xlsx", ".pdf", ".png", ".csv", ".svg"):
+            fn += suffix
+            ext = suffix
+        try:
+            if ext == ".xlsx":
+                export.save_xlsx(fn, self._summary, self._problem, dist_power=self._dist_power())
+                done = fn
+            elif ext == ".csv":
+                done = ", ".join(p.replace("\\", "/").rsplit("/", 1)[-1] for p in export.save_csv(fn, self._summary, self._problem, dist_power=self._dist_power()))
+            else:
+                export.save_figure(fn, self._summary, self._problem, dist_power=self._dist_power())
+                done = fn
+        except Exception as exc:  # noqa: BLE001 -- missing package, file in use, ...
+            self._message(f"{type(exc).__name__}: {exc}", error=True)
+            return
+        self._message(f"saved {done}")
+
+    def _copy_image(self):
+        if self._summary is None or self._problem is None:
+            return
+        try:
+            png = export.figure_bytes(self._summary, self._problem, "png", dpi=150, dist_power=self._dist_power())
+            image = QtGui.QImage.fromData(png, "PNG")
+            QtWidgets.QApplication.clipboard().setImage(image)
+        except Exception as exc:  # noqa: BLE001 -- matplotlib missing
+            self._message(f"{type(exc).__name__}: {exc}", error=True)
+            return
+        self._message("summary image copied to the clipboard")
 
     def _restore(self):
         """Back to the values before the last fit."""

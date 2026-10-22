@@ -8,7 +8,7 @@ kwargs -- it just picks a key and calls .run(A, b, db).
 Every solver built in this package is exposed here (2026-09-26, per
 Joachim's request -- "not all solvers supplied in gui are available").
 Each SolverSpec's description carries forward that solver's own
-documented caveats (see the individual solvers/*.py docstrings for the
+documented caveats (see the individual ``solvers/*.py`` docstrings for the
 full story) so the choice of which to trust is yours, not made silently
 on your behalf. Where a solver needs a parameter it doesn't choose for
 itself (Tikhonov/TSVD's lambda/k, MaxEnt's lambda, Hansen's CG MaxEnt's
@@ -110,17 +110,23 @@ def _evidence_grid(A, db, L, A_for_median=None, widen=0.0):
 def _evidence_best(A, b, db, L, lam_grid, ridge=0.0):
     """Grid maximum of the evidence, optionally refined in ln lambda."""
     from scipy.optimize import minimize_scalar
-    best, res = bayesian_evidence.evidence_search(A, b, db, L, lam_grid, ridge=ridge)
+    fe = bayesian_evidence.FastEvidence(A, b, db, L, ridge=ridge)
+    if fe.ok:
+        ev = fe.at
+    else:
+        def ev(lam):
+            return bayesian_evidence.log_evidence(A, b, db, L, lam, ridge=ridge)
+    res = [ev(lam) for lam in lam_grid]
+    best = max(res, key=lambda r: r.log_evidence)
     if not OPTIONS["evidence_refine"]:
         return best, res
     lams = np.asarray(lam_grid, float)
     i = int(np.argmin(np.abs(lams - best.lam)))
     if 0 < i < lams.size - 1:
-        o = minimize_scalar(lambda la: -bayesian_evidence.log_evidence(A, b, db, L, float(np.exp(la)),
-                                                                        ridge=ridge).log_evidence,
+        o = minimize_scalar(lambda la: -ev(float(np.exp(la))).log_evidence,
                             bounds=(np.log(lams[i - 1]), np.log(lams[i + 1])), method="bounded",
                             options={"xatol": 1e-3})
-        r = bayesian_evidence.log_evidence(A, b, db, L, float(np.exp(o.x)), ridge=ridge)
+        r = ev(float(np.exp(o.x)))
         if r.log_evidence > best.log_evidence:
             best = r
     return best, res
@@ -150,9 +156,12 @@ class SplineOptions:
     p = B c, the solver works on A_spline = A_quad @ B_quad and returns
     the coefficients c. See spline_basis.py for the basis itself.
 
-    n_coeffs: number of coefficients (None -> _spline_n_coeffs_default).
-    spacing: knot placement in r ("uniform", "quadratic", "log").
-    A_quad: optional kernel on a finer equidistant grid over the same
+    n_coeffs
+        number of coefficients (None -> _spline_n_coeffs_default).
+    spacing
+        knot placement in r ("uniform", "quadratic", "log").
+    A_quad
+        optional kernel on a finer equidistant grid over the same
         [0, r_max] (same kernel and alpha) used to integrate the basis;
         None integrates on A's own grid.
     """
@@ -1095,6 +1104,22 @@ def _hansen_eq19_factor(n: int) -> np.ndarray:
     return np.linalg.cholesky(A19).T
 
 
+def _hansen_eq19_even_factor(n: int) -> np.ndarray:
+    """As _hansen_eq19_factor, but with p(0) free: the curvature term at
+    r = 0 uses the mirror point f_{-1} = f_1 (p even in r, p'(0) = 0), i.e.
+    S = [f_1 - f_2]^2 + sum_{j=2}^{N-1} [f_j - (f_{j-1}+f_{j+1})/2]^2
+    + f_N^2/2. Only p(Dmax) = 0 is imposed. Needed for the lamella
+    (thickness) PDDF p_t(r) = gamma_t(r), whose value at r = 0 is
+    int rho^2 dx > 0 (Hansen 2016, eq. 3: "free end points allowed")."""
+    D = np.zeros((n - 1, n))
+    D[0, 0:2] = (1.0, -1.0)
+    for j in range(n - 2):
+        D[j + 1, j:j + 3] = (-0.5, 1.0, -0.5)
+    A = D.T @ D
+    A[-1, -1] += 0.5
+    return np.linalg.cholesky(A).T
+
+
 # first entry = default (GUI and function default). hansen_eq19 made the
 # default 2026-10-10 (Joachim): the normalized evidence prefers it on
 # test.dat (ln Z -153.0 vs -236.2 point grid, -118.8 vs -134.1 B-splines).
@@ -1102,6 +1127,7 @@ _EVIDENCE_PENALTIES = {
     "hansen_eq19": "Hansen (2000) eq. 19: curvature, p(0)=p(Dmax)=0",
     "hansen_printed": "Hansen (2000), matrix as printed: 1st difference, p(0)=p(Dmax)=0",
     "second_derivative": "2nd derivative, free ends",
+    "hansen_eq19_even": "Hansen eq. 19 with p(0) free (p'(0)=0), p(Dmax)=0 -- lamella",
 }
 
 
@@ -1133,6 +1159,8 @@ def _penalty_operator(penalty: str, n: int) -> np.ndarray:
         return hansen_smoothness_cholesky(n)
     if penalty == "second_derivative":
         return second_derivative_operator(n).toarray()
+    if penalty == "hansen_eq19_even":
+        return _hansen_eq19_even_factor(n)
     raise ValueError(f"unknown penalty {penalty!r}; use one of {list(_EVIDENCE_PENALTIES)}")
 
 
@@ -1213,8 +1241,8 @@ def _run_bayesian_evidence_merged(
     if penalty == "second_derivative":
         return _with_logz(_run_bayesian_evidence(A, b, db, target_chi2_r=target_chi2_r),
                           A, b, db, second_derivative_operator(n).toarray(), penalty)
-    if penalty == "hansen_eq19":
-        L = _hansen_eq19_factor(n)
+    if penalty in ("hansen_eq19", "hansen_eq19_even"):
+        L = _penalty_operator(penalty, n)
         lam_grid = _evidence_grid(A, db, L)
         p_map, lam_used, note = _bayesian_evidence_pick_lambda(
             A, b, db, L, lam_grid, target_chi2_r, "Bayesian evidence")
@@ -1536,7 +1564,8 @@ SOLVER_REGISTRY: dict[str, SolverSpec] = _Registry({
             "maximization (Vestergaard & Hansen 2006); optional chi2_r = 1. "
             "Smoothness penalty: Hansen (2000) eq. 19 (curvature, "
             "p(0)=p(Dmax)=0; default), Hansen's matrix as printed (1st "
-            "difference, same boundary terms), or plain 2nd derivative. The result line "
+            "difference, same boundary terms), plain 2nd derivative, or eq. 19 "
+            "with p(0) free (for the lamella kernel, whose p_t(0) > 0). The result line "
             "reports the normalized log-evidence ln Z for comparing "
             "penalties (higher is better; not available for the 2nd "
             "derivative, whose prior is improper). Works with signed "
@@ -1615,7 +1644,7 @@ def run_solver(
 ) -> SolverResult:
     """Run a registered solver, optionally in B-spline coefficient space.
 
-    With spline=None this is SOLVER_REGISTRY[key].run(A, b, db, **kwargs).
+    With spline=None this is ``SOLVER_REGISTRY[key].run(A, b, db, **kwargs)``.
     With spline given, the solver is applied unchanged to the (M, n_coeffs)
     matrix A_spline and its result mapped back to the display grid:
     x = B_disp @ c, fitted_b = A_spline @ c, and the Laplace error band

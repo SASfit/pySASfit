@@ -10,6 +10,7 @@ standalone function usable by any fixed-point iteration in this package
 
 Already validated in the source file's own docstring/history (not
 re-validated here beyond this module's own tests):
+
   - KINSetMAA=0 matches plain Picard iteration almost exactly (354 vs 353
     steps on a reference case), confirming the order-0 branch correctly
     degenerates to unaccelerated fixed-point iteration.
@@ -59,18 +60,19 @@ def biggs_andrews(
 
     Parameters
     ----------
-    fixed_point_operator : callable(x) -> x_next
-        The map being accelerated -- e.g. em.em_step (plus smoothing)
+    fixed_point_operator : callable
+        x -> x_next, the map being accelerated -- e.g. em.em_step (plus smoothing)
         wrapped in a small closure by the caller.
     x0 : initial guess.
     max_iterations : hard cap (this function's own "numberOfIterations").
-    tol : convergence tolerance on relative change in ||x|| between
+    tol : float
+        Convergence tolerance on the relative change in ``||x||`` between
         successive (accepted) iterates -- same criterion
         biggsAndrewsOZsolver.py itself uses (not the em.py-family's
         absolute ||x_new-x_old|| gNorm test, since this is a
         general-purpose accelerator, not specific to this package's own
         convention).
-    kin_set_maa : extrapolation order (|value|) and step-size formula
+    kin_set_maa : extrapolation order (abs(value)) and step-size formula
         choice (sign) -- see module/source docstring. 0 disables
         extrapolation (reduces to plain Picard iteration); 2 is a
         reasonable default matching the source file's own default.

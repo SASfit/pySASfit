@@ -11,12 +11,12 @@ It combines them into models (size distribution, structure factor, resolution, b
 script or in an interactive GUI, the **model explorer** (`pysasfit-explorer`). The code started as a copy of
 SASstudio (github.com/ISISNeutronMuon/SASstudio) and was reworked; see "Changes" below.
 
-| you want to | use |
-|---|---|
-| plot and fit models by hand, with data | [model explorer](#model-explorer) |
-| fit from a script | [`Pipeline`](#models-and-fitting) or the [fitting engine](#fitting-engine-and-optimisers) |
-| compare optimisers, constraints, several data sets | [fitting engine](#fitting-engine-and-optimisers) |
-| keep a session and continue later | [projects](#projects) |
+| you want to                                        | use                                                                                       |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| plot and fit models by hand, with data             | [model explorer](#model-explorer)                                                         |
+| fit from a script                                  | [`Pipeline`](#models-and-fitting) or the [fitting engine](#fitting-engine-and-optimisers) |
+| compare optimisers, constraints, several data sets | [fitting engine](#fitting-engine-and-optimisers)                                          |
+| keep a session and continue later                  | [projects](#projects)                                                                     |
 
 ## Installation of the SASfit libraries
 
@@ -130,9 +130,21 @@ folder. Both settings can be remembered between sessions.
 unit conversion), takes an optional fit q range and shows the parameters ticked for fitting. The residuals
 Δ/σ appear below the plot. *Fit* runs the optimiser in a thread (*Stop* cancels it), *Undo fit* restores the values
 before it. The *Constraints* tab takes inequalities (`c1_ff_R + c1_ff_L < 100`; names are the parameter labels with
-`.` replaced by `_`), the *Priors* tab Gaussian priors (`name  mean  sigma`) and the *Result* tab shows values,
-errors, χ²/dof and the constraints. *Copy Python* copies code that reproduces the model, *Export…* saves the curve
-and the parameters.
+`.` replaced by `_`), the *Priors* tab priors (`label form args`: `normal`, `lognormal`, `halfnormal`, `loguniform`, see
+"Priors for positive parameters and ranges") and the *Result* tab shows values, errors, χ²/dof, the constraints and the
+correlation matrix. Optimiser, algorithm, and for bumps a line of options (see "bumps: optimisers and options")
+are chosen above the parameter table; *Search global minimum* algorithms are described below. *Copy Python*
+copies code that reproduces the model. **Export result…** saves xlsx/csv/pdf/png/svg and **Copy summary image**
+puts the summary figure on the clipboard (see "Saving a fit result").
+
+**Background.** Besides the constant `background` the rows `bg.A` and `bg.alpha` describe a power law A·q<sup>−α</sup>
+(see "Power-law background").
+
+**Windows.** Model, Fit and Size distributions are docks; each can be detached into its own window from the View
+menu (see "Windows, background curve, size distributions"). The Size-distributions dock plots N(x)·x<sup>p</sup>; its
+exponent p is also used by the export.
+
+There is no "fit as priors" button on purpose (see "Priors").
 
 The explorer fits one data set. The engine below can fit several at once.
 
@@ -153,22 +165,22 @@ res = prob.fit("scipy")                                    # or "nlopt", "cma", 
 print(res.text())
 ```
 
-Parameters can be common to all data sets or local to each, fixed or bounded. Constraints and Gaussian priors are
-supported. Errors come from the numerical Jacobian at the minimum and are scaled by √χ²<sub>red</sub> unless
+Parameters can be common to all data sets or local to each, fixed or bounded. Constraints and priors are
+supported (also priors of other forms, see below). Errors come from the numerical Jacobian at the minimum and are scaled by √χ²<sub>red</sub> unless
 `scale_errors=False`. The result (`FitSummary`) holds values, errors, covariance, χ², the fitted curves and the state
 of the constraints.
 
 **Optimisers.** A backend is selected by name, then an algorithm. The Fit panel lists the backends whose package
 is installed.
 
-| backend | package | algorithms | notes |
-|---|---|---|---|
-| `scipy` | scipy | `trf`, `dogbox`, `lm` | least squares; the default. Constraints by penalty. |
-| `scipy-global` | scipy | `differential_evolution`, `dual_annealing`, `shgo`, `basinhopping` | global; finite bounds needed (basinhopping excepted). |
-| `nlopt` | `nlopt` | local and global NLopt algorithms (`LN_BOBYQA`, `LN_SBPLX`, `LD_SLSQP`, ...) | derivative-free and gradient-based; handles constraints natively. |
-| `iminuit` | `iminuit` | `migrad`, `simplex`, `migrad+minos` | MINOS gives asymmetric errors, printed as `(−a / +b)`. |
-| `bumps` | `bumps` | `lm`, `amoeba`, `de`, `dream` | DREAM returns errors from the posterior samples. `de` and `dream` need finite bounds. |
-| `cma` | `cma` | CMA-ES | derivative-free, robust against noise. |
+| backend        | package   | algorithms                                                                   | notes                                                                                 |
+| -------------- | --------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `scipy`        | scipy     | `trf`, `dogbox`, `lm`                                                        | least squares; the default. Constraints by penalty.                                   |
+| `scipy-global` | scipy     | `differential_evolution`, `dual_annealing`, `shgo`, `basinhopping`           | global; finite bounds needed (basinhopping excepted).                                 |
+| `nlopt`        | `nlopt`   | local and global NLopt algorithms (`LN_BOBYQA`, `LN_SBPLX`, `LD_SLSQP`, ...) | derivative-free and gradient-based; handles constraints natively.                     |
+| `iminuit`      | `iminuit` | `migrad`, `simplex`, `migrad+minos`                                          | MINOS gives asymmetric errors, printed as `(−a / +b)`.                                |
+| `bumps`        | `bumps`   | `lm`, `amoeba`, `de`, `dream`, `newton`, `pt`                                | DREAM returns errors from the posterior samples. `de`, `dream`, `pt` need finite bounds; options: see "bumps: optimisers and options". |
+| `cma`          | `cma`     | CMA-ES                                                                       | derivative-free, robust against noise.                                                |
 
 Optional packages: `pip install nlopt bumps iminuit cma` (or `pip install "pysasfit[fit]"`).
 
@@ -191,28 +203,28 @@ distribution and a structure factor takes some 10 ms to 1 s, so the number of ev
 takes. The numbers below come from a small test (4 parameters, 60 points, 1e-5 integration noise,
 `tests/studio/test_fitting.py`) and show the order of magnitude only; they are not a benchmark of real SASfit models.
 
-| optimiser | evaluations (4 parameters) | start | bounds | errors | use it for |
-|---|---|---|---|---|---|
-| scipy `trf` | 30 to 100 | must be reasonable | yes | covariance | the default: fast local fit with good errors |
-| scipy `dogbox` | 30 to 100 | must be reasonable | yes | covariance | many parameters at their bounds |
-| scipy `lm` | 30 to 100 | must be reasonable | ignored | covariance | unbounded problems, smooth model |
-| `differential_evolution` | 1 000 to 3 000 | any | finite, required | after refine | finding the right region when the start is poor |
-| `dual_annealing` | 2 000 and more | any | finite, required | after refine | rugged landscapes; needs many evaluations to converge |
-| `shgo` | 1 000 to 4 000 | any | finite, required | after refine | few parameters (up to about 5), smooth model |
-| `basinhopping` | 10 000 and more | any | optional | after refine | a few separate local minima; most expensive |
-| NLopt `LN_BOBYQA` | 100 to 400 | reasonable | yes | after refine | smooth model, no derivatives, noise tolerated |
-| NLopt `LN_SBPLX`, `LN_NELDERMEAD` | 200 to 1 000 | reasonable | yes | after refine | noisy model |
-| NLopt `LN_COBYLA` | 100 to 500 | reasonable | yes | after refine | native inequality constraints |
-| NLopt `LD_SLSQP` | 50 to 200 | reasonable | yes | after refine | equality and inequality constraints, smooth model |
-| NLopt `GN_*` (`GN_CRS2_LM`, `GN_ISRES`, ...) | 2 000 and more | any | finite, required | after refine | global search (`GN_ISRES` also with constraints) |
-| iminuit `migrad` | 200 to 1 500 | reasonable | yes | covariance | strongly correlated parameters |
-| iminuit `simplex` | 300 to 1 500 | poor is acceptable | yes | covariance | rough first step before `migrad` |
-| iminuit `migrad+minos` | 1 000 to 3 000 | reasonable | yes | **asymmetric** (profile) | skewed or non-Gaussian errors |
-| bumps `lm` | 50 to 150 | reasonable | yes | covariance | like scipy `trf` |
-| bumps `amoeba` | 200 to 600 | reasonable | yes | covariance | derivative-free local search |
-| bumps `de` | 5 000 to 20 000 | any | finite, required | covariance | global search; slower than scipy's |
-| bumps `dream` | 4 000 and more | any | finite, required | **posterior** | full uncertainty, correlations, several minima |
-| CMA-ES | 1 000 to 5 000 | any | optional | after refine | noisy or multimodal model, up to some dozens of parameters |
+| optimiser                                    | evaluations (4 parameters) | start              | bounds           | errors                   | use it for                                                 |
+| -------------------------------------------- | -------------------------- | ------------------ | ---------------- | ------------------------ | ---------------------------------------------------------- |
+| scipy `trf`                                  | 30 to 100                  | must be reasonable | yes              | covariance               | the default: fast local fit with good errors               |
+| scipy `dogbox`                               | 30 to 100                  | must be reasonable | yes              | covariance               | many parameters at their bounds                            |
+| scipy `lm`                                   | 30 to 100                  | must be reasonable | ignored          | covariance               | unbounded problems, smooth model                           |
+| `differential_evolution`                     | 1 000 to 3 000             | any                | finite, required | after refine             | finding the right region when the start is poor            |
+| `dual_annealing`                             | 2 000 and more             | any                | finite, required | after refine             | rugged landscapes; needs many evaluations to converge      |
+| `shgo`                                       | 1 000 to 4 000             | any                | finite, required | after refine             | few parameters (up to about 5), smooth model               |
+| `basinhopping`                               | 10 000 and more            | any                | optional         | after refine             | a few separate local minima; most expensive                |
+| NLopt `LN_BOBYQA`                            | 100 to 400                 | reasonable         | yes              | after refine             | smooth model, no derivatives, noise tolerated              |
+| NLopt `LN_SBPLX`, `LN_NELDERMEAD`            | 200 to 1 000               | reasonable         | yes              | after refine             | noisy model                                                |
+| NLopt `LN_COBYLA`                            | 100 to 500                 | reasonable         | yes              | after refine             | native inequality constraints                              |
+| NLopt `LD_SLSQP`                             | 50 to 200                  | reasonable         | yes              | after refine             | equality and inequality constraints, smooth model          |
+| NLopt `GN_*` (`GN_CRS2_LM`, `GN_ISRES`, ...) | 2 000 and more             | any                | finite, required | after refine             | global search (`GN_ISRES` also with constraints)           |
+| iminuit `migrad`                             | 200 to 1 500               | reasonable         | yes              | covariance               | strongly correlated parameters                             |
+| iminuit `simplex`                            | 300 to 1 500               | poor is acceptable | yes              | covariance               | rough first step before `migrad`                           |
+| iminuit `migrad+minos`                       | 1 000 to 3 000             | reasonable         | yes              | **asymmetric** (profile) | skewed or non-Gaussian errors                              |
+| bumps `lm`                                   | 50 to 150                  | reasonable         | yes              | covariance               | like scipy `trf`                                           |
+| bumps `amoeba`                               | 200 to 600                 | reasonable         | yes              | covariance               | derivative-free local search                               |
+| bumps `de`                                   | 5 000 to 20 000            | any                | finite, required | covariance               | global search; slower than scipy's                         |
+| bumps `dream`                                | 4 000 and more             | any                | finite, required | **posterior**            | full uncertainty, correlations, several minima             |
+| CMA-ES                                       | 1 000 to 5 000             | any                | optional         | after refine             | noisy or multimodal model, up to some dozens of parameters |
 
 "After refine" means: the optimiser returns a point only; with the "refine" box ticked (`polish=True`) a
 least-squares fit starts at that point and supplies the errors.
@@ -275,12 +287,67 @@ mixtures. With "refine" the result is the exact least-squares minimum with error
    method only when needed. *Max evaluations* limits the work of every optimiser (for `differential_evolution` it sets
    the number of generations; the evaluations are rounded to whole generations).
 
+The Result tab ends with the correlation matrix of the free parameters. Pairs with |r| >= 0.9 are listed with the
+usual remedies: fix one of them at an independently known value, give one or both a Gaussian prior from independent
+knowledge (not from the same data, which would count it twice), or do nothing if only their combination matters.
+In Python: `result.correlation()`, `result.free_labels`, `result.correlation_text(threshold)`.
+
 Degenerate parameters limit every optimiser: the scale and the amplitude N of a size distribution, or the volume
 fraction and the scale, cannot be fitted together. Fix one of them, or give a Gaussian prior (Priors tab). A very
 large error on a parameter, or a parameter stuck at a bound, points to this and not to the optimiser.
 
 So far the choice rests on the test model. Benchmark the optimisers on your own SASfit problems, for example with
 FitBenchmarking, before you rely on one for a long series of fits.
+
+## Faster fits: DFO-LS, variable projection, cache, coarse to fine, fixed grid
+
+Five options for slow models, all off by default and all giving the same result as the plain fit:
+
+- **DFO-LS** (optimiser `DFO-LS`, `pip install DFO-LS`): derivative-free Gauss-Newton on the residuals with bounds.
+  It needs far fewer evaluations than a finite-difference Jacobian when the model is slow. The variant `noisy`
+  is more robust against the noise of adaptive integrals. Constraints are handled as penalty rows, like for scipy.
+
+- **Solve linear parameters (variable projection)**: the intensity is linear in the scale factors, the background and
+  the amplitude `N` of a size distribution. These are not searched by the optimiser. For every trial of the other
+  parameters they are obtained exactly by linear least squares (their bounds are respected). The optimiser then
+  has fewer dimensions and no strong correlations between scale and shape. Parameters that appear in a constraint
+  or a prior stay with the optimiser. Errors and chi² are those of the full problem. Scale and `N` of the same
+  contribution are redundant; `N` is the one that is solved.
+
+- **Cache form factors**: during the fit the intensity of every contribution is remembered, and so is the form
+  factor on the integration nodes of a size distribution. A change of the distribution parameters, of a scale or of
+  another contribution then does not recompute the form factor. To make the nodes identical for nearby
+  parameters, the automatically found integration range is rounded outwards to a 5 % geometric grid while
+  fitting (the result differs from an unrounded range by the integration accuracy only). The Result tab reports how many
+  evaluations were reused. Without cache the contributions are unchanged.
+
+- **Coarse to fine**: the first fit uses a cheap size-distribution integral (`n_x` divided by 4, `rtol` at least
+  1e-3); the second fit starts from that result with the real integration settings. A global optimiser (scipy
+  global, CMA-ES, bumps `de`/`dream`) does its search in stage 1 and is followed by a least-squares `trf` in stage 2.
+  The evaluations of both stages are added up. The SASfit-internal precision settings are not changed, and a
+  contribution without size distribution is not affected. The gain is large only when the size-distribution integral
+  dominates the time; check that the coarse stage lands near the minimum (the Result tab gives chi²/dof of stage 1).
+
+- **Fixed size grid**: the size-distribution integral is evaluated on a grid that is equidistant in ln x (trapezoid
+  rule) instead of Gauss-Legendre nodes that move with the integration range. P(q, x) is computed once on the grid
+  (implies the cache); a trial of the distribution parameters (mean, width, shape, N) then only changes the weights
+  N(x), so it costs a matrix-vector product and no form-factor call at all. The grid has about `n_x * 2` nodes inside
+  the support of the distribution and 1.6 times the support on each side. It is rebuilt when the distribution leaves
+  the grid or becomes much narrower than the grid spacing. Works for the monodisperse and the decoupling approach and
+  without structure factor; the local monodisperse approximation (S depends on x) is integrated normally. A
+  form-factor parameter other than the distributed one (length, shell thickness, ...) invalidates the grid values.
+  The result differs from Gauss-Legendre by the integration accuracy (checked to 2e-4 relative in the tests); with a
+  very narrow distribution raise `n_x`.
+
+Two tools show what pays: **Profile model** (Fit panel) splits one model evaluation into form factor, size
+distribution, structure factor and overhead and estimates the time of a fit; **Check nodes** compares the intensity
+for increasing `n_x` with a reference of at least 192 nodes per panel and proposes the smallest `n_x` that agrees to
+1e-4 (the default is 96, which is often more than needed; the node count is the number of form-factor calls per
+model evaluation divided by 4 panels). In Python: `profiling.profile_model`, `integration.suggest_n_x`.
+
+In Python: `prob.fit("dfols", vp=True, cache=True, coarse=True, grid=True)` (`coarse_factor` sets the reduction of `n_x`); `snap` sets the grid step (default 0.05). The best speed-up
+comes from variable projection together with the cache: a fit of a size distribution with a scale and a background
+then needs the form factor only when the form-factor parameters change.
 
 ## Projects
 
@@ -291,8 +358,8 @@ FitBenchmarking, before you rely on one for a long series of fits.
   with their fit check boxes and bounds;
 - the data (embedded in the file);
 - the plot settings (q range, number of points, log axes, display mode);
-- the fit settings: optimiser, algorithm, max evaluations, "refine", fit q range, constraints, priors and the last
-  result;
+- the fit settings: optimiser, algorithm, max evaluations, "refine", the speed-up options, fit
+  q range, constraints, priors and the last result;
 - the integration settings of the size-distribution integral.
 
 The SASfit installation is not stored. A function that is missing in the installation used for loading is
@@ -316,6 +383,9 @@ Python plugins override C plugins of the same name. There are two ways to provid
 ```
 pysasfit-studio list [--type ff|sq|sd|peak]      pysasfit-studio search hard sphere
 pysasfit-studio info ff_sphere                    pysasfit-studio eval ff_sphere --q 0.01 0.1 --set R=50 eta=1
+pysasfit-studio tree [ff|sq|sd]                   (menu tree from the .def group files)
+pysasfit-studio status                            (header folders, libraries, plugin and .def folders)
+pysasfit-studio explore [ff_sphere]               (same as pysasfit-explorer)
 pysasfit-studio new-plugin NAME                   pysasfit-studio sasview-adapter ff_sphere
 pysasfit-studio profiles OUTDIR                   pysasfit-studio install-binaries SOURCE
 pysasfit-studio menu                              (the interactive menu of SASstudio_utilities_cli.py)
@@ -343,6 +413,119 @@ The precision settings of libsasfit (`sasfit_eps`) are zero until set. The SASfi
 
 Change them with `studio.get_library().set_precision(nriq=1e-8, int_strategy="GSL_QAGS")`.
 
+## Searching for the global minimum
+
+Fits of SAS models have many local minima (size, width and oscillation phase interact). Choose the algorithm in the Fit panel.
+
+| Algorithm                                                          | Kind           | Notes                                                                       |
+| ------------------------------------------------------------------ | -------------- | --------------------------------------------------------------------------- |
+| `multistart`                                                       | global         | Latin-hypercube starts, each refined locally. First start = current values. |
+| `differential_evolution`, `dual_annealing`, `shgo`, `basinhopping` | global (scipy) | Work in parameters rescaled to the bounds.                                  |
+| `cma`                                                              | global         | CMA-ES, rescaled to bounds.                                                 |
+| NLopt global (`GN_*`)                                              | global         | Optional.                                                                   |
+
+**Rescaling.** `_Context.rescale_to_bounds()` maps every free parameter with finite bounds to `(x-lo)/(hi-lo)`. Global optimisers therefore see a unit box and parameters of very different magnitude are treated alike.
+
+**Multistart.** `k` starting points are drawn from a Latin hypercube (`scipy.stats.qmc`). Parameters with a wide positive range (`lo > 0`, `hi > 100*lo`) are sampled log-uniformly. Per-start budget: `max(maxeval // k, 50)` evaluations. Results are grouped: minima that agree within 1e-3 (relative) count as the same minimum, so the report shows how often the best one was found. A best minimum found only once is a warning sign.
+
+Needs finite bounds on all free parameters (the Fit panel tells you which one is missing).
+
+## Priors for positive parameters and ranges
+
+Bounds are a *uniform prior* between lower and upper. Additional priors, entered one per line in the Priors box as `label form args`:
+
+| Form        | Syntax (example)          | Penalty added to chi²                         |
+| ----------- | ------------------------- | --------------------------------------------- |
+| Gaussian    | `ff.R normal 50 5`        | `((x-mean)/sigma)²`                           |
+| log-normal  | `ff.R lognormal 50 1.3`   | `(ln(x/median)/ln(factor))²`, large if `x<=0` |
+| half-normal | `ff.sigma halfnormal 0.2` | `(x/sigma)²` (x >= 0)                         |
+| log-uniform | `ff.R loguniform`         | `2 ln x` (needs lower bound > 0)              |
+
+Gaussian, log-normal and half-normal are appended as extra residual rows, so every least-squares algorithm handles them. Log-uniform is a scalar term and is refused by `scipy` (least_squares) and `dfols`, and by `multistart`. It works with NLopt, iminuit, bumps, CMA-ES and scipy-global. A parameter with a prior is kept nonlinear in variable projection. After a log-uniform fit the NLopt polish step is skipped; the coarse-to-fine mode keeps the global optimiser for stage 2.
+
+**Which prior when?** A scale parameter (radius, length) that may span decades: log-uniform or log-normal. A relative width (`sigma`, polydispersity) that is probably small: half-normal. A known value with uncertainty: Gaussian.
+
+**Prior from an earlier fit.** Taking the sigmas of a fit as priors is sensible only for a *new, independent* data set (sequential update). For the same data set it counts the information twice and makes the error bars too small. For that reason there is no "fit as prior" button; if you add one later, warn when the data-set name is identical.
+
+**Bayesian view.** posterior = likelihood × prior. The best fit with priors is the MAP estimate. The bumps backend (DREAM) samples the posterior, including the priors above.
+
+## Power-law background
+
+Background model: `background + A * q^(-alpha)`, alpha starts at 4 (Porod). Rows in the explorer: `background`, `bg.A` (bounds 0…), `bg.alpha` (bounds 0…8). Addresses in fit tables, priors and projects: `background`, `bg.A`, `bg.alpha`.
+
+`ModelFunction(…, bg_A=0.0, bg_alpha=4.0)`; `power_term(q)` returns `bg_A * q**-bg_alpha`.
+
+**Variable projection.** I(q) = background·1 + A·q^-alpha + s·F(q; θ). For fixed θ and alpha the linear parameters `background`, `A`, scale and N are solved together by bounded linear least squares (`bg.A` column: `q^-alpha`). `alpha` stays nonlinear. A parameter with a prior or constraint stays nonlinear, too.
+
+In the plot the background (constant + power law) is drawn as a dashed grey line; it is hidden when the background is zero and in the S(q) view.
+
+## Windows, background curve, size distributions
+
+- **Docks:** Model (left), Fit (bottom/right), Size distributions (right). The plot is the central widget.
+- **Detach:** View menu → "detach '<title>' as a separate window". A detached dock has no owner window and does *not* stay on top (the usual float button does). Un-tick to dock again at its old area. Closing the main window closes detached docks.
+- **Size distributions:** N(x)·x^p with free exponent p (spin box −6…12, default 3; buttons p=0/3/6, e.g. volume weight p=3, intensity weight about p=6). Optional log x-axis. Range from the distribution's `support()`, extended to `[max(lo/2, hi·1e-4), hi·1.5]`.
+
+## bumps: optimisers and options
+
+Backend `bumps` offers `lm`, `amoeba`, `de`, `dream`, `newton` (BFGS) and `pt` (parallel tempering, experimental; the bumps manual says it "does not yet perform well"). `de`, `dream` and `pt` need finite bounds for all free parameters. In the Fit panel a line **bumps options** accepts `name=value` pairs, in Python `problem.fit("bumps", "dream", bumps={...})`. Unknown names for the chosen method raise an error that lists the valid ones.
+
+| Method         | Options                                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `lm`, `newton` | steps, starts, ftol, xtol, jump                                                                                        |
+| `amoeba`       | steps, starts, radius, xtol, ftol, jump                                                                                |
+| `de`           | steps, pop, CR, F, ftol, xtol                                                                                          |
+| `dream`        | samples, burn, pop, init (`eps`, `lhs`, `cov`, `random`), thin, alpha, outliers (`none`, `iqr`, `grubbs`, `mahal`), trim, steps |
+| `pt`           | steps, nT, Tmin, Tmax, CR, burn                                                                                        |
+
+Notes from the bumps manual: for 2 digits in the 68 % interval DREAM needs about 1e5 samples, for the 95 % interval about 1e6 (`samples=100000`). `init=lhs` spreads the start population over the bounds (multi-modal problems), `init=eps` stays near the start. If the chains look stuck use `thin`. A DREAM run has converged when the lowest chi² and the parameter traces are flat; check with more `burn` and `samples`. DREAM and `pt` give the posterior covariance and 68 % intervals shown in the result tables. UltraNest is not used: bumps DREAM covers the posterior sampling.
+
+## Saving a fit result
+
+Fit panel → Result page: **Export result…** and **Copy summary image**.
+
+| Format                 | Content                                                                                                                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.xlsx`                | Sheets: Summary, Parameters (value, error, bounds, at-bound flag), Correlation (colour scale), Covariance, Curve (q, data, error, fit, residual, with chart), Distributions (size distributions, with chart), Plot (summary picture), Report. Needs `openpyxl` (+ `pillow` for the picture). |
+| `.csv`                 | Parameters, correlation, covariance, curves and (if the model has a size distribution) `_distributions.csv`.                                                                                                                  |
+| `.pdf`, `.png`, `.svg` | Summary figure: data + fit + residuals + size distributions N(x) and N(x)·x^p + parameter table + correlation. Needs `matplotlib`.                                                                                            |
+| clipboard              | The same summary figure as an image.                                                                                                                                                                                          |
+
+**Size distributions in the export.** For every fitted size distribution the export contains N(x) (amplitude included) and N(x)·x^p on 400 logarithmic x points (integration range of the distribution widened to `[max(lo/2, hi·1e-4), hi·1.5]`): sheet **Distributions** with chart (xlsx), `<name>_distributions.csv`, and two panels in the summary figure (N(x) left, N(x)·x^p right). The exponent **p is read from the Size-distribution dock** of the explorer (field "p", default 3) at the moment of the export and is written into the sheet header, the CSV header, the figure title and the Summary sheet, so the file documents which weight was used. Python: `export.save_xlsx(path, result, problem, dist_power=6)`.
+
+A parameter is flagged *at bound* if it lies within `max(1e-4·|x|, 1e-6·(hi-lo), 1e-9)` of a bound.
+
+## Tests
+
+```
+pip install pytest openpyxl pillow matplotlib PySide6 bumps
+set QT_QPA_PLATFORM=offscreen      (Windows cmd; Linux: export ...)
+set MPLBACKEND=Agg
+python -m pytest tests/studio -q
+```
+
+| File                            | Covers                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------- |
+| `support.py`                    | Toy models, data generation, problem factories (no libsasfit needed)            |
+| `test_background.py`            | power-law background, VP with `bg.A`, alpha free/fixed                          |
+| `test_priors.py`                | all prior forms, backend restrictions, MAP behaviour                            |
+| `test_global.py`                | rescaling, multistart, global algorithms                                        |
+| `test_export.py`                | xlsx/csv/pdf/png content, at-bound flags                                        |
+| `test_export_distributions.py`  | size distributions N(x), N(x)·x^p in xlsx/csv/figure                            |
+| `test_bumps_options.py`         | bumps methods and option passing (needs `bumps`)                                |
+| `test_fit_panel_gui.py`         | Fit panel with a stub explorer (offscreen Qt)                                   |
+| `test_param_row.py`             | parameter row: slider range, editing, bounds, fit box, dummy parameters (Qt)    |
+| `test_groups.py`                | `.def` parsing, menu tree, special groups, cache invalidation                   |
+| `test_paths.py`                 | library search order, settings file, header/def/plugin folders                  |
+| `test_cli.py`                   | new-plugin, SasView adapter (also with the word 'inf' in descriptions), sub-commands |
+| `test_explorer_gui.py`          | Explorer window, docks, detach, distributions; needs libsasfit, skipped otherwise |
+
+Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not installed.
+
+**GUI tests.** `test_fit_panel_gui.py` uses a stub explorer and needs no SASfit library. `test_explorer_gui.py` creates a real `ModelExplorer` with `ff_sphere` and `sd_LogNorm` and is skipped when the library or PySide6 is missing. Its fixture sets a usable size distribution (N=1, s=0.2, p=1, mu=50), the contrast `eta=1` and switches "log I" off: with the default values the intensity is zero, and `_redraw` stops before it draws the background line and the size-distribution plot.
+
+**Qt shutdown.** `tests/studio/conftest.py` has a session fixture (`_qt_clean_shutdown`) that closes all remaining Qt windows, runs the deferred deletes and collects the Python wrappers when the test session ends. Without it, PySide6 with matplotlib canvases can end the run with a segmentation fault while the interpreter exits, although all tests have passed.
+
+
 ## Changes with respect to SASstudio
 
 - **Plugin initialisation:** plugins are initialised with `do_init()` and libsasfit's common-function table. Before,
@@ -364,6 +547,11 @@ Change them with `studio.get_library().set_precision(nriq=1e-8, int_strategy="GS
   - the header parser tolerates malformed tables, such as the `</tr></tr>` in `ff_boucher_cyl`;
   - the templates produce working plugins and SasView adapters;
   - `generate_plugin_profiles.py` became `pysasfit-studio profiles`.
+- **Export and priors (this fork):** results can be saved as xlsx/csv/figure with the size distributions N(x) and
+  N(x)·x<sup>p</sup>; priors of four forms; a power-law background; bumps options and the methods `newton` and `pt`.
+- **Bug fix:** `sasview-adapter` replaced every `inf` in the generated parameter list, also inside descriptions
+  ("influence" became `float("inf")luence`, which could break the generated file); now only infinite numbers are
+  written as `float("inf")`.
 - **Tests:** they compile a mock libsasfit with two plugins, one of them importing from the other, so the loader is
   tested on Linux.
 

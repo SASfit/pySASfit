@@ -7,12 +7,14 @@ Found in .../PerChristianHansen/ARLS.zip alongside Hansen's own tools
 to Hansen). Transcribed directly from the actual .m source, 2026-09-23.
 
 Method (Jones' own description, condensed): given the SVD A = U S V^T, and
-the standard Tikhonov filter-factor solution coefficients in the V-basis,
+the standard Tikhonov filter-factor solution coefficients in the V-basis::
+
     g_i(lambda) = beta_i * s_i / (s_i^2 + lambda^2),   beta = U^T b
+
 the "discrete Picard condition" (Hansen) says these coefficients should
 decay for a well-behaved solution. ARLS searches, via a coarse-to-fine
 multiplicative schedule on lambda, for the SMALLEST lambda that makes
-log10(|g_i|) decline (assessed by fitting both a line and a parabola to
+log10(abs(g_i)) decline (assessed by fitting both a line and a parabola to
 the log-coefficient sequence and requiring both to indicate a non-positive
 slope) -- fully automatic, no user-supplied regularization parameter, no
 L-curve/GCV/discrepancy-principle criterion needed at all.

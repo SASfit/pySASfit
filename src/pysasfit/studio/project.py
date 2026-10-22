@@ -56,7 +56,7 @@ def to_dict(ex):
         contribs.append(c)
     d = {
         "format": FORMAT, "version": VERSION,
-        "background": _row(ex.bg_row),
+        "background": _row(ex.bg_row), "bg_A": _row(ex.bgA_row), "bg_alpha": _row(ex.bgalpha_row),
         "contributions": contribs, "current": ex.tabs.currentIndex(),
         "integration": dict(ex.integration),
         "plot": {
@@ -68,7 +68,7 @@ def to_dict(ex):
         "fit": {
             "q_scale": fp.q_scale.text(), "fit_qmin": fp.fit_qmin.text(), "fit_qmax": fp.fit_qmax.text(),
             "backend": fp.backend.currentData(), "algorithm": fp.algorithm.currentData(), "max_eval": fp.max_eval.value(),
-            "polish": fp.polish.isChecked(), "constraints": fp.constraints.toPlainText(), "priors": fp.priors.toPlainText(),
+            "polish": fp.polish.isChecked(), "vp": fp.vp.isChecked(), "cache": fp.cache_requested(), "coarse": fp.coarse.isChecked(), "grid": fp.grid.isChecked(), "constraints": fp.constraints.toPlainText(), "priors": fp.priors.toPlainText(),
             "result": fp.result.toPlainText(),
         },
     }  # fmt: skip
@@ -118,6 +118,8 @@ def load_dict(ex, d):
     if 0 <= d.get("current", 0) < ex.tabs.count():
         ex.tabs.setCurrentIndex(d.get("current", 0))
     _set_row(ex.bg_row, d.get("background"))
+    _set_row(ex.bgA_row, d.get("bg_A"))
+    _set_row(ex.bgalpha_row, d.get("bg_alpha"))
     ex.clear_data()
     dt = d.get("data")
     if dt:
@@ -151,6 +153,10 @@ def load_dict(ex, d):
             fp.algorithm.setCurrentIndex(j)
     fp.max_eval.setValue(f.get("max_eval", 0))
     fp.polish.setChecked(f.get("polish", True))
+    fp.vp.setChecked(bool(f.get("vp", False)))
+    fp.cache.setChecked(bool(f.get("cache", False)))
+    fp.coarse.setChecked(bool(f.get("coarse", False)))
+    fp.grid.setChecked(bool(f.get("grid", False)))
     fp.constraints.setPlainText(f.get("constraints", ""))
     fp.priors.setPlainText(f.get("priors", ""))
     fp.result.setPlainText(f.get("result", ""))

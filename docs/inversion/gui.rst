@@ -6,15 +6,39 @@ Start
 
 .. code-block:: bash
 
-   pysasfit-inversion          # this tool alone
-   pysasfit-gui                # all tools; "Size distribution / p(r)" tab
+   pysasfit-inversion [datafile | project.pysasfit]   # this tool alone
+   pysasfit-gui [project.pysasfit]                    # all tools; "Size distribution / p(r)" tab
    python run_gui.py           # without installing
+
+Projects and last session
+-------------------------
+
+**File → Save project…** writes a project file (``*.pysasfit``) with the
+data (file name and an embedded copy of the numbers), the setting of every
+control and the last result (background fit, inversion, bootstrap); **File →
+Open project…** restores it, also when the data file has moved since (the
+embedded copy is then written next to the project and loaded). A project
+file given on the command line (``pysasfit-inversion proj.pysasfit``) is
+opened at start.
+
+The last session is saved the same way automatically (after loading data, a
+background fit or a solve, and when the window closes) as
+``session_inversion.pysasfit`` next to the preferences file and reopened at
+the next start. **Settings → Forget last session** deletes it.
+
+Projects carry a format version. Settings that a file does not contain --
+for instance parameters added in a later version -- take their **default
+values**, and entries the program does not know are ignored; the status bar
+says which. See :mod:`pysasfit.core.project` for the file layout and the
+compatibility rules.
 
 Layout
 ------
 
 The window has a control column on the left and two plots on the right:
-:math:`I(q)` with error bars, background and fit (log–log) at the top, the
+:math:`I(q)` with error bars, background and fit (log–log) at the top, with
+the normalised residuals :math:`(I - I_\mathrm{fit})/\sigma` of the fit in a
+small panel below it (shared q axis, as in the SLD-profile tool), the
 recovered distribution with its uncertainty band and a dotted zero line at
 the bottom.
 
@@ -85,14 +109,20 @@ Workflow
    ratio of the cubic-fit estimate to the file errors as a check.
 2. **Background** -- fit :math:`I_{bg}+c\,q^{-\alpha}` in a :math:`q` range
    (only :math:`I_{bg}` is subtracted) or enter a fixed value.
-3. **Kernel** -- :math:`4\pi j_0(qr)` for the PDDF (no :math:`\alpha`),
-   or the sphere kernel for a radius distribution (:math:`\alpha=6`
-   default).
+3. **Kernel** -- the PDDF of a globular particle (:math:`4\pi j_0(qr)`),
+   of the cross-section of a long cylinder (:math:`2\pi^2 J_0(qr)/q`) or of
+   the thickness of a lamella (:math:`4\pi\cos(qr)/q^2`), all without
+   :math:`\alpha`; or the sphere kernel for a radius distribution
+   (:math:`\alpha=6` default). Choosing the lamella kernel switches the
+   Bayesian-evidence penalty to "p(0) free" (and back to eq. 19 for the
+   other kernels). The result panel shows the forward value and the radius
+   of gyration of the particle, cross-section or thickness.
 4. **Grid** -- :math:`r_{max}`, number of points, spacing (uniform,
    quadratic, logarithmic) and interpolation between the points (linear or
    cubic). Spacing and interpolation are hidden in B-spline mode;
    interpolation is fixed to linear for the solvers that need
-   :math:`x\ge0`.
+   :math:`x\ge0`; the list is then greyed out and marked
+   *(linear only for this solver)*.
 5. **Solver** and its options (appear only for the solver that has them),
    optionally "Force :math:`\chi^2_r=1`" (Bayesian evidence).
 6. **B-splines** -- "Represent p(r) by B-splines (any solver)", number of

@@ -15,6 +15,7 @@ deconvolution p(r) -> rho(r)) in :mod:`pysasfit.sldprofile.twostep`.
 
 from . import geometry, models
 from ..core import resolution
+from .bspline import BSplines
 from .density import DensityProfileFit, ProfileResult, ProfileSolution
 from .twostep import DeconvolutionFit, PDDFResult, TwoStepResult, indirect_ft, two_step_fit
 from .geometry import amplitude_matrix, pddf, radius_of_gyration
@@ -27,6 +28,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "DensityProfileFit",
+    "BSplines",
     "DeconvolutionFit",
     "PDDFResult",
     "TwoStepResult",

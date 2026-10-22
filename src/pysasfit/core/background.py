@@ -14,11 +14,14 @@ better behaved. The background is evaluated at the measured q (not smeared).
 
 Built-in terms
 --------------
-``Constant``          c
-``PowerLaw``          A q^(-n)                 (low-q upturn of large aggregates, Porod n = 4,
+
+::
+
+    Constant          c
+    PowerLaw          A q^(-n)                 (low-q upturn of large aggregates, Porod n = 4,
                                                 mass fractals 1 < n < 3, surface fractals 3 < n < 4)
-``OrnsteinZernike``   I_L / (1 + (q xi)^2)     (concentration fluctuations / network blobs)
-``FunctionTerm``      any user function f(q, *theta) with a numerical Jacobian
+    OrnsteinZernike   I_L / (1 + (q xi)^2)     (concentration fluctuations / network blobs)
+    FunctionTerm      any user function f(q, *theta) with a numerical Jacobian
 
 Example::
 
@@ -173,6 +176,18 @@ class Background:
         return self
 
     def _flat(self):
+        # cached: called several times per model evaluation (2026-10-21, ~25 % of
+        # the run time of a density-profile fit); the key detects any change of
+        # the terms' values or free/positive flags
+        key = tuple((id(t), tuple(t.values), tuple(t.free), tuple(t.positive)) for t in self.terms)
+        c = getattr(self, "_flat_cache", None)
+        if c is not None and c[0] == key:
+            return c[1]
+        out = self._flat_build()
+        self._flat_cache = (key, out)
+        return out
+
+    def _flat_build(self):
         names, vals, free, pos, owner = [], [], [], [], []
         for it, t in enumerate(self.terms):
             for j, nm in enumerate(t.names):

@@ -123,8 +123,8 @@ def discrepancy_principle_search_bidirectional(
     param_start indicates, geometrically, until the root is bracketed, then
     refines with Brent's method.
 
-    Needed for the Bayesian-evidence solvers' lambda: discrepancy_principle_
-    search above always starts over-smoothed (EM's smoothing_h at
+    Needed for the Bayesian-evidence solvers' lambda: ``discrepancy_principle_search``
+    above always starts over-smoothed (EM's smoothing_h at
     param_start) and walks DOWN to find where chi2_r first drops to the
     target. The Bayesian-evidence solvers' own evidence-maximizing lambda
     is not constructed to hit any particular chi2_r at all -- on a given

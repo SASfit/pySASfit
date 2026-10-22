@@ -223,10 +223,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
         act.setToolTip("integration strategy of the SASfit library and of the size-distribution integral (scipy)")
         act.triggered.connect(self._choose_integration)
 
-        split = QtWidgets.QSplitter()
-        self.setCentralWidget(split)
-
-        # ---- left: background, contributions (tabs)
+        # ---- left (a dock that can be detached): background, contributions (tabs)
         left = QtWidgets.QWidget()
         self._left = left
         left.setMinimumWidth(560)
@@ -243,7 +240,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
         inst.addWidget(change)
         lv.addLayout(inst)
 
-        gbox = QtWidgets.QGroupBox("Mixture:  I(q) = Σ scale_i · I_i(q) + background")
+        gbox = QtWidgets.QGroupBox("Mixture:  I(q) = Σ scale_i · I_i(q) + background + A · q^-alpha")
         gl = QtWidgets.QVBoxLayout(gbox)
         gl.setSpacing(2)
         self.bg_row = ParameterRow("background", 0.0, "constant background added to I(q)")
@@ -251,6 +248,13 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.bg_row.fitToggled.connect(lambda on: self.fit_panel.refresh_table())
         self.bg_row.boundsEdited.connect(lambda: self.fit_panel.refresh_table())
         gl.addWidget(self.bg_row)
+        self.bgA_row = ParameterRow("bg.A", 0.0, "amplitude A of a power-law background A * q^(-alpha); 0 = off (e.g. Porod-like tail, alpha = 4)")
+        self.bgalpha_row = ParameterRow("bg.alpha", 4.0, "exponent alpha of the power-law background A * q^(-alpha)")
+        for r in (self.bgA_row, self.bgalpha_row):
+            r.valueChanged.connect(self._schedule)
+            r.fitToggled.connect(lambda on: self.fit_panel.refresh_table())
+            r.boundsEdited.connect(lambda: self.fit_panel.refresh_table())
+            gl.addWidget(r)
         show = QtWidgets.QHBoxLayout()
         self.mode_combo = QtWidgets.QComboBox()
         for text, data in MODES:
@@ -284,7 +288,11 @@ class ModelExplorer(QtWidgets.QMainWindow):
         bar.addStretch(1)
         lv.addLayout(bar)
         lv.addWidget(self.tabs, 1)
-        split.addWidget(left)
+        self.model_dock = QtWidgets.QDockWidget("Model", self)
+        self.model_dock.setObjectName("model_dock")
+        self.model_dock.setWidget(left)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.model_dock)
+        self.resizeDocks([self.model_dock], [600], QtCore.Qt.Orientation.Horizontal)
 
         # ---- right: plot and controls
         right = QtWidgets.QWidget()
@@ -297,6 +305,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
         rv.addWidget(NavigationToolbar2QT(self.canvas, self))
         rv.addWidget(self.canvas, 1)
         (self.line,) = self.ax.plot([qmin, qmax], [1.0, 1.0], lw=1.8)  # placeholder: a log axis needs data to draw
+        (self.bg_line,) = self.ax.plot([], [], ls="--", lw=1.2, color="0.45", zorder=2, label="background")
+        self.bg_line.set_visible(False)
         self.ax.grid(True, which="both", alpha=0.25)
         (self.res_line,) = self.ax_res.plot([], [], "o", ms=2.5, color="C0")
         self.ax_res.axhline(0.0, color="0.5", lw=0.8)
@@ -352,23 +362,150 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.status = QtWidgets.QLabel("")
         self.status.setWordWrap(True)
         rv.addWidget(self.status)
-        split.addWidget(right)
-        split.setStretchFactor(0, 0)
-        split.setStretchFactor(1, 1)
-        split.setSizes([580, 600])
+        self.setCentralWidget(right)
         self._on_scales()
 
         self.fit_panel = FitPanel(self)
         self.fit_dock = QtWidgets.QDockWidget("Fit", self)
         self.fit_dock.setWidget(self.fit_panel)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.fit_dock)
+        self._build_distribution_dock()
         view = self.menuBar().addMenu("&View")
-        view.addAction(self.fit_dock.toggleViewAction())
+        self._detached = []
+        for dock, area in (
+            (self.model_dock, QtCore.Qt.DockWidgetArea.LeftDockWidgetArea),
+            (self.dist_dock, QtCore.Qt.DockWidgetArea.RightDockWidgetArea),
+            (self.fit_dock, QtCore.Qt.DockWidgetArea.BottomDockWidgetArea),
+        ):
+            view.addAction(dock.toggleViewAction())
+            act = view.addAction(f"    detach '{dock.windowTitle()}' as a separate window")
+            act.setCheckable(True)
+            act.setToolTip(
+                "an independent window that can go behind the main window (the float button of a dock keeps it on top)"
+            )
+            act.toggled.connect(lambda on, d=dock, a=area: self._set_detached(d, a, on))
+        view.addSeparator()
         act = view.addAction("&Sliders")
         self.sliders_action = act
         act.setCheckable(True)
         act.setToolTip("show a slider next to every parameter field")
         act.toggled.connect(self._set_sliders)
+
+    # ------------------------------------------------- docks, size distributions
+    def _set_detached(self, dock, area, on):
+        """Make ``dock`` an independent top-level window (no owner: it can go behind the main window) or dock it again."""
+        if on:
+            size = dock.size()
+            self.removeDockWidget(dock)
+            dock.setFloating(False)
+            dock.setParent(None)
+            dock.setWindowFlags(QtCore.Qt.WindowType.Window)
+            dock.setTitleBarWidget(QtWidgets.QWidget())  # the window frame has the title
+            dock.resize(max(size.width(), 520), max(size.height(), 320))
+            dock.show()
+            self._detached.append(dock)
+        else:
+            if dock in self._detached:
+                self._detached.remove(dock)
+            dock.setTitleBarWidget(None)
+            dock.setWindowFlags(QtCore.Qt.WindowType.Widget)
+            self.addDockWidget(area, dock)
+            dock.show()
+
+    def closeEvent(self, event):
+        for dock in list(self._detached):
+            dock.close()
+        super().closeEvent(event)
+
+    def _build_distribution_dock(self):
+        """Dock with a plot of the size distribution N(x) of every contribution that has one."""
+        w = QtWidgets.QWidget()
+        v = QtWidgets.QVBoxLayout(w)
+        v.setContentsMargins(2, 2, 2, 2)
+        self.dist_fig = Figure(figsize=(4, 3), layout="constrained")
+        self.dist_ax = self.dist_fig.add_subplot(111)
+        self.dist_canvas = FigureCanvasQTAgg(self.dist_fig)
+        v.addWidget(NavigationToolbar2QT(self.dist_canvas, w))
+        v.addWidget(self.dist_canvas, 1)
+        row = QtWidgets.QHBoxLayout()
+        self.dist_logx = QtWidgets.QCheckBox("log x")
+        self.dist_logx.toggled.connect(self._schedule)
+        self.dist_xpow = QtWidgets.QDoubleSpinBox()
+        self.dist_xpow.setRange(-6.0, 12.0)
+        self.dist_xpow.setDecimals(2)
+        self.dist_xpow.setSingleStep(1.0)
+        self.dist_xpow.setValue(3.0)
+        self.dist_xpow.setToolTip("plot N(x) * x^p: p = 0 number distribution, 3 volume-like, 6 what the intensity sees at low q")
+        self.dist_xpow.valueChanged.connect(self._schedule)
+        row.addWidget(self.dist_logx)
+        row.addWidget(QtWidgets.QLabel("N(x) · x^p, p ="))
+        row.addWidget(self.dist_xpow)
+        for p, text in ((0, "p=0"), (3, "p=3"), (6, "p=6")):
+            b = QtWidgets.QPushButton(text)
+            b.setFixedWidth(46)
+            b.clicked.connect(lambda _c=False, p=p: self.dist_xpow.setValue(p))
+            row.addWidget(b)
+        row.addStretch(1)
+        v.addLayout(row)
+        self.dist_dock = QtWidgets.QDockWidget("Size distributions", self)
+        self.dist_dock.setObjectName("dist_dock")
+        self.dist_dock.setWidget(w)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.dist_dock)
+        self.dist_dock.visibilityChanged.connect(lambda _v: self._schedule())
+
+    @staticmethod
+    def _sd_range(c):
+        """x range for plotting the size distribution of contribution ``c``."""
+        try:
+            lo, hi = c.support()
+        except TypeError:
+            lo, hi = c.support(0.0)
+        if not (np.isfinite(lo) and np.isfinite(hi) and hi > lo):
+            raise ValueError("no usable size range")
+        return max(lo / 2.0, hi * 1e-4), hi * 1.5
+
+    def _update_distributions(self):
+        if not self.dist_dock.isVisible():
+            return
+        ax = self.dist_ax
+        ax.clear()
+        k, lab = float(self.dist_xpow.value()), ""
+        n = 0
+        for i, p in enumerate(self.models()):
+            c = p.contrib
+            if c.sd is None:
+                continue
+            try:
+                lo, hi = self._sd_range(c)
+                x = np.geomspace(lo, hi, 400) if self.dist_logx.isChecked() else np.linspace(lo, hi, 400)
+                y = np.asarray(c.sd.evaluate_p(x, c.sd_p), dtype=float) * x**k
+            except Exception:  # noqa: BLE001 -- a distribution that cannot be drawn is left out
+                continue
+            ax.plot(x, y, color=f"C{i + 1}", label=f"{i + 1}: {c.sd.name}")
+            try:
+                lab = c.ff.parameter_names[c.distributed]
+            except Exception:  # noqa: BLE001
+                lab = lab or "x"
+            n += 1
+        if n:
+            ax.set_xlabel(lab or "x")
+            ax.set_ylabel("N(x)" if not k else f"N(x) · x^{k:g}")
+            ax.grid(True, which="both", alpha=0.25)
+            if self.dist_logx.isChecked():
+                ax.set_xscale("log")
+            ax.legend(fontsize=8)
+        else:
+            ax.text(0.5, 0.5, "no contribution has a size distribution", ha="center", va="center", transform=ax.transAxes)
+            ax.set_axis_off()
+        self.dist_canvas.draw_idle()
+
+    def _update_background(self, q):
+        """Dashed grey line: constant background + A q^-alpha (only when there is one)."""
+        bg = self.bg_row.value + self._power_term(q)
+        show = self.mode_combo.currentData() != "S" and bool(np.any(np.asarray(bg) != 0))
+        if show:
+            self.bg_line.set_data(q, np.broadcast_to(bg, np.shape(q)))
+        self.bg_line.set_visible(show)
 
     # -------------------------------------------------------------- project
     def _open_project(self):
@@ -565,6 +702,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
         if p is not None:
             p.reset()
         self.bg_row.set_value(0.0, emit=False)
+        self.bgA_row.set_value(0.0, emit=False)
+        self.bgalpha_row.set_value(4.0, emit=False)
         self._schedule()
 
     # ------------------------------------------------------------------ plot
@@ -633,7 +772,11 @@ class ModelExplorer(QtWidgets.QMainWindow):
             else:
                 particles = c.intensity(q)
             parts.append(p.scale_row.value * np.asarray(particles, dtype=float))
-        return sum(parts) + self.bg_row.value, parts
+        return sum(parts) + self.bg_row.value + self._power_term(q), parts
+
+    def _power_term(self, q):
+        A = self.bgA_row.value
+        return A * np.asarray(q, dtype=float) ** (-self.bgalpha_row.value) if A else 0.0
 
     def _redraw(self):
         if not self.has_model() or self._busy:
@@ -660,10 +803,12 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self._last = (q, I)
         self.line.set_data(q, I)
         self._update_parts(q, parts)
+        self._update_background(q)
+        self._update_distributions()
         fit_note = self._update_residuals(Id)
         self.fit_panel.refresh_values()
         if self.autoscale.isChecked():
-            self.ax.relim()
+            self.ax.relim(visible_only=True)
             self.ax.autoscale_view()
         self.canvas.draw_idle()
         msg = f"{q.size} points in {(time.perf_counter() - t0) * 1e3:.0f} ms"
@@ -772,7 +917,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
     def _set_sliders(self, on):
         self.show_sliders = bool(on)
-        self.bg_row.set_sliders(on)
+        for r in (self.bg_row, self.bgA_row, self.bgalpha_row):
+            r.set_sliders(on)
         for p in self.panels():
             p.set_sliders(on)
 
@@ -784,6 +930,10 @@ class ModelExplorer(QtWidgets.QMainWindow):
         """The parameter row of a fit address (see :meth:`parameter_entries`)."""
         if address == "background":
             return self.bg_row
+        if address == "bg.A":
+            return self.bgA_row
+        if address == "bg.alpha":
+            return self.bgalpha_row
         ms = self.models()
         if address.startswith("scale."):
             return ms[int(address[6:])].scale_row
@@ -803,13 +953,16 @@ class ModelExplorer(QtWidgets.QMainWindow):
     def build_model(self):
         """A :class:`~pysasfit.studio.ModelFunction` of the mixture (the contributions are the live objects)."""
         ms = self.models()
-        return ModelFunction([p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=self.bg_row.value)
+        return ModelFunction(
+            [p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=self.bg_row.value,
+            bg_A=self.bgA_row.value, bg_alpha=self.bgalpha_row.value,
+        )  # fmt: skip
 
     def parameter_entries(self):
         """``[(address, label, default lower, default upper)]`` of all parameters of the mixture (fit addresses)."""
         ms = self.models()
         multi = len(ms) > 1
-        out = [("background", "background", "", "")]
+        out = [("background", "background", "", ""), ("bg.A", "bg.A", "0", ""), ("bg.alpha", "bg.alpha", "0", "8")]
         for i, p in enumerate(ms):
             pre = f"c{i + 1}." if multi else ""
             has_sd = p.funcs["sd"] is not None
@@ -834,6 +987,10 @@ class ModelExplorer(QtWidgets.QMainWindow):
         """Current value of a fit address (see :meth:`parameter_entries`)."""
         if address == "background":
             return self.bg_row.value
+        if address == "bg.A":
+            return self.bgA_row.value
+        if address == "bg.alpha":
+            return self.bgalpha_row.value
         ms = self.models()
         if address.startswith("scale."):
             return ms[int(address[6:])].scale_row.value
@@ -844,7 +1001,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
     def snapshot(self):
         """All parameter values, to come back to with :meth:`restore`."""
         return {
-            "background": self.bg_row.value,
+            "background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value,
             "items": [
                 (p, p.scale_row.value, {r: p.contrib.vector(r).copy() for r in ROLES if p.contrib.vector(r) is not None})
                 for p in self.models()
@@ -861,6 +1018,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
                     vec[:] = v
             p.scale_row.set_value(scale, emit=False)
         self.bg_row.set_value(snap["background"], emit=False)
+        self.bgA_row.set_value(snap.get("bg_A", 0.0), emit=False)
+        self.bgalpha_row.set_value(snap.get("bg_alpha", 4.0), emit=False)
         self.after_fit()
 
     def apply_model_values(self, model):
@@ -868,6 +1027,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
         for p, s in zip(self.models(), model.scales):
             p.scale_row.set_value(s, emit=False)
         self.bg_row.set_value(model.background, emit=False)
+        self.bgA_row.set_value(model.bg_A, emit=False)
+        self.bgalpha_row.set_value(model.bg_alpha, emit=False)
         self.after_fit()
 
     def after_fit(self):
@@ -913,7 +1074,10 @@ class ModelExplorer(QtWidgets.QMainWindow):
             lines.append(")")
         names = ", ".join(f"c{i + 1}" for i in range(len(ms)))
         scales = ", ".join(repr(p.scale_row.value) for p in ms)
-        lines += ["", f"model = ModelFunction([{names}], scales=[{scales}], background={self.bg_row.value!r})", "I = model(q)"]
+        bg = f"background={self.bg_row.value!r}"
+        if self.bgA_row.value:
+            bg += f", bg_A={self.bgA_row.value!r}, bg_alpha={self.bgalpha_row.value!r}"
+        lines += ["", f"model = ModelFunction([{names}], scales=[{scales}], {bg})", "I = model(q)"]
         return "\n".join(lines)
 
     def _copy_python(self):

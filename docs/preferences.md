@@ -106,6 +106,18 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
 - **fine r_max grid half width: at least coarse steps ×** — `sldprofile.opt.fine_steps` · factory: **1.5** · range: 0.1 … 20  
   Second term of the fine-scan half width (see above), in coarse grid steps; it keeps the fine scan from collapsing when the coarse posterior is very narrow.
 
+- **fine r_max grid: only where the coarse posterior >** — `sldprofile.opt.fine_support` · factory: **1e-06** · range: 0 … 0.1  
+  The fine r_max scan is limited to the coarse r_max whose posterior exceeds this fraction of the maximum, plus one coarse step on each side (no limit on a side where the weight reaches the end of the coarse grid). Without it, a broad coarse posterior sends the fine scan to r_max values that cannot fit the data and only cost time (star example, N = 80: 58 s → 8 s). 0 switches the limit off.
+
+- **end an α path when χ² stalls (relative change over 3 steps) <** — `sldprofile.opt.abandon_plateau` · factory: **0.02** · range: 0 … 0.5  
+  An α path also ends when the data are not fitted (χ² above the stop value) but χ² has changed by less than this fraction over the last three α steps while ln evidence has already dropped by the stop value below its maximum on the path. Such an r_max cannot fit the data; its evidence maximum is already on the path, and the remaining small-α fits are the slowest of the scan. 0 = never.
+
+- **no restarts at r_max with ln evidence below the best by** — `sldprofile.opt.abandon_margin` · factory: **50** · range: 0 … 1e+06  
+  At an r_max whose best ln evidence is this far below the best of the r_max already done, no restarts from the other starting profiles are tried (they only help near the evidence maximum). 0 = always.
+
+- **parallel processes for the r_max scan** — `sldprofile.opt.n_workers` · factory: **0** · range: 0 … 256  
+  Number of processes for the r_max scan (0 or 1: serial). The r_max nearest to the centre is done first, the others in parallel. Only worthwhile with several free cores and slow fits (large N): process start-up, copying the fitter and the loss of the running best evidence cost time; on a 2-core test machine the parallel scan was slower than the serial one. Falls back to serial when the fit cannot be copied to other processes (e.g. a max-ent prior or background given as a lambda).
+
 #### Grids and scans
 
 - **adaptive grid: pilot over-smoothing (e-folds in α)** — `sldprofile.adaptive.smoothing` · factory: **2** · range: 0 … 20  

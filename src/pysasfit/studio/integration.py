@@ -21,7 +21,8 @@ from collections import OrderedDict
 import numpy as np
 from scipy import integrate as _si
 
-__all__ = ["METHODS", "DEFAULTS", "PANELS", "ContributionCache", "integrate", "size_integral", "load_settings", "save_settings"]
+__all__ = ["METHODS", "DEFAULTS", "PANELS", "ContributionCache", "integrate", "size_integral", "suggest_n_x", "format_node_check",
+           "load_settings", "save_settings"]  # fmt: skip
 
 METHODS = {
     "gauss-legendre": "Gauss-Legendre, fixed nodes (n_x per panel, 4 panels)",
@@ -195,6 +196,11 @@ def size_integral(c, q, S):
             v = scope[(kind, x)] = np.array(v, dtype=float)
         return v
 
+    if getattr(c, "fixed_grid", False) and (c.sq is None or c.approach in ("monodisperse", "decoupling")) and 0 < a < b:
+        # fixed logarithmic grid: P(q, x) is computed once per grid, the distribution only gives the weights
+        value = _grid_integral(c, q, S, _fixed_grid(c, a, b), P, cache)
+        return value
+
     if c.sq is None or c.approach == "monodisperse":  # manual 4.1.1:  S(q) ∫ N P dx
         def f(x):
             return weight(x) * P(x)
@@ -224,6 +230,131 @@ def size_integral(c, q, S):
     value, info = integrate(f, a, b, c.method, c.n_x, c.rtol, c.atol, c.limit)
     c.last_integration = info
     return post(value)
+
+
+def _fixed_grid(c, a, b):
+    """Nodes and trapezoid weights of a grid equidistant in ln x that contains the support ``[a, b]``.
+
+    The grid is kept in ``c._grid`` while it still contains the support with at least half the resolution (nodes
+    inside the support: ``n_x * PANELS / 2``); otherwise a new one is built around the support with the margin
+    ``c.grid_margin`` (default 1.6) on both sides. The integrand N(x) P(q, x) x is smooth in ln x and decays at both
+    ends, where the trapezoid rule converges very fast.
+    """
+    n_in = max(int(c.n_x) * PANELS // 2, 48)
+    g = getattr(c, "_grid", None)
+    if g is not None and g[0] <= a and b <= g[1]:
+        inside = int(np.count_nonzero((g[2] >= a) & (g[2] <= b)))
+        if inside >= n_in // 2:
+            return g[2], g[3]
+    m = float(getattr(c, "grid_margin", 1.6))
+    lo, hi = a / m, b * m
+    d = math.log(b / a) / n_in
+    n = int(math.ceil(math.log(hi / lo) / d)) + 1
+    xs = lo * np.exp(d * np.arange(n))
+    w = xs * d
+    w[0] *= 0.5
+    w[-1] *= 0.5
+    c._grid = (lo, float(xs[-1]), xs, w)
+    return xs, w
+
+
+def _grid_integral(c, q, S, grid, P, cache):
+    """The size-distribution integral as a weighted sum over the fixed grid (monodisperse and decoupling)."""
+    xs, w0 = grid
+    before = cache.node_misses if cache is not None else 0
+    n = np.asarray(c.sd.evaluate_p(xs, c.sd_p), dtype=float) * w0
+    Pm = np.column_stack([P(float(x)) for x in xs])
+    if c.sq is None or c.approach == "monodisperse":
+        v = Pm @ n
+        v = v if S is None else v * S
+    else:  # decoupling approximation
+        Fm = np.column_stack([P(float(x), "amplitude") for x in xs])
+        v = Pm @ n + (Fm @ n) ** 2 / float(np.sum(n)) * (S - 1.0)
+    evals = (cache.node_misses - before) if cache is not None else xs.size
+    c.last_integration = {"method": "fixed grid", "neval": int(evals), "nodes": int(xs.size)}
+    return v
+
+
+NODE_CANDIDATES = (8, 12, 16, 24, 32, 48, 64, 96, 128)
+_FIXED_NODE_METHODS = ("gauss-legendre", "simpson", "trapezoid", "romb")
+
+
+def suggest_n_x(c, q, tol=1e-4, candidates=NODE_CANDIDATES):
+    """Smallest ``n_x`` whose intensity agrees with a reference of (at least) 192 nodes per panel to ``tol``.
+
+    The difference is the maximum over q of ``|I_n - I_ref| / max(|I_ref|, 1e-6 max|I_ref|)``. A candidate counts only if
+    the next candidate agrees as well. Returns a dictionary: ``n_x`` (None: no candidate reached ``tol``),
+    ``current``, ``reference``, ``table`` [(n_x, difference)], ``tol``, ``method``; methods that choose their nodes
+    themselves (``quad_vec``, ``sasfit``) return ``n_x`` None and a ``note``. The settings of ``c`` are restored.
+    """
+    if c.sd is None:
+        raise ValueError("the contribution has no size distribution")
+    out = {"method": c.method, "tol": float(tol), "current": int(c.n_x), "n_x": None, "table": [], "reference": None}
+    if c.method not in _FIXED_NODE_METHODS:
+        out["note"] = f"'{c.method}' chooses its nodes itself: n_x does not apply"
+        return out
+    q = np.asarray(q, dtype=float)
+    ref_n = max(2 * int(c.n_x), 192)
+    out["reference"] = ref_n
+    saved = (c.n_x, getattr(c, "cache", None), getattr(c, "fixed_grid", False))
+    c.cache = None
+    if hasattr(c, "fixed_grid"):
+        c.fixed_grid = False
+    try:
+
+        def run(n):
+            c.n_x = int(n)
+            return np.asarray(c.intensity(q), dtype=float)
+
+        ref = run(ref_n)
+        finite = np.isfinite(ref)
+        floor = max(1e-6 * float(np.max(np.abs(ref[finite]))) if finite.any() else 0.0, 1e-300)
+
+        def difference(I):
+            with np.errstate(invalid="ignore", divide="ignore"):
+                e = np.abs(I - ref) / np.maximum(np.abs(ref), floor)
+            return float(np.nanmax(e)) if np.any(np.isfinite(e)) else math.inf
+
+        cand = {int(n) for n in candidates if n < ref_n}
+        if int(saved[0]) < ref_n:
+            cand.add(int(saved[0]))
+        streak, first = 0, None
+        for n in sorted(cand):
+            e = difference(run(n))
+            out["table"].append((n, e))
+            if e <= tol:
+                first = n if streak == 0 else first
+                streak += 1
+            else:
+                streak, first = 0, None
+            if streak >= 2 and n >= int(saved[0]):
+                break
+        out["n_x"] = first
+    finally:
+        c.n_x, c.cache = saved[0], saved[1]
+        if hasattr(c, "fixed_grid"):
+            c.fixed_grid = saved[2]
+    return out
+
+
+def format_node_check(results):
+    """Text of :func:`suggest_n_x` results; ``results``: ``[(label, dictionary)]``."""
+    lines = []
+    for label, r in results:
+        lines.append(f"{label}: method {r['method']}, current n_x = {r['current']}")
+        if r.get("note"):
+            lines += [f"  {r['note']}", ""]
+            continue
+        lines.append(f"  difference to n_x = {r['reference']} (max relative, all q), goal {r['tol']:.0e}:")
+        for n, e in r["table"]:
+            lines.append(f"    n_x = {n:4d}   {e:9.2e}{'   <- current' if n == r['current'] else ''}")
+        if r["n_x"] is None:
+            lines.append("  no tested n_x reaches the goal: keep the current value or loosen the goal")
+        else:
+            saving = r["current"] / r["n_x"]
+            lines.append(f"  n_x = {r['n_x']} is enough" + (f" ({saving:.1f}x fewer form-factor calls than now)" if saving > 1.2 else ""))
+        lines.append("")
+    return "\n".join(lines).rstrip()
 
 
 # ------------------------------------------------------------------ settings
