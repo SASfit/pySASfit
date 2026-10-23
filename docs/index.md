@@ -41,11 +41,12 @@ fitting.
 :::
 
 :::{grid-item-card} studio
-:link: studio
+:link: studio_manual/index
 :link-type: doc
 
 SASfit's plugin and libsasfit model functions via ctypes, combined into mixtures, plotted and fitted in an
-interactive explorer (`pysasfit-explorer`) with several optimisers and saved projects.
+interactive explorer (`pysasfit-explorer`) with several optimisers and saved projects. Manual with screenshots
+and Python examples, plus the reference.
 :::
 
 :::{grid-item-card} Preferences
@@ -82,7 +83,7 @@ Installation <installation>
 SLD profile <sldprofile/index>
 Size distribution / p(r) <inversion/index>
 Ornstein–Zernike <oz/index>
-studio <studio>
+studio manual <studio_manual/index>
 Preferences <preferences>
 API <api/index>
 ```

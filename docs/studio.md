@@ -1,4 +1,8 @@
-# pysasfit.studio — SASfit plugin functions in Python
+# studio reference
+
+```{note}
+This page is the complete reference. A guided tour with screenshots and examples is the {doc}`studio manual <studio_manual/index>`.
+```
 
 `pysasfit.studio` gives Python access to the compiled SASfit model functions:
 
@@ -492,7 +496,7 @@ Fit panel → Result page: **Export result…** and **Copy summary image**.
 
 **Size distributions in the export.** For every fitted size distribution the export contains N(x) (amplitude included) and N(x)·x^p on 400 logarithmic x points (integration range of the distribution widened to `[max(lo/2, hi·1e-4), hi·1.5]`): sheet **Distributions** with chart (xlsx), `<name>_distributions.csv`, and two panels in the summary figure (N(x) left, N(x)·x^p right). The exponent **p is read from the Size-distribution dock** of the explorer (field "p", default 3) at the moment of the export and is written into the sheet header, the CSV header, the figure title and the Summary sheet, so the file documents which weight was used. Python: `export.save_xlsx(path, result, problem, dist_power=6)`.
 
-A parameter is flagged *at bound* if it lies within `max(1e-4·|x|, 1e-6·(hi-lo), 1e-9)` of a bound.
+A parameter is flagged *at bound* if it lies within `max(1e-4·s, 1e-6·(hi-lo))` of a bound, where s is the larger of the fitted value and the start value; the second term applies only to a finite range. There is no absolute tolerance, so a parameter of the order of 1e-12 (the amplitude N of a size distribution) is not flagged only because it is small, while one that was driven from its start value towards 0 is.
 
 ## Tests
 
@@ -517,6 +521,8 @@ python -m pytest tests/studio -q
 | `test_groups.py`                | `.def` parsing, menu tree, special groups, cache invalidation                   |
 | `test_paths.py`                 | library search order, settings file, header/def/plugin folders                  |
 | `test_cli.py`                   | new-plugin, SasView adapter (also with the word 'inf' in descriptions), sub-commands |
+| `test_examples.py`              | example scripts (valid; run when libsasfit is present), manual includes and screenshot names |
+| `test_at_bounds.py`             | the 'at a bound' flag is relative to the size of the parameter                  |
 | `test_explorer_gui.py`          | Explorer window, docks, detach, distributions; needs libsasfit, skipped otherwise |
 
 Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not installed.
