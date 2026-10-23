@@ -126,7 +126,11 @@ def locate(model, address):
 
 
 def _ident(label):
-    return re.sub(r"\W+", "_", label).strip("_")
+    """Name of a parameter in constraint expressions: the label with ``.`` etc. replaced by ``_``; a label that starts
+    with a digit (``1.sd.mu`` of the second contribution) gets a ``c`` in front (``c1_sd_mu``), as the expression
+    must be valid Python."""
+    name = re.sub(r"\W+", "_", label).strip("_")
+    return "c" + name if name[:1].isdigit() else name
 
 
 # --------------------------------------------------------------------------- data classes
@@ -747,6 +751,7 @@ class FitProblem:
         elif vp:
             message = f"variable projection: no linear parameter found; {message}"
         vals = ctx.final_vals(u)
+        starts = [p.value for p in self.parameters]  # the values the fit started from (scale of the at-bound test)
         for p, v in zip(self.parameters, vals):
             p.value = float(v)
         self.apply(0)
@@ -760,8 +765,12 @@ class FitProblem:
         at_bounds = []
         for i, x in zip(ctx.all_free, vals[ctx.all_free]):
             lo, hi = self.parameters[i].lower, self.parameters[i].upper
-            # trust-region methods stop slightly inside a bound: 1e-4 relative to the value or 1e-6 of the range
-            tol = max(1e-4 * abs(x), 1e-6 * (hi - lo if math.isfinite(hi - lo) else 0.0), 1e-9)
+            # Trust-region methods stop slightly inside a bound. 'Slightly' is relative to the size of the parameter
+            # (the larger of the result and the start value, so that a parameter driven towards 0 is still caught):
+            # 1e-4 of it, or 1e-6 of a finite range. There is no absolute tolerance: parameters of 1e-12 (the
+            # amplitude N of a size distribution) are not 'at the bound 0' only because they are small.
+            scale = max(abs(x), abs(starts[i]))
+            tol = max(1e-4 * scale, 1e-6 * (hi - lo if math.isfinite(hi - lo) else 0.0))
             if x <= lo + tol or x >= hi - tol:
                 at_bounds.append(self.parameters[i].label)
         per_set, pos = [], 0
