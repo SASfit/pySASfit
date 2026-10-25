@@ -82,6 +82,7 @@ def to_dict(ex):
 
 
 def save(ex, path):
+    """Write the session of explorer ``ex`` to ``path`` (``.sasstudio`` is appended if there is no suffix); returns the path."""
     path = str(path)
     if not os.path.splitext(path)[1]:
         path += SUFFIX
@@ -165,6 +166,7 @@ def load_dict(ex, d):
 
 
 def load(ex, path):
+    """Read a project file and rebuild the session of explorer ``ex`` from it (see :func:`load_dict`)."""
     with open(path, encoding="utf-8") as fh:
         d = json.load(fh)
     load_dict(ex, d)

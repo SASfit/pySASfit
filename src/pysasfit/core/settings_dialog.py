@@ -27,6 +27,8 @@ def _fmt(s, v):
         return dict(s.choices).get(v, str(v))
     if s.kind == "float":
         return f"{v:.6g}" if not s.log else f"{v:.3g}"
+    if s.kind in ("str", "file") and not v:
+        return s.effective_placeholder() or "(empty)"
     return str(v)
 
 
@@ -44,6 +46,20 @@ class _Row:
         elif s.kind == "int":
             w = QtWidgets.QSpinBox(parent)
             w.setRange(int(s.lo if s.lo is not None else -2**31 + 1), int(s.hi if s.hi is not None else 2**31 - 1))
+        elif s.kind == "file":
+            # path with a browse button; empty shows (and means) the default location
+            self.box = QtWidgets.QWidget(parent)
+            bl = QtWidgets.QHBoxLayout(self.box)
+            bl.setContentsMargins(0, 0, 0, 0)
+            w = QtWidgets.QLineEdit(self.box)
+            w.setMinimumWidth(320)
+            w.setPlaceholderText(s.effective_placeholder())
+            browse = QtWidgets.QToolButton(self.box)
+            browse.setText("…")
+            browse.setToolTip("choose the file")
+            browse.clicked.connect(self._browse)
+            bl.addWidget(w, 1)
+            bl.addWidget(browse)
         else:
             w = QtWidgets.QLineEdit(parent)
             w.setMaximumWidth(140)
@@ -55,11 +71,29 @@ class _Row:
         self.label.setWordWrap(True)
         self.hint = QtWidgets.QLabel(f"factory: {_fmt(s, s.default)}", parent)
         self.hint.setStyleSheet("color: gray")
+        if s.kind == "file":
+            # the full default path is the grey text in the empty field (and in the tooltip)
+            self.hint.setText("factory: the grey path")
+            full = s.effective_placeholder()
+            for x in (w, self.label, self.hint):
+                x.setToolTip(f"{tip}<p>factory: {html.escape(full)}</p>")
         self.set(prefs.get(s.key))
         sig = (w.toggled if s.kind == "bool" else w.currentIndexChanged if s.kind == "choice"
                else w.valueChanged if s.kind == "int" else w.textChanged)
         sig.connect(lambda *_: self.mark())
         self.mark()
+
+    def editor(self):
+        """The widget placed in the grid (the line edit, or its box with the browse button)."""
+        return getattr(self, "box", self.w)
+
+    def _browse(self):
+        start = self.w.text().strip() or self.s.effective_placeholder()
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self.w, self.s.label, start, "HDF5 files (*.h5 *.hdf5 *.nxs);;All files (*)",
+            options=QtWidgets.QFileDialog.Option.DontConfirmOverwrite)
+        if path:
+            self.w.setText(path)
 
     def set(self, v):
         w, s = self.w, self.s
@@ -94,7 +128,7 @@ class _Row:
         f = self.label.font()
         f.setBold(ok and v != self.s.default)
         self.label.setFont(f)
-        if self.s.kind in ("float", "str"):
+        if self.s.kind in ("float", "str", "file"):
             self.w.setStyleSheet("" if ok else "background: #ffd0d0")
 
 
@@ -158,7 +192,7 @@ class PreferencesDialog(QtWidgets.QDialog):
                 for i, s in enumerate(sec.settings):
                     r = _Row(s, g)
                     gl.addWidget(r.label, i, 0)
-                    gl.addWidget(r.w, i, 1)
+                    gl.addWidget(r.editor(), i, 1)
                     gl.addWidget(r.hint, i, 2)
                     rows.append(r)
                     self._filter.watch(r)

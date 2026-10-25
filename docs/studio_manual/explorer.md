@@ -9,15 +9,21 @@ pysasfit-explorer --project my.sasstudio                       # a saved session
 
 From a script: `explore(...)`, see {doc}`scripting`.
 
+In `pysasfit-gui` the explorer is the **pySASstudio** tab (the second); its own menus (*Save project as…*,
+*SASfit installation…*, *Integration…*, the dock entries of *View*, *Sliders*) appear in the launcher's File,
+Settings and View menus, and the tab can be detached into its own window ({doc}`../launcher`).
+
 ## Windows
 
 The plot is the central widget. Around it are three docks that you can move, hide and detach:
 
 | dock | content | open |
 |---|---|---|
-| **Model** | the contributions as tabs, background, parameters | always |
+| **Model** | the contributions as tabs, background, parameters | *View → Model* |
 | **Fit** | data, fit selection, constraints, priors, optimiser, result | *View → Fit* |
 | **Size distributions** | N(x)·x<sup>p</sup> of the distributions of the model | *View → Size distributions* |
+
+All three are shown at the start; the *View* menu hides and shows them again.
 
 To put a dock into a window of its own, use *View → detach '…' as a separate window*. A detached window does not
 stay on top of the main window, and closing the main window closes it.

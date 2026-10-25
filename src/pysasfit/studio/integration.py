@@ -169,7 +169,8 @@ def size_integral(c, q, S):
     """Intensity of contribution ``c`` (with a size distribution) at ``q``; ``S`` = S(q) or None (LMA).
 
     ``c`` provides ff, sd, sq, ff_p, sd_p, sq_p, distributed, approach, support() and the settings
-    method, n_x, rtol, atol, limit. The result of the integration is kept in ``c.last_integration``.
+    method, n_x, rtol, atol, limit (optionally cache, fixed_grid, grid_margin). The result of the
+    integration is kept in ``c.last_integration``.
     """
     a, b = c.support()
     p = c.ff_p.copy()
@@ -198,8 +199,7 @@ def size_integral(c, q, S):
 
     if getattr(c, "fixed_grid", False) and (c.sq is None or c.approach in ("monodisperse", "decoupling")) and 0 < a < b:
         # fixed logarithmic grid: P(q, x) is computed once per grid, the distribution only gives the weights
-        value = _grid_integral(c, q, S, _fixed_grid(c, a, b), P, cache)
-        return value
+        return _grid_integral(c, q, S, _fixed_grid(c, a, b), P, cache)
 
     if c.sq is None or c.approach == "monodisperse":  # manual 4.1.1:  S(q) ∫ N P dx
         def f(x):
@@ -377,7 +377,7 @@ def load_settings():
 
 
 def save_settings(settings):
-    """Remember ``settings`` (method, n_x, rtol, atol, limit) for later sessions."""
+    """Remember ``settings`` (all keys of :data:`DEFAULTS`: method, n_x, rtol, atol, limit, x_power, tail) for later sessions."""
     from . import paths
 
     paths.set_setting("integration", {k: settings[k] for k in DEFAULTS})

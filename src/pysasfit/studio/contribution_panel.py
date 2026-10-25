@@ -37,7 +37,7 @@ NO_SD_NOTE = "not used with a size distribution: its amplitude N is the scale"
 
 
 def _column(title):
-    """Group box with a picker slot, a description label and a scrollable list of parameter rows."""
+    """An empty group box with a vertical layout; the caller adds the picker, the description and the parameter rows."""
     box = QtWidgets.QGroupBox(title)
     lay = QtWidgets.QVBoxLayout(box)
     lay.setContentsMargins(6, 6, 6, 6)

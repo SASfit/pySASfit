@@ -1,4 +1,5 @@
-"""DFO-LS backend, variable projection and the form-factor cache (no SASfit library needed)."""
+"""DFO-LS backend and the speed-ups of the fit (no SASfit library needed): variable projection, form-factor cache,
+coarse to fine, fixed size grid, model profiling and the node check."""
 
 import numpy as np
 import pytest

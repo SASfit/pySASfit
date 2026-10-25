@@ -526,4 +526,79 @@ HELP = {
     "numerics.background.oz_level":
         "Start value of an Ornstein–Zernike term I_L/(1 + q²ξ²): I_L = level × max I; ξ starts at "
         "1/median q unless given.",
+    # =================================================================== SANS reduction (pySASred)
+    "sasred.beamcentre.radius_px":
+        "Radius of the disc around the current estimate whose counts enter the centre of gravity of the "
+        "direct-beam run. The disc is re-centred until the shift is below the tolerance. Larger than the "
+        "beam spot (about 2-3 FWHM), smaller than the distance to other bright features.",
+    "sasred.beamcentre.tol_px":
+        "The iteration of the masked centre of gravity stops when the disc moves by less than this. The "
+        "statistical uncertainty of the centre is usually far smaller (0.004 px on the Vifor runs).",
+    "sasred.beamcentre.max_iter":
+        "Largest number of re-centring steps of the beam-centre search; reached only if the beam spot is "
+        "at the edge of the disc or of the detector.",
+    "sasred.mask.beamstop_radius_px":
+        "First guess of the beamstop shadow: a new detector image starts with the standard border plus a "
+        "square of this half width (or a disc of this radius, see the shape) around the beam centre, as "
+        "beamstop pixels of the mask. It is only a start: adjust it with the mask tools or replace it by "
+        "Suggest. Until the mask is edited, the guess follows the beam centre and the size.",
+    "sasred.mask.beamstop_shape":
+        "Shape of the first-guess beamstop: square (the SANS-I beamstops are square) or disc.",
+    "sasred.qbins.n":
+        "Start value of the number of q bins of the radial / sector average. Empty bins are dropped, so "
+        "the curve can have fewer points.",
+    "sasred.qbins.spacing":
+        "Start value of the q-bin spacing: logarithmic (constant Δq/q, the usual choice for SANS) or "
+        "linear (constant Δq, e.g. for peaks at large q).",
+    "sasred.normalise_by":
+        "Start value of the normalisation: monitor 1 (its Poisson error is propagated as a systematic "
+        "scale shared by all points) or counting time (no monitor error).",
+    "sasred.units":
+        "Units of wavelength and q on the panels, in the plots and in the saved files (NXcanSAS Q units "
+        "attribute, ASCII header). The reduction itself works in Å and 1/Å, so results do not depend on "
+        "this choice. Also switchable on the Reduction panel.",
+    "sasred.detector.scale":
+        "Start value of the colour scale of the detector image: linear; log(1+I) (zero counts stay "
+        "finite); symlog (linear below 1 count, logarithmic above); asinh (smooth version of symlog).",
+    "sasred.mask.border_px":
+        "The standard mask: this many outer rows and columns on every side of the detector (bit "
+        "'border'). It is the mask of a new detector image and the base of Suggest and Reset.",
+    "sasred.mask.drop":
+        "Beamstop suggestion: the shadow is the connected region below drop x rim level that reaches the "
+        "beam centre; the rim level is the 90th percentile of the median-filtered counts within the search "
+        "radius. Lower it if the suggestion covers too much, raise it for a beamstop that transmits.",
+    "sasred.mask.search_radius_px":
+        "Beamstop suggestion: radius around the beam centre in which the rim level is determined; it "
+        "should include the bright scattering around the beamstop.",
+    "sasred.mask.suggest_shape":
+        "Beamstop suggestion: rectangle masks the whole bounding rectangle of the shadow found in the "
+        "data (square beamstops, no ragged edge); shadow masks only the pixels below the threshold.",
+    "sasred.mask.display":
+        "How the masked pixels are drawn on the detector image: in the mask colours (with the opacity "
+        "below), on their own grey scale with its own colour bar (to see what is behind the mask), or "
+        "hidden (only the outline). The colour scale of the image always uses the unmasked pixels only.",
+    "sasred.mask.grow_px":
+        "Beamstop suggestion: the shadow is grown by this many pixels to cover the penumbra at its edge, "
+        "where the counts are already up but not yet trustworthy.",
+    "sasred.mask.opacity":
+        "Opacity of the mask colours over the detector image. The black-and-white outline of the masked "
+        "area is always drawn, so the mask stays visible at low opacity.",
+    "sasred.efficiency.archive":
+        "HDF5 file in which the detector-efficiency maps are archived, one entry per map named after "
+        "the date of its water measurement, to follow the detector over time. Empty: "
+        "efficiency_archive.h5 next to the pySASfit preferences file.",
+    "sasred.mask.hot":
+        "Suggest also isolated hot pixels: more than 5 x the median of their 5 x 5 neighbourhood and 10 "
+        "Poisson standard deviations above it. Next to the beamstop they usually mean beam leaking past "
+        "its edge.",
+    # =================================================================== pyTOOLbox
+    "toolbox.viewer.max_points":
+        "Largest number of elements the HDF5 viewer reads for a plot or matrix view. Larger slices are "
+        "read with a stride (every n-th element along each shown dimension); the axis labels say so.",
+    "toolbox.lister.max_elements":
+        "Datasets with at most this many elements count as metadata and are offered as entries of the "
+        "metadata lister; larger ones (images, histograms) are not.",
+    "toolbox.lister.float_digits":
+        "Floating-point values in the metadata listing are rounded to this many digits after the "
+        "decimal point (as shown, copied and exported).",
 }

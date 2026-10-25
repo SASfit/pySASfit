@@ -24,7 +24,7 @@ import json
 import os
 from dataclasses import dataclass, field
 
-__all__ = ["Setting", "Section", "register", "tools", "sections", "find", "get", "values", "set_value",
+__all__ = ["Setting", "Section", "register", "tools", "sections", "find", "get", "effective", "values", "set_value",
            "reset", "save", "load", "settings_path", "is_default"]
 
 
@@ -34,11 +34,16 @@ class Setting:
     default: object
     label: str
     help: str = ""
-    kind: str = "float"         # float | int | bool | choice | str
+    kind: str = "float"         # float | int | bool | choice | str | file
     lo: float | None = None
     hi: float | None = None
     choices: list = field(default_factory=list)   # [(value, label), ...] for kind="choice"
     log: bool = False           # float shown in scientific notation
+    placeholder: object = None  # str/file: text (or function returning it) used when the value is empty
+
+    def effective_placeholder(self) -> str:
+        p = self.placeholder
+        return str(p() if callable(p) else (p or ""))
 
     def coerce(self, v):
         """Validate and convert ``v``; raises ValueError."""
@@ -51,7 +56,7 @@ class Setting:
             if v not in vals:
                 raise ValueError(f"{self.label}: {v!r} is not one of {vals}")
             return v
-        if self.kind == "str":
+        if self.kind in ("str", "file"):
             return str(v)
         x = int(round(float(v))) if self.kind == "int" else float(v)
         if self.lo is not None and x < self.lo:
@@ -73,6 +78,16 @@ _SECTIONS: list[Section] = []
 _BY_KEY: dict[str, Setting] = {}
 _VALUES: dict[str, object] = {}
 _LOADED = False
+
+#: key prefixes that were renamed; values stored under the old prefix are read under the new one
+_RENAMED = {"sasbox.": "toolbox."}         # pySASbox became pyTOOLbox
+
+
+def _current_key(k):
+    for old, new in _RENAMED.items():
+        if k.startswith(old):
+            return new + k[len(old):]
+    return k
 
 
 def register(tool, tool_title, title, settings):
@@ -123,6 +138,16 @@ def get(key):
     _ensure()
     s = _BY_KEY[key]
     return _VALUES.get(key, s.default)
+
+
+def effective(key):
+    """The value, or for an empty text/file setting its placeholder (e.g. the default location of a
+    file next to the preferences file)."""
+    v = get(key)
+    s = _BY_KEY[key]
+    if s.kind in ("str", "file") and not v:
+        return s.effective_placeholder()
+    return v
 
 
 def values(prefix):
@@ -186,6 +211,7 @@ def load(path=None):
         warnings.warn(f"pySASfit settings file {path} unreadable ({exc}); using factory defaults")
         return
     for k, v in (data.get("values") or {}).items():
+        k = _current_key(k)
         s = _BY_KEY.get(k)
         if s is None:
             _VALUES[k] = v

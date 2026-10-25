@@ -1,5 +1,5 @@
 """
-pySASfitInversion GUI: a thin Qt (PySide6) layer over the pysasfit.inversion
+pyINVersion GUI (formerly pySASfitInversion): a thin Qt (PySide6) layer over the pysasfit.inversion
 library. No numerics live here -- every computation (loading, background
 fitting/subtraction, kernel construction, solving) calls straight into the
 library, so the library stays usable headless/scriptable/testable on its
@@ -155,7 +155,7 @@ class MainWindow(ProjectMixin, QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("pySASfitInversion")
+        self.setWindowTitle("pyINVersion – size distributions and p(r)")
         from pysasfit.core.settings_dialog import add_preferences_menu
         add_preferences_menu(self, "inversion")
         self.resize(1200, 800)
@@ -1356,6 +1356,9 @@ class MainWindow(ProjectMixin, QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    from ...resources import tool_icon
+
+    app.setWindowIcon(tool_icon("pyINVersion"))
     window = MainWindow()
     window.show()
     if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):

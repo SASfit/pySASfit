@@ -1,6 +1,16 @@
 Size distribution / p(r): ``pysasfit.inversion``
 ================================================
 
+.. image:: ../pySASfit-logo-bundle/logos/pyINVersion/svg/pyINVersion-light.svg
+   :alt: pyINVersion
+   :height: 56px
+   :class: only-light
+
+.. image:: ../pySASfit-logo-bundle/logos/pyINVersion/svg/pyINVersion-dark.svg
+   :alt: pyINVersion
+   :height: 56px
+   :class: only-dark
+
 Library (+ a Qt GUI) for solving Fredholm integrals of
 the first kind arising in small-angle scattering: recovering a
 **pair-distance distribution function (PDDF)** p(r) or a **size

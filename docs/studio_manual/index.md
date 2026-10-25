@@ -1,5 +1,17 @@
 # studio manual
 
+```{image} ../pySASfit-logo-bundle/logos/pySASstudio/svg/pySASstudio-light.svg
+:alt: pySASstudio
+:height: 56px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pySASstudio/svg/pySASstudio-dark.svg
+:alt: pySASstudio
+:height: 56px
+:class: only-dark
+```
+
 The **studio** tools give you the model functions of SASfit (form factors, structure factors, size distributions,
 peaks) in Python: you can plot them, combine them into models, fit them to data and save the result. You can work
 interactively in the **model explorer** (`pysasfit-explorer`) or from a script. This manual is a guided tour; the

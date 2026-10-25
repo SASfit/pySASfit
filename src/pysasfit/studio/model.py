@@ -161,7 +161,11 @@ class ScatteringContribution:
         return list(self.sd.parameter_names).index("N")
 
     def enable_cache(self, snap=0.0):
-        """Remember intensities and form factors at the integration nodes (``None``/``disable_cache`` to stop)."""
+        """Remember intensities and form factors at the integration nodes (stop with :meth:`disable_cache`).
+
+        ``snap`` > 0 rounds the automatic integration range outwards to a geometric grid of that step, so
+        nearby parameter sets share nodes and the form factor on them can be reused.
+        """
         from .integration import ContributionCache
 
         self.cache = ContributionCache()

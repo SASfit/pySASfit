@@ -4,7 +4,10 @@ Plots a SASfit model on a log-log plot and lets you change every parameter with 
 a value. The model is a **mixture**: a sum of contributions, each with its own scale factor, plus a
 background
 
-    I(q) = sum_i  scale_i * I_i(q)  +  background
+    I(q) = sum_i  scale_i * I_i(q)  +  background  +  A * q**(-alpha)
+
+(the power-law term is off while A = 0; with a size distribution the amplitude N of the distribution is the scale of
+the contribution).
 
 and each contribution is a form factor, optionally integrated over a size distribution and multiplied by
 a structure factor (:class:`pysasfit.studio.ScatteringContribution`, manual ch. 4). Contributions are
@@ -65,6 +68,7 @@ from .library import (  # noqa: E402
 )
 from .param_row import ParameterRow, clear_layout, slider_range  # noqa: E402,F401
 from .model import ModelFunction  # noqa: E402
+from ..resources import tool_icon  # noqa: E402
 
 __all__ = ["ModelExplorer", "ParameterRow", "explore", "main"]
 
@@ -177,6 +181,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
     def __init__(self, ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), parent=None):
         super().__init__(parent)
         self.setWindowTitle("pySASfit model explorer")
+        self.setWindowIcon(tool_icon("pySASstudio"))
         self.resize(1180, 920)
         self._entries = _entries()
         self._defs = groups.load_groups()
@@ -412,9 +417,13 @@ class ModelExplorer(QtWidgets.QMainWindow):
             self.addDockWidget(area, dock)
             dock.show()
 
-    def closeEvent(self, event):
+    def close_detached(self):
+        """Close the panels detached as separate windows (also called by the pySASfit launcher)."""
         for dock in list(self._detached):
             dock.close()
+
+    def closeEvent(self, event):
+        self.close_detached()
         super().closeEvent(event)
 
     def _build_distribution_dock(self):
@@ -1108,6 +1117,7 @@ def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), pro
     """Open the explorer; blocks until it is closed unless a Qt event loop is already running.
 
     ``extra``: more contributions of the mixture, each ``(form factor, size distribution, structure factor)``.
+    ``project``: a ``.sasstudio`` file to open (File > Open project).
     """
     app = QtWidgets.QApplication.instance()
     own = app is None

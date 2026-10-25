@@ -229,5 +229,5 @@ class IntegrationDialog(QtWidgets.QDialog):
         return dict(self._sasfit)
 
     def scipy_result(self):
-        """Size-distribution integration settings: method, n_x, rtol, atol, limit."""
+        """Size-distribution integration settings: method, n_x, rtol, atol, limit, x_power, tail (the keys of ``integration.DEFAULTS``)."""
         return dict(self._scipy)

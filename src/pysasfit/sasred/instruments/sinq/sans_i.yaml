@@ -1,0 +1,32 @@
+# SINQ SANS-I instrument file (pySASred). Values that are not yet confirmed
+# carry `uncertainty: null` and are marked "to confirm"; null uncertainty
+# means "not propagated" and is listed as such in every output.
+instrument: SANS-I
+facility: SINQ, PSI
+reader: sinq_sans_i
+detector:
+  type: 3He multiwire, 128 x 128
+  pixel_size_m: [0.0075, 0.0075]        # read from file; used to check it
+  deadtime:
+    model: nonparalysable
+    rate: global                         # multiwire: one rate for the detector
+    tau_s: 6.6e-7                        # BerSANS and DarePy; GRASP uses 6.0e-7 (to confirm)
+    uncertainty_s: null
+    flag_factor: 1.2
+monitor:
+  normaliser: monitor1                   # BerSANS 2026 used Moni1, 2024 Moni2, DarePy monitor2
+  deadtime:
+    tau_s: 0.0                           # factor 1.0252 in the BerSANS copy suggests ~3.3 us (to confirm)
+    uncertainty_s: null
+attenuator:                              # transmission factors by selector index (DarePy table)
+  "0": {transmission: 1.0, uncertainty: 0.0}
+  "1": {transmission: 0.002061856, uncertainty: null}   # ~1/485, to confirm, lambda dependence?
+  "2": {transmission: 0.011363636, uncertainty: null}   # ~1/88
+  "3": {transmission: 0.125, uncertainty: null}         # ~1/8
+  "4": {transmission: 0.285714286, uncertainty: null}   # ~1/3.5
+  "5": {transmission: 0.120481928, uncertainty: null}   # ~1/8.3
+wavelength:
+  distribution: triangular               # Dornier velocity selector
+  dlam_over_lam_fwhm_default: null        # read from file; else the user must give it
+beamstop:
+  out_y_mm_below: -100                   # beamstop y below this: beam stop out (transmission)

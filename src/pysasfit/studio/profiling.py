@@ -12,7 +12,6 @@ small and the overhead dominates.
 
 from __future__ import annotations
 
-import statistics  # noqa: F401
 import time
 
 import numpy as np

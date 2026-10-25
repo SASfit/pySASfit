@@ -2,7 +2,7 @@
 
 All tools share one preferences dialog: **Settings → Preferences…** in the launcher (`pysasfit-gui`, it opens on
 the page of the tool in front) and in each stand-alone window (`pysasfit-sldprofile`, `pysasfit-inversion`,
-`pysasfit-oz`). It holds the numerical settings that are not on the tools' main panels.
+`pysasfit-oz`, `pysasfit-sasred`, `pysasfit-toolbox`). It holds the numerical settings that are not on the tools' main panels.
 
 * **Save** writes them to the preferences file, and they are the defaults at every later start:
   `%APPDATA%\pySASfit\settings.json` (Windows), `~/.config/pysasfit/settings.json` (Linux/macOS), or the file named by the
@@ -447,6 +447,90 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
 
 - **reject solves with residual >** — `oz.mixture.accept_residual` · factory: **0.001** · range: 1e-12 … 1  
   Mixture validation tab: a numerical OZ solve is rejected when max|G(Γ) − Γ| exceeds this value.
+
+### SANS reduction
+
+#### Beam centre (masked centre of gravity of the direct-beam run)
+
+- **disc radius [px]** — `sasred.beamcentre.radius_px` · factory: **8** · range: 1 … 64  
+  Radius of the disc around the current estimate whose counts enter the centre of gravity of the direct-beam run. The disc is re-centred until the shift is below the tolerance. Larger than the beam spot (about 2-3 FWHM), smaller than the distance to other bright features.
+
+- **tolerance [px]** — `sasred.beamcentre.tol_px` · factory: **0.1** · range: 0.0001 … 5  
+  The iteration of the masked centre of gravity stops when the disc moves by less than this. The statistical uncertainty of the centre is usually far smaller (0.004 px on the Vifor runs).
+
+- **iterations** — `sasred.beamcentre.max_iter` · factory: **50** · range: 1 … 10000  
+  Largest number of re-centring steps of the beam-centre search; reached only if the beam spot is at the edge of the disc or of the detector.
+
+#### Default reduction parameters (starting values on the Reduction panel)
+
+- **beamstop first guess: half width (square) or radius [px]** — `sasred.mask.beamstop_radius_px` · factory: **6** · range: 0 … 64  
+  First guess of the beamstop shadow: a new detector image starts with the standard border plus a square of this half width (or a disc of this radius, see the shape) around the beam centre, as beamstop pixels of the mask. It is only a start: adjust it with the mask tools or replace it by Suggest. Until the mask is edited, the guess follows the beam centre and the size.
+
+- **beamstop first guess: shape** — `sasred.mask.beamstop_shape` · factory: **square** · square, disc  
+  Shape of the first-guess beamstop: square (the SANS-I beamstops are square) or disc.
+
+- **number of q bins** — `sasred.qbins.n` · factory: **60** · range: 2 … 2000  
+  Start value of the number of q bins of the radial / sector average. Empty bins are dropped, so the curve can have fewer points.
+
+- **q-bin spacing** — `sasred.qbins.spacing` · factory: **logarithmic** · range: "log" (logarithmic), "lin" (linear)  
+  Start value of the q-bin spacing: logarithmic (constant Δq/q, the usual choice for SANS) or linear (constant Δq, e.g. for peaks at large q).
+
+- **normalise by** — `sasred.normalise_by` · factory: **monitor 1 (Poisson error propagated)** · range: "monitor" (monitor 1 (Poisson error propagated)), "time" (counting time)  
+  Start value of the normalisation: monitor 1 (its Poisson error is propagated as a systematic scale shared by all points) or counting time (no monitor error).
+
+- **units of wavelength and q** — `sasred.units` · factory: **nm and 1/nm** · range: "nm" (nm and 1/nm), "A" (Å and 1/Å)  
+  Units of wavelength and q on the panels, in the plots and in the saved files (NXcanSAS Q units attribute, ASCII header). The reduction itself works in Å and 1/Å, so results do not depend on this choice. Also switchable on the Reduction panel.
+
+- **colour scale of the detector image** — `sasred.detector.scale` · factory: **log(1+I)** · range: "linear" (linear), "log1p" (log(1+I)), "symlog" (symlog (linear below 1 count)), "asinh" (asinh)  
+  Start value of the colour scale of the detector image: linear; log(1+I) (zero counts stay finite); symlog (linear below 1 count, logarithmic above); asinh (smooth version of symlog).
+
+#### Mask suggestion (Suggest in the detector panel)
+
+- **standard mask: outer rows and columns** — `sasred.mask.border_px` · factory: **2** · range: 0 … 20  
+  The standard mask: this many outer rows and columns on every side of the detector (bit 'border'). It is the mask of a new detector image and the base of Suggest and Reset.
+
+- **beamstop: drop below this fraction of the rim level** — `sasred.mask.drop` · factory: **0.3** · range: 0.01 … 0.95  
+  Beamstop suggestion: the shadow is the connected region below drop x rim level that reaches the beam centre; the rim level is the 90th percentile of the median-filtered counts within the search radius. Lower it if the suggestion covers too much, raise it for a beamstop that transmits.
+
+- **beamstop: search radius around the beam centre [px]** — `sasred.mask.search_radius_px` · factory: **20** · range: 3 … 200  
+  Beamstop suggestion: radius around the beam centre in which the rim level is determined; it should include the bright scattering around the beamstop.
+
+- **beamstop: grow the shadow by [px] (penumbra)** — `sasred.mask.grow_px` · factory: **1** · range: 0 … 10  
+  Beamstop suggestion: the shadow is grown by this many pixels to cover the penumbra at its edge, where the counts are already up but not yet trustworthy.
+
+- **beamstop: suggested shape** — `sasred.mask.suggest_shape` · factory: **rectangle around the shadow** · rectangle, shadow  
+  Beamstop suggestion: rectangle masks the whole bounding rectangle of the shadow found in the data (square beamstops, no ragged edge); shadow masks only the pixels below the threshold.
+
+- **masked pixels on the detector image** — `sasred.mask.display` · factory: **mask colours** · mask colours, own grey scale, hidden  
+  How the masked pixels are drawn on the detector image: in the mask colours (with the opacity below), on their own grey scale with its own colour bar (to see what is behind the mask), or hidden (only the outline). The colour scale of the image always uses the unmasked pixels only.
+
+- **opacity of the mask colours [%]** — `sasred.mask.opacity` · factory: **80** · range: 10 … 100  
+  Opacity of the mask colours over the detector image. The black-and-white outline of the masked area is always drawn, so the mask stays visible at low opacity.
+
+- **also suggest hot pixels** — `sasred.mask.hot` · factory: **on** · range: on/off  
+  Suggest also isolated hot pixels: more than 5 x the median of their 5 x 5 neighbourhood and 10 Poisson standard deviations above it. Next to the beamstop they usually mean beam leaking past its edge.
+
+#### Detector efficiency
+
+- **efficiency archive file** — `sasred.efficiency.archive` · factory: **efficiency_archive.h5 next to the preferences file** (the dialog shows the full path) · file, with a browse button  
+  HDF5 file in which the detector-efficiency maps are archived, one entry per map named after the date of its water measurement, to follow the detector over time. Empty: efficiency_archive.h5 next to the pySASfit preferences file.
+
+### pyTOOLbox
+
+Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
+
+#### HDF5 viewer
+
+- **largest number of elements read for a plot** — `toolbox.viewer.max_points` · factory: **4000000** · range: 10000 … 5e+08  
+  Largest number of elements the HDF5 viewer reads for a plot or matrix view. Larger slices are read with a stride (every n-th element along each shown dimension); the axis labels say so.
+
+#### Metadata lister
+
+- **largest dataset listed as metadata (elements)** — `toolbox.lister.max_elements` · factory: **16** · range: 1 … 100000  
+  Datasets with at most this many elements count as metadata and are offered as entries of the metadata lister; larger ones (images, histograms) are not.
+
+- **digits after the decimal point of floating-point values** — `toolbox.lister.float_digits` · factory: **3** · range: 0 … 15  
+  Floating-point values in the metadata listing are rounded to this many digits after the decimal point (as shown, copied and exported).
 
 ### Shared numerics
 

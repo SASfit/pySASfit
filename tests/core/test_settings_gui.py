@@ -76,7 +76,7 @@ def test_launcher_has_one_settings_menu(app):
     from pysasfit.gui.launcher import Launcher
 
     w = Launcher()
-    assert [a.text() for a in w.menuBar().actions()] == ["&Settings"]
+    assert [a.text() for a in w.menuBar().actions()] == ["&File", "&View", "&Settings"]   # one of each
     for win in w.windows.values():
         if isinstance(win, QtWidgets.QMainWindow):
             assert not win.menuBar().isVisible()
@@ -93,3 +93,25 @@ def test_explanation_panel(qtbot=None):
     assert r.s.key in dlg.explain_box.text()
     assert r.s.help[:30].replace("&", "&amp;").replace("<", "&lt;") in dlg.explain_box.text()
     dlg.close()
+
+
+def test_file_setting_shows_the_default_location(tmp_path, monkeypatch):
+    """The efficiency archive: empty means the file next to the preferences file, and the dialog shows it."""
+    import os
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6 import QtWidgets
+
+    from pysasfit.core import settings as prefs
+    from pysasfit.core.settings_dialog import PreferencesDialog
+    monkeypatch.setenv("PYSASFIT_SETTINGS", str(tmp_path / "settings.json"))
+    prefs.load()
+    QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    expected = str(tmp_path / "efficiency_archive.h5")
+    assert prefs.effective("sasred.efficiency.archive") == expected
+    d = PreferencesDialog(tool="sasred")
+    row = next(r for r in d.rows if r.s.key == "sasred.efficiency.archive")
+    assert row.w.placeholderText() == expected and expected in row.w.toolTip()
+    row.w.setText(str(tmp_path / "other.h5"))
+    assert row.value() == str(tmp_path / "other.h5")
+    d.close()

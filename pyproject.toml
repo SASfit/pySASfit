@@ -32,7 +32,12 @@ oz = ["mpmath", "sundials4py", "bumps", "mixscatter", "openpyxl"]
 fit = ["nlopt", "bumps", "iminuit", "cma", "DFO-LS"]
 # export of fit results from the studio fit panel: Excel workbook with charts, clipboard picture
 export = ["openpyxl", "matplotlib>=3.7"]
-dev = ["pytest>=7.0", "matplotlib>=3.7", "PySide6>=6.5"]
+# SANS data reduction (pySASred): HDF5 raw data and NXcanSAS output, instrument files
+sasred = ["h5py>=3.8", "pyyaml>=6"]
+# pyTOOLbox: HDF5 viewer and metadata lister (openpyxl for the Excel export of the listing)
+toolbox = ["h5py>=3.8", "openpyxl"]
+sasbox = ["h5py>=3.8", "openpyxl"]        # old name of the toolbox extra
+dev = ["pytest>=7.0", "matplotlib>=3.7", "PySide6>=6.5", "h5py>=3.8", "pyyaml>=6"]
 # documentation: one Sphinx project in docs/ (Markdown via MyST and reStructuredText)
 docs = ["sphinx>=7", "myst-parser>=2", "pydata-sphinx-theme>=0.15", "sphinx-design"]
 
@@ -43,6 +48,9 @@ pysasfit-inversion = "pysasfit.inversion.gui.app:main"
 pysasfit-studio = "pysasfit.studio.cli:main"
 pysasfit-explorer = "pysasfit.studio.explorer:main"
 pysasfit-oz = "pysasfit.oz.gui.main_window:main"
+pysasfit-sasred = "pysasfit.sasred.gui:main"
+pysasfit-toolbox = "pysasfit.toolbox.gui:main"
+pysasfit-sasbox = "pysasfit.toolbox.gui:main"     # old name
 
 [project.urls]
 Repository = "https://github.com/SASfit/pySASfit"
@@ -52,7 +60,12 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "pysasfit.oz" = ["*.dll", "*.so", "*.dylib"]
+"pysasfit.sasred.instruments.sinq" = ["*.yaml"]
 "pysasfit.studio" = ["headers/*.h", "templates/*", "sasfit_lib/*", "sasfit_lib/plugins/*", "sasfit_lib/plugins/FrolovPoints/*"]
+
+# logos and icons of the logo bundle, copied by tools/sync_logos.py (release.py runs it before the build)
+"pysasfit.resources" = ["icons/*/*.svg", "icons/*/*.ico", "logos/*/svg/*.svg", "menu-icons/*/*.svg",
+                        "menu-icons/*/*.ico"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

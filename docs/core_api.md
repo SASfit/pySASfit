@@ -50,3 +50,26 @@ The settings themselves are listed, with explanations, in {doc}`preferences`.
 .. automodule:: pysasfit.core.docking
    :members: DockMixin, PanelWindow, plot_panel, small_toolbar
 ```
+
+## Detachable tabs
+
+Used by the launcher and by pyTOOLbox (see {doc}`launcher`).
+
+```{eval-rst}
+.. automodule:: pysasfit.core.tabs
+   :members: DetachableTabWidget, DragOutTabBar
+```
+
+## Colour scales of detector images
+
+```{eval-rst}
+.. automodule:: pysasfit.core.colorscale
+   :members:
+```
+
+## Wrapping control bars
+
+```{eval-rst}
+.. automodule:: pysasfit.core.flowlayout
+   :members:
+```

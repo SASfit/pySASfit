@@ -16,6 +16,14 @@ Key prefixes are consumed as dictionaries by the GUIs:
 
 from .settings import Setting as S, register
 
+
+def _next_to_preferences(name):
+    """A file in the folder of the preferences file (resolved when it is needed)."""
+    import os
+    from .settings import settings_path
+    return os.path.join(os.path.dirname(settings_path()), name)
+
+
 # ---------------------------------------------------------------------------
 # SLD profile
 # ---------------------------------------------------------------------------
@@ -256,6 +264,74 @@ register(T, TT, "RY Polydisperse Yukawa tab", [
 register(T, TT, "Mixture validation tab", [
     S("oz.mixture.accept_residual", 1e-3, "reject solves with residual >", "",
       lo=1e-12, hi=1, log=True),
+])
+
+# ---------------------------------------------------------------------------
+# SANS reduction (pySASred)
+# ---------------------------------------------------------------------------
+T, TT = "sasred", "SANS reduction"
+register(T, TT, "Beam centre (masked centre of gravity of the direct-beam run)", [
+    S("sasred.beamcentre.radius_px", 8.0, "disc radius [px]",
+      "Only pixels within this radius of the current estimate are used; the disc is re-centred "
+      "until the shift is below the tolerance.", lo=1, hi=64),
+    S("sasred.beamcentre.tol_px", 0.1, "tolerance [px]", "", lo=1e-4, hi=5, log=True),
+    S("sasred.beamcentre.max_iter", 50, "iterations", "", kind="int", lo=1, hi=10000),
+])
+register(T, TT, "Default reduction parameters (starting values on the Reduction panel)", [
+    S("sasred.mask.beamstop_radius_px", 6.0, "beamstop first guess: half width (square) or radius [px]",
+      "Put into the mask of a new image around the beam centre; adjust it with the mask tools.", lo=0, hi=64),
+    S("sasred.mask.beamstop_shape", "square", "beamstop first guess: shape", "", kind="choice",
+      choices=[("square", "square"), ("disc", "disc")]),
+    S("sasred.qbins.n", 60, "number of q bins", "", kind="int", lo=2, hi=2000),
+    S("sasred.qbins.spacing", "log", "q-bin spacing", "", kind="choice",
+      choices=[("log", "logarithmic"), ("lin", "linear")]),
+    S("sasred.normalise_by", "monitor", "normalise by", "", kind="choice",
+      choices=[("monitor", "monitor 1 (Poisson error propagated)"), ("time", "counting time")]),
+    S("sasred.units", "nm", "units of wavelength and q", "Display, plots and output files; the "
+      "reduction itself works in Å.", kind="choice", choices=[("nm", "nm and 1/nm"), ("A", "Å and 1/Å")]),
+    S("sasred.detector.scale", "log1p", "colour scale of the detector image", "", kind="choice",
+      choices=[("linear", "linear"), ("log1p", "log(1+I)"), ("symlog", "symlog (linear below 1 count)"),
+               ("asinh", "asinh")]),
+])
+register(T, TT, "Mask suggestion (Suggest in the detector panel)", [
+    S("sasred.mask.border_px", 2, "standard mask: outer rows and columns", "", kind="int", lo=0, hi=20),
+    S("sasred.mask.drop", 0.3, "beamstop: drop below this fraction of the rim level",
+      "The rim level is the 90th percentile of the (median-filtered) counts around the beam centre; "
+      "the shadow is the connected region below drop x rim level that reaches the beam centre.",
+      lo=0.01, hi=0.95),
+    S("sasred.mask.search_radius_px", 20.0, "beamstop: search radius around the beam centre [px]", "",
+      lo=3, hi=200),
+    S("sasred.mask.grow_px", 1, "beamstop: grow the shadow by [px] (penumbra)", "", kind="int", lo=0, hi=10),
+    S("sasred.mask.suggest_shape", "rectangle", "beamstop: suggested shape", "", kind="choice",
+      choices=[("rectangle", "rectangle around the shadow"), ("shadow", "the shadow as found")]),
+    S("sasred.mask.display", "colours", "masked pixels on the detector image", "", kind="choice",
+      choices=[("colours", "mask colours"), ("scale", "own grey scale"), ("hidden", "hidden (outline only)")]),
+    S("sasred.mask.opacity", 80, "opacity of the mask colours [%]", "The outline of the masked area is "
+      "always drawn (white on black).", kind="int", lo=10, hi=100),
+    S("sasred.mask.hot", True, "also suggest hot pixels", "Pixels > 5 x the 5 x 5 median and 10 sigma above it.",
+      kind="bool"),
+])
+register(T, TT, "Detector efficiency", [
+    S("sasred.efficiency.archive", "", "efficiency archive file",
+      "Empty: efficiency_archive.h5 next to the preferences file.", kind="file",
+      placeholder=lambda: _next_to_preferences("efficiency_archive.h5")),
+])
+
+# ---------------------------------------------------------------------------
+# pyTOOLbox (HDF5 viewer, metadata lister)
+# ---------------------------------------------------------------------------
+T, TT = "toolbox", "pyTOOLbox"
+register(T, TT, "HDF5 viewer", [
+    S("toolbox.viewer.max_points", 4_000_000, "largest number of elements read for a plot",
+      "Larger slices are read with a stride (every n-th element); the matrix view pages "
+      "through the full data.", kind="int", lo=10_000, hi=500_000_000),
+])
+register(T, TT, "Metadata lister", [
+    S("toolbox.lister.max_elements", 16, "largest dataset listed as metadata (elements)",
+      "Datasets with more elements (images, histograms) are not offered as entries.",
+      kind="int", lo=1, hi=100000),
+    S("toolbox.lister.float_digits", 3, "digits after the decimal point of floating-point values",
+      "", kind="int", lo=0, hi=15),
 ])
 
 # ---------------------------------------------------------------------------

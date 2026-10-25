@@ -7,8 +7,12 @@ The explorer's Fit dock and the script interface use the same engine, `pysasfit.
 **Parameters** are the ticked rows. Each has a start value and optional bounds; bounds are a uniform prior.
 Parameters can be common to several data sets or local to each (script interface; the explorer fits one data set).
 
-**Constraints** are inequalities between parameters, for example that the first population is larger than the
-second: `sd_mu > c1_sd_mu`. In the Constraints tab the names are the parameter labels with `.` replaced by `_`.
+**Constraints** are inequalities or equalities between parameters, for example that the first population is larger
+than the second (`c1_sd_mu > c2_sd_mu`) or that two fractions add up to 1 (`c1_scale + c2_scale == 1`). The names are
+the parameter labels with `.` replaced by `_`. In the explorer a model with several contributions labels the
+parameters `c1.sd.mu`, `c2.sd.mu`, ...; with a single contribution they are `sd.mu` (`sd_mu`). In a script the labels
+are those of the `FitProblem` (`sd.mu` for contribution 0, `1.sd.mu` for contribution 1); a label that starts with a
+digit gets a `c` in front (`c1_sd_mu`). `problem.identifiers()` lists the usable names.
 
 **Priors** add knowledge to the data, one per line as `label form args`:
 

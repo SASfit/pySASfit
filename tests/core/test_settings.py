@@ -177,3 +177,13 @@ def test_docs_list_every_setting():
     for sec in p.sections():
         for s in sec.settings:
             assert f"`{s.key}`" in doc, s.key
+
+
+def test_renamed_keys_are_read(prefs_file):
+    """Values saved under sasbox.* (pySASbox) are read as toolbox.* (pyTOOLbox)."""
+    prefs_file.write_text(json.dumps({"format": "pysasfit_settings_v1",
+                                      "values": {"sasbox.lister.float_digits": 5}}))
+    prefs.load()
+    assert prefs.get("toolbox.lister.float_digits") == 5
+    prefs.save()
+    assert json.loads(prefs_file.read_text())["values"] == {"toolbox.lister.float_digits": 5}

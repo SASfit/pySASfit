@@ -15,7 +15,7 @@ are estimated from their Bayesian posterior.
 
 ```bash
 pysasfit-sldprofile [datafile | project.pysasfit]   # this tool alone
-pysasfit-gui [datafile | project.pysasfit]          # all tools as tabs; a data file opens in the SLD-profile tab
+pysasfit-gui [datafile | project.pysasfit]          # all tools as tabs; a data file opens in the pySLDprofile tab
 python run_gui.py [datafile]          # without installing (finds ./src itself)
 ```
 

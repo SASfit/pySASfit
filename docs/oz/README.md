@@ -8,7 +8,7 @@
   Not carried over: `criticalDensities.py` and `optimizeRYalpha.py` (Python 2 `print` statements; they never imported
   under Python 3).
 - **GUI**: the Tk GUI is ported to Qt (PySide6) in `pysasfit.oz.gui`. Start it with `pysasfit-oz`, or use the
-  "Ornstein-Zernike" tab of `pysasfit-gui`.
+  "pyOZsolver" tab of `pysasfit-gui`.
 - **C helper libraries**: `librmsa.dll` is included for Windows. The sources of librmsa, liboneyukawa, liborpa and
   librfa are in `extern/oz`, with `build_windows.bat` per library (MSYS2/MinGW) and `build_linux.sh` for Linux/macOS
   (needs GSL). The wrappers look for the libraries next to themselves in `src/pysasfit/oz`.

@@ -9,7 +9,7 @@ Steps, in this order (the first one that fails stops the release):
     tests        pytest tests/studio          (the other tool folders: --all-tests)
     screenshots  tools/studio_screenshots.py  renews docs/_static/studio/*.png from the current GUI
     docs         sphinx -b html docs docs/_build/html   (warnings are shown; --strict makes them errors)
-    package      python -m build              sdist and wheel in dist/ (needs the 'build' package)
+    package      tools/sync_logos.py, then python -m build   sdist and wheel in dist/ (needs the 'build' package)
 
 The screenshots need PySide6, matplotlib and the SASfit libraries. They are renewed *before* the documentation is
 built, so the HTML shows the current GUI. Nothing is tagged, committed or uploaded: check ``git status`` for the
@@ -58,7 +58,8 @@ def step_docs(a):
 
 
 def step_package(a):
-    return run("package", [PY, "-m", "build"])
+    # the icons and logos of the bundle go into the package (src/pysasfit/resources)
+    return run("logos", [PY, os.path.join("tools", "sync_logos.py")]) and run("package", [PY, "-m", "build"])
 
 
 def main(argv=None):

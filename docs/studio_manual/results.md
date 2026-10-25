@@ -5,8 +5,8 @@
 After a fit the Result tab lists the optimiser, the number of evaluations, χ² and χ²/dof, every parameter with its
 error (and, for iminuit MINOS, its asymmetric errors; for DREAM the 68 % interval), parameters sitting at a bound,
 the state of the constraints, and the correlation matrix of the free parameters. Pairs with |r| ≥ 0.9 are listed
-with the usual remedies. *Undo fit* restores the values from before the fit. The *Copy Python* button of
-the model dock copies code that reproduces the model.
+with the usual remedies. *Undo fit* restores the values from before the fit. The *Copy Python* button below the plot copies code that
+reproduces the model.
 
 ## Saving a result
 

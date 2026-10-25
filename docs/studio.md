@@ -133,8 +133,9 @@ folder. Both settings can be remembered between sessions.
 **Data and fit.** The *Fit* panel (*View → Fit*) loads a data file (`pysasfit.core.load_data`; q × factor for
 unit conversion), takes an optional fit q range and shows the parameters ticked for fitting. The residuals
 Δ/σ appear below the plot. *Fit* runs the optimiser in a thread (*Stop* cancels it), *Undo fit* restores the values
-before it. The *Constraints* tab takes inequalities (`c1_ff_R + c1_ff_L < 100`; names are the parameter labels with
-`.` replaced by `_`), the *Priors* tab priors (`label form args`: `normal`, `lognormal`, `halfnormal`, `loguniform`, see
+before it. The *Constraints* tab takes inequalities and equalities (`c1_ff_R + c1_ff_L < 100`, `c1_scale + c2_scale == 1`;
+names are the parameter labels with `.` replaced by `_`, so `ff_R` with a single contribution; the Fit panel's
+tooltip lists them), the *Priors* tab priors (`label form args`: `normal`, `lognormal`, `halfnormal`, `loguniform`, see
 "Priors for positive parameters and ranges") and the *Result* tab shows values, errors, χ²/dof, the constraints and the
 correlation matrix. Optimiser, algorithm, and for bumps a line of options (see "bumps: optimisers and options")
 are chosen above the parameter table; *Search global minimum* algorithms are described below. *Copy Python*
@@ -180,13 +181,14 @@ is installed.
 | backend        | package   | algorithms                                                                   | notes                                                                                 |
 | -------------- | --------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `scipy`        | scipy     | `trf`, `dogbox`, `lm`                                                        | least squares; the default. Constraints by penalty.                                   |
-| `scipy-global` | scipy     | `differential_evolution`, `dual_annealing`, `shgo`, `basinhopping`           | global; finite bounds needed (basinhopping excepted).                                 |
+| `scipy-global` | scipy     | `differential_evolution`, `multistart`, `dual_annealing`, `shgo`, `basinhopping` | global; finite bounds needed (basinhopping excepted).                             |
 | `nlopt`        | `nlopt`   | local and global NLopt algorithms (`LN_BOBYQA`, `LN_SBPLX`, `LD_SLSQP`, ...) | derivative-free and gradient-based; handles constraints natively.                     |
 | `iminuit`      | `iminuit` | `migrad`, `simplex`, `migrad+minos`                                          | MINOS gives asymmetric errors, printed as `(−a / +b)`.                                |
 | `bumps`        | `bumps`   | `lm`, `amoeba`, `de`, `dream`, `newton`, `pt`                                | DREAM returns errors from the posterior samples. `de`, `dream`, `pt` need finite bounds; options: see "bumps: optimisers and options". |
 | `cma`          | `cma`     | CMA-ES                                                                       | derivative-free, robust against noise.                                                |
+| `dfols`        | `DFO-LS`  | default, `noisy`                                                             | derivative-free least squares with bounds; see "Faster fits".                         |
 
-Optional packages: `pip install nlopt bumps iminuit cma` (or `pip install "pysasfit[fit]"`).
+Optional packages: `pip install nlopt bumps iminuit cma DFO-LS` (or `pip install "pysasfit[fit]"`).
 
 Options common to all backends: `maxeval` (maximum number of model evaluations) and `polish=True`. With `polish`,
 the best point is refined by a least-squares fit, which gives the exact minimum and the errors; the Fit panel's
@@ -509,7 +511,17 @@ python -m pytest tests/studio -q
 
 | File                            | Covers                                                                          |
 | ------------------------------- | ------------------------------------------------------------------------------- |
+| `conftest.py`, `mock_sasfit/`   | Fixtures: mock libsasfit (compiled by `build.py`), isolated settings file, Qt shutdown |
 | `support.py`                    | Toy models, data generation, problem factories (no libsasfit needed)            |
+| `test_catalogue.py`             | header catalogue: names, parameters, search                                     |
+| `test_loader.py`                | plugin loading with `do_init`, precision defaults, errors, `install-binaries` (mock libraries) |
+| `test_model.py`                 | `ScatteringContribution`, `ModelFunction`, `Pipeline`                           |
+| `test_integration.py`           | integration methods of the size-distribution integral                           |
+| `test_fitting.py`               | `FitProblem`: backends, constraints, several data sets, errors                  |
+| `test_constraint_names.py`      | identifiers of parameters in constraints (`1.sd.mu` -> `c1_sd_mu`)              |
+| `test_speedups.py`              | variable projection, cache, coarse to fine, fixed grid, profiling, node check   |
+| `test_project.py`               | saving and loading `.sasstudio` projects                                        |
+| `test_real_sasfit.py`           | checks against the real SASfit libraries (skipped without them)                 |
 | `test_background.py`            | power-law background, VP with `bg.A`, alpha free/fixed                          |
 | `test_priors.py`                | all prior forms, backend restrictions, MAP behaviour                            |
 | `test_global.py`                | rescaling, multistart, global algorithms                                        |
@@ -570,7 +582,7 @@ Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not insta
   (`sasfit.vfs`). Today only `ff_sphere`, `sd_LogNorm` and `sq_HardSphere` have names; the others are addressed as
   `p0`, `p1`, ...
 - **GUI:**
-  - add a studio tab to `pysasfit-gui`;
+  - ~~add a studio tab to `pysasfit-gui`~~ (done: the *pySASstudio* tab, see {doc}`launcher`);
   - fit several data sets in the explorer (the engine can do it already);
   - use the resolution (dq) in the explorer's fit.
 - **Testing:**

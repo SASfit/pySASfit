@@ -7,7 +7,8 @@ table of fit parameters:
 * a **local** parameter belongs to one data set only (``add_local`` creates one per data set);
 * ``fixed`` parameters keep their value, ``lower``/``upper`` are bounds;
 * **constraints** are inequalities or equalities of the parameter names (``"ff_R + ff_t < 100"``,
-  ``"c1_scale + c2_scale == 1"``; a dot in a name becomes ``_``, see :meth:`FitProblem.identifiers`);
+  ``"scale_0_a + scale_0_b == 1"``): the label of a parameter with every run of non-word characters turned into ``_``,
+  and a ``c`` in front if it starts with a digit (``1.sd.mu`` -> ``c1_sd_mu``), see :meth:`FitProblem.identifiers`;
 * **priors** (``add_prior``, ``add_prior_text``) add a term to chi^2: ``normal`` (mean, sigma), ``lognormal`` (median, factor > 1),
   ``halfnormal`` (sigma, for x >= 0) as extra residuals, and ``loguniform`` (flat in ln x, lower bound > 0 needed) as a scalar
   term ``2 ln x`` that the least-squares backends (``scipy``, ``dfols``) cannot use.
@@ -21,7 +22,7 @@ Parameters are addressed like in :class:`~pysasfit.studio.Pipeline`: ``"backgrou
     prob.add_common("0.ff.R", lower=1, upper=200)       # same radius in both data sets
     prob.add_local("scale.0", lower=0)                  # one scale factor per data set
     prob.add_local("background")
-    prob.add_constraint("sd_mu > 1")
+    prob.add_constraint("scale_0_a + scale_0_b == 1")   # labels 'scale.0[a]', 'scale.0[b]'
     result = prob.fit("scipy")                          # or prob.fit("nlopt", "LN_BOBYQA")
     print(result.text())
 
@@ -288,6 +289,8 @@ class FitSummary:
 
 # --------------------------------------------------------------------------- problem
 class FitProblem:
+    """Data sets with models, fit parameters, constraints and priors; :meth:`fit` runs an optimiser (see the module docstring)."""
+
     def __init__(self):
         self.datasets = []
         self.parameters = []
@@ -364,7 +367,8 @@ class FitProblem:
         return self.add_parameter(address, datasets=None, **kw)
 
     def add_local(self, address, lower=-math.inf, upper=math.inf, fixed=False, label=None):
-        """One independent parameter per data set (labels ``address[data set name]``)."""
+        """One independent parameter per data set (labels ``<label>[data set name]``, e.g. ``ff.R[a]``; with a single
+        data set just ``label``)."""
         base = label or re.sub(r"^0\.(?=(ff|sd|sq)\.)", "", address)
         if len(self.datasets) == 1:  # a single data set: nothing to distinguish
             return [self.add_parameter(address, [0], lower=lower, upper=upper, fixed=fixed, label=label)]
@@ -384,7 +388,8 @@ class FitProblem:
         return {p.ident: p.label for p in self.parameters}
 
     def add_constraint(self, text):
-        """An inequality of parameter identifiers, e.g. ``"ff_R + ff_t < 100"`` (fixed parameters count as constants)."""
+        """An inequality (``<``, ``<=``, ``>``, ``>=``) or equality (``==``) of parameter identifiers, e.g.
+        ``"ff_R + ff_t < 100"`` (fixed parameters count as constants; see :meth:`identifiers`)."""
         c = _Constraint(text)
         unknown = c.names - set(self.identifiers())
         if unknown:
@@ -1187,11 +1192,13 @@ _BUMPS_ALGORITHMS = {
     "pt": "parallel tempering MCMC (experimental; finite bounds needed)",
 }
 
-#: options of the bumps fitters that can be given to ``problem.fit("bumps", ..., bumps={...})`` or typed into the
-#: "bumps options" box of the Fit panel (``steps=2000, pop=20, init=lhs``): steps samples burn pop thin init alpha
-#: outliers trim (dream); steps pop CR F ftol xtol (de); steps starts radius xtol ftol jump (amoeba); steps starts ftol
-#: xtol jump (lm, newton); steps nT Tmin Tmax CR burn (pt). Unknown keys of the chosen method raise a ValueError.
-_BUMPS_NEEDS_BOUNDS = ("de", "dream", "pt")
+_BUMPS_NEEDS_BOUNDS = ("de", "dream", "pt")  # methods that sample the box between the bounds
+
+# Options of the bumps fitters that can be given to ``problem.fit("bumps", ..., bumps={...})`` or typed into the
+# "bumps options" box of the Fit panel (``steps=2000, pop=20, init=lhs``): steps samples burn pop thin init alpha
+# outliers trim (dream); steps pop CR F ftol xtol (de); steps starts radius xtol ftol jump (amoeba); steps starts ftol
+# xtol jump (lm, newton); steps nT Tmin Tmax CR burn (pt). Unknown keys of the chosen method raise a ValueError
+# (the allowed keys come from the installed bumps, see _bumps_settings).
 
 
 def parse_option_text(text):

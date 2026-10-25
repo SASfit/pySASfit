@@ -9,8 +9,9 @@ is written back into the parameter fields.
 
 Explorer interface used here: ``has_model``, ``parameter_entries``, ``fit_selection``, ``build_model``,
 ``snapshot``, ``restore``, ``apply_model_values``, ``set_data``, ``clear_data``, ``set_busy`` and ``data``.
-The model is a mixture of contributions; parameters of several contributions are labelled
-``c1.ff.R``, ``c2.ff.R`` ... (``c1.scale``, ``background``).
+The model is a mixture of contributions; with several contributions the parameters are labelled
+``c1.ff.R``, ``c2.ff.R`` ... (``c1.scale``; ``ff.R`` with a single one), the background ones ``background``,
+``bg.A``, ``bg.alpha``.
 """
 
 from __future__ import annotations
@@ -201,8 +202,9 @@ class FitPanel(QtWidgets.QWidget):
         tabs = QtWidgets.QTabWidget()
         self.constraints = QtWidgets.QPlainTextEdit()
         self.constraints.setPlaceholderText(
-            "one inequality per line, e.g.\n   c1_ff_R + c1_ff_L < 100\n   c2_scale < c1_scale\n"
-            "names: parameter names with '.' replaced by '_' (see tooltip)"
+            "one inequality or equality per line, e.g.\n   c1_ff_R + c1_ff_L < 100\n   c2_scale < c1_scale\n"
+            "names: the parameter labels with '.' replaced by '_' (c1.ff.R -> c1_ff_R; with one contribution ff_R); "
+            "the tooltip lists them"
         )
         self.priors = QtWidgets.QPlainTextEdit()
         self.priors.setPlaceholderText(
@@ -252,7 +254,7 @@ class FitPanel(QtWidgets.QWidget):
         if not self._selection:
             lines.append("(none: tick the fit boxes next to the parameters)")
         self.summary.setPlainText("\n".join(lines))
-        names = ", ".join(_ident(label) for _a, label, *_ in e.parameter_entries()) if e.has_model() else ""
+        names = ", ".join(fitting._ident(label) for _a, label, *_ in e.parameter_entries()) if e.has_model() else ""
         self.constraints.setToolTip("usable names: " + names)
         self.priors.setToolTip("usable names: " + names)
         self._update_buttons()
@@ -581,6 +583,3 @@ class FitPanel(QtWidgets.QWidget):
         self.undo_btn.setEnabled(False)
         self._message("parameters restored")
 
-
-def _ident(label):
-    return re.sub(r"\W+", "_", label).strip("_")

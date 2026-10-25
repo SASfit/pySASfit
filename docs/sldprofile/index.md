@@ -1,5 +1,17 @@
 # SLD profile
 
+```{image} ../pySASfit-logo-bundle/logos/pySLDprofile/svg/pySLDprofile-light.svg
+:alt: pySLDprofile
+:height: 56px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pySLDprofile/svg/pySLDprofile-dark.svg
+:alt: pySLDprofile
+:height: 56px
+:class: only-dark
+```
+
 `pysasfit.sldprofile` estimates the radial scattering-length-density profile ρ(r) of spheres, cylinders and
 lamellae from small-angle scattering data. Two routes are available:
 
@@ -15,7 +27,7 @@ The distance distribution p(r) alone (sphere, cylinder cross-section or lamella 
 also be obtained with every solver of the inversion tool, kernels `sinc_4pi`, `cylinder_pddf` and `lamella_pddf`
 ({doc}`../inversion/theory_forward_model`).
 
-The GUI is `pysasfit-sldprofile`, or the *SLD profile* tab of `pysasfit-gui`.
+The GUI is `pysasfit-sldprofile`, or the *pySLDprofile* tab of `pysasfit-gui`.
 
 ```{toctree}
 :maxdepth: 2

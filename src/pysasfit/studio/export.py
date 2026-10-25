@@ -12,8 +12,9 @@ The workbook has the sheets
   Pillow);
 * **Report**: the text of the Result tab.
 
-CSV files (``<name>_parameters.csv``, ``_correlation.csv``, ``_covariance.csv``, ``_curve.csv``, ``_plot.png``) can be
-read by every program. Use ``delimiter=";"`` for Excel with a German or Swiss locale. ``save_figure`` writes the
+CSV files (``<name>_parameters.csv``, ``_correlation.csv``, ``_covariance.csv``, ``_curve.csv``, ``_distributions.csv``
+(only with a size distribution), ``_plot.png``) can be read by every program; ``save_csv("fit.csv", ...)`` writes
+``fit_parameters.csv`` etc. Use ``delimiter=";"`` for Excel with a German or Swiss locale. ``save_figure`` writes the
 one-page summary as PDF, PNG or SVG; ``figure_bytes`` gives it as bytes (for the clipboard).
 
     from pysasfit.studio import export
@@ -41,7 +42,6 @@ __all__ = ["have_xlsx", "have_matplotlib", "save_xlsx", "save_csv", "save_figure
 
 PARAMETER_HEADER = ["parameter", "value", "error", "lower", "upper", "fixed", "at a bound", "interval minus", "interval plus"]
 CURVE_HEADER = ["q", "I data", "sigma", "I fit", "(fit - data) / sigma"]
-
 
 DISTRIBUTION_POWER = 3.0  # the size distributions are shown as N(x) * x**3 (volume weighted)
 DISTRIBUTION_HEADER = ["distribution", "x", "N(x)", "N(x) x^p"]
@@ -160,7 +160,7 @@ def _matrix_rows(summary, which):
 
 # --------------------------------------------------------------------------- CSV
 def _csv_names(path):
-    base, ext = os.path.splitext(str(path))
+    base = os.path.splitext(str(path))[0]
     return {k: f"{base}_{k}{e}" for k, e in (("parameters", ".csv"), ("correlation", ".csv"), ("covariance", ".csv"),
                                               ("curve", ".csv"), ("distributions", ".csv"), ("plot", ".png"))}  # fmt: skip
 
@@ -377,8 +377,9 @@ def save_xlsx(path, summary, problem, png=None, dist_power=DISTRIBUTION_POWER):
 
 # --------------------------------------------------------------------------- summary picture
 def summary_figure(summary, problem, title=None, dist_power=DISTRIBUTION_POWER):
-    """A one-page matplotlib figure (A4 landscape): data and fit with residuals, parameters with errors, the
-    correlation matrix, convergence and warnings for strongly correlated parameters."""
+    """A one-page matplotlib figure (A4 landscape): data and fit with residuals, the fitted size distributions (if
+    any; N(x) and N(x) x^``dist_power``), parameters with errors, the correlation matrix, convergence and warnings for
+    strongly correlated parameters."""
     from matplotlib.figure import Figure
 
     curves = distribution_curves(problem, dist_power)

@@ -17,11 +17,12 @@ def test_launcher_hosts_all_tools():
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
     w = Launcher()
     titles = [w.tabs.tabText(i) for i in range(w.tabs.count())]
-    assert titles == ["SLD profile", "Size distribution / p(r)", "Ornstein-Zernike"], titles  # no "(error)" tabs
-    oz = w.window_for("Ornstein-Zernike")
+    assert titles == ["pySASred", "pySASstudio", "pySLDprofile", "pyINVersion",
+                      "pyOZsolver", "pyTOOLbox"], titles  # no "(error)" tabs
+    oz = w.window_for("pyOZsolver")
     assert oz.count() >= 4 and not any("(error)" in oz.tabText(i) for i in range(oz.count()))
-    w.window_for("SLD profile").load_file(DATA)
-    w.tabs.setCurrentIndex(1)
+    w.window_for("pySLDprofile").load_file(DATA)
+    w.tabs.setCurrentIndex(3)
     app.processEvents()
     w.close()
 
@@ -58,4 +59,34 @@ def test_every_plot_has_a_navigation_toolbar():
         lay = tb.parentWidget().layout()
         if lay is not None and lay.indexOf(tb.canvas) >= 0:
             assert lay.indexOf(tb) < lay.indexOf(tb.canvas), type(tb.parentWidget()).__name__
+    w.close()
+
+
+def test_tool_menus_are_merged_into_the_launcher():
+    """The tools' menu bars are hidden in the launcher: their own entries (model explorer:
+    Save project as, SASfit installation, Sliders; SANS reduction: Save NXcanSAS) appear in
+    the launcher's File / Settings / View menus, without duplicating Open/Save/Preferences."""
+    pytest.importorskip("h5py")
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    w = Launcher(tools=[("pySASred", "pysasfit.sasred.gui", "MainWindow"),
+                        ("pySASstudio", "pysasfit.studio.explorer", "ModelExplorer")])
+    assert [w.tabs.tabText(i) for i in range(w.tabs.count())] == ["pySASred", "pySASstudio"]
+    menus = {a.text().replace("&", ""): a.menu() for a in w.menuBar().actions()}
+
+    def texts(name):
+        m = menus[name]
+        m.aboutToShow.emit()
+        return [a.text().replace("&", "") for a in m.actions() if not a.isSeparator()]
+
+    w.tabs.setCurrentIndex(0)
+    f = texts("File")
+    assert "Save NXcanSAS…" in f and sum("Open project" in t for t in f) == 1
+    s = texts("Settings")
+    assert sum(t.startswith("Preferences") for t in s) == 1
+    w.tabs.setCurrentIndex(1)
+    app.processEvents()
+    f = texts("File")
+    assert "Save project as…" in f and sum("Save project" == t.rstrip("…") for t in f) == 1
+    assert any("SASfit installation" in t for t in texts("Settings"))
+    assert "Sliders" in texts("View")
     w.close()

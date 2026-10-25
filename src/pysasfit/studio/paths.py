@@ -217,9 +217,10 @@ def header_dirs():
 def def_dirs():
     """Folders searched for the group definitions ``*.def`` (menu tree of the functions).
 
-    The ``def`` subfolder of each plugin library folder (``<lib>/plugins/def``, ``<lib>/def``) and the
-    folder itself, then the same for the Python plugin folders, so that your own groups (see
-    ``templates/groups_example.def``) come last. Existing folders only.
+    The ``def`` subfolder of the bundled headers folder and of each plugin library folder (``<lib>/plugins/def``,
+    ``<lib>/def``) and the folder itself, then the same for the folders in ``PYSASFIT_STUDIO_PLUGINS`` and
+    ``~/.pysasfit/studio_plugins``, so that your own groups (see ``templates/groups_example.def``) come last.
+    Existing folders only.
     """
     base = [BUNDLED_HEADERS] + plugin_lib_dirs()
     base += [d for d in os.environ.get("PYSASFIT_STUDIO_PLUGINS", "").split(os.pathsep) if d]

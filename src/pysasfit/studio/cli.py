@@ -4,7 +4,7 @@
     pysasfit-studio search sphere shell
     pysasfit-studio info ff_sphere
     pysasfit-studio eval ff_sphere --q 0.01 0.1 0.5 --set R=50 eta=1
-    pysasfit-studio explore [ff_sphere] [--sq sq_hardsphere] [--sd sd_LogNorm]   # interactive plot, needs PySide6
+    pysasfit-studio explore [ff_sphere] [--sq SQ] [--sd SD] [--add FF[,SD[,SQ]]] [--project FILE]   # needs PySide6
     pysasfit-studio tree [ff|sq|sd]          # menu tree of the functions (groups from the .def files)
     pysasfit-studio new-plugin my_gauss [--dir DIR]
     pysasfit-studio sasview-adapter ff_sphere [--dir DIR]

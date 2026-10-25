@@ -63,8 +63,10 @@ def biggs_andrews(
     fixed_point_operator : callable
         x -> x_next, the map being accelerated -- e.g. em.em_step (plus smoothing)
         wrapped in a small closure by the caller.
-    x0 : initial guess.
-    max_iterations : hard cap (this function's own "numberOfIterations").
+    x0 : array_like
+        Initial guess.
+    max_iterations : int
+        Hard cap (this function's own "numberOfIterations").
     tol : float
         Convergence tolerance on the relative change in ``||x||`` between
         successive (accepted) iterates -- same criterion
@@ -72,17 +74,21 @@ def biggs_andrews(
         absolute ||x_new-x_old|| gNorm test, since this is a
         general-purpose accelerator, not specific to this package's own
         convention).
-    kin_set_maa : extrapolation order (abs(value)) and step-size formula
+    kin_set_maa : int
+        Extrapolation order (``abs(kin_set_maa)``) and step-size formula
         choice (sign) -- see module/source docstring. 0 disables
         extrapolation (reduces to plain Picard iteration); 2 is a
         reasonable default matching the source file's own default.
-    clip_nonnegative : if True, clip the extrapolated trial point to
+    clip_nonnegative : bool
+        If True, clip the extrapolated trial point to
         >= clip_floor before evaluating fixed_point_operator there (see
         module docstring's ADAPTATION note). Set False to reproduce the
         original OZ behaviour exactly (no clipping) for a sign-
         unconstrained fixed-point map.
-    clip_floor : the non-negativity floor used when clip_nonnegative=True.
-    on_iterate : optional callback(x_accepted) invoked once per accepted
+    clip_floor : float
+        The non-negativity floor used when clip_nonnegative=True.
+    on_iterate : callable, optional
+        Callback(x_accepted) invoked once per accepted
         iterate (including the two warm-up steps), so a caller can record
         its own per-iteration diagnostics (e.g. em.py's chi2_r_history)
         without this generic module needing to know anything about them.

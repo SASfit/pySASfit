@@ -12,6 +12,10 @@ studio      the SASfit plugin functions (form factors, structure factors,
             size distributions) via ctypes, models and fitting (from SASstudio)
 oz          Ornstein-Zernike solvers, closures, polydisperse structure
             factors and SAS models, with a Qt GUI (from pyOZgui)
+sasred      SANS data reduction for SINQ SANS-I with exact error propagation,
+            with a Qt GUI (pySASred)
+toolbox     pyTOOLbox, small helpful tools: HDF5 viewer (in the spirit of myHDF5)
+            and metadata lister for the raw data files (formerly ``sasbox``)
 gui         common Qt launcher (``pysasfit-gui``)
 
 Sub-packages are imported lazily, so ``import pysasfit`` stays cheap and the
@@ -22,7 +26,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "gui")
+_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "toolbox", "gui")
 
 __all__ = list(_SUBPACKAGES)
 

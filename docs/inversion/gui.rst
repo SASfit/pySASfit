@@ -7,7 +7,7 @@ Start
 .. code-block:: bash
 
    pysasfit-inversion [datafile | project.pysasfit]   # this tool alone
-   pysasfit-gui [project.pysasfit]                    # all tools; "Size distribution / p(r)" tab
+   pysasfit-gui [project.pysasfit]                    # all tools; "pyINVersion" tab
    python run_gui.py           # without installing
 
 Projects and last session

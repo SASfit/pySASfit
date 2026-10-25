@@ -1,8 +1,20 @@
 # Ornstein–Zernike
 
+```{image} ../pySASfit-logo-bundle/logos/pyOZsolver/svg/pyOZsolver-light.svg
+:alt: pyOZsolver
+:height: 56px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pyOZsolver/svg/pyOZsolver-dark.svg
+:alt: pyOZsolver
+:height: 56px
+:class: only-dark
+```
+
 `pysasfit.oz` solves the multicomponent Ornstein–Zernike equations with a choice of closures and solvers, with
 polydisperse particle form factors, analytic references (MSA, RMSA, Robertus, Gazzillo), fitting, a Qt
-interface (`pysasfit-oz`, or the Ornstein–Zernike tab of `pysasfit-gui`) and a programmatic API. It comes from
+interface (`pysasfit-oz`, or the pyOZsolver tab of `pysasfit-gui`) and a programmatic API. It comes from
 pyOZgui; the interface was ported from Tk to Qt (see {doc}`README`).
 
 The GUI's *calculate* button calls {func}`pysasfit.oz.ozLib.solve`, so anything the interface can compute is
