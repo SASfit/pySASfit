@@ -416,7 +416,8 @@ def group_curves(curves: Sequence[Curve], sample_regex: Optional[str] = None,
                 n = geo.count(gname)
                 if n > 1:
                     g.notes.append(f"{n} curves of geometry {gname}: averaged where they overlap; "
-                                   "add a grouping item to separate them")
+                                   "add a grouping item to separate them (e.g. hdf:sample/position ± 1 "
+                                   "for a sample measured at two changer positions)")
             units = {c.I_unit for c in g.curves if c.I_unit}
             if len(units) > 1:
                 g.notes.append("different intensity units: " + ", ".join(sorted(units)))

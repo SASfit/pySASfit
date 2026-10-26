@@ -169,3 +169,18 @@ In `pysasfit-gui` the window is the first tab. Its own menus are hidden there; t
 launcher's **File** menu (*Open raw-data folder…*, *Save NXcanSAS…*, *Save ASCII…*, *Save all reduced runs…*) and
 **View** menu. The tab can be detached into its own window, which shows its own menus again (see
 {doc}`../launcher`).
+
+## Sample positions and transmissions
+
+The reduction table matches transmissions by sample name **and sample position** (changer position of the
+runs, 1 mm): transmission runs and `trans.txt` values of another position are not used, the notes say so.
+Without a usable `trans.txt` value the transmission is computed from the transmission runs at that position
+against the nearest empty-beam transmission run (beam spot τ); when `trans.txt` disagrees with the runs
+(more than 5 σ and 0.01), the value of the runs is used and the notes show both. A sample whose position is
+that of another sample measured at the same time (within 5 mm) is marked *decision needed* ("changer not
+moved or wrong sample name?"), and a sample measured at several positions is listed with them.
+
+Vifor September 2026: "EXP-005370-A_2" was first measured at 3.0 mm (runs 82060, 82063, 82080, 82097), which
+is the slot of A_1 (0.3 mm; slots are 29 mm apart): transmission 0.2355 and scattering identical to A_1. It was
+measured again in its own slot at 29.3 mm (82114, 82131, 82148): transmission 0.4177 (trans.txt: 0.2966).
+

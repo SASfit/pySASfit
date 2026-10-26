@@ -13,6 +13,8 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import re
+
+import numpy as np
 from dataclasses import asdict, dataclass, field
 from typing import Dict, Iterable, List, Optional
 
@@ -241,12 +243,22 @@ def _lam(config: str) -> str:
     return m.group(1) if m else ""
 
 
+POSITION_TOL_MM = 1.0          # transmission runs and trans.txt values belong to a sample position within this
+SLOT_TOL_MM = 5.0              # another sample this close (beam size): the same slot of the changer
+
+
 def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, transmissions=None,
               sample_background: Optional[str] = "empty_cell") -> ReductionTable:
     """Fill the table of one configuration from a plan.
 
-    ``raws``: run -> raw run (for the thickness); ``transmissions``: rows of ``trans.txt``
-    (:func:`~pysasfit.sasred.io.transmission.read_transmission_summary`), matched by sample name;
+    ``raws``: run -> raw run (thickness, sample position); ``transmissions``: rows of ``trans.txt``
+    (:func:`~pysasfit.sasred.io.transmission.read_transmission_summary`), matched by sample name and,
+    with ``raws``, by sample position (a value measured at another changer position is not used;
+    transmission runs at another position neither). Without a usable trans.txt value the transmission
+    is computed from the transmission runs at the same position against the nearest empty-beam
+    transmission run (beam spot τ); a trans.txt value that disagrees with the runs is flagged.
+    A sample whose position is that of another sample (within 5 mm) is flagged ("changer not moved
+    or wrong sample name?"), as is a sample measured at several positions;
     ``sample_background``: the role whose runs fill *Sample-BG* when the plan has no sample
     background of its own (default: the empty cell, as when the samples sit in the same cells as the
     water; None leaves it empty)."""
@@ -258,20 +270,109 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
         trans_by_name[row.sample] = row                    # the last one wins, as find_transmission
     tr_entries = [e for e in plan.entries if e.kind == "transmission" and _lam(e.config) == lam]
 
+    def pos(run):
+        r = raws.get(run)
+        v = getattr(r, "sample_position_mm", None) if r is not None else None
+        return None if v is None else float(v)
+
+    def entry_pos(e):
+        ps = [p for p in (pos(x) for x in e.runs) if p is not None]
+        return float(np.median(ps)) if ps else None
+
+    # sample positions of the scattering runs of this wavelength: a sample measured at a position that
+    # belongs to another sample (changer not moved, wrong name) is reported
+    from .grouping import _parse_time
+    slots = {}                       # sample -> {position: [first, last] start time of its runs there}
+    for e in plan.entries:
+        if _lam(e.config) != lam or e.role != "sample":
+            continue
+        for x in e.runs:
+            p1, r = pos(x), raws.get(x)
+            if p1 is None:
+                continue
+            t1 = _parse_time(getattr(r, "start_time", "")) or 0.0
+            w = slots.setdefault(e.sample, {}).setdefault(round(p1, 1), [t1, t1])
+            w[0], w[1] = min(w[0], t1), max(w[1], t1)
+    eb_runs = [x for e in plan.entries if e.kind == "transmission" and e.role == "empty_beam"
+               and _lam(e.config) == lam for x in e.summed or e.runs]
+
+    def computed_T(runs):
+        """τ (beam spot) of the transmission runs against an empty-beam transmission run."""
+        from .core.beamcentre import masked_centre_of_gravity
+        from .core.scattering_strength import aperture_transmission_runs
+        vals = []
+        for x in runs:
+            s = raws.get(x)
+            ebs = [raws[y] for y in eb_runs if y in raws and s is not None
+                   and abs(raws[y].L2_m - s.L2_m) <= 0.01 * s.L2_m]
+            if not ebs:
+                continue
+            eb = min(ebs, key=lambda r: abs(r.run - x))
+            try:
+                c = masked_centre_of_gravity(eb.counts)
+                t = aperture_transmission_runs(s, eb, (c.x, c.y))
+                vals.append((t.tau_ul, t.tau_ul_sigma, x, eb.run))
+            except Exception:  # noqa: BLE001
+                continue
+        if not vals:
+            return None
+        v = np.array([a[0] for a in vals])
+        sig = float(np.std(v, ddof=1) / np.sqrt(len(v))) if len(v) > 1 else float(vals[0][1])
+        return float(v.mean()), sig, [a[2] for a in vals], vals[0][3]
+
     def fill(row: RowSet, e):
         row.info = e.sample
         row.runs = _choices(e)
+        notes = []
         if e.verdict not in ("single", "equivalent", "outlier", "not checked"):
-            row.notes = f"decision needed: {e.verdict}. {e.message}"
+            notes.append(f"decision needed: {e.verdict}. {e.message}")
         elif e.message:
-            row.notes = e.message
+            notes.append(e.message)
+        p0 = entry_pos(e)
         tr = [x for x in tr_entries if x.sample == e.sample]
-        if tr:
-            row.trans_runs = [c for x in tr for c in _choices(x)]
+        trc = [c for x in tr for c in _choices(x)]
+        if p0 is not None and trc:
+            same = [c for c in trc if pos(c.run) is None or abs(pos(c.run) - p0) <= POSITION_TOL_MM]
+            if len(same) < len(trc):
+                other = sorted({round(pos(c.run), 1) for c in trc if c not in same})
+                notes.append(f"transmission runs at other sample positions ({', '.join(f'{v:g}' for v in other)} mm) "
+                             f"not used for position {p0:.1f} mm")
+            trc = same
+        row.trans_runs = trc
         hit = trans_by_name.get(e.sample)
+        if hit is not None and p0 is not None and pos(hit.run) is not None \
+                and abs(pos(hit.run) - p0) > POSITION_TOL_MM:
+            notes.append(f"trans.txt value {hit.value:g} ({hit.file}) is for position {pos(hit.run):.1f} mm, "
+                         f"not {p0:.1f} mm: not used")
+            hit = None
         if hit is not None:
             row.transmission, row.transmission_sigma = hit.value, hit.sigma
             row.transmission_source = f"trans.txt ({hit.file})"
+            if row.trans_runs and raws:
+                ct = computed_T([c.run for c in row.trans_runs if c.use])
+                if ct is not None and abs(ct[0] - hit.value) > max(0.01, 5 * (ct[1] + (hit.sigma or 0))):
+                    row.transmission, row.transmission_sigma = ct[0], ct[1]
+                    row.transmission_source = f"runs {ct[2]} / empty beam {ct[3]} (beam spot)"
+                    notes.append(f"check: trans.txt gives {hit.value:g} ({hit.file}), the transmission runs "
+                                 f"{ct[2]} give {ct[0]:.4f} ± {ct[1]:.4f} (beam spot, empty beam {ct[3]}): "
+                                 "the value of the runs is used")
+        elif row.trans_runs and raws:
+            ct = computed_T([c.run for c in row.trans_runs if c.use])
+            if ct is not None:
+                row.transmission, row.transmission_sigma = ct[0], ct[1]
+                row.transmission_source = f"runs {ct[2]} / empty beam {ct[3]} (beam spot)"
+        if p0 is not None and e.role == "sample":
+            mine = slots.get(e.sample, {}).get(round(p0, 1))
+            others = sorted({(n, q) for n, ps in slots.items() if n != e.sample for q, w in ps.items()
+                             if abs(q - p0) <= SLOT_TOL_MM and mine is not None
+                             and w[0] <= mine[1] and mine[0] <= w[1]})      # same slot at the same time
+            if others:
+                notes.append("decision needed: sample position {:.1f} mm is that of {} – changer not moved or "
+                             "wrong sample name?".format(p0, ", ".join(f"{n} ({q:g} mm)" for n, q in others)))
+            if len(slots.get(e.sample, ())) > 1:
+                notes.append("measured at several positions: " +
+                             ", ".join(f"{v:g}" for v in sorted(slots[e.sample])) + " mm")
+        row.notes = "; ".join(dict.fromkeys(notes))
         r0 = raws.get(e.runs[0])
         if r0 is not None and getattr(r0, "sample_thickness_cm", None):
             row.scaling = float(r0.sample_thickness_cm)

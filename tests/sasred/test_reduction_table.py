@@ -166,3 +166,25 @@ def test_aperture_saved_and_old_files(tmp_path):
     del d["corrections"]["water"]["aperture_cm2"]               # file written before the aperture column
     d["corrections"]["water"]["unknown_future_key"] = 3
     assert ReductionTable.from_dict(d).corrections["water"].aperture_cm2 is None
+
+
+def test_positions_and_transmissions():
+    """Vifor: 'A_2' was first measured at 3.0 mm (the slot of A_1), later at its slot 29.3 mm; the
+    transmissions follow the position, trans.txt (0.2966) is replaced by the runs (0.418)."""
+    if not os.path.isdir(RAW):
+        pytest.skip("Vifor raw data not available")
+    from pysasfit.sasred import plan as pl, reduction_table as rt
+    from pysasfit.sasred.catalogue import scan_folder
+    from pysasfit.sasred.io.transmission import read_transmission_summary
+    cat = scan_folder(RAW)
+    raws = {e.run: e.raw for e in cat if e.raw}
+    t = rt.from_plan(pl.build_plan(cat), "L2 8.0 m, λ 6.00 Å, L1 8.0 m", raws,
+                     read_transmission_summary(os.path.join(RAW, "trans.txt")))
+    a2 = {r.used[0]: r for r in t.samples if r.info == "EXP-005370-A_2"}
+    wrong, right = a2[82080], a2[82131]
+    assert [c.run for c in wrong.trans_runs] == [82060, 82063] and [c.run for c in right.trans_runs] == [82114]
+    assert wrong.transmission == pytest.approx(0.2355, abs=0.002) and "is that of EXP-005370-A_1" in wrong.notes
+    assert right.transmission == pytest.approx(0.4177, abs=0.002) and "trans.txt gives 0.2966" in right.notes
+    others = [r for r in t.samples if r.info.startswith("EXP-005370-D")]
+    assert others and not any("is that of" in r.notes for r in others)      # same slots, other time
+    assert t.samples[0].transmission == pytest.approx(0.2397)                # trans.txt agrees: kept
