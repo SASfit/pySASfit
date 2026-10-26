@@ -44,16 +44,167 @@ Instrument constants come from `pysasfit/sasred/instruments/sinq/sans_i.yaml`.
 | 4 dead time | non-paralysable, N·f with f = 1/(1 − τR), R = total counts / time (global for the multiwire detector, per tube for tube detectors); τ = 6.6·10⁻⁷ s | rank-1 coupling of all pixels; τ when its uncertainty is known |
 | 5 attenuator | divided by the transmission of the selected attenuator | when known |
 | 6 normalisation | divided by monitor 1 (Poisson σ² = M) or by the counting time | `monitor1:<run>`, systematic |
-| 7, 11 geometry, solid angle | lab-frame position of every pixel with the detector tilt α about the vertical axis through the beam spot; 2θ = atan2(√(x²+y²), z); ΔΩ = A·L2·cos α / r³ (exact to first order in the pixel area, checked against brute-force integration) | – |
+| 7, 11 geometry, solid angle | lab-frame position of every pixel relative to the beam centre **of the geometry of the run** (L2, λ; from its direct-beam runs), with the detector tilt α about the vertical axis through the beam spot; 2θ = atan2(√(x²+y²), z); ΔΩ = A·L2·cos α / r³ (exact to first order in the pixel area, checked against brute-force integration). L2 is the effective distance (recorded + offset, if set) | – |
 | 12 efficiency | optional: divided by the detector efficiency from water (below) | water, empty-cell and transmission sources |
 | 14 average | radial or sector average as a sparse linear map over the valid pixels whose centre falls in the bin (no pixel splitting yet) | linear, exact |
 | resolution | Qdev² = (q σ_λ/λ)² + spread of the pixel q in the bin; triangular wavelength distribution, σ = FWHM/√6 | – |
+
+The solid angle is computed only once the beam centre of the run's geometry is known: q, 2θ and ΔΩ of every pixel
+are measured from it. The order relative to steps 3–6 does not matter (all are factors per pixel); it is applied
+before the efficiency (step 12, whose water was itself divided by its own ΔΩ with the centre of the water
+geometry) and before the average. Each geometry has its own centre: with the Vifor data the 2 m geometry has no
+direct-beam run and borrows the 8 m centre; moving it by ±0.5 pixel changes the 8 m / 2 m water ratio by
+0.05 % and K(15°) by 0.1 %.
 
 The result is I(q) in counts / monitor / sr (counts / s / sr when normalised by time) on the bin-averaged q.
 
 The detector tilt is read from the file (`chi_position`) but not yet applied, until it is confirmed that this
 field is the tilt; the notes say so. The dead time of the monitor is 0 for now (a factor 1.0252 seen in a BerSANS
 copy suggests about 3.3 μs, to be confirmed).
+
+## Reduction of the table: 2D first, then the average
+
+The rows of the reduction table are reduced pixel by pixel first ({func}`pysasfit.sasred.absolute.reduce_row_2d`),
+the radial or sector average comes afterwards ({func}`pysasfit.sasred.absolute.average`). Every run is
+corrected as above (counting error, dead time, attenuator, monitor), the runs of a row are summed, then
+
+```{math}
+N_{ij} = A\,\frac{S_{ij}-Cd_{ij}}{T_S} - (1-p_{cS})\,\frac{SB_{ij}-Cd_{ij}}{T_{SB}}, \qquad
+W_{ij} = \frac{W_{ij}-Cd_{ij}}{T_W} - \frac{WB_{ij}-Cd_{ij}}{T_{WB}}
+```
+
+```{math}
+\frac{d\Sigma}{d\Omega}_{ij} = \frac{N_{ij}}{W_{ij}}\;g(\lambda)\,\frac{1-\tau_W}{4\pi\,D\,d_S}\,\frac{A_W}{A_S}
+\quad [\mathrm{cm^{-1}\,sr^{-1}}], \qquad \tau_W = T_W / T_{WB}, \qquad D = T_W \ \text{(BerSANS, SANS-I)}\ \text{or}\ \tau_W\ \text{(Strunz)}
+```
+
+(Strunz et al. 2000, eq. 8, with the water at the same geometry, so that the solid angle and the pixel
+efficiency cancel). T_W is the transmission of water + cell, T_WB that of the empty cell, both against the
+empty beam. Every transmission and count is an uncertainty source of the result.
+
+**Different apertures for sample and water.** A_S and A_W are the illuminated areas (sample apertures) in cm²,
+column *Aperture [cm²]* of the reduction table (Sample rows and the Water row; the raw files do not record the
+sample aperture). With the same aperture leave both empty: the ratio is 1. If only one is given, it is ignored
+and the notes say so.
+
+**Relation to BerSANS.** BerSANS writes the factor as ScalingFactor(W)/ScalingFactor(S) with
+
+| | same aperture | different apertures |
+|---|---|---|
+| ScalingFactor(S) | d_S | d_S · A_S |
+| ScalingFactor(W) | g(λ) (1 − τ_W)/(4π T_W) | g(λ) · A_W (1 − τ_W)/(4π T_W) |
+
+BerSANS' *Calculate* button gives ScalingFactor(W) without g(λ) (the user multiplies it in): T_W 0.5,
+T_EC 0.95, A_W 1 cm² → 7.5389·10⁻². The notes of every reduced row give both scaling factors, so they can be
+compared with a BerSANS command file ({func}`pysasfit.sasred.absolute.water_scaling_factor`).
+
+BerSANS divides by T_W (water + cell), Strunz et al. eq. 8 by τ_W = T_W/T_EC (water alone); the two differ by
+the factor 1/T_EC (≈ 5 % for T_EC = 0.95). The instrument file chooses (`water.denominator`):
+`water_and_cell` (BerSANS, the SANS-I setting, consistent with its g(λ)) or `tau` (Strunz). Since the water counts are divided by T_W (water + cell),
+the water scatters (1 − τ_W) of the beam into 4π, attenuated by the cell on the way out, the consistent
+denominator is τ_W; a g(λ) calibrated with BerSANS, however, contains the factor T_EC of its calibration
+cells, and then `water_and_cell` reproduces that calibration.
+
+K0 is the forward excess g(λ) of the water measured at SANS-I (instrument file `water.g_lambda`, λ in nm):
+
+| λ [nm] | 0.47 | 0.60 | 0.80 | 1.00 | 1.20 |
+|---|---|---|---|---|---|
+| measured | 1.338 | 1.284 | 1.217 | 1.150 | 1.141 |
+| g = 1.36992 + 0.31389 λ − 1.07706 λ² + 0.54662 λ³ (in use) | 1.336 | 1.289 | 1.212 | 1.153 | 1.140 |
+| g = 1.642 − 0.7825 λ + 0.3159 λ² (previous) | 1.344 | 1.286 | 1.218 | 1.175 | 1.158 |
+
+The cubic is the least-squares polynomial through the five points (residuals ≤ 0.5 %, rms 0.3 %); it is applied
+({func}`pysasfit.sasred.absolute.water_g`) with a relative uncertainty of 0.6 % (the fit uncertainty inside
+0.47–1.2 nm) as a systematic source `water_g`. With four coefficients for five points it has one degree of
+freedom: outside 0.47–1.2 nm it is unreliable (it turns up above 1.2 nm, g(1.3 nm) = 1.159 ± 0.021), the
+notes say "extrapolated". The previous quadratic did not pass the points at 1.0 and 1.2 nm (+2.2 % and +1.5 %).
+`reduce_row_2d(..., k0=…)` uses another value.
+Missing measurements do not stop the reduction, the notes say what was left out:
+
+| missing | then |
+|---|---|
+| Cd (blocked beam) | nothing subtracted for the beam-independent background |
+| sample background | no background subtracted |
+| water background (empty cell) | the water is not corrected for its cell, τ_W = T_W |
+| water | relative scale: N / (ΔΩ · d) [· efficiency], in counts/monitor/sr/cm |
+| transmission | T = 1 |
+| thickness | d = 1 cm |
+
+In the window: **Reduce all samples (2D → I(q))** or **Reduce selected samples** in a geometry tab of the
+reduction table (or the *Reduction* menu). The mask is the edited mask when the geometry is the one shown in
+the detector panel, otherwise the suggested mask of the first sample run; the beam centre is that of the
+geometry; q bins, sector and normalisation come from the Reduction panel. The results appear in I(q) as
+*"L2 8.0 m No. 3"* etc., *view → reduced 2D* in the detector panel shows the 2D image of the result chosen,
+and they are saved like single runs. With the Vifor data (water and empty cell, no Cd) A_3 and D_3 at 8 m and
+2 m agree within 1 % in the q range both cover, and water reduced as a sample gives the flat
+g(λ) (1 − τ_W)/(4π T_W d) = 1.289 × 1.208 = 1.557 cm⁻¹ sr⁻¹ for d = 0.2 cm at 0.6 nm (T_W = 0.2399,
+T_EC = 0.8835; with the Strunz denominator τ_W: 1.375 cm⁻¹ sr⁻¹, lower by T_EC).
+
+The reduced curves of the geometries are merged in pyTOOLbox (*Merge geometries*, {doc}`../toolbox/merge`):
+*Reduction → Send results to pyTOOLbox merge (no files)* hands them over without saving.
+
+## Absolute scale from the direct beam and the attenuator
+
+Instead of water, the absolute scale can come from the empty (direct) beam, measured with an attenuator
+of known transmission T_att: Φ₀ = Σ(EB − bkg)/T_att, and dΣ/dΩ = N/(Φ₀ ΔΩ η d_S). The nominal
+transmissions in the instrument file (`attenuator`) are calculated from the hole diameters of the sieves;
+they hold only for a homogeneously illuminated sieve.
+
+Test with the Vifor data at 0.6 nm (water at 8 m and 2 m against the attenuated empty beam 82173, 82221,
+82269, attenuator 1, efficiency at the direct-beam spot from the water map, +53 mm distance offset):
+
+| | T_att of attenuator 1 |
+|---|---|
+| nominal (sieve holes) | 2.06·10⁻³ = 1/485 |
+| from water, BerSANS denominator (in use) | 1.64·10⁻³ ± 2 % ≈ 1/610 |
+| from water, Strunz denominator | 1.45·10⁻³ ≈ 1/690 |
+
+8 m and 2 m water agree within 1.5 % (without the distance offset by 5.6 % only). **An absolute scale
+from the direct beam with the nominal attenuator transmission is therefore about 26 % lower than the
+one from water.** The water calibration is trusted for now (water measured against a standard); the
+attenuator is to be reconfirmed by tests (e.g. the inhomogeneous illumination of the sieve). The value is
+kept in the instrument file as `attenuator."1".water_check`, not used, and the notes of every run with that
+attenuator mention the difference. Transmissions are not affected (the attenuator is in both runs).
+
+## The SANS-I detector
+
+Construction (instrument file, `detector.construction`; {mod}`pysasfit.sasred.core.detector_model`): Al dome
+window 7 mm thick, Ø 1300 mm, radius of curvature 930 mm (cap depth 26.5 cm); ⁴He at 2.7 bar in the dome; a
+flat 2 mm Al membrane; ³He at 2.7 bar with CF₄ as stopping gas. Still to confirm: active depth, ⁴He path between window and membrane, CF₄ pressure and the plane the recorded L2 refers to. The dome apex lies
+26.5 cm in front of the detection plane (confirmed), i.e. the rim of the dome is in the detection plane.
+
+| λ [Å] | Σ(³He) [cm⁻¹] | 1/Σ [cm] | T Al 7 mm (+ 2 mm) | efficiency, depth 2 / 3 / 5 cm | ⟨z⟩, depth 3 cm [cm] |
+|---|---|---|---|---|---|
+| 4.7 | 0.93 | 1.07 | 0.970 (0.962) | 0.81 / 0.90 / 0.95 | 0.88 |
+| 6 | 1.19 | 0.84 | 0.964 (0.953) | 0.87 / 0.93 / 0.95 | 0.75 |
+| 8 | 1.58 | 0.63 | 0.953 (0.940) | 0.90 / 0.93 / 0.94 | 0.61 |
+| 12 | 2.38 | 0.42 | 0.933 (0.914) | 0.91 / 0.91 / 0.91 | 0.42 |
+
+(Al above the Bragg cut-off 4.68 Å: absorption, incoherent and about 0.1 b inelastic; the membrane taken as Al.)
+
+Consequences:
+
+* **Dome:** the dome is convex towards the sample (overpressure inside), its centre of curvature behind the
+  window, so a neutron crosses it at γ = α + 2θ, α the inclination of the dome normal where it crosses
+  (sin α = h/R). On the axis γ = 0; at 0.24 / 0.48 m from the axis γ = 20° / 42° at 2 m and 16° / 34° at 8 m,
+  and the Al transmission at 6 Å is lower by 0.24 % / 1.3 % at 2 m and 0.15 % / 0.8 % at 8 m. Water at the
+  same geometry cancels it pixel by pixel (absolute scale, efficiency map at the same distance); an efficiency
+  map used at another distance does not (up to about 0.5 %).
+* **Water at two distances:** the same pixel sees the dome at different γ at 8 m and 2 m.
+  `compare_water_runs(..., dome=True)` divides it (and the flat membrane, −0.03 % at the 2 m edge) out first: for Vifor (with the +53 mm offset) the water
+  anisotropy becomes K(10°) = 0.993 and K(15°) = 0.984 instead of 0.988 and 0.974, C = 1.0016 (offset 5.5 cm
+  without the offset applied); about a third of the drop attributed to the water was the dome.
+* **³He at an angle:** the ³He absorbs more along the longer path (+0.4 % at 17°, depth 3 cm); the flat Al membrane
+  loses 0.06 % there.
+* **Parallax:** neutrons at ψ = 15° are detected 0.2 cm farther out than their entrance point (0.27 pixel).
+* **Distance:** the neutrons are detected on average ⟨z⟩ ≈ 0.75 cm (6 Å) behind the start of the active volume.
+  This explains less than 1 cm of the +5.3 cm distance offset found with water at 8 m and 2 m; the rest has to
+  come from where L2 is measured (e.g. to the dome window, followed by the ⁴He layer and the membrane). ⟨z⟩
+  changes with λ (0.88 cm at 4.7 Å, 0.42 cm at 12 Å), so water at two distances at another wavelength tells
+  the constant part from the conversion depth.
+* **Wavelength:** the efficiency falls from about 0.93 at 6 Å by the window absorption at long λ and rises with
+  the ³He absorption: with water at the same λ the λ dependence cancels for the absolute scale.
+* **⁴He:** 2.7 bar scatter about 0.09 % per 10 cm of path, almost isotropically (a flat background).
 
 ## Detector efficiency from water
 

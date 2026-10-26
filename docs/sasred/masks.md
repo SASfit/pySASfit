@@ -27,6 +27,19 @@ I(q), by *Reduce selected* and by the polar view, and it is kept with the last s
 *Run 82140 after Suggest and one drawn rectangle: border (near-black frame), beamstop shadow (red), the pixels
 leaking at its left edge (cyan, under the outline) and the rectangle (magenta).*
 
+## One mask per instrument configuration
+
+Every instrument configuration has its own mask: collimation L1 and detector distance L2 (0.1 m), wavelength
+(0.1 Å), beam stop type (`SANS/beam_stop/out_flag`, BerSANS "Beamstop") and beam stop position x, y (1 mm)
+({func}`pysasfit.sasred.catalogue.mask_key`). Selecting a run of another configuration switches the mask in the
+editor; the edited mask of the previous configuration is kept. The line below the mask tools names the
+configuration of the mask shown and how many configurations have edited masks.
+
+Reductions take the mask of the configuration of their (first) run: the one in the editor, a stored one, or,
+if none was edited for that configuration, the suggested mask of the run; the notes say which. *File → Save
+masks of all configurations…* / *Load masks of configurations…* write and read all of them in one HDF5 file
+(one group per configuration with `pixel_mask`, the key and a label); the last session keeps them too.
+
 ## Suggested mask
 
 **Suggest** (detector panel) proposes the mask for the image shown, with the current beam centre:

@@ -68,9 +68,10 @@ def test_independent_recalculation():
     f = 1 / (1 - tau * N.sum() / raw.counting_time_s)
     yy, xx = np.mgrid[:128, :128]
     x, y = (xx - bc[0]) * 0.0075, (yy - bc[1]) * 0.0075
-    d = np.sqrt(x * x + y * y + raw.L2_m ** 2)
-    dom = 0.0075 ** 2 * raw.L2_m / d ** 3
-    q = 4 * np.pi / raw.wavelength_A * np.sin(np.arccos(raw.L2_m / d) / 2)
+    L2 = raw.L2_effective_m                       # recorded distance + offset (preference)
+    d = np.sqrt(x * x + y * y + L2 ** 2)
+    dom = 0.0075 ** 2 * L2 / d ** 3
+    q = 4 * np.pi / raw.wavelength_A * np.sin(np.arccos(L2 / d) / 2)
     img = N * f / raw.monitors["monitor1"] / dom
     ok = (xx - bc[0]) ** 2 + (yy - bc[1]) ** 2 >= 36
     b = np.searchsorted(edges, q, side="right") - 1

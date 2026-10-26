@@ -57,7 +57,7 @@ _TOOL_INFO = {
     "pySLDprofile": "radial scattering-length-density profiles",
     "pyINVersion": "size distributions and p(r) by inversion",
     "pyOZsolver": "Ornstein-Zernike structure factors",
-    "pyTOOLbox": "small helpful tools: HDF5 viewer and metadata lister",
+    "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data",
 }
 
 # launcher menus; a tool's own menu entries that the launcher does not provide itself are

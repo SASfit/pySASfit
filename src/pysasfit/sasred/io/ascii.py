@@ -20,6 +20,8 @@ def write_ascii_1d(path, reduced, units="nm"):
     head += [f"{k} = {v}" for k, v in r.parameters.items()]
     head += [f"note: {n}" for n in r.notes]
     head.append(f"wavelength = {u.lam(r.raw.wavelength_A):.5g} {u.length}")
+    from .metadata import metadata_json
+    head.append(f"metadata_json = {metadata_json(r.raw)}")
     qu = "1/A" if u.key == "A" else u.q
     head.append(f"q [{qu}]  I  Idev(statistical)  Qdev [{qu}]  sigma_systematic")
     data = np.column_stack([u.q_out(r.q), r.I, r.idev(), u.q_out(r.q_sigma), r.systematic_std()])

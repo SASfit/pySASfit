@@ -25,7 +25,7 @@ def test_window_without_data():
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
     _app()
     w = MainWindow()
-    assert set(w.docks) == {"runs", "reduction", "detector", "iq", "budget", "log"}
+    assert set(w.docks) == {"runs", "reduction", "detector", "iq", "budget", "log", "table"}
     canvases = w.findChildren(FigureCanvasQTAgg)
     bars = {id(tb.canvas) for tb in w.findChildren(NavigationToolbar2QT)}
     assert len(canvases) == 3 and all(id(c) in bars for c in canvases)
@@ -67,7 +67,7 @@ def test_folder_beam_centre_reduce_and_save(tmp_path):
     np.testing.assert_allclose(w.results[82130].I, ref.I, rtol=1e-14)
     np.testing.assert_allclose(w.results[82130].idev(), ref.idev(), rtol=1e-14)
     paths = w.save_all(str(tmp_path))
-    assert len(paths) == 4 and all(os.path.isfile(p) for p in paths)
+    assert len(paths) == 6 and all(os.path.isfile(p) for p in paths)
     with h5py.File([p for p in paths if p.endswith(".h5")][0]) as f:
         assert "I_budget" in f["sasentry01/sasdata01"]
     d = np.loadtxt([p for p in paths if p.endswith(".dat")][0])
@@ -119,7 +119,7 @@ def test_units_switch_and_live_preview(tmp_path):
     w = MainWindow()
     assert w.unit == "nm" and w.qmin.suffix() == " 1/nm"     # default: nm and 1/nm
     w.set_folder(RAW)
-    assert w.table.horizontalHeaderItem(2).text() == "λ [nm]"
+    assert w.table.horizontalHeaderItem(3).text() == "λ [nm]"
     w.xc.setValue(61.73)
     w.yc.setValue(63.93)
     w.select_runs([82130])
@@ -137,7 +137,7 @@ def test_units_switch_and_live_preview(tmp_path):
     w.set_units("A")                                       # the limits are converted
     assert w.qmin.value() == pytest.approx(0.01) and w.qmax.value() == pytest.approx(0.08)
     assert w.iq_canvas.figure.axes[0].get_xlabel() == "q [1/Å]"
-    assert w.table.horizontalHeaderItem(2).text() == "λ [Å]"
+    assert w.table.horizontalHeaderItem(3).text() == "λ [Å]"
     w.set_units("nm")
     w.on_reduce()
     paths = w.save_all(str(tmp_path))
@@ -169,4 +169,69 @@ def test_detector_polar_view():
     assert w.det_canvas.figure.axes[0].get_ylabel() == "q [1/Å]"
     w.det_view.setCurrentIndex(w.det_view.findData("cartesian"))
     assert w.det_canvas.figure.axes[0].images
+    w.close()
+
+
+def test_preferences_applied_to_panel():
+    """Changing the q-bin spacing in the preferences reaches the open Reduction panel."""
+    pytest.importorskip("PySide6")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6 import QtWidgets
+    from pysasfit.core import settings as prefs
+    from pysasfit.core import settings_dialog as sd
+    from pysasfit.sasred.core.averaging import q_edges
+    from pysasfit.sasred.gui import MainWindow
+    QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    w = MainWindow()
+    old = prefs.get("sasred.qbins.spacing")
+    try:
+        new = "lin" if old == "log" else "log"
+        w.spacing.setCurrentIndex(w.spacing.findData(old))
+        prefs.set_value("sasred.qbins.spacing", new)
+        for cb in list(sd._listeners):                 # what the dialog does after saving
+            cb()
+        assert w.spacing.currentData() == new
+        e = q_edges(0.01, 0.1, 10, w.spacing.currentData())
+        d = np.diff(e)
+        assert (d.max() / d.min() < 1.0001) == (new == "lin")
+    finally:
+        prefs.set_value("sasred.qbins.spacing", old)
+        w.close()
+
+
+def test_mask_and_centre_per_configuration(tmp_path):
+    """Each instrument configuration (L1, L2, λ, beam stop) keeps its own mask; beam centres are
+    kept per (L2, λ, L1)."""
+    from pysasfit.sasred.catalogue import mask_key
+    from pysasfit.sasred.core import mask as mk
+    app = _app()
+    w = MainWindow()
+    w.set_folder(RAW)
+    by_run = {e.run: e.raw for e in w.entries if e.raw is not None}
+    r8, r2, rt = by_run[82130], by_run[82203], by_run[82173]
+    assert r8.beamstop_type == "3" and mask_key(r8) == (8.0, 8.0, 6.0, "3", -27, 1)
+    assert mask_key(r2) != mask_key(r8) and mask_key(rt) != mask_key(r8)      # other L2 / beam stop out
+    assert all(len(k) == 3 for k in w.centres) and (8.0, 6.0, 8.0) in w.centres
+    w.select_runs([82130])
+    app.processEvents()
+    w._draw_detector()
+    m = w.mask_editor.mask.copy()
+    m[10:12, 10:12] |= mk.USER
+    w.mask_editor.set_mask(m)                                   # edited for the 8 m configuration
+    w.select_runs([82203])
+    w._draw_detector()
+    assert w.mask_editor.pristine and not (w.mask_editor.mask & mk.USER).any()
+    m8, how = w.mask_for(r8)
+    assert np.count_nonzero(m8 & mk.USER) == 4 and "L2 8 m" in how
+    _, how2 = w.mask_for(by_run[82204])                       # same 2 m configuration as the editor
+    assert "detector panel" in how2
+    w.select_runs([82130])
+    w._draw_detector()
+    assert np.count_nonzero(w.mask_editor.mask & mk.USER) == 4
+    p = w.save_masks(str(tmp_path / "masks.h5"))
+    w.masks = {}
+    assert w.load_masks(p) == 1 and np.count_nonzero(w.masks[mask_key(r8)] & mk.USER) == 4
+    from pysasfit.sasred.catalogue import COLUMNS
+    row = [e for e in w.entries if e.run == 82130][0].row()
+    assert row[COLUMNS.index("L1 [m]")] == "8.0" and row[COLUMNS.index("beam stop (x, y mm)")] == "3 (-27, 1)"
     w.close()

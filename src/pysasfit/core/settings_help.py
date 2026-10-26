@@ -573,6 +573,26 @@ HELP = {
     "sasred.mask.suggest_shape":
         "Beamstop suggestion: rectangle masks the whole bounding rectangle of the shadow found in the "
         "data (square beamstops, no ragged edge); shadow masks only the pixels below the threshold.",
+    "sasred.table.autofill":
+        "When a raw-data folder is opened, the reduction table is filled automatically: one tab per geometry (detector distance, wavelength, collimation), the runs grouped by sample, the roles taken from the sample names and, with 'check repeated runs', the repeated runs compared and outliers switched off. Geometries with few runs or without water / empty cell are marked with '?' (measured for tests?) and can be removed with the × of their tab. Off: the table stays as it is until 'Fill from runs'.",
+    "sasred.detector.distance_offset_mm":
+        "Effective sample-detector distance (to the detection layer) = recorded distance + this offset, used for q and the solid angle; the recorded distance stays in the run table, the grouping and the selection. Factory value 53 mm: water measured at 8 m and 2 m with the same collimation (Vifor, Sept. 2026) was 4 % apart per steradian, which a common offset of +53 mm explains (the mean conversion depth in the 3He is only about 0.75 cm at 6 Å, so most of it is where the distance is measured). To be measured again, by hand or with water at several distances and the same collimation (pysasfit.sasred.core.water.fit_distance_offset). Once the instrument configuration writes the corrected distance, limit the offset with the date below or set it to 0. The offset is noted in every reduction; its uncertainty is not propagated.",
+    "sasred.detector.distance_offset_before":
+        "Date (YYYY-MM-DD) from which the files already contain the corrected distance: the offset above is applied only to runs started before it. Empty: the offset is applied to all runs.",
+    "sasred.transmission.beamstop_out_mm":
+        "Transmission runs are measured with the beam stop moved out of the direct beam, in y (on SANS-I "
+        "typically bsy = -200 mm or lower) or in x, or taken out of the detection area. A run whose beam "
+        "stop is farther than this distance from the beam centre (on the detector) counts as a transmission "
+        "run, whatever the attenuator: usually an attenuator is needed against saturation, but with "
+        "very long wavelengths and collimations the direct beam can be measured without one. The beam "
+        "stop motors are tied to detector pixels by its shadow in the scattering runs, the beam centre "
+        "comes from the direct-beam runs, per detector distance and wavelength (gravity may need a "
+        "realignment at long distances and wavelengths). Runs where the position and the image disagree are marked with "
+        "'?' in the run table.",
+    "sasred.transmission.deadtime_warn":
+        "The direct beam concentrates the count rate: above this non-paralysable dead-time factor "
+        "(1 / (1 - rate τ), τ = 0.66 µs on SANS-I) a transmission run is reported as close to "
+        "saturation and a (stronger) attenuator is recommended. The factor is corrected in any case.",
     "sasred.mask.display":
         "How the masked pixels are drawn on the detector image: in the mask colours (with the opacity "
         "below), on their own grey scale with its own colour bar (to see what is behind the mask), or "

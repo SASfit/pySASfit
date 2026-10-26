@@ -86,7 +86,14 @@ def _canvas():
     return FigureCanvasQTAgg(fig)
 
 
+def _lam_column() -> int:
+    from .catalogue import COLUMNS
+    return COLUMNS.index("λ [nm]")
+
+
 class MainWindow(DockMixin, QtWidgets.QMainWindow):
+    instances = __import__("weakref").WeakSet()      # open windows (pyTOOLbox takes their results)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"pySASred {__version__} – SANS data reduction (SINQ SANS-I)")
@@ -95,6 +102,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.entries = []            # CatalogueEntry list of the folder
         self.results = {}            # run -> ReducedRun
         self.beam_centre = None      # BeamCentre of the last determination
+        self.centres = {}            # geometry (L2, λ) -> GeometryCentre: q and solid angle use it
+        self.masks = {}              # instrument configuration (catalogue.mask_key) -> edited uint32 mask
+        self._mask_key = None        # configuration of the mask in the editor
+        self._centre_sync = False
         self.preview = None          # on-the-fly radial average of the selected run (not kept)
         self.unit = prefs.get("sasred.units")      # "nm" or "A": display and output units
         self._preview_timer = QtCore.QTimer(self)
@@ -105,19 +116,32 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         fmenu.addAction("Open raw-data &folder…", self.on_browse)
         fmenu.addAction("Save &NXcanSAS…", self.on_save_nxcansas)
         fmenu.addAction("Save &ASCII…", self.on_save_ascii)
+        fmenu.addAction("Save &2D NXcanSAS…", self.on_save_2d)
+        fmenu.addSeparator()
+        fmenu.addAction("Save masks of all configurations…", self.on_save_masks)
+        fmenu.addAction("Load masks of configurations…", self.on_load_masks)
         fmenu.addAction("Save &all reduced runs…", self.on_save_all)
         add_preferences_menu(self, "sasred")
         self._build_runs()
         self._build_reduction()
         self._build_plots()
         self._build_log()
+        self._build_table()
         self.splitDockWidget(self.docks["runs"], self.docks["reduction"], QtCore.Qt.Orientation.Vertical)
         self.tabifyDockWidget(self.docks["iq"], self.docks["budget"])
         self.tabifyDockWidget(self.docks["iq"], self.docks["log"])
+        self.tabifyDockWidget(self.docks["iq"], self.docks["table"])
         self.docks["iq"].raise_()
         self._finish_docks()
         self.statusBar().showMessage("Choose the raw-data folder (File → Open raw-data folder)")
         self.resize(1400, 900)
+        MainWindow.instances.add(self)
+        # preferences that set panel controls: a change in Settings → Preferences is applied at once
+        self._pref_seen = {k: prefs.get(k) for k in self._PANEL_PREFS}
+        from ..core.settings_dialog import on_saved
+        import weakref
+        ref = weakref.ref(self)
+        on_saved(lambda: ref() is not None and ref().apply_preferences())
 
     # ------------------------------------------------------------------ panels
     def _build_runs(self):
@@ -245,7 +269,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         g = QtWidgets.QGroupBox("Reduced runs")
         gl = QtWidgets.QVBoxLayout(g)
         self.result_combo = QtWidgets.QComboBox()
-        self.result_combo.currentIndexChanged.connect(lambda _i: self._draw_budget())
+        self.result_combo.currentIndexChanged.connect(
+            lambda _i: (self._draw_budget(), self._draw_detector() if self.det_view.currentData() == "reduced2d" else None))
         gl.addWidget(self.result_combo)
         row = QtWidgets.QHBoxLayout()
         for text, slot in (("NXcanSAS…", self.on_save_nxcansas), ("ASCII…", self.on_save_ascii),
@@ -256,6 +281,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         gl.addLayout(row)
         lay.addWidget(g)
         lay.addStretch(1)
+        for wdg in (self.xc, self.yc):
+            wdg.valueChanged.connect(lambda _v: self._on_centre_edit())
         for wdg in (self.xc, self.yc, self.bs_radius):
             wdg.valueChanged.connect(lambda _v: (self.mask_editor.follow_guess(), self._draw_detector()))
         self.bs_shape.currentIndexChanged.connect(
@@ -306,6 +333,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.det_view = QtWidgets.QComboBox()
         self.det_view.addItem("cartesian (x, y)", "cartesian")
         self.det_view.addItem("polar (φ, q)", "polar")
+        self.det_view.addItem("reduced 2D (result chosen)", "reduced2d")
         self.det_view.setToolTip("polar: azimuth φ horizontally (0° = horizontal direction +x, counter-clockwise), "
                                  "q vertically; rings become horizontal lines, anisotropy shows as waves")
         self.det_view.currentIndexChanged.connect(lambda _i: self._draw_detector())
@@ -313,7 +341,13 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from .mask_editor import MaskEditor
         self.mask_editor = MaskEditor(self)                 # mask: suggest, draw, undo, load / save
         self.mask_editor.changed.connect(self._schedule_preview)
-        self._add_dock("detector", "Detector", plot_panel(self.det_canvas, self, bars=(bar_w, self.mask_editor.bar)),
+        self.mask_cfg = QtWidgets.QLabel("")
+        self.mask_cfg.setWordWrap(True)
+        self.mask_cfg.setToolTip("Each instrument configuration (L1, L2, λ, beam stop type and position) has its own "
+                                 "mask: selecting a run of another configuration switches the mask; reductions use "
+                                 "the mask of their configuration (or the suggested one if none was edited)")
+        self._add_dock("detector", "Detector", plot_panel(self.det_canvas, self,
+                                                          bars=(bar_w, self.mask_editor.bar, self.mask_cfg)),
                        Area.RightDockWidgetArea)
         self.iq_canvas = _canvas()
         self._add_dock("iq", "I(q)", plot_panel(self.iq_canvas, self), Area.RightDockWidgetArea)
@@ -325,6 +359,167 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.log_view = QtWidgets.QPlainTextEdit()
         self.log_view.setReadOnly(True)
         self._add_dock("log", "Log", self.log_view, Area.RightDockWidgetArea)
+
+    def _build_table(self):
+        from .table_gui import ReductionTableWidget
+        self.table_panel = ReductionTableWidget(lambda: self.entries, self.centre_for, self, log=self.log)
+        self.table_panel.reduce_rows = self.reduce_table_rows
+        self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea)
+        m = self.menuBar().addMenu("&Reduction")
+        m.addAction("Reduction &table", self.show_table)
+        m.addAction("&Fill table from runs", lambda: (self.show_table(), self.table_panel.on_fill()))
+        m.addAction("Add &many samples… (select runs, then group)",
+                    lambda: (self.show_table(), self.table_panel.on_add_many()))
+        m.addAction("&Empty table (fill by hand)", lambda: (self.show_table(), self.table_panel.on_clear()))
+        m.addSeparator()
+        m.addAction("&Reduce geometry shown (2D, then I(q))", lambda: self.table_panel.page.on_reduce(all_rows=True))
+        m.addAction("Reduce &selected rows", lambda: self.table_panel.page.on_reduce(all_rows=False))
+        m.addSeparator()
+        m.addAction("Send results to pyTOOLbox &merge (no files)", self.on_send_to_merge)
+
+    def mask_for(self, raw):
+        """The mask for a run and where it comes from: the mask of its instrument configuration
+        (L1, L2, λ, beam stop type and position; :func:`catalogue.mask_key`) – the one in the editor
+        or a stored one – else the suggested mask of the run (border, beam stop shadow, hot pixels)."""
+        from .catalogue import mask_key, mask_key_label
+        from .core import mask as mk
+        k = mask_key(raw)
+        ed = self.mask_editor.mask
+        if k == self._mask_key and ed is not None and ed.shape == raw.counts.shape:
+            return self.full_mask(raw.counts.shape), f"mask of {mask_key_label(k)} (detector panel)"
+        m = self.masks.get(k)
+        if m is not None and m.shape == raw.counts.shape:
+            return m.copy(), f"mask of {mask_key_label(k)}"
+        return mk.suggest_mask(raw.counts, self.centre_for(raw))[0], \
+            f"suggested mask (no mask edited for {mask_key_label(k)})"
+
+    def _sync_mask_config(self, raw):
+        """Switch the editor to the mask of the configuration of ``raw``; the edited mask of the
+        previous configuration is kept."""
+        from .catalogue import mask_key, mask_key_label
+        k = mask_key(raw)
+        ed = self.mask_editor
+        if k != self._mask_key:
+            if self._mask_key is not None and ed.mask is not None and not ed.pristine:
+                self.masks[self._mask_key] = ed.mask.copy()
+            if self._mask_key is None and ed.mask is not None and not ed.pristine and k not in self.masks:
+                self.masks[k] = ed.mask.copy()               # mask restored from an older session
+            m = self.masks.get(k)
+            ed._undo.clear()
+            ed._redo.clear()
+            if m is not None and m.shape == raw.counts.shape:
+                ed.mask = m.copy()
+                ed.pristine = False
+            else:
+                ed.mask = None
+                ed.ensure(raw.counts.shape)
+            ed._update_stats()
+            self._mask_key = k
+        n = len(set(self.masks) | ({k} if not ed.pristine else set()))
+        self.mask_cfg.setText(f"mask for {mask_key_label(k)}" + ("" if not ed.pristine else " (not edited yet)")
+                              + (f" – masks edited for {n} configuration{'s' if n != 1 else ''}" if n else ""))
+
+    def _commit_mask(self):
+        if self._mask_key is not None and self.mask_editor.mask is not None and not self.mask_editor.pristine:
+            self.masks[self._mask_key] = self.mask_editor.mask.copy()
+
+    def save_masks(self, path):
+        """All configuration masks into one HDF5 file (one group per configuration)."""
+        import h5py
+        from .catalogue import mask_key_label
+        self._commit_mask()
+        with h5py.File(path, "w") as f:
+            f.attrs["description"] = "pySASred masks per instrument configuration (L1, L2, λ, beam stop)"
+            for i, (k, m) in enumerate(sorted(self.masks.items(), key=lambda kv: str(kv[0]))):
+                g = f.create_group(f"mask{i:03d}")
+                g.create_dataset("pixel_mask", data=np.asarray(m, np.uint32), compression="gzip")
+                g.attrs["key"] = json.dumps(list(k))
+                g.attrs["label"] = mask_key_label(k)
+        return path
+
+    def load_masks(self, path, replace=False):
+        import h5py
+        new = {}
+        with h5py.File(path, "r") as f:
+            for g in f.values():
+                k = json.loads(g.attrs["key"])
+                k[0:3] = [float(x) for x in k[0:3]]
+                new[tuple(k)] = np.asarray(g["pixel_mask"][()], np.uint32)
+        if replace:
+            self.masks = {}
+        self.masks.update(new)
+        if self._mask_key in new:
+            self.mask_editor.set_mask(new[self._mask_key], message="mask of the shown configuration loaded")
+        return len(new)
+
+    def on_save_masks(self):
+        self._commit_mask()
+        if not self.masks:
+            QtWidgets.QMessageBox.information(self, "Masks", "No edited masks yet.")
+            return
+        p, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save masks of all configurations",
+                                                     os.path.join(self.folder or os.getcwd(), "masks.h5"),
+                                                     "HDF5 (*.h5)")
+        if p:
+            self.save_masks(p)
+            self.log(f"masks of {len(self.masks)} configurations saved to {p}")
+
+    def on_load_masks(self):
+        p, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load masks of configurations", self.folder or "",
+                                                     "HDF5 (*.h5)")
+        if p:
+            n = self.load_masks(p)
+            self.log(f"masks of {n} configurations loaded from {p}")
+            self._draw_detector()
+
+    def reduce_table_rows(self, table, rows):
+        """Reduce sample rows of the reduction table: 2D per pixel, then the average with the q bins,
+        sector and normalisation of the Reduction panel. Results appear in I(q) and as 2D image."""
+        from .absolute import reduce_row_2d, average
+        from .io.sinq import read_sans_i
+        paths = {e.run: e.path for e in self.entries}
+
+        def read(n):
+            if n not in paths:
+                raise KeyError(f"run {n} not in the folder")
+            return read_sans_i(paths[n])
+        sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
+        done = None
+        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        try:
+            for row in rows:
+                tag = f"{table.config.split(',')[0]} {row.label}"
+                try:
+                    raw0 = read(row.used[0]) if row.used else None
+                    if raw0 is None:
+                        raise ValueError("no runs switched on")
+                    mask, how = self.mask_for(raw0)
+                    r2 = reduce_row_2d(table, row, read, self.centre_for(raw0), mask=mask,
+                                       normalise_by=self.norm.currentData(), k0=table.water_g)
+                    r2.notes.insert(0, how)
+                    r1 = average(r2, self._edges(raw0, r2.mask), sector_deg=sector)
+                except Exception as exc:  # noqa: BLE001
+                    self.log(f"{tag} ({row.info}): FAILED – {type(exc).__name__}: {exc}")
+                    continue
+                self.results[tag] = r1
+                done = tag
+                self.log(f"{tag} ({row.info}): runs {row.runs_text()}, {len(r1.q)} bins, {r1.intensity.unit}")
+                for n in dict.fromkeys(r1.notes):
+                    self.log(f"    {n}")
+                QtWidgets.QApplication.processEvents()
+        finally:
+            QtWidgets.QApplication.restoreOverrideCursor()
+        self._refresh_results(select=done)
+        if done is not None:
+            self.docks["iq"].raise_()
+        return done
+
+    def show_table(self):
+        """Show the reduction table panel (a tab next to I(q) by default)."""
+        d = self.docks["table"]
+        if d.isHidden():
+            self.set_panel_visible("table", True)
+        d.raise_()
 
     def log(self, text):
         self.log_view.appendPlainText(text)
@@ -354,6 +549,12 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
         self._fill_table()
+        from .catalogue import beam_centres
+        self.centres = beam_centres([e.raw for e in self.entries])
+        for c in sorted(self.centres.values(), key=lambda c: c.key):
+            self.log("beam centre " + c.describe())
+        if prefs.get("sasred.table.autofill"):
+            self.table_panel.on_fill()
         bad = sum(e.raw is None for e in self.entries)
         self.statusBar().showMessage(f"{len(self.entries)} runs in {folder}" + (f", {bad} unreadable" if bad else ""),
                                      10000)
@@ -373,7 +574,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 if e.raw is None or (e.raw is not None and e.raw.aborted):
                     it.setForeground(QtGui.QBrush(QtGui.QColor("firebrick")))
                 t.setItem(i, j, it)
-        t.setHorizontalHeaderItem(2, QtWidgets.QTableWidgetItem(f"λ [{self.units.length}]"))
+        t.setHorizontalHeaderItem(_lam_column(), QtWidgets.QTableWidgetItem(f"λ [{self.units.length}]"))
         t.setSortingEnabled(True)
         t.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
         t.resizeColumnsToContents()
@@ -407,8 +608,46 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.table.setSelectionMode(mode)
 
     def _on_selection(self):
+        self._show_centre_of(self.displayed_raw())
         self._draw_detector()
         self._schedule_preview()
+
+    # ------------------------------------------------------------------ beam centre per geometry
+    def centre_for(self, raw) -> tuple:
+        """Beam centre of the geometry of ``raw`` (direct beam of that geometry, a borrowed one,
+        or set by hand); the spin boxes when there is none."""
+        from .catalogue import config_key
+        c = self.centres.get(config_key(raw)) if raw is not None else None
+        if c is None:
+            return (self.xc.value(), self.yc.value())
+        return (round(float(c.x), self.xc.decimals()), round(float(c.y), self.yc.decimals()))   # as shown
+
+    def _show_centre_of(self, raw):
+        from .catalogue import config_key
+        if raw is None:
+            return
+        c = self.centres.get(config_key(raw))
+        if c is None:
+            self.bc_label.setText(f"no beam centre for L2 {raw.L2_m:.1f} m, λ {raw.wavelength_A:.2f} Å yet: "
+                                  "determine it from a direct-beam run of this geometry or enter it")
+            return
+        self._centre_sync = True
+        try:
+            self.xc.setValue(c.x)
+            self.yc.setValue(c.y)
+        finally:
+            self._centre_sync = False
+        self.bc_label.setText(c.describe())
+
+    def _on_centre_edit(self):
+        """A centre typed in the spin boxes belongs to the geometry of the displayed run."""
+        from .catalogue import GeometryCentre, config_key
+        raw = self.displayed_raw()
+        if self._centre_sync or raw is None:
+            return
+        k = config_key(raw)
+        self.centres[k] = GeometryCentre(k, self.xc.value(), self.yc.value(), 0.0, 0.0, [], "by hand")
+        self.bc_label.setText(self.centres[k].describe())
 
     # ------------------------------------------------------------------ units
     @property
@@ -441,6 +680,41 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def _schedule_preview(self):
         self._preview_timer.start()
 
+    def on_send_to_merge(self):
+        """Hand the reduced results to pyTOOLbox *Merge geometries* without writing files."""
+        if not self.results:
+            QtWidgets.QMessageBox.information(self, "Merge geometries", "Nothing reduced yet.")
+            return
+        from ..toolbox.merge_gui import send_reduced
+        send_reduced(self.results, "pySASred")
+        self.log(f"{len(self.results)} reduced curves sent to pyTOOLbox → Merge geometries")
+
+    _PANEL_PREFS = ("sasred.qbins.n", "sasred.qbins.spacing", "sasred.normalise_by",
+                    "sasred.mask.beamstop_shape", "sasred.mask.beamstop_radius_px")
+
+    def apply_preferences(self):
+        """Set the panel controls whose preference was changed (the others keep what was set in
+        the panel or restored from the last session)."""
+        try:
+            changed = [k for k in self._PANEL_PREFS if prefs.get(k) != self._pref_seen.get(k)]
+        except RuntimeError:          # window already deleted
+            return
+        for k in changed:
+            v = prefs.get(k)
+            if k == "sasred.qbins.n":
+                self.nbins.setValue(int(v))
+            elif k == "sasred.mask.beamstop_radius_px":
+                self.bs_radius.setValue(float(v))
+            else:
+                combo = {"sasred.qbins.spacing": self.spacing, "sasred.normalise_by": self.norm,
+                         "sasred.mask.beamstop_shape": self.bs_shape}[k]
+                i = combo.findData(v)
+                if i >= 0:
+                    combo.setCurrentIndex(i)
+            self._pref_seen[k] = v
+        if changed:
+            self.log("preferences applied to the Reduction panel: " + ", ".join(k.split(".", 1)[1] for k in changed))
+
     def update_preview(self):
         """Radial / sector average of the first selected run with the current settings, shown in
         I(q) without being kept (uses the header already read, no checksum)."""
@@ -450,9 +724,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if sel:
             raw = sel[0].raw
             try:
+                self._sync_mask_config(raw)
                 mask = self._mask(raw.counts.shape)
                 sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
-                self.preview = reduce_run_1d(raw, (self.xc.value(), self.yc.value()), self._edges(raw, mask),
+                self.preview = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask),
                                              mask=mask, normalise_by=self.norm.currentData(), sector_deg=sector)
             except Exception as exc:  # noqa: BLE001 -- e.g. beam centre outside, empty q range
                 self.statusBar().showMessage(f"live I(q) of run {raw.run}: {exc}", 8000)
@@ -473,13 +748,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         except Exception as exc:  # noqa: BLE001
             QtWidgets.QMessageBox.critical(self, "Beam centre", f"run {e.run}: {exc}")
             return
+        from .catalogue import GeometryCentre, config_key
         self.beam_centre = bc
-        self.xc.setValue(bc.x)
-        self.yc.setValue(bc.y)
+        k = config_key(e.raw)
+        self.centres[k] = GeometryCentre(k, bc.x, bc.y, bc.sigma_x, bc.sigma_y, [e.run], f"run {e.run}")
+        self._centre_sync = True
+        try:
+            self.xc.setValue(bc.x)
+            self.yc.setValue(bc.y)
+        finally:
+            self._centre_sync = False
         self.bc_label.setText(f"run {e.run}: x = {bc.x:.3f} ± {bc.sigma_x:.3f}, y = {bc.y:.3f} ± {bc.sigma_y:.3f}"
                               f", {bc.iterations} iterations"
                               + (f", {100 * bc.edge_fraction:.0f} % of the disc off the detector"
-                                 if bc.edge_fraction > 0 else ""))
+                                 if bc.edge_fraction > 0 else "")
+                              + f"; kept for L1 {k[2]:g} m, L2 {k[0]:g} m, λ {k[1]:g} Å")
         self.log(f"beam centre from run {e.run}: x = {bc.x:.4f} ± {bc.sigma_x:.4f}, y = {bc.y:.4f} ± {bc.sigma_y:.4f}")
 
     # ------------------------------------------------------------------ reduction
@@ -510,8 +793,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         u = self.units
         qmin, qmax = u.q_in(self.qmin.value()), u.q_in(self.qmax.value())      # internal: 1/Å
         if qmin <= 0 or qmax <= 0:
-            g = pixel_geometry(raw.counts.shape, raw.pixel_size_m, (self.xc.value(), self.yc.value()),
-                               raw.L2_m, raw.wavelength_A)
+            g = pixel_geometry(raw.counts.shape, raw.pixel_size_m, self.centre_for(raw),
+                               getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A)
             q = g.q[mask == 0]
             q = q[q > 0]
             qmin = qmin if qmin > 0 else float(q.min())
@@ -525,9 +808,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from .io.sinq import read_sans_i
         from .reduce import reduce_run_1d
         raw = read_sans_i(e.path)
-        mask = self._mask(raw.counts.shape)
+        mask = self.mask_for(raw)[0]
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
-        r = reduce_run_1d(raw, (self.xc.value(), self.yc.value()), self._edges(raw, mask), mask=mask,
+        r = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask), mask=mask,
                           normalise_by=self.norm.currentData(), sector_deg=sector)
         return r
 
@@ -535,6 +818,14 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         sel = [e for e in self.selected_entries() if e.raw is not None]
         if not sel:
             QtWidgets.QMessageBox.information(self, "Reduce", "Select one or more runs in the run table.")
+            return
+        from .catalogue import config_key
+        geos = sorted({config_key(e.raw) for e in sel})
+        if len(geos) > 1:
+            QtWidgets.QMessageBox.information(
+                self, "Reduce", "The selected runs belong to " + ", ".join(f"L2 {k[0]:g} m / λ {k[1]:g} Å" for k in geos)
+                + ". Reduce one geometry at a time: the beam centre, the solid angle and the mask belong to "
+                  "the geometry.")
             return
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
         try:
@@ -564,7 +855,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         cur = select if select is not None else self.result_combo.currentData()
         self.result_combo.clear()
         for run, r in self.results.items():
-            self.result_combo.addItem(f"{run}  {r.raw.sample_name}", run)
+            self.result_combo.addItem(f"{run}  {r.parameters.get('sample', r.raw.sample_name)}", run)
         i = self.result_combo.findData(cur)
         self.result_combo.setCurrentIndex(i if i >= 0 else self.result_combo.count() - 1)
         self.result_combo.blockSignals(False)
@@ -576,14 +867,44 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         return self.results.get(run)
 
     # ------------------------------------------------------------------ plots
+    def _draw_reduced_2d(self, fig):
+        r = self.current_result()
+        ax = fig.add_subplot(111)
+        if r is None or r.image is None:
+            ax.text(0.5, 0.5, "no reduced result chosen", ha="center", va="center", transform=ax.transAxes)
+            return
+        img = np.array(r.image.value, float)
+        bad = (np.asarray(r.flags) != 0) | ~np.isfinite(img)
+        img[bad] = np.nan
+        norm = make_norm(self.det_scale.currentData(), np.nan_to_num(img, nan=0.0), valid=~bad)
+        px, py = r.raw.pixel_size_m
+        im = ax.imshow(img, origin="lower", norm=norm, cmap=self.det_cmap.currentText(),
+                       interpolation="nearest", aspect=py / px)
+        from ..toolbox.viewer import image_colorbar
+        decorate_colorbar(image_colorbar(fig, ax, im, r.intensity.unit or ""), self.det_scale.currentData())
+        c = r.parameters.get("beam_center_px")
+        if c:
+            ax.plot([c[0]], [c[1]], "+", color="red", ms=12, mew=1.5, zorder=5)
+        ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
+        ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]")
+        lab = r.parameters.get("label")
+        ax.set_title(f"reduced 2D: {lab + ' ' if lab else ''}{r.parameters.get('sample', r.raw.sample_name)}",
+                     fontsize="medium")
+
     def _draw_detector(self):
         fig = self.det_canvas.figure
         fig.clear()
+        if self.det_view.currentData() == "reduced2d":
+            self._draw_reduced_2d(fig)
+            self.mask_editor._ax = None
+            self.det_canvas.draw_idle()
+            return
         sel = [e for e in self.selected_entries() if e.raw is not None]
         if not sel:
             self.det_canvas.draw_idle()
             return
         raw = sel[0].raw
+        self._sync_mask_config(raw)
         ax = fig.add_subplot(111)
         c = raw.counts.astype(float)
         # colour range from the unmasked pixels only: bright pixels at the edge of a badly placed
@@ -624,7 +945,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from .core.polar import polar_image
         u = self.units
         xc, yc = self.xc.value(), self.yc.value()
-        pol = polar_image(c, (xc, yc), raw.pixel_size_m, raw.L2_m, raw.wavelength_A,
+        pol = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A,
                           invalid=self._mask(c.shape) != 0)
         cmap = matplotlib.colormaps[self.det_cmap.currentText()].with_extremes(bad="0.85")
         qe = u.q_out(pol.q_edges)
@@ -638,8 +959,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             from .mask_editor import MASKED_CMAP
             masked = self._mask(c.shape) != 0
             if masked.any():
-                full = polar_image(c, (xc, yc), raw.pixel_size_m, raw.L2_m, raw.wavelength_A).image
-                inv = polar_image(masked.astype(float), (xc, yc), raw.pixel_size_m, raw.L2_m,
+                full = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A).image
+                inv = polar_image(masked.astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m),
                                   raw.wavelength_A).image
                 sel = np.isfinite(inv) & (np.nan_to_num(inv) > 0)
                 if sel.any():
@@ -652,7 +973,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if mode == "colours":                                # masked cells in the mask colours
             from matplotlib.colors import ListedColormap
             from .mask_editor import OVERLAY_COLOURS
-            bits = polar_image(self._mask(c.shape).astype(float), (xc, yc), raw.pixel_size_m, raw.L2_m,
+            bits = polar_image(self._mask(c.shape).astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m),
                                raw.wavelength_A).image
             alpha = self.mask_editor.opacity.value() / 100
             for bit, col in OVERLAY_COLOURS:
@@ -680,7 +1001,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         u = self.units
         for run, r in self.results.items():
             ax.errorbar(u.q_out(r.q), r.I, yerr=r.idev(), fmt="o", ms=3, capsize=0, lw=0.8,
-                        label=f"{run} {r.raw.sample_name}")
+                        label=f"{run} {r.parameters.get('sample', r.raw.sample_name)}")
         p = self.preview
         if p is not None:
             ax.errorbar(u.q_out(p.q), p.I, yerr=p.idev(), fmt="--", color="0.15", lw=1.0, capsize=0,
@@ -740,6 +1061,17 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             write_nxcansas_1d(p, r, units=self.unit)
             self.log(f"saved {p}")
 
+    def on_save_2d(self):
+        r = self._need_result()
+        if r is None:
+            return
+        p, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save 2D NXcanSAS", self._default_name(r, "_2d.h5"),
+                                                     "NXcanSAS (*.h5 *.nxs)")
+        if p:
+            from .io.nxcansas import write_nxcansas_2d
+            write_nxcansas_2d(p, r, units=self.unit)
+            self.log(f"saved {p}")
+
     def on_save_ascii(self):
         r = self._need_result()
         if r is None:
@@ -752,9 +1084,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.log(f"saved {p}")
 
     def save_all(self, folder):
-        """NXcanSAS and ASCII of every reduced run into ``folder``; returns the paths."""
+        """NXcanSAS and ASCII of every reduced run, and the 2D image as ``<name>_2d.h5``, into
+        ``folder``; returns the paths."""
         from .io.ascii import write_ascii_1d
-        from .io.nxcansas import write_nxcansas_1d
+        from .io.nxcansas import write_nxcansas_1d, write_nxcansas_2d
         out = []
         for r in self.results.values():
             stem = os.path.splitext(os.path.basename(self._default_name(r, "")))[0]
@@ -762,6 +1095,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             write_nxcansas_1d(p, r, units=self.unit)
             out.append(p)
             out.append(write_ascii_1d(os.path.join(folder, stem + ".dat"), r, units=self.unit))
+            out.append(write_nxcansas_2d(os.path.join(folder, stem + "_2d.h5"), r, units=self.unit))
         return out
 
     def on_save_all(self):
@@ -784,13 +1118,26 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 "sector_c": self.sector_c.value(), "sector_hw": self.sector_hw.value(),
                 "detector_scale": self.det_scale.currentData(), "detector_cmap": self.det_cmap.currentText(),
                 "detector_view": self.det_view.currentData(),
+                "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
+                            if c.source != "direct beam" and not c.source.startswith("borrowed")],
                 "dock_state": self.dock_state()}
 
     @staticmethod
     def _session_mask_path():
         return os.path.join(os.path.dirname(prefs.settings_path()), "sasred_session_mask.h5")
 
+    @staticmethod
+    def _session_masks_path():
+        return os.path.join(os.path.dirname(prefs.settings_path()), "sasred_session_masks.h5")
+
     def save_session(self):
+        try:
+            self._commit_mask()
+            if self.masks:
+                os.makedirs(os.path.dirname(self._session_masks_path()), exist_ok=True)
+                self.save_masks(self._session_masks_path())
+        except Exception:  # noqa: BLE001 -- the session is a convenience
+            pass
         if self.mask_editor.mask is not None:
             try:
                 from .core.mask import save_mask
@@ -854,8 +1201,23 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.mask_editor._update_stats()
             except Exception:  # noqa: BLE001
                 pass
+        if os.path.isfile(self._session_masks_path()):
+            try:
+                self.load_masks(self._session_masks_path())
+            except Exception:  # noqa: BLE001
+                pass
         if s.get("folder") and os.path.isdir(s["folder"]):
             self.set_folder(s["folder"])
+        from .catalogue import GeometryCentre
+        for item in s.get("centres", []) or []:
+            try:
+                if len(item) == 5:          # sessions before the centre depended on L1: not used
+                    continue
+                L2, lam, L1, x, y, src = item
+                k = (float(L2), float(lam), float(L1))
+                self.centres[k] = GeometryCentre(k, float(x), float(y), 0.0, 0.0, [], str(src))
+            except (TypeError, ValueError):
+                pass
         return True
 
     def forget_session(self):

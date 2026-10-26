@@ -33,6 +33,11 @@ __all__ = ["load_instrument", "ReducedRun", "reduce_run_1d", "uncertain_paramete
            "combined_normalised_counts", "efficiency_from_runs"]
 
 
+def _L2(raw) -> float:
+    """Distance for the geometry: the effective distance (recorded + offset) when known."""
+    return float(getattr(raw, "L2_effective_m", raw.L2_m))
+
+
 def load_instrument(name: str = "sans_i") -> dict:
     with resources.files(__package__ + ".instruments.sinq").joinpath(f"{name}.yaml").open() as fh:
         return yaml.safe_load(fh)
@@ -104,6 +109,13 @@ def normalised_counts(raw: RawRun, inst: dict, notes: List[str], mask=None, norm
                             f"attenuator:{raw.attenuator}", "attenuator", notes) \
         if raw.attenuator != "0" else constant(1.0)
     c = attenuator(c, a)
+    chk = (att or {}).get("water_check") if raw.attenuator != "0" else None
+    if chk:
+        ratio = float(chk["transmission"]) / float(att["transmission"])
+        notes.append(f"attenuator {raw.attenuator}: nominal transmission {float(att['transmission']):.4g}, the water "
+                     f"calibration at {chk['wavelength_nm']} nm gives {float(chk['transmission']):.4g} "
+                     f"(× {ratio:.3f}): intensities scaled with this attenuator against unattenuated runs (e.g. an "
+                     f"absolute scale from the direct beam) may be off by {100 * (1 / ratio - 1):+.0f} %")
 
     # step 6: normalisation
     if normalise_by == "monitor":
@@ -140,7 +152,10 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
     dt = inst["detector"]["deadtime"]
 
     # step 7 and 11: geometry and solid angle
-    geo = pixel_geometry(raw.counts.shape, raw.pixel_size_m, beam_center_px, raw.L2_m,
+    if getattr(raw, "L2_offset_m", 0.0):
+        notes.append(f"detector distance {raw.L2_effective_m:.4f} m = recorded {raw.L2_m:.4f} m "
+                     f"{1000 * raw.L2_offset_m:+.1f} mm offset (uncertainty not propagated)")
+    geo = pixel_geometry(raw.counts.shape, raw.pixel_size_m, beam_center_px, _L2(raw),
                          raw.wavelength_A, alpha_deg=0.0)
     if abs(raw.detector_tilt_deg) > 0.01:
         notes.append(f"chi_position = {raw.detector_tilt_deg} deg not applied as tilt (to confirm)")
@@ -223,7 +238,8 @@ def combined_normalised_counts(runs, inst: dict, notes: List[str], mask=None, no
 
 def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=None,
                          mask=None, blocked=None, instrument: Optional[dict] = None,
-                         normalise_by: str = "monitor", reject_sigma: Optional[float] = 5.0) -> Efficiency:
+                         normalise_by: str = "monitor", reject_sigma: Optional[float] = 5.0,
+                         water_k=None) -> Efficiency:
     """Detector efficiency from water (see :mod:`pysasfit.sasred.core.efficiency`).
 
     ``water``, ``empty_cell``, ``blocked``: a raw run or a list of runs (summed) at the same
@@ -232,7 +248,10 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
     data (default: the suggested mask of the summed water counts, border + beamstop + hot pixels).
     Every run is corrected for dead time and attenuator and normalised (monitor or time) as in
     :func:`reduce_run_1d`. ``reject_sigma``: see
-    :func:`~pysasfit.sasred.core.efficiency.efficiency_from_water` (beamstop edge)."""
+    :func:`~pysasfit.sasred.core.efficiency.efficiency_from_water` (beamstop edge). ``water_k``:
+    the angular dependence K(2θ)/K(0) of the water (a function of 2θ in rad, e.g.
+    :meth:`~pysasfit.sasred.core.water.WaterComparison.K` from water at two distances); the water
+    image is divided by it so that the map holds the detector efficiency only."""
     from .core.geometry import pixel_geometry
     from .core import mask as mk
     inst = instrument or load_instrument()
@@ -259,8 +278,11 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
     empty_cell = cells[0] if cells else None
     tw = _transmission(t_water, f"transmission:{water.run}")
     te = None if empty_cell is None else _transmission(t_empty, f"transmission:{empty_cell.run}")
-    geo = pixel_geometry(water.counts.shape, water.pixel_size_m, beam_center_px, water.L2_m, water.wavelength_A)
+    geo = pixel_geometry(water.counts.shape, water.pixel_size_m, beam_center_px, _L2(water), water.wavelength_A)
     I = water_intensity(W, EC, tw, te if te is not None else 1.0, geo.d_omega, B)
+    if water_k is not None:
+        I = I / np.asarray(water_k(geo.two_theta), float)
+        notes.append("water divided by its angular dependence K(2θ)/K(0)")
     valid = (np.asarray(mask) == 0) & np.isfinite(I.value) & (I.value > 0)
     meta = dict(water_run=water.run, water_runs=[r.run for r in waters], empty_cell_runs=[r.run for r in cells],
                 blocked_runs=[r.run for r in blocks],
@@ -268,7 +290,7 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
                 t_empty=None if te is None else [float(te.value), float(te.std())],
                 L2_m=water.L2_m, wavelength_A=water.wavelength_A, beam_center_px=list(map(float, beam_center_px)),
                 dlam_over_lam_fwhm=water.dlam_over_lam_fwhm, detector_tilt_deg=water.detector_tilt_deg,
-                L1_m=water.L1_m, pixel_size_m=list(water.pixel_size_m),
+                L1_m=water.L1_m, pixel_size_m=list(water.pixel_size_m), water_k_applied=water_k is not None,
                 detector_offset_m=list(water.detector_offset_m), attenuator=water.attenuator,
                 measured_start=min(str(r.start_time) for r in waters),
                 measured_end=max(str(r.end_time or r.start_time) for r in waters),

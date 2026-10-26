@@ -7,6 +7,15 @@ reader: sinq_sans_i
 detector:
   type: 3He multiwire, 128 x 128
   pixel_size_m: [0.0075, 0.0075]        # read from file; used to check it
+  construction:                          # from J. Kohlbrecher, 2026-10-26 (null: still to confirm)
+    window: {material: Al, thickness_m: 0.007, diameter_m: 1.300, radius_of_curvature_m: 0.930,
+             apex_to_detector_m: 0.265}  # dome convex towards the sample, apex 26.5 cm in front of the detection plane (confirmed)
+    fill_gas: {gas: 4He, pressure_bar: 2.7, path_m: null}         # between dome window and membrane
+    membrane: {material: Al, shape: flat, thickness_m: 0.002}   # separates 4He from the detection gas
+    detection_gas: {gas: 3He, pressure_bar: 2.7, stopping_gas: CF4, stopping_pressure_bar: null,
+                    active_depth_m: null, inactive_layer_m: null}
+    distance_reference: null             # which plane the recorded L2 refers to
+    temperature_K: 293.0
   deadtime:
     model: nonparalysable
     rate: global                         # multiwire: one rate for the detector
@@ -18,9 +27,16 @@ monitor:
   deadtime:
     tau_s: 0.0                           # factor 1.0252 in the BerSANS copy suggests ~3.3 us (to confirm)
     uncertainty_s: null
+beamstop:                                # motor positions bsx, bsy in mm (read from file)
+  x_sign: 1                              # +1: bsx grows with the detector pixel x (to confirm)
+  y_sign: 1                              # +1: bsy grows with the detector pixel y (to confirm)
 attenuator:                              # transmission factors by selector index (DarePy table)
   "0": {transmission: 1.0, uncertainty: 0.0}
-  "1": {transmission: 0.002061856, uncertainty: null}   # ~1/485, to confirm, lambda dependence?
+  "1": {transmission: 0.002061856, uncertainty: null,   # ~1/485 from the sieve hole diameters (nominal)
+        water_check: {wavelength_nm: 0.6, transmission: 0.00164, uncertainty_rel: 0.02,
+                      source: "Vifor 2026-09, 8 m and 2 m water (g(λ), BerSANS denominator) vs empty beam 82173/82221/82269"}}
+        # water check gives ~1/610: the nominal value is 26 % too high at 0.6 nm (inhomogeneous sieve illumination?);
+        # to be reconfirmed by tests. Absolute scale from the attenuated direct beam is then 26 % too low.
   "2": {transmission: 0.011363636, uncertainty: null}   # ~1/88
   "3": {transmission: 0.125, uncertainty: null}         # ~1/8
   "4": {transmission: 0.285714286, uncertainty: null}   # ~1/3.5
@@ -28,5 +44,13 @@ attenuator:                              # transmission factors by selector inde
 wavelength:
   distribution: triangular               # Dornier velocity selector
   dlam_over_lam_fwhm_default: null        # read from file; else the user must give it
-beamstop:
-  out_y_mm_below: -100                   # beamstop y below this: beam stop out (transmission)
+water:                                   # calibration standard
+  g_lambda:                              # forward excess K0 of the water (Strunz et al. 2000, eq. 6), λ in nm
+    formula: [1.36992, 0.31389, -1.07706, 0.54662]   # g = c0 + c1 λ + c2 λ² + c3 λ³, least squares through the points
+    # previous quadratic in use at SANS-I: [1.642, -0.7825, 0.3159]
+    measured_nm: [0.47, 0.60, 0.80, 1.00, 1.20]
+    measured: [1.338, 1.284, 1.217, 1.150, 1.141]
+    range_nm: [0.47, 1.20]
+    uncertainty_rel: 0.006               # fit uncertainty of the cubic inside 0.47-1.2 nm (0.5-0.7 %; rms residual 0.3 %)
+  denominator: water_and_cell            # water factor g A_W (1 - T_W/T_EC)/(4π D): water_and_cell → D = T_W (BerSANS, used at
+                                         # SANS-I with this g(λ)); tau → D = τ_W = T_W/T_EC (Strunz eq. 8), 1/T_EC lower

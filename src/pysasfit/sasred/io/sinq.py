@@ -55,12 +55,29 @@ class RawRun:
     start_time: str
     end_time: Optional[str]
     missing_optional: List[str] = field(default_factory=list)
+    L2_offset_m: float = 0.0      # distance offset for the geometry (L2_m stays as recorded)
+    beamstop_type: str = ""       # beam stop selector (size/type), SANS/beam_stop/out_flag
+
+    @property
+    def L2_recorded_m(self) -> float:
+        """Sample-detector distance as stored in the file (= L2_m)."""
+        return self.L2_m
+
+    @property
+    def L2_effective_m(self) -> float:
+        """Distance to the detection layer used for q and the solid angle: recorded + offset."""
+        return self.L2_m + self.L2_offset_m
 
     @property
     def aborted(self) -> bool:
-        """Monitor-preset run that stopped before reaching its preset."""
-        m = self.monitors.get("monitor1")
-        return self.count_mode == "monitor" and m is not None and m < 0.99 * self.preset
+        """Run that stopped before reaching its preset: the monitor count (monitor mode) or the
+        counting time (timer mode) is below 99 % of the preset."""
+        if self.count_mode == "monitor":
+            m = self.monitors.get("monitor1")
+            return m is not None and m < 0.99 * self.preset
+        if self.count_mode in ("timer", "time"):
+            return self.counting_time_s < 0.99 * self.preset
+        return False
 
 
 def _read(g, path, required=True, missing=None):
@@ -99,9 +116,32 @@ def sha256_of(path) -> str:
     return h.hexdigest()
 
 
-def read_sans_i(path, checksum: bool = True) -> RawRun:
+def distance_offset_for(start_time: str) -> float:
+    """Detector distance offset [m] for a run started at ``start_time``: the preference
+    ``sasred.detector.distance_offset_mm``, applied to runs started before
+    ``sasred.detector.distance_offset_before`` (YYYY-MM-DD; empty = all runs), so that older files
+    can be corrected once the instrument configuration writes the corrected distance."""
+    try:
+        from ...core import settings as prefs
+        off = float(prefs.effective("sasred.detector.distance_offset_mm")) / 1000.0
+        before = str(prefs.effective("sasred.detector.distance_offset_before") or "").strip()
+    except Exception:  # noqa: BLE001 -- no settings (scripts, tests)
+        return 0.0
+    if off == 0.0:
+        return 0.0
+    if before and str(start_time)[:10] >= before[:10]:
+        return 0.0
+    return off
+
+
+def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] = None) -> RawRun:
     """Read a SANS-I HDF file. ``checksum=False`` skips the SHA-256 (fast header
-    catalogue); a reduction always reads with the checksum."""
+    catalogue); a reduction always reads with the checksum.
+
+    ``distance_offset_m`` is the offset of the detection layer from the recorded detector distance:
+    ``RawRun.L2_m`` stays as recorded (grouping, selection, labels), ``L2_effective_m`` = recorded +
+    offset is used for q and the solid angle; None takes it from the preferences
+    (:func:`distance_offset_for`)."""
     path = str(path)
     m = re.search(r"n0*(\d+)\.hdf$", Path(path).name)
     if not m:
@@ -141,6 +181,7 @@ def read_sans_i(path, checksum: bool = True) -> RawRun:
         att, _ = _read(g, "SANS/attenuator/selection")
         bsx, _ = _read(g, "SANS/beam_stop/x_position")
         bsy, _ = _read(g, "SANS/beam_stop/y_position")
+        bst, _ = _read(g, "SANS/beam_stop/out_flag", False, missing)      # beam stop selector (BerSANS "Beamstop")
         name, _ = _read(g, "sample/name")
         pos, _ = _read(g, "sample/position", False, missing)
         thk, thu = _read(g, "sample/thickness", False, missing)
@@ -150,7 +191,7 @@ def read_sans_i(path, checksum: bool = True) -> RawRun:
         raise ValueError(f"chi_position unit '{chiu}' unexpected")
     if thk is not None and thu is not None and str(thu).lower() != "cm":
         thk = _length_m(thk, thu, "sample/thickness") * 100.0
-    return RawRun(
+    run = RawRun(
         path=path, run=int(m.group(1)), sha256=sha256_of(path) if checksum else "",
         counts=counts, n_frames=n_frames, counting_time_s=float(t), monitors=monitors,
         preset=float(preset), count_mode=str(mode),
@@ -163,6 +204,11 @@ def read_sans_i(path, checksum: bool = True) -> RawRun:
                            None if dy is None else _length_m(dy, dyu, "detector/y_position")),
         detector_tilt_deg=0.0 if chi is None else float(chi),
         attenuator=str(att).strip(), beamstop_xy_mm=(float(bsx), float(bsy)),
+        beamstop_type="" if bst is None else str(np.asarray(bst).ravel()[0] if np.ndim(bst) else bst).strip(),
         sample_name=str(name), sample_position_mm=None if pos is None else float(pos),
         sample_thickness_cm=None if thk is None else float(thk),
         start_time=str(start), end_time=end, missing_optional=missing)
+    off = distance_offset_for(run.start_time) if distance_offset_m is None else float(distance_offset_m)
+    if off:
+        run.L2_offset_m = off
+    return run

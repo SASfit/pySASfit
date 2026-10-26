@@ -311,6 +311,22 @@ register(T, TT, "Mask suggestion (Suggest in the detector panel)", [
     S("sasred.mask.hot", True, "also suggest hot pixels", "Pixels > 5 x the 5 x 5 median and 10 sigma above it.",
       kind="bool"),
 ])
+register(T, TT, "Reduction table", [
+    S("sasred.table.autofill", True, "fill the reduction table when a folder is opened", "", kind="bool"),
+])
+register(T, TT, "Detector distance", [
+    S("sasred.detector.distance_offset_mm", 53.0, "offset added to the recorded distance [mm]",
+      "Effective sample-detector distance = recorded distance + offset.", lo=-500, hi=500),
+    S("sasred.detector.distance_offset_before", "", "apply the offset to runs started before",
+      "Date YYYY-MM-DD; empty: all runs.", kind="str"),
+])
+register(T, TT, "Transmission runs", [
+    S("sasred.transmission.beamstop_out_mm", 100.0, "beam stop out of the beam beyond [mm]",
+      "Distance of the beam stop from the beam centre on the detector above which a run is a transmission run.",
+      lo=1, hi=2000),
+    S("sasred.transmission.deadtime_warn", 1.05, "warn above this dead-time factor", "",
+      lo=1.0, hi=2.0),
+])
 register(T, TT, "Detector efficiency", [
     S("sasred.efficiency.archive", "", "efficiency archive file",
       "Empty: efficiency_archive.h5 next to the preferences file.", kind="file",
