@@ -252,3 +252,19 @@ def test_old_package_name_still_imports():
         warnings.simplefilter("ignore", DeprecationWarning)
         from pysasfit.sasbox import hdf5 as old
     assert old is new
+
+
+def test_tab_style_marks_the_selected_tab():
+    pytest.importorskip("PySide6")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6 import QtWidgets
+    from pysasfit.core.tabstyle import apply_tab_style, tab_style_sheet
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    before = app.styleSheet()
+    try:
+        apply_tab_style(app)
+        apply_tab_style(app)                                   # only once
+        assert app.styleSheet().count("pysasfit-tab-style") == 1
+        assert "QTabBar::tab:selected" in tab_style_sheet() and "#d9d9d9" in tab_style_sheet()
+    finally:
+        app.setStyleSheet(before)

@@ -133,6 +133,8 @@ class MainWindow(QtWidgets.QMainWindow):
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv)
+    from ..core.tabstyle import apply_tab_style
+    apply_tab_style(app)
     app.setWindowIcon(tool_icon("pyTOOLbox"))
     w = MainWindow()
     w.show()

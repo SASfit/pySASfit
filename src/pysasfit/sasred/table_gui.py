@@ -202,6 +202,7 @@ class GeometryPage(QtWidgets.QWidget):
         box2 = QtWidgets.QGroupBox("Sample data")
         sl = QtWidgets.QVBoxLayout(box2)
         self.samp = self._make_table(COLS_SAMPLE, 0)
+        self.samp.itemSelectionChanged.connect(lambda: self.panel.rows_selected.emit())
         sl.addWidget(self.samp, 1)
         row = QtWidgets.QHBoxLayout()
         red = QtWidgets.QHBoxLayout()
@@ -466,6 +467,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
     from the reduction completely (the raw files stay untouched)."""
 
     changed = QtCore.Signal()
+    rows_selected = QtCore.Signal()          # sample rows selected (or another geometry tab shown)
 
     def __init__(self, entries: Callable[[], list], centre: Callable[[object], tuple], parent=None, log=None):
         """``centre(raw)``: the beam centre of the geometry of a raw run."""

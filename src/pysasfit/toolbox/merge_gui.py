@@ -24,6 +24,20 @@ _TOOLS: "weakref.WeakSet" = weakref.WeakSet()      # open merge tools (launcher 
 _OWN_WINDOWS: list = []                              # pyTOOLbox windows opened by send_reduced
 
 
+def _reveal(w):
+    """Bring a widget to the front: the tabs that hold it (pyTOOLbox, launcher) and its window."""
+    x = w
+    while x is not None:
+        p = x.parentWidget()
+        if isinstance(p, QtWidgets.QStackedWidget) and isinstance(p.parentWidget(), QtWidgets.QTabWidget):
+            p.parentWidget().setCurrentWidget(x)
+        x = p
+    win = w.window()
+    win.show()
+    win.raise_()
+    win.activateWindow()
+
+
 def send_reduced(results: Dict[object, object], source: str = "pySASred") -> "MergeTool":
     """Hand pySASred results (key -> ReducedRun) to a merge tool without writing files: the open one
     (e.g. the pyTOOLbox tab of the launcher), else a new pyTOOLbox window. Curves sent before under
@@ -75,11 +89,17 @@ class MergeTool(QtWidgets.QWidget):
         lay.addWidget(split)
 
         # ---------------------------------------------------------------- left: files, grouping, options
+        # three steps as tabs, so that each table gets the full height
         left = QtWidgets.QWidget()
         lv = QtWidgets.QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
-        fb = QtWidgets.QGroupBox("1. Reduced curves (pySASred in memory or files, BerSANS)")
+        self.steps = QtWidgets.QTabWidget()
+        lv.addWidget(self.steps, 1)
+        self.summary = QtWidgets.QLabel("")
+        lv.addWidget(self.summary)
+        fb = QtWidgets.QWidget()
         fl = QtWidgets.QVBoxLayout(fb)
+        fl.addWidget(QtWidgets.QLabel("pySASred results in memory, pySASred NXcanSAS / ASCII files, BerSANS 1D files"))
         row = QtWidgets.QHBoxLayout()
         for text, slot in (("Add files…", self.on_add_files), ("Add folder…", self.on_add_folder),
                            ("From pySASred", self.on_from_sasred), ("Show 2D", self.on_show_2d),
@@ -94,10 +114,16 @@ class MergeTool(QtWidgets.QWidget):
         self.files.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.files.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.files.horizontalHeader().setStretchLastSection(True)
-        fl.addWidget(self.files)
-        lv.addWidget(fb, 3)
+        self.filter = QtWidgets.QLineEdit()
+        self.filter.setPlaceholderText("filter rows: text in file, sample or geometry (regular expression)")
+        self.filter.textChanged.connect(self._apply_filter)
+        fl.addWidget(self.filter)
+        fl.addWidget(self.files, 1)
+        self.steps.addTab(fb, "1 · Curves")
 
-        gb = QtWidgets.QGroupBox("2. Group")
+        page2 = QtWidgets.QWidget()
+        p2 = QtWidgets.QVBoxLayout(page2)
+        gb = QtWidgets.QGroupBox("Group")
         gl = QtWidgets.QFormLayout(gb)
         self.regex = QtWidgets.QLineEdit()
         self.regex.setPlaceholderText(r"e.g. EXP-005370-(\w)_\d   (empty: the whole name)")
@@ -110,7 +136,8 @@ class MergeTool(QtWidgets.QWidget):
         self.items.horizontalHeader().setStretchLastSection(True)
         self.items.setToolTip("Groups are split by these items: text = equal values, numbers within ± "
                               "tolerance (empty: equal; '1%': relative). E.g. a temperature ± 0.5 K.")
-        self.items.setMaximumHeight(110)
+        self.items.setMinimumHeight(90)
+        self.items.setColumnWidth(0, 260)
         ib = QtWidgets.QVBoxLayout()
         add = QtWidgets.QPushButton("Add item")
         add.clicked.connect(lambda: self.add_item())
@@ -123,9 +150,9 @@ class MergeTool(QtWidgets.QWidget):
         ih.addWidget(self.items, 1)
         ih.addLayout(ib)
         gl.addRow(ih)
-        lv.addWidget(gb)
+        p2.addWidget(gb, 1)
 
-        ob = QtWidgets.QGroupBox("3. Merge")
+        ob = QtWidgets.QGroupBox("Merge")
         ol = QtWidgets.QFormLayout(ob)
         self.method = QtWidgets.QComboBox()
         self.method.addItem("weighted mean in the overlaps", "weighted")
@@ -139,23 +166,45 @@ class MergeTool(QtWidgets.QWidget):
         self.cuts.setHorizontalHeaderLabels(["geometry", "q min [1/nm]", "q max [1/nm]", "drop first", "drop last"])
         self.cuts.horizontalHeader().setStretchLastSection(True)
         self.cuts.setToolTip("q range and points dropped at the ends, per geometry (for all groups)")
-        self.cuts.setMaximumHeight(120)
+        self.cuts.setMinimumHeight(90)
         ol.addRow(self.cuts)
         b = QtWidgets.QPushButton("Group and merge")
         b.setStyleSheet("font-weight: bold")
         b.clicked.connect(self.on_merge)
-        ol.addRow(b)
-        lv.addWidget(ob)
+        p2.addWidget(ob, 1)
+        p2.addWidget(b)
+        self.steps.addTab(page2, "2 · Group and merge")
 
-        rb = QtWidgets.QGroupBox("4. Merged groups")
+        rb = QtWidgets.QWidget()
         rl = QtWidgets.QVBoxLayout(rb)
-        self.table = QtWidgets.QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["group", "curves", "geometries", "overlap mismatch", "notes"])
+        self.table = QtWidgets.QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels(["group", "sample", "curves", "geometries", "overlap mismatch", "notes"])
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.itemSelectionChanged.connect(self.replot)
-        rl.addWidget(self.table)
+        self.table.itemSelectionChanged.connect(self._show_sources)
+        rl.addWidget(self.table, 3)
+        rl.addWidget(QtWidgets.QLabel("Curves of the selected group (the underlying data):"))
+        self.sources = QtWidgets.QTableWidget(0, 6)
+        self.sources.setHorizontalHeaderLabels(["geometry", "sample", "source", "runs", "q range [1/nm]", "points"])
+        self.sources.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.sources.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.sources.horizontalHeader().setStretchLastSection(True)
+        self.sources.setToolTip("Double-click: show this curve in pySASred (reduction-table row or run) or, for a "
+                                "file, its folder in the curve list")
+        self.sources.itemDoubleClicked.connect(lambda _it: self.on_show_source())
+        rl.addWidget(self.sources, 2)
+        srow = QtWidgets.QHBoxLayout()
+        bsrc = QtWidgets.QPushButton("Show in pySASred")
+        bsrc.setToolTip("select the reduction-table row (or run) of the selected curve in pySASred")
+        bsrc.clicked.connect(self.on_show_source)
+        b2d = QtWidgets.QPushButton("Show 2D")
+        b2d.clicked.connect(lambda: self._emit_images(self._source_curves(selected_only=True)))
+        srow.addWidget(bsrc)
+        srow.addWidget(b2d)
+        srow.addStretch(1)
+        rl.addLayout(srow)
         sv = QtWidgets.QHBoxLayout()
         self.out_ascii = QtWidgets.QCheckBox("ASCII per curve")
         self.out_ascii.setChecked(True)
@@ -177,7 +226,7 @@ class MergeTool(QtWidgets.QWidget):
         sb.addWidget(b2)
         sb.addStretch(1)
         rl.addLayout(sb)
-        lv.addWidget(rb, 3)
+        self.steps.addTab(rb, "3 · Merged groups")
         split.addWidget(left)
 
         # ---------------------------------------------------------------- right: plot
@@ -314,6 +363,74 @@ class MergeTool(QtWidgets.QWidget):
             self._log("no 2D image for: " + ", ".join(missing[:8]) + (" …" if len(missing) > 8 else ""))
         return out
 
+    # ------------------------------------------------------------------ underlying data of a group
+    def _source_curves(self, selected_only=False):
+        sel = self.selected()
+        if not sel:
+            return []
+        cs = list(sel[0].group.curves)
+        if selected_only:
+            rows = sorted({i.row() for i in self.sources.selectedIndexes()})
+            if rows:
+                cs = [cs[r] for r in rows if r < len(cs)]
+        return cs
+
+    def _show_sources(self):
+        cs = self._source_curves()
+        t = self.sources
+        t.setRowCount(len(cs))
+        for i, c in enumerate(cs):
+            lo, hi = c.q_range()
+            src = (f"pySASred: {c.path.split(':', 1)[1]}" if c.path.startswith("pySASred:")
+                   else c.path + (f" : {c.entry}" if c.entry else ""))
+            runs = str(c.meta.get("runs") or c.meta.get("run") or "")
+            for j, v in enumerate((c.geometry, c.sample, src, runs, f"{lo:.4g} – {hi:.4g}", str(len(c.q)))):
+                it = QtWidgets.QTableWidgetItem(v)
+                it.setToolTip(v if j != 2 else c.path)
+                t.setItem(i, j, it)
+        t.resizeColumnsToContents()
+
+    def _emit_images(self, curves):
+        imgs = self.images_for(curves)
+        if imgs:
+            self.images_requested.emit(imgs)
+
+    def on_show_source(self):
+        """Select the reduction-table row (or run) of the selected curve in an open pySASred window."""
+        cs = self._source_curves(selected_only=True)
+        if not cs:
+            return
+        c = cs[0]
+        if not c.path.startswith("pySASred:"):
+            self._log(f"{c.name}: file {c.path}")
+            return
+        key = c.path.split(":", 1)[1]
+        try:
+            from ..sasred.gui import MainWindow as Red
+        except Exception as exc:  # noqa: BLE001
+            self._log(f"pySASred not available: {exc}")
+            return
+        for w in list(Red.instances):
+            res = getattr(w, "results", {})
+            k = int(key) if key.isdigit() else key
+            if k not in res:
+                continue
+            if isinstance(k, int):
+                w.select_runs([k])
+            else:
+                panel = w.table_panel
+                for i, page in enumerate(panel.pages()):
+                    pre = page.table.config.split(",")[0]
+                    for r, row in enumerate(page.table.samples):
+                        if f"{pre} {row.label}" == key:
+                            panel.tabs.setCurrentIndex(i)
+                            w.show_table() if hasattr(w, "show_table") else None
+                            page.samp.selectRow(r)
+            _reveal(w)
+            self._log(f"{key} shown in pySASred")
+            return
+        self._log(f"{key}: not (any more) in an open pySASred window")
+
     def on_show_2d(self):
         rows = sorted({i.row() for i in self.files.selectedIndexes()})
         imgs = self.images_for([self.curves[r] for r in rows if r < len(self.curves)])
@@ -330,6 +447,27 @@ class MergeTool(QtWidgets.QWidget):
         self.curves = []
         self._refresh_files()
 
+    def _apply_filter(self, text=None):
+        import re as _re
+        text = self.filter.text().strip() if text is None else text.strip()
+        try:
+            rx = _re.compile(text, _re.I) if text else None
+        except _re.error:
+            rx = None
+        for i, c in enumerate(self.curves):
+            hide = rx is not None and not any(rx.search(v or "") for v in (c.name, c.sample, c.geometry))
+            self.files.setRowHidden(i, hide)
+
+    def _update_summary(self):
+        geos = {c.geometry for c in self.curves}
+        s = f"{len(self.curves)} curves, {len(geos)} geometr{'y' if len(geos) == 1 else 'ies'}"
+        if self.merged:
+            bad = sum(1 for m in self.merged if any(abs(o.factor - 1) > 0.05 for o in m.overlaps))
+            s += f"; {len(self.merged)} groups merged" + (f", {bad} with overlap mismatch > 5 %" if bad else "")
+        self.summary.setText(s)
+        self.steps.setTabText(0, f"1 · Curves ({len(self.curves)})")
+        self.steps.setTabText(2, f"3 · Merged groups ({len(self.merged)})")
+
     def _refresh_files(self):
         t = self.files
         t.setRowCount(len(self.curves))
@@ -340,6 +478,8 @@ class MergeTool(QtWidgets.QWidget):
                 it.setToolTip(c.path)
                 t.setItem(i, j, it)
         t.resizeColumnsToContents()
+        self._apply_filter()
+        self._update_summary()
         fields = mg.fields_of(self.curves)
         for r in range(self.items.rowCount()):
             cb = self.items.cellWidget(r, 0)
@@ -431,22 +571,34 @@ class MergeTool(QtWidgets.QWidget):
             g = m.group
             worst = max(m.overlaps, key=lambda o: abs(o.factor - 1), default=None)
             mis = "" if worst is None else f"{100 * (worst.factor - 1):+.1f} % (z {worst.z:+.1f})"
-            vals = (g.label, str(len(g.curves)), " | ".join(m.geometries), mis, "; ".join(m.notes))
+            # geometries: only the parts that differ between them (e.g. "L2 8.00 m | L2 2.00 m")
+            parts = [x.split(", ") for x in m.geometries]
+            keep = [i for i in range(max(map(len, parts), default=0))
+                    if len({p[i] if i < len(p) else "" for p in parts}) > 1] or [0]
+            geo_short = " | ".join(", ".join(p[i] for i in keep if i < len(p)) for p in parts)
+            samples = sorted({c.sample for c in g.curves})
+            vals = (g.label, ", ".join(samples), str(len(g.curves)), geo_short, mis, "; ".join(m.notes))
             for j, v in enumerate(vals):
                 it = QtWidgets.QTableWidgetItem(v)
-                if j == 3 and worst is not None:
+                if j == 4 and worst is not None:
                     it.setToolTip("\n".join(o.text() for o in m.overlaps))
                     if abs(worst.factor - 1) > 0.05:
                         it.setForeground(QtGui.QBrush(_RED))
                     elif abs(worst.factor - 1) > 0.02:
                         it.setForeground(QtGui.QBrush(_ORANGE))
-                if j == 4:
+                if j == 3:
+                    it.setToolTip("\n".join(m.geometries))
+                if j == 1:
+                    it.setToolTip("\n".join(samples))
+                if j == 5:
                     it.setToolTip("\n".join(m.notes))
                 t.setItem(i, j, it)
         t.resizeColumnsToContents()
         t.setColumnWidth(0, min(t.columnWidth(0), 320))
         t.setColumnWidth(2, min(t.columnWidth(2), 360))
         self._log(f"{len(self.merged)} groups merged ({self.method.currentText()})")
+        self._update_summary()
+        self.steps.setCurrentIndex(2)
         if self.merged:
             t.selectRow(0)
         self.replot()
@@ -501,11 +653,16 @@ class MergeTool(QtWidgets.QWidget):
                                 label=f"{c.geometry}" if k == 0 else None)
                 if len(m.q):
                     ax.errorbar(m.q, m.I * f, m.dI * f, fmt="-", lw=1.2, color=col, elinewidth=0.6,
-                                label=f"{m.group.label}" + (f" (× {f:g})" if f != 1 else ""))
+                                label=f"{', '.join(sorted({c.sample for c in m.group.curves}))} [{m.group.label}]"
+                                + (f" (× {f:g})" if f != 1 else ""))
                 for o in m.overlaps:
                     ax.axvspan(*o.q_range, color=col, alpha=0.06)
             if len(sel) == 1:
-                ax.set_title("\n".join(o.text() for o in sel[0].overlaps)[:300], fontsize=7)
+                def short(g):
+                    return g.split(",")[0]
+                ax.set_title(f"{sel[0].group.label}: " + "; ".join(
+                    f"{short(o.high)} / {short(o.low)} = {o.factor:.3f} ± {o.sigma:.3f} (z {o.z:+.1f})"
+                    for o in sel[0].overlaps), fontsize=8)
         if ax.has_data():
             ax.legend(fontsize=7, loc="best")
         self.canvas.draw_idle()

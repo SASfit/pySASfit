@@ -1,5 +1,11 @@
 # Merge geometries
 
+The page has three tabs on the left, one per step, so that each table gets the full height: **1 · Curves**
+(the curves read, with a filter field: a regular expression on file, sample or geometry), **2 · Group and
+merge** (grouping and merge options, button *Group and merge*) and **3 · Merged groups** (the result,
+selected for the plot, and saving; opened after merging). The line below the tabs counts curves,
+geometries and merged groups. The step numbers below refer to these tabs.
+
 The tab **Merge geometries** of pyTOOLbox (module {mod}`pysasfit.toolbox.merge`) merges the reduced curves of
 the different detector distances (and wavelengths) of a sample into one curve. Curves are grouped by the sample
 name, through a regular expression, and by any other header item with a tolerance, so that a sample measured at
@@ -68,6 +74,15 @@ from neighbour to neighbour; the factors are written into the output.
 
 The table of geometries holds a **q range** and the **points dropped** at the low and high q end of every
 geometry, for all groups, like BerSANS' merge mask (`.smi`, `#` = point not used).
+
+## Underlying data of a group
+
+The table of merged groups shows the sample name(s) of every group, and the legend of the plot starts with
+them. Below it, *Curves of the selected group* lists the curves that were merged: geometry, sample, source (the
+pySASred reduction-table row or run, or the file and entry), the runs summed, q range and number of points.
+*Show in pySASred* (or a double-click) selects that row or run in the open pySASred window and brings it to the
+front, where its runs, transmissions and notes are; *Show 2D* opens the 2D images of the selected curves. There
+is no need to go back to pySASred by hand.
 
 ## 4. Plot and save
 

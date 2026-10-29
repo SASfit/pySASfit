@@ -341,8 +341,17 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from .mask_editor import MaskEditor
         self.mask_editor = MaskEditor(self)                 # mask: suggest, draw, undo, load / save
         self.mask_editor.changed.connect(self._schedule_preview)
+        tools = QtWidgets.QToolButton()
+        tools.setText("mask tools")
+        tools.setCheckable(True)
+        tools.setChecked(True)
+        tools.setToolTip("show / hide the mask tools (more room for the image in a small panel)")
+        tools.toggled.connect(lambda on: (self.mask_editor.bar.setVisible(on), self.mask_cfg.setVisible(on)))
+        bar.addWidget(tools)
+        self.mask_tools_button = tools
         self.mask_cfg = QtWidgets.QLabel("")
-        self.mask_cfg.setWordWrap(True)
+        self.mask_cfg.setWordWrap(False)
+        self.mask_cfg.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Fixed)
         self.mask_cfg.setToolTip("Each instrument configuration (L1, L2, λ, beam stop type and position) has its own "
                                  "mask: selecting a run of another configuration switches the mask; reductions use "
                                  "the mask of their configuration (or the suggested one if none was edited)")
@@ -350,7 +359,26 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                                                           bars=(bar_w, self.mask_editor.bar, self.mask_cfg)),
                        Area.RightDockWidgetArea)
         self.iq_canvas = _canvas()
-        self._add_dock("iq", "I(q)", plot_panel(self.iq_canvas, self), Area.RightDockWidgetArea)
+        iq_bar = QtWidgets.QHBoxLayout()
+        self.iq_show = QtWidgets.QComboBox()
+        self.iq_show.addItem("selected runs / table rows", "selected")
+        self.iq_show.addItem("last reduction", "last")
+        self.iq_show.addItem("all reduced", "all")
+        self.iq_show.setToolTip("Which reduced curves I(q) shows. 'selected': the runs selected in the run table and "
+                                "the rows selected in the reduction table (the last reduction when none of them "
+                                "is reduced). The legend is shown up to 12 curves.")
+        self.iq_show.currentIndexChanged.connect(lambda _i: self._draw_iq())
+        self.iq_offset = QtWidgets.QDoubleSpinBox()
+        self.iq_offset.setRange(1.0, 1000.0)
+        self.iq_offset.setDecimals(1)
+        self.iq_offset.setPrefix("offset × ")
+        self.iq_offset.setToolTip("successive curves multiplied by this factor (1: none)")
+        self.iq_offset.valueChanged.connect(lambda _v: self._draw_iq())
+        iq_bar.addWidget(labelled("show", self.iq_show))
+        iq_bar.addWidget(self.iq_offset)
+        iq_bar.addStretch(1)
+        self._last_keys = []
+        self._add_dock("iq", "I(q)", plot_panel(self.iq_canvas, self, bars=(iq_bar,)), Area.RightDockWidgetArea)
         self.budget_canvas = _canvas()
         self._add_dock("budget", "Error budget", plot_panel(self.budget_canvas, self), Area.RightDockWidgetArea)
         self.splitDockWidget(self.docks["detector"], self.docks["iq"], QtCore.Qt.Orientation.Horizontal)
@@ -364,6 +392,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from .table_gui import ReductionTableWidget
         self.table_panel = ReductionTableWidget(lambda: self.entries, self.centre_for, self, log=self.log)
         self.table_panel.reduce_rows = self.reduce_table_rows
+        self.table_panel.rows_selected.connect(self._draw_iq)
+        self.table_panel.tabs.currentChanged.connect(lambda _i: self._draw_iq())
         self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea)
         m = self.menuBar().addMenu("&Reduction")
         m.addAction("Reduction &table", self.show_table)
@@ -416,8 +446,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             ed._update_stats()
             self._mask_key = k
         n = len(set(self.masks) | ({k} if not ed.pristine else set()))
-        self.mask_cfg.setText(f"mask for {mask_key_label(k)}" + ("" if not ed.pristine else " (not edited yet)")
-                              + (f" – masks edited for {n} configuration{'s' if n != 1 else ''}" if n else ""))
+        L1, L2, lam, bst, bx, by = k
+        self.mask_cfg.setText(f"mask: L1 {L1:g}, L2 {L2:g} m, {lam:g} Å, BS {bst or '?'} ({bx}, {by})"
+                              + (" · new" if ed.pristine else "") + (f" · {n} edited" if n else ""))
+        self.mask_cfg.setToolTip(f"mask for {mask_key_label(k)}" + (" (not edited yet)" if ed.pristine else "")
+                                 + f"\nmasks edited for {n} configuration{'s' if n != 1 else ''}")
 
     def _commit_mask(self):
         if self._mask_key is not None and self.mask_editor.mask is not None and not self.mask_editor.pristine:
@@ -485,6 +518,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             return read_sans_i(paths[n])
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
         done = None
+        self._last_keys = []
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
         try:
             for row in rows:
@@ -502,8 +536,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                     self.log(f"{tag} ({row.info}): FAILED – {type(exc).__name__}: {exc}")
                     continue
                 self.results[tag] = r1
+                self._last_keys.append(tag)
                 done = tag
-                self.log(f"{tag} ({row.info}): runs {row.runs_text()}, {len(r1.q)} bins, {r1.intensity.unit}")
+                self.log(f"{tag} ({row.info}): runs {row.runs_text()}, {len(r1.q)} bins "
+                         f"({getattr(self, '_last_bins', '')}), {r1.intensity.unit}")
                 for n in dict.fromkeys(r1.notes):
                     self.log(f"    {n}")
                 QtWidgets.QApplication.processEvents()
@@ -610,7 +646,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def _on_selection(self):
         self._show_centre_of(self.displayed_raw())
         self._draw_detector()
-        self._schedule_preview()
+        self._schedule_preview()          # also redraws I(q) (selected curves)
 
     # ------------------------------------------------------------------ beam centre per geometry
     def centre_for(self, raw) -> tuple:
@@ -801,7 +837,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             qmax = qmax if qmax > 0 else float(q.max()) * (1 + 1e-9)
         if qmax <= qmin:
             raise ValueError(f"q max ({u.q_out(qmax):g}) must be larger than q min ({u.q_out(qmin):g}) {u.q}")
-        return q_edges(qmin, qmax, self.nbins.value(), self.spacing.currentData())
+        e = q_edges(qmin, qmax, self.nbins.value(), self.spacing.currentData())
+        self._last_bins = (f"{self.nbins.value()} {self.spacing.currentText()} q bins, "
+                           f"{u.q_out(qmin):.4g}–{u.q_out(qmax):.4g} {u.q}")
+        return e
 
     def reduce_entry(self, e):
         """Reduce one catalogue entry with the panel settings (re-read with checksum)."""
@@ -828,6 +867,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                   "the geometry.")
             return
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        self._last_keys = []
         try:
             for e in sel:
                 try:
@@ -836,7 +876,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                     self.log(f"run {e.run}: FAILED – {type(exc).__name__}: {exc}")
                     continue
                 self.results[r.run] = r
-                self.log(f"run {r.run} ({r.raw.sample_name}): {len(r.q)} bins, q = {self.units.q_out(r.q[0]):.4g} … "
+                self._last_keys.append(r.run)
+                self.log(f"run {r.run} ({r.raw.sample_name}): {len(r.q)} bins ({getattr(self, '_last_bins', '')}), q = {self.units.q_out(r.q[0]):.4g} … "
                          f"{self.units.q_out(r.q[-1]):.4g} {self.units.q}, "
                          f"dead-time factor {r.deadtime_factor:.4f}")
                 for n in r.notes:
@@ -994,26 +1035,55 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         ax.set_ylabel(f"q [{u.q}]")
         ax.set_title(f"run {raw.run}: {raw.sample_name}", fontsize="medium")
 
+    def shown_results(self):
+        """(key, result) pairs that I(q) shows (see the 'show' selector of the I(q) panel)."""
+        mode = self.iq_show.currentData() if hasattr(self, "iq_show") else "all"
+        if mode == "all":
+            keys = list(self.results)
+        else:
+            keys = []
+            if mode == "selected":
+                keys = [e.run for e in self.selected_entries() if e.run in self.results]
+                try:
+                    page = self.table_panel.page
+                    if page is not None:
+                        pre = page.table.config.split(",")[0]
+                        keys += [k for k in (f"{pre} {r.label}" for r in page.selected_rows()) if k in self.results]
+                except Exception:  # noqa: BLE001
+                    pass
+            if not keys:
+                keys = [k for k in self._last_keys if k in self.results]
+        return [(k, self.results[k]) for k in dict.fromkeys(keys)]
+
     def _draw_iq(self):
         fig = self.iq_canvas.figure
         fig.clear()
         ax = fig.add_subplot(111)
         u = self.units
-        for run, r in self.results.items():
-            ax.errorbar(u.q_out(r.q), r.I, yerr=r.idev(), fmt="o", ms=3, capsize=0, lw=0.8,
-                        label=f"{run} {r.parameters.get('sample', r.raw.sample_name)}")
+        shown_items = self.shown_results()
+        f = self.iq_offset.value() if hasattr(self, "iq_offset") else 1.0
+        for k, (key, r) in enumerate(shown_items):
+            lab = r.parameters.get("label") or key
+            ax.errorbar(u.q_out(r.q), r.I * f ** k, yerr=r.idev() * f ** k, fmt="o", ms=3, capsize=0, lw=0.8,
+                        label=f"{lab} {r.parameters.get('sample', r.raw.sample_name)}" + (f" ×{f ** k:g}" if k and f != 1 else ""))
         p = self.preview
         if p is not None:
             ax.errorbar(u.q_out(p.q), p.I, yerr=p.idev(), fmt="--", color="0.15", lw=1.0, capsize=0,
                         elinewidth=0.6, label=f"live: {p.run} {p.raw.sample_name}")
-        shown = list(self.results.values()) + ([p] if p is not None else [])
+        shown = [r for _, r in shown_items] + ([p] if p is not None else [])
         if shown:
             ax.set_xscale("log")
             if all(np.all(r.I > 0) for r in shown):
                 ax.set_yscale("log")
             _log_q_ticks(ax)
-            ax.legend(fontsize="small")
+            if len(shown) <= 12:
+                ax.legend(fontsize="small")
+            else:                                  # a legend of many curves would squeeze the axes away
+                ax.set_title(f"{len(shown)} curves – select runs or table rows to see fewer (with legend)",
+                             fontsize="small")
             ax.set_ylabel(f"I [{shown[0].intensity.unit}]")
+        elif self.results:
+            ax.set_title("select reduced runs or table rows ('show' above the plot)", fontsize="small")
         ax.set_xlabel(f"q [{u.q}]")
         self.iq_canvas.draw_idle()
 
@@ -1112,12 +1182,14 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         return {"folder": self.folder, "xc": self.xc.value(), "yc": self.yc.value(),
                 "beamstop_radius_px": self.bs_radius.value(), "beamstop_shape": self.bs_shape.currentData(),
                 "nbins": self.nbins.value(),
+                "prefs_at_save": {k: prefs.get(k) for k in self._PANEL_PREFS},
                 "qmin": self.units.q_in(self.qmin.value()), "qmax": self.units.q_in(self.qmax.value()),
                 "units": self.unit, "live": self.live.isChecked(), "spacing": self.spacing.currentData(),
                 "normalise_by": self.norm.currentData(), "sector": self.sector.isChecked(),
                 "sector_c": self.sector_c.value(), "sector_hw": self.sector_hw.value(),
                 "detector_scale": self.det_scale.currentData(), "detector_cmap": self.det_cmap.currentText(),
                 "detector_view": self.det_view.currentData(),
+                "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
                             if c.source != "direct beam" and not c.source.startswith("borrowed")],
                 "dock_state": self.dock_state()}
@@ -1171,9 +1243,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 w.setValue(self.units.q_out(float(s[key])))
         if "live" in s:
             self.live.setChecked(bool(s["live"]))
-        if isinstance(s.get("nbins"), int):
+        # a preference changed since the session was saved wins over the session value (otherwise a
+        # q-bin spacing set in Settings → Preferences would be undone at every start)
+        saved = s.get("prefs_at_save") or {}
+
+        def keep(key, pref):
+            if pref not in saved:                       # older session: the preference wins when they differ
+                return s.get(key) == prefs.get(pref)
+            return saved[pref] == prefs.get(pref)
+        if isinstance(s.get("nbins"), int) and keep("nbins", "sasred.qbins.n"):
             self.nbins.setValue(s["nbins"])
-        for key, combo in (("spacing", self.spacing), ("normalise_by", self.norm), ("beamstop_shape", self.bs_shape)):
+        for key, combo, pref in (("spacing", self.spacing, "sasred.qbins.spacing"),
+                                 ("normalise_by", self.norm, "sasred.normalise_by"),
+                                 ("beamstop_shape", self.bs_shape, "sasred.mask.beamstop_shape")):
+            if not keep(key, pref):
+                continue
             i = combo.findData(s.get(key))
             if i >= 0:
                 combo.setCurrentIndex(i)
@@ -1187,6 +1271,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         i = self.det_view.findData(s.get("detector_view"))
         if i >= 0:
             self.det_view.setCurrentIndex(i)
+        if "mask_tools" in s:
+            self.mask_tools_button.setChecked(bool(s["mask_tools"]))
+        i = self.iq_show.findData(s.get("iq_show"))
+        if i >= 0:
+            self.iq_show.setCurrentIndex(i)
         self.restore_dock_state(s.get("dock_state"))
         if os.path.isfile(self._session_mask_path()):
             try:
@@ -1238,6 +1327,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv)
+    from ..core.tabstyle import apply_tab_style
+    apply_tab_style(app)
     app.setWindowIcon(tool_icon("pySASred"))
     w = MainWindow()
     w.show()

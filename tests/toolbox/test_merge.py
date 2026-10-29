@@ -146,8 +146,11 @@ def test_gui(folder, tmp_path_factory):
     t.add_item("Sample/Temperature", "0.5")
     t.on_merge()
     assert t.table.rowCount() == 4 and "Temperature 20" in t.table.item(0, 0).text()
-    assert "+3.0 %" in t.table.item(2, 3).text() or "+2.9 %" in t.table.item(2, 3).text() \
-        or "+3.1 %" in t.table.item(2, 3).text()
+    assert "+3.0 %" in t.table.item(2, 4).text() or "+2.9 %" in t.table.item(2, 4).text() \
+        or "+3.1 %" in t.table.item(2, 4).text()
+    assert t.table.item(0, 1).text() == "EXP-1-A_1"
+    t.table.selectRow(0)
+    assert t.sources.rowCount() == 4 and t.sources.item(0, 1).text() == "EXP-1-A_1"
     t.mode.setCurrentIndex(1)
     t.series_key.setCurrentText("Sample/Temperature")
     t.replot()
@@ -195,6 +198,13 @@ def test_from_sasred_in_memory():
     t.on_merge()
     assert t.table.rowCount() == 2 and len(t.merged[0].overlaps) == 1
     assert abs(t.merged[0].overlaps[0].factor - 1) < 0.03
+    t.table.selectRow(0)                                         # underlying curves, back to pySASred
+    assert t.sources.rowCount() == 2 and t.sources.item(0, 2).text().startswith("pySASred: L2 ")
+    t.sources.selectRow(1)
+    t.on_show_source()
+    pg = red.table_panel.page
+    sel = pg.selected_rows()
+    assert len(sel) == 1 and sel[0].info.startswith("EXP-005370-A_1")
     # pySASred → open merge tool (send)
     merge_gui.send_reduced(red.results)
     assert len(t.curves) == 4 or any(len(x.curves) == 4 for x in merge_gui._TOOLS)

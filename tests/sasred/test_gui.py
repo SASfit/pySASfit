@@ -235,3 +235,40 @@ def test_mask_and_centre_per_configuration(tmp_path):
     row = [e for e in w.entries if e.run == 82130][0].row()
     assert row[COLUMNS.index("L1 [m]")] == "8.0" and row[COLUMNS.index("beam stop (x, y mm)")] == "3 (-27, 1)"
     w.close()
+
+
+def test_session_does_not_undo_changed_preference(tmp_path, monkeypatch):
+    """A q-bin spacing set in the preferences after the session was saved is used at the next start."""
+    import json
+    from pysasfit.core import settings as prefs
+    from pysasfit.sasred import gui as g
+    _app()
+    sess = tmp_path / "sasred_session.json"
+    monkeypatch.setattr(g, "_session_path", lambda: str(sess))
+    old = prefs.get("sasred.qbins.spacing")
+    try:
+        prefs.set_value("sasred.qbins.spacing", "log")
+        w = MainWindow()
+        w.spacing.setCurrentIndex(w.spacing.findData("log"))
+        w.save_session()
+        w.close()
+        prefs.set_value("sasred.qbins.spacing", "lin")              # changed afterwards
+        w = MainWindow()
+        w.restore_session()
+        assert w.spacing.currentData() == "lin"
+        w.spacing.setCurrentIndex(w.spacing.findData("log"))       # changed in the panel: kept next time
+        w.save_session()
+        w.close()
+        w = MainWindow()
+        w.restore_session()
+        assert w.spacing.currentData() == "log"
+        w.close()                                                   # (closing saves the session)
+        d = json.loads(sess.read_text())                            # session without the record (older)
+        d.pop("prefs_at_save")
+        sess.write_text(json.dumps(d))
+        w = MainWindow()
+        w.restore_session()
+        assert w.spacing.currentData() == "lin"                     # preference wins when they differ
+        w.close()
+    finally:
+        prefs.set_value("sasred.qbins.spacing", old)
