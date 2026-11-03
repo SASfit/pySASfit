@@ -35,11 +35,11 @@ per steradian, I(q) in counts / monitor / sr.
 
 | implemented | still to come (phase 3 of the definition) |
 |---|---|
-| reading SANS-I HDF files (units from the attributes, strict required fields, SHA-256 of the raw file) | SANS-LLB reader |
+| reading SANS-I and SANS-LLB HDF files (units from the attributes, strict required fields, SHA-256 of the raw file; SANS-LLB central detector + wide-angle panels); runs without data (time 0, 0 counts, monitor 0) skipped and marked | SANS-LLB panel offsets from a standard (AgBe) |
 | counting error, dead time (non-paralysable, global or per tube), attenuator, monitor or time normalisation | |
-| reduction of the table rows in 2D (transmission, Cd, sample background with (1 − p_cS), water and empty cell with g(λ), thickness, absolute scale), then the radial average; missing corrections allowed and noted | water anisotropy K(2θ) in the reduction; 2D output files |
+| reduction of the table rows in 2D (transmission, Cd, sample background with (1 − p_cS), water and empty cell with g(λ), thickness, absolute scale from water or from the direct beam + efficiency map), then the radial average; optional corrections (Cd, backgrounds) left out or switched off; missing inputs red in the table and listed in the panel *Missing input* | water anisotropy K(2θ) in the reduction; 2D output files; direct-beam scale for the SANS-LLB panels |
 | geometry with detector tilt, exact solid angle | |
-| detector efficiency from water (empty cell, transmissions, solid angle; masked pixels from the x and y wires), transmission tables, dated archive of the maps in one HDF5 file with comparison over time | efficiency and its archive in the GUI |
+| detector efficiency from water (empty cell, transmissions, solid angle; masked pixels from the x and y wires), transmission tables, dated archive of the maps in one HDF5 file with comparison over time; in the GUI: made from the water of any geometry, shown as a 2D map, saved / archived; raw image ÷ efficiency / ÷ solid angle | archive browser in the GUI |
 | beam centre from the direct beam | grouping and equivalence check in the GUI file selection, batch scripts |
 | scattering strength after Strunz et al. (2000): transmission over growing apertures (T_Si, τ_UL, lower limit of p_cS), p_cS from the curve, regime and advice, self-consistent p_cS | guided strong-scatterer step in the GUI; general formula with T_EB, (1 − p_cS), K0 |
 | BerSANS-like grouping of runs by metadata with precisions; equivalence check of repeated runs (outliers, scale and shape drift, e.g. sedimentation) before summing; reduction plan with roles, summed runs, outliers and missing runs per configuration | *Runs* panel in the GUI |
@@ -59,6 +59,7 @@ reduction
 formula
 grouping
 scripting
+sans_llb
 ```
 
 The API reference is {doc}`api` (also listed under {doc}`../api/index`).

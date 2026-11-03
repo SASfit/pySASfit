@@ -25,7 +25,7 @@ def test_window_without_data():
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
     _app()
     w = MainWindow()
-    assert set(w.docks) == {"runs", "reduction", "detector", "iq", "budget", "log", "table"}
+    assert set(w.docks) == {"runs", "reduction", "detector", "iq", "budget", "log", "table", "missing"}
     canvases = w.findChildren(FigureCanvasQTAgg)
     bars = {id(tb.canvas) for tb in w.findChildren(NavigationToolbar2QT)}
     assert len(canvases) == 3 and all(id(c) in bars for c in canvases)
@@ -272,3 +272,32 @@ def test_session_does_not_undo_changed_preference(tmp_path, monkeypatch):
         w.close()
     finally:
         prefs.set_value("sasred.qbins.spacing", old)
+
+
+def test_active_panel_and_arrange():
+    """Clicking into a panel frames it in colour; View → Arrange panels tiles / stacks / tabs the panels."""
+    from PySide6 import QtCore, QtTest
+    from pysasfit.core.docking import ACTIVE_PANEL_COLOUR, DEFAULT_PANEL_BORDER
+    app = _app()
+    w = MainWindow()
+    w.resize(1600, 900)
+    w.show()
+    app.processEvents()
+    assert DEFAULT_PANEL_BORDER == "raised"
+    QtTest.QTest.mouseClick(w.nbins, QtCore.Qt.MouseButton.LeftButton)
+    app.processEvents()
+    assert w.active_panel == "reduction" and ACTIVE_PANEL_COLOUR in w.panel_frames["reduction"].styleSheet()
+    QtTest.QTest.mouseClick(w.folder_edit, QtCore.Qt.MouseButton.LeftButton)
+    app.processEvents()
+    assert w.active_panel == "runs" and w.panel_frames["reduction"].styleSheet() == ""
+    for how in ("horizontal", "vertical", "grid", "tabs"):
+        w.arrange_panels(how)
+        app.processEvents()
+        vis = [n for n, d in w.docks.items() if not d.isHidden()]
+        assert len(vis) == len(w.docks)
+    w.arrange_panels("horizontal")
+    app.processEvents()
+    xs = sorted(d.geometry().x() for d in w.docks.values())
+    assert len(set(xs)) == len(xs)                      # all side by side
+    w.reset_layout()
+    w.close()

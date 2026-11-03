@@ -167,11 +167,15 @@ def water_image(waters, empties, blocked, centre, t_water, t_empty, instrument=N
     from .efficiency import water_intensity
     from .geometry import pixel_geometry
     from . import mask as mk
-    inst = instrument or load_instrument()
+    ws0 = _as_list(waters)
+    inst = instrument or load_instrument(ws0[0] if ws0 else None)
     tw, te = _transmission(t_water, "transmission:water"), _transmission(t_empty, "transmission:empty_cell")
     ws, ecs, bls = _as_list(waters), _as_list(empties), _as_list(blocked)
     notes = []
-    m, _ = mk.suggest_mask(np.sum([w.counts for w in ws], axis=0), centre)
+    if getattr(ws[0], "panel", None) is not None:
+        m, _ = mk.default_mask(ws[0], centre)
+    else:
+        m, _ = mk.suggest_mask(np.sum([w.counts for w in ws], axis=0), centre)
     W, m = combined_normalised_counts(ws, inst, notes, m)
     E = B = None
     if ecs:
@@ -179,7 +183,12 @@ def water_image(waters, empties, blocked, centre, t_water, t_empty, instrument=N
     if bls:
         B, m = combined_normalised_counts(bls, inst, notes, m)
     L2 = float(getattr(ws[0], "L2_effective_m", ws[0].L2_m)) if L2_m is None else float(L2_m)
-    g = pixel_geometry(ws[0].counts.shape, ws[0].pixel_size_m, centre, L2, ws[0].wavelength_A)
+    if getattr(ws[0], "panel", None) is not None:
+        from .geometry import run_geometry
+        g = run_geometry(ws[0], centre)
+        L2 = g.L2_m
+    else:
+        g = pixel_geometry(ws[0].counts.shape, ws[0].pixel_size_m, centre, L2, ws[0].wavelength_A)
     I = water_intensity(W, E, tw, te if E is not None else 1.0, g.d_omega, B)
     if dome:
         from .detector_model import window_transmission
@@ -201,8 +210,8 @@ def compare_water_runs(water_a, empty_a, water_b, empty_b, beam_center_px, t_wat
     pixel solid angle; masks suggested from the summed water counts. With ``dome`` each image is first
     divided by the transmission of the curved Al dome window and the flat Al membrane over the
     detector (it differs between the distances for the same pixel), so that K holds the water only."""
-    from ..reduce import load_instrument
-    inst = instrument or load_instrument()
+    from ..reduce import load_instrument, _as_list
+    inst = instrument or load_instrument((_as_list(water_a) or [None])[0])
 
     def one(ws, ecs, bls, centre):
         return water_image(ws, ecs, bls, centre, t_water, t_empty, inst, dome)

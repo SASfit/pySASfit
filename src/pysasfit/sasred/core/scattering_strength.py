@@ -211,7 +211,7 @@ def aperture_transmission_runs(sample, empty, centre, cd=None, instrument=None, 
     saturation and a (stronger) attenuator is recommended."""
     from ..catalogue import is_transmission
     from ..reduce import load_instrument, normalised_counts
-    inst = instrument or load_instrument()
+    inst = instrument or load_instrument(sample)
     if abs(sample.L2_m - empty.L2_m) > 0.01 * empty.L2_m:
         raise ValueError(f"sample at L2 = {sample.L2_m:.2f} m, empty beam at {empty.L2_m:.2f} m")
     if check_beamstop:

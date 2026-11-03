@@ -13,6 +13,18 @@ pip install -e ".[docs]"        # Sphinx, MyST and the theme, to build this docu
 
 Python ≥ 3.10, numpy ≥ 2.0, scipy ≥ 1.10.
 
+**Windows with MSYS2:** use the **UCRT64** environment; MINGW64 no longer has PySide6. PyPI has no PySide6 or VTK
+wheels for MSYS2's Python, so install Qt from pacman, then the rest with pip:
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-pyside6 mingw-w64-ucrt-x86_64-qt6-svg
+python -m pip install -e ".[gui,sasred,toolbox]"   # with the same python that runs pySASfit
+```
+
+Without `qt6-svg` the tools stop with "DLL load failed while importing QtSvg". PyVista (the optional separate 3D
+window of pySASmorph) needs VTK, which MSYS2's Python cannot get from PyPI; the 3D panel in the window works
+without it.
+
 `pysasfit.studio` also needs the compiled SASfit libraries, which are not kept in git. Copy them once:
 
 ```bash

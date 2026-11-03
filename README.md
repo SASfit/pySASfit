@@ -12,7 +12,8 @@ from the raw detector data (reduction with exact error propagation) to models, f
 | `pysasfit.inversion` | Fredholm inversion: size distributions and p(r) (EM, signed EM, maxent, Tikhonov, SVD, ARLS, Bayesian-evidence IFT, splines) | `pysasfit-inversion` |
 | `pysasfit.studio` | the SASfit plugin and libsasfit model functions (form factors, structure factors, size distributions, peaks) via ctypes, combined into models (polydispersity, monodisperse/decoupling/LMA structure factors, resolution) and fitted; from SASstudio, see `docs/studio.md` | `pysasfit-explorer` (model explorer and fit panel), `pysasfit-studio` (command line) |
 | `pysasfit.oz` | Ornstein–Zernike solvers and closures, polydisperse/multicomponent structure factors, SAS models, analytic references (MSA, RMSA, Robertus, Gazzillo), fitting; from pyOZgui, GUI ported from Tk to Qt (see `docs/oz/README.md`) | `pysasfit-oz` |
-| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
+| `pysasfit.morph` | **pySASmorph**: representative 3D two- and multi-phase morphologies from SAXS/SANS data (multi-level cut of one Gaussian field, contrast series with one common g(r)) (clipped Gaussian random fields, the SAXSMorph method of Ingham et al. 2011, reimplemented): extrapolation, γ(r), g(r), f(k), FFT or random-wave field, voxel structure with its back-calculated I(q), S/V, percolation, bicontinuity; VTK/HDF5/TIFF/STL export, 3D panel (pyqtgraph/OpenGL, optional PyVista window); see `docs/morph/` | `pysasfit-morph` |
+| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
 
 ## Installation
 
@@ -22,6 +23,7 @@ pip install -e ".[gui,dev]"     # library + PySide6/matplotlib GUIs + pytest
 pip install -e ".[gui,oz]"      # + optional OZ dependencies (sundials4py, mpmath, bumps, mixscatter, openpyxl)
 pip install -e ".[gui,fit,export]"  # + optional optimisers (nlopt, bumps, iminuit, cma, DFO-LS) and Excel export
 pip install -e ".[gui,sasred,toolbox]"  # + SANS reduction and HDF5 tools (h5py, pyyaml, openpyxl)
+pip install -e ".[gui,morph]"   # + pySASmorph 3D panel and exports (pyqtgraph, PyOpenGL, h5py, tifffile)
 pip install -e .                # library only (numpy, scipy)
 ```
 
@@ -42,6 +44,7 @@ pysasfit-toolbox [file.hdf ...]   # HDF5 viewer and metadata lister
 pysasfit-sldprofile [datafile]
 pysasfit-inversion
 pysasfit-oz
+pysasfit-morph [datafile]        # 3D two-phase morphology from I(q)
 pysasfit-explorer [ff_sphere]   # studio: plot, adjust and fit SASfit models (docs/studio.md)
 python run_gui.py [datafile]     # without installing (finds ./src itself)
 ```
@@ -109,6 +112,17 @@ write_nxcansas_1d("A_1_8m.h5", r)                          # Q in 1/nm, covarian
 ```
 
 ```python
+from pysasfit.morph import MorphParameters, reconstruct
+from pysasfit.morph.io import load_curve
+from pysasfit.morph.export import write_matrix
+
+q, I, s = load_curve("porous.dat")                       # background subtracted; 2 or 3 columns
+res = reconstruct(q, I, s, MorphParameters(porosity=0.3, box_size=2000, n=128, seed=1))
+print(res.report())                                      # Q, K, S/V, chi2 of the model, connectivity
+write_matrix(res, "porous.vtk")                          # or .h5, .tif, .npy
+```
+
+```python
 from pysasfit import studio
 print(studio.info("ff_sphere"))
 I = studio.function("ff_sphere")(q, R=50, eta=1)
@@ -121,6 +135,7 @@ S = studio.function("sq_HardSphere")(q, RHS=50, fp=0.3)
 pytest                      # all tools (about 15 min)
 pytest tests/sldprofile     # one tool
 pytest tests/studio         # studio: needs PySide6; GUI tests run offscreen, those needing libsasfit skip without it
+pytest tests/morph                  # pySASmorph (seconds)
 pytest tests/sasred tests/toolbox   # tests on real SANS-I files run when PYSASRED_TEST_RAW points to the raw data
 ```
 
@@ -139,6 +154,9 @@ src/pysasfit/
                         beam centre, averaging, resolution, mask, polar), io/ (sinq reader, nxcansas, ascii),
                         instruments/sinq/sans_i.yaml, reduce.py, catalogue.py, units.py, gui.py, mask_editor.py
     toolbox/            hdf5.py (viewer helpers), viewer.py, meta_lister.py, gui.py
+    morph/              transforms, extrapolation, correlation (level cut), grf, statistics, scattering,
+                        pipeline (two phases), multiphase (N phases, contrast series), export, surface (meshes, STL), view3d_gl (3D panel), view3d (PyVista),
+                        io, gui (pySASmorph)
     sldprofile/         geometry, density, regularization, models, gui
     inversion/          kernels, solvers/, regularization, background, io_utils, ... ; gui/app.py
     studio/             headers.py (catalogue), library.py (loader), functions.py, model.py, integration.py,
@@ -152,7 +170,7 @@ src/pysasfit/
     resources/          tool icons and logos (copied from docs/pySASfit-logo-bundle by tools/sync_logos.py)
     sasbox/             old name of toolbox (forwards to it)
 tests/                  sldprofile/, inversion/ (+ data/), studio/ (+ mock SASfit C sources), oz/, oz_gui/, gui/,
-                        core/, sasred/, toolbox/
+                        core/, sasred/, toolbox/, morph/
 extern/oz/              C sources of the OZ helper libraries (build_windows.bat, build_linux.sh)
 examples/sldprofile/    demo_hansen2016.py and test data
 examples/studio/        01_evaluate_functions.py ... 05_open_explorer.py (included in the studio manual),
@@ -183,11 +201,17 @@ are not part of the installed package yet. `io_tools/SASformats.py` (BerSANS, HD
 - `toolbox` (pyTOOLbox, formerly pySASbox / `sasbox`): the HDF5 viewer is new; the metadata lister is
   `tools/hdf_meta_lister.py` ported from PyQt6 to PySide6. `pysasfit.sasbox`, `pysasfit-sasbox` and the extra
   `sasbox` still work.
+- `morph` (pySASmorph): new implementation of the SAXSMorph method (Ingham et al., J. Appl. Cryst. 44 (2011) 221),
+  written from the publications; the notes and the original program are in `ToDo/SAXSMorpph/`.
 - `inversion`: from `SASfitGit/src/pySASfitInversion` (package `sasfit_inversion` and `gui`), unchanged except for the
   import paths (`sasfit_inversion.X` → `pysasfit.inversion.X`, `gui.app` → `pysasfit.inversion.gui.app`). It still
   uses its own `load_sas_data` and background-subtraction module; moving these onto `pysasfit.core` is a later step.
 
 ## To do
+
+- `pysasfit.morph`: validation against SAXSMorph 2.2 (`ToDo/SAXSMorpph/saxsmorph.jar`) and PySAXSMorph on reference
+  data; PSI SANS formats, contrast variation and uncertainty propagation (roadmap in `ToDo/SAXSMorpph/`);
+  logo bundle entries (pySASmorph icons are missing, the wordmark colour is teal #0F7C80).
 
 - `pysasfit.sasred` phase 3: transmission, empty cell and Cd subtraction of the sample, detector efficiency in the
   GUI (compare with the SANS-I efficiency maps in `tools/*.mat`), thickness, absolute scale, collimation term of Qdev, pixel splitting,

@@ -10,6 +10,16 @@ Generated from the docstrings.
              load_instrument, uncertain_parameter
 ```
 
+## Raw files (SANS-I, SANS-LLB)
+
+```{eval-rst}
+.. automodule:: pysasfit.sasred.io.raw
+   :members: read_raw, instrument_of
+
+.. automodule:: pysasfit.sasred.io.sans_llb
+   :members: Panel, read_sans_llb, bank_run, panel_geometry, panel_offsets, beam_position_mm, panel_mask
+```
+
 ## Uncertainty engine
 
 ```{eval-rst}
@@ -144,4 +154,10 @@ Generated from the docstrings.
 
 .. automodule:: pysasfit.sasred.mask_editor
    :members: MaskEditor
+
+.. automodule:: pysasfit.sasred.efficiency_gui
+   :members: EfficiencyMixin
+
+.. automodule:: pysasfit.sasred.table_gui
+   :members: ReductionTableWidget, GeometryPage, RunSetDialog
 ```

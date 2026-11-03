@@ -39,6 +39,7 @@ deprecation warning), the command `pysasfit-sasbox`, the extra `pysasfit[sasbox]
 usage
 merge
 image2d
+data1d
 ```
 
 The API reference is {doc}`api` (also listed under {doc}`../api/index`).

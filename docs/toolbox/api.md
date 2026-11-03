@@ -35,6 +35,20 @@ Generated from the docstrings.
 
 .. automodule:: pysasfit.toolbox.image_gui
    :members: ImageTool
+
+.. automodule:: pysasfit.toolbox.analysis2d
+   :members: radial_average, sector_mask, azimuthal_average, box_profile, sin2_decomposition, sum_images,
+             region_integral, rocking_curve, pixels_in_shape, beam_centre_of_gravity, q_edges
+```
+
+## 1D data
+
+```{eval-rst}
+.. automodule:: pysasfit.toolbox.data1d
+   :members: Data1D, from_curve, read_data1d, write_ascii, interpolate, combine
+
+.. automodule:: pysasfit.toolbox.data1d_gui
+   :members: Data1DTool
 ```
 
 ## GUI

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Reduction table panel: the correction matrix (Cadmium, Water, Water-BG, Sample-BG) and the
+"""Reduction table panel: the correction matrix (Cadmium, Water, Water-BG, Sample-BG, Direct beam) and the
 sample table of one configuration, filled from the run plan or by hand. The button in the first
 column of each row opens the run list of that row: which runs are summed, which are left out and
 why (outliers, aborted runs, beam stop position), with an editable comment."""
@@ -9,16 +9,24 @@ from typing import Callable, Dict, List, Optional
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from .reduction_table import CORRECTIONS, ReductionTable, RowSet, RunChoice, configurations, from_plan, parse_runs
+from .reduction_table import CORRECTIONS, OPTIONAL, ReductionTable, RowSet, RunChoice, configurations, from_plan, parse_runs
 
 __all__ = ["ReductionTableWidget", "GeometryPage", "RunSetDialog"]
 
 _RED = QtGui.QColor("firebrick")
 _ORANGE = QtGui.QColor("darkorange")
 _GREY = QtGui.QColor("gray")
+MISSING_BG = QtGui.QColor(255, 196, 196)        # cell of a missing input
+CHECK_BG = QtGui.QColor(255, 226, 180)          # cell of an input to check
+#: table column of a missing field (Missing.field)
+FIELD_COLUMN = {"use": "Use", "runs": "Summed runs", "transmission": "Transmission", "thickness": "Thickness [cm]",
+                "aperture": "Aperture [cm²]"}
 
-COLS_CORR = ["Runs", "Information", "Number", "Summed runs", "Transmission", "Thickness [cm]", "Aperture [cm²]", "Notes"]
-COLS_SAMPLE = COLS_CORR[:7] + ["Attenuator A", "Probability p_cS", "Notes"]
+# correction rows (Cd, water, water background, sample background) need transmissions but no
+# thickness (the water's thickness is in g(λ), the backgrounds are subtracted per thickness of the sample)
+COLS_CORR = ["Runs", "Use", "Information", "Number", "Summed runs", "Transmission", "Aperture [cm²]", "Notes"]
+COLS_SAMPLE = ["Runs", "Information", "Number", "Summed runs", "Transmission", "Thickness [cm]", "Aperture [cm²]",
+               "Attenuator A", "Probability p_cS", "Notes"]
 _EDIT = {"Information": "info", "Transmission": "transmission", "Thickness [cm]": "scaling",
          "Aperture [cm²]": "aperture_cm2",
          "Attenuator A": "attenuator", "Probability p_cS": "probability"}
@@ -33,12 +41,17 @@ class RunSetDialog(QtWidgets.QDialog):
 
     COLS = ["use", "run", "sample", "kind", "L1 [m]", "L2 [m]", "start", "time [s]", "monitor", "counts/monitor", "comment"]
 
-    def __init__(self, row: RowSet, raws: Dict[int, object], parent=None, candidates: Optional[List[int]] = None):
+    OTHER = "other run of this geometry"
+
+    def __init__(self, row: RowSet, raws: Dict[int, object], parent=None, candidates: Optional[List[int]] = None,
+                 geometry_runs: Optional[tuple] = None):
         super().__init__(parent)
         self.setWindowTitle(f"{row.label}: {row.info or 'runs'}")
         self.row = row
         self.raws = raws
         self.candidates = candidates or []
+        self.geometry_runs = geometry_runs or ([], [])     # (scattering runs, transmission runs) of the geometry
+        self.new_transmission = None
         lay = QtWidgets.QVBoxLayout(self)
         if row.notes:
             note = QtWidgets.QLabel(row.notes)
@@ -59,10 +72,31 @@ class RunSetDialog(QtWidgets.QDialog):
         self.cand = QtWidgets.QCheckBox("show other runs of this sample")
         self.cand.toggled.connect(self.on_candidates)
         self.cand.setEnabled(bool(self.candidates))
+        self.allg = QtWidgets.QCheckBox("list all runs of this geometry")
+        self.allg.setToolTip("Lists every scattering run of this geometry (tab Scattering runs) and every transmission "
+                             "run of this wavelength (tab Transmission runs), not ticked: tick the ones that belong "
+                             "to this row, untick the ones that do not.")
+        self.allg.toggled.connect(self.on_all_geometry)
+        self.allg.setEnabled(bool(self.geometry_runs[0] or self.geometry_runs[1]))
+        self.filt = QtWidgets.QLineEdit()
+        self.filt.setPlaceholderText("filter: sample name or run")
+        self.filt.textChanged.connect(self._filter)
         add.addWidget(self.add_edit, 1)
         add.addWidget(b)
         add.addWidget(self.cand)
+        add.addWidget(self.allg)
+        add.addWidget(self.filt)
         lay.addLayout(add)
+        trow = QtWidgets.QHBoxLayout()
+        tb = QtWidgets.QPushButton("Transmission from the ticked transmission runs")
+        tb.setToolTip("τ (beam spot) of every ticked transmission run against the empty-beam transmission run of the "
+                      "same distance (same attenuator preferred); taken over with OK")
+        tb.clicked.connect(self.on_transmission)
+        self.t_label = QtWidgets.QLabel(f"now: {row.transmission:.4f} ({row.transmission_source})"
+                                        if row.transmission is not None else "now: none")
+        trow.addWidget(tb)
+        trow.addWidget(self.t_label, 1)
+        lay.addLayout(trow)
         bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
                                         | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
         bb.accepted.connect(self.accept)
@@ -91,7 +125,7 @@ class RunSetDialog(QtWidgets.QDialog):
         vals = [str(c.run)] + [""] * (len(self.COLS) - 3)
         if r is not None:
             from .catalogue import is_transmission
-            m = float(r.monitors.get("monitor1", 0))
+            m = float(r.monitors.get("monitor1" if r.instrument == "sans_i" else r.preset_monitor, 0))
             vals = [str(c.run), r.sample_name, "trans." if is_transmission(r) else "scatt.", f"{r.L1_m:.1f}",
                     f"{r.L2_m:.2f}",
                     str(r.start_time)[:19], f"{r.counting_time_s:.0f}", f"{m:.4g}",
@@ -100,11 +134,21 @@ class RunSetDialog(QtWidgets.QDialog):
             it = QtWidgets.QTableWidgetItem(v)
             it.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable)
             t.setItem(i, j, it)
-        com = QtWidgets.QTableWidgetItem(c.comment)
+        why = getattr(r, "empty_reason", "") if r is not None else ""
+        shown = c.comment
+        if why and not c.comment.startswith("skipped"):
+            shown = f"skipped: {why}" + (f"; {c.comment}" if c.comment else "")
+        if why:
+            t.item(i, 0).setCheckState(QtCore.Qt.CheckState.Unchecked)
+            t.item(i, 0).setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)          # cannot be ticked
+            t.item(i, 0).setToolTip(f"no usable data: {why}")
+        com = QtWidgets.QTableWidgetItem(shown)
         t.setItem(i, len(self.COLS) - 1, com)
         colour = None
-        low = c.comment.lower()
-        if r is None:
+        low = shown.lower()
+        if why:
+            colour = _GREY
+        elif r is None:
             com.setToolTip("run not in the folder")
             colour = _GREY
         elif "outlier" in low or "not summed" in low:
@@ -147,20 +191,77 @@ class RunSetDialog(QtWidgets.QDialog):
                 if it.text() == "same sample, other group" and t.item(i, 0).checkState() != QtCore.Qt.CheckState.Checked:
                     t.removeRow(i)
 
+    def on_all_geometry(self, on):
+        for t, runs in ((self.scatt, self.geometry_runs[0]), (self.trans, self.geometry_runs[1])):
+            have = set(self._runs_in(t))
+            if on:
+                for r in runs:
+                    if r not in have:
+                        self._add_row(t, RunChoice(r, False, self.OTHER))
+                t.sortItems(1)
+            else:
+                for i in reversed(range(t.rowCount())):
+                    if t.item(i, len(self.COLS) - 1).text() == self.OTHER and \
+                            t.item(i, 0).checkState() != QtCore.Qt.CheckState.Checked:
+                        t.removeRow(i)
+        self._filter(self.filt.text())
+
+    def _filter(self, text):
+        text = text.strip().lower()
+        for t in (self.scatt, self.trans):
+            for i in range(t.rowCount()):
+                hay = (t.item(i, 1).text() + " " + (t.item(i, 2).text() if t.item(i, 2) else "")).lower()
+                t.setRowHidden(i, bool(text) and text not in hay)
+
+    def on_transmission(self):
+        from .reduction_table import transmission_from_runs
+        runs = [c.run for c in self._read(self.trans) if c.use]
+        if not runs:
+            self.t_label.setText("no transmission run ticked")
+            return
+        ct = transmission_from_runs(runs, self.raws)
+        if ct is None:
+            self.t_label.setText("no empty-beam transmission run at this distance and wavelength")
+            return
+        self.new_transmission = ct
+        each = ", ".join(f"{x}: {v:.4f}" for x, v in zip(ct[2], ct[4]))
+        self.t_label.setText(f"τ = {ct[0]:.4f} ± {ct[1]:.4f} (runs {each}; empty beam {ct[3]}) – taken over with OK")
+
     @staticmethod
     def _read(t) -> List[RunChoice]:
         out = []
         for i in range(t.rowCount()):
             use = t.item(i, 0).checkState() == QtCore.Qt.CheckState.Checked
             com = t.item(i, len(RunSetDialog.COLS) - 1).text()
-            if com == "same sample, other group" and not use:
+            base = com.split("; ", 1)[1] if com.startswith("skipped:") and "; " in com else com
+            if base in ("same sample, other group", RunSetDialog.OTHER) and not use:
                 continue
+            if com in ("same sample, other group", RunSetDialog.OTHER) and not use:
+                continue
+            if com == RunSetDialog.OTHER:
+                com = "added by hand"
             out.append(RunChoice(int(t.item(i, 1).text()), use, com))
         return sorted(out, key=lambda c: c.run)
 
     def apply(self):
         self.row.runs = self._read(self.scatt)
         self.row.trans_runs = self._read(self.trans)
+        if self.new_transmission is not None:
+            ct = self.new_transmission
+            self.row.transmission, self.row.transmission_sigma = ct[0], ct[1]
+            self.row.transmission_source = f"runs {ct[2]} / empty beam {ct[3]} (beam spot)"
+
+
+class _PopupCombo(QtWidgets.QComboBox):
+    """Combo box that rebuilds its entries just before it opens."""
+
+    def __init__(self, before_popup, parent=None):
+        super().__init__(parent)
+        self._before = before_popup
+
+    def showPopup(self):
+        self._before()
+        super().showPopup()
 
 
 class GeometryPage(QtWidgets.QWidget):
@@ -181,8 +282,48 @@ class GeometryPage(QtWidgets.QWidget):
         bl.addWidget(self.corr)
         top = QtWidgets.QHBoxLayout()
         top.addWidget(box, 1)
-        wbox = QtWidgets.QGroupBox("Absolute scale from water")
+        wbox = QtWidgets.QGroupBox("Absolute scale")
         wl = QtWidgets.QFormLayout(wbox)
+        self.scale_combo = QtWidgets.QComboBox()
+        for text, key in (("automatic", "auto"), ("water", "water"), ("direct beam + efficiency map", "direct_beam"),
+                          ("relative (per sr and cm)", "relative")):
+            self.scale_combo.addItem(text, key)
+        self.scale_combo.setToolTip("automatic: the direct beam (row Direct beam) as soon as an efficiency map is "
+                                    "chosen below – the water of this geometry is then not used –, else water when the "
+                                    "Water row has runs, else relative.\nDirect beam: dΣ/dΩ = N/(ε ΔΩ d Φ), "
+                                    "Φ = Σ (DB − Cd)/ε around the beam, corrected for its attenuator")
+        self.scale_combo.currentIndexChanged.connect(self._on_scale)
+        self.scale_used = QtWidgets.QLabel()
+        self.eff_combo = _PopupCombo(self._update_scale_box)
+        self.eff_combo.setToolTip("Detector efficiency map for the direct-beam scale: made from the water rows of a "
+                                  "geometry (usually a shorter distance) or read from a file (a saved map or an "
+                                  "efficiency archive)")
+        self.eff_combo.activated.connect(self._on_eff)
+        eff_row = QtWidgets.QHBoxLayout()
+        eff_row.addWidget(self.eff_combo, 1)
+        sb = QtWidgets.QPushButton("Show")
+        sb.setToolTip("Show the efficiency map in the detector panel")
+        sb.clicked.connect(self._on_show_eff)
+        eff_row.addWidget(sb)
+        self.eff_fill = QtWidgets.QCheckBox("mask the pixels the map only estimates")
+        self.eff_fill.setToolTip("Pixels masked or rejected in the water of the map (e.g. behind its beam stop) are "
+                                 "estimated as row × column; ticked: they are masked in the sample too")
+        self.eff_fill.toggled.connect(self._on_eff_fill)
+        self.db_radius = QtWidgets.QLineEdit()
+        self.db_radius.setPlaceholderText("automatic")
+        self.db_radius.setToolTip("Radius [mm] around the direct beam within which it is summed; empty: the radius "
+                                  "holding 99.5 % of its counts, + 2 pixels")
+        self.db_radius.editingFinished.connect(lambda: self._on_number(self.db_radius, "direct_beam_radius_mm"))
+        self.db_att = QtWidgets.QLineEdit()
+        self.db_att.setToolTip("Transmission of the attenuator of the direct-beam runs; empty: the water calibration "
+                               "of the instrument file at this wavelength if there is one, else its nominal value")
+        self.db_att.editingFinished.connect(lambda: self._on_number(self.db_att, "direct_beam_attenuator"))
+        wl.addRow("method:", self.scale_combo)
+        wl.addRow("used:", self.scale_used)
+        wl.addRow("efficiency map:", eff_row)
+        wl.addRow("", self.eff_fill)
+        wl.addRow("direct beam radius [mm]:", self.db_radius)
+        wl.addRow("attenuator transmission:", self.db_att)
         self.g_auto = QtWidgets.QLabel()
         self.g_edit = QtWidgets.QLineEdit()
         self.g_edit.setPlaceholderText("from instrument file")
@@ -262,9 +403,26 @@ class GeometryPage(QtWidgets.QWidget):
 
     def _row_of(self, t, i) -> RowSet:
         return self.table.corrections[list(CORRECTIONS)[i]] if t is self.corr else self.table.samples[i]
+    def _missing_of(self, t, i, r: RowSet):
+        """{column: Missing} of a row."""
+        out = {}
+        for x in getattr(self, "_missing", []):
+            if (t is self.corr and x.index is None and x.role == r.role) or \
+                    (t is not self.corr and x.role == "sample" and x.index == i):
+                col = FIELD_COLUMN.get(x.field)
+                if col:
+                    out.setdefault(col, x)
+        return out
+
     def _fill_row(self, t, i, r: RowSet, cols):
+        miss = self._missing_of(t, i, r)
         b = QtWidgets.QPushButton(r.label)
         b.setToolTip("Runs of this row: summed, left out, comments")
+        if "Summed runs" in miss and miss["Summed runs"].severity == "info":
+            b.setToolTip(miss["Summed runs"].text + "\n(click: the runs of this row)")
+        elif "Summed runs" in miss:
+            b.setStyleSheet("QPushButton { color: firebrick; font-weight: bold; }")
+            b.setToolTip(miss["Summed runs"].text + "\n(click: the runs of this row)")
         b.clicked.connect(lambda _=False, t=t, i=i: self.open_runs(t, i))
         t.setCellWidget(i, 0, b)
         vals = {"Information": r.info, "Number": r.number if r.runs else "",
@@ -275,6 +433,22 @@ class GeometryPage(QtWidgets.QWidget):
             it = QtWidgets.QTableWidgetItem(vals.get(c, ""))
             if c not in _EDIT:
                 it.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable)
+            if r.role in ("water", "empty_cell") and t is self.corr and self._method != "water" and r.runs:
+                it.setForeground(QtGui.QBrush(_GREY))
+                it.setToolTip("not used: " + ("absolute scale from the direct beam and the efficiency map"
+                                              if self._method == "direct_beam" else "relative scale"))
+            if c == "Use":
+                if r.role in OPTIONAL:
+                    it.setFlags(QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)
+                    off = r.role in self.table.ignored
+                    it.setCheckState(QtCore.Qt.CheckState.Unchecked if off else QtCore.Qt.CheckState.Checked)
+                    it.setToolTip("Untick to reduce without this correction (it is optional); the runs stay in the row")
+                else:
+                    it.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
+            if c in ("Transmission",) and r.role == "direct_beam":
+                it.setText("—")
+                it.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
+                it.setToolTip("the direct beam needs no transmission (its attenuator is corrected)")
             if c == "Transmission" and r.transmission_source:
                 it.setToolTip(r.transmission_source + (f", σ = {r.transmission_sigma:g}" if r.transmission_sigma else ""))
             if c == "Notes":
@@ -283,11 +457,22 @@ class GeometryPage(QtWidgets.QWidget):
                     it.setForeground(QtGui.QBrush(_RED))
             if c == "Number" and r.runs and len(r.used) < len(r.runs):
                 it.setForeground(QtGui.QBrush(_ORANGE))
+            x = miss.get(c)
+            if x is not None and x.severity == "info":
+                it.setToolTip(x.text + (f"\n{it.toolTip()}" if it.toolTip() else ""))
+            elif x is not None:
+                it.setBackground(QtGui.QBrush(MISSING_BG if x.severity == "missing" else CHECK_BG))
+                it.setToolTip(x.text + (f"\n{it.toolTip()}" if it.toolTip() else ""))
             t.setItem(i, j, it)
 
     def refresh(self):
         self._filling = True
         try:
+            try:
+                self._missing = self.table.missing_inputs()
+                self._method = self.table.scale_method()
+            except Exception:  # noqa: BLE001 -- e.g. an unknown scale method in a loaded table
+                self._missing, self._method = [], ""
             for i, role in enumerate(CORRECTIONS):
                 self._fill_row(self.corr, i, self.table.corrections[role], COLS_CORR)
             self.samp.setRowCount(len(self.table.samples))
@@ -301,6 +486,7 @@ class GeometryPage(QtWidgets.QWidget):
             h = self.corr.horizontalHeader().height() + sum(self.corr.rowHeight(i) for i in range(self.corr.rowCount()))
             self.corr.setFixedHeight(h + 2 * self.corr.frameWidth() + self.corr.horizontalScrollBar().sizeHint().height())
             self._update_water_box()
+            self._update_scale_box()
             p = self.table.problems()
             self.problems.setText("" if not p else "Still missing: " + "; ".join(p))
         finally:
@@ -309,8 +495,8 @@ class GeometryPage(QtWidgets.QWidget):
     def _update_water_box(self):
         from .absolute import water_denominator, water_g, water_scaling_factor
         from .reduce import load_instrument
-        inst = load_instrument()
         r = self.ref_raw
+        inst = load_instrument(r)
         if r is None:
             self.g_auto.setText("– (no run of this geometry)")
             gv = None
@@ -331,6 +517,129 @@ class GeometryPage(QtWidgets.QWidget):
             f = water_scaling_factor(w.transmission, ec.transmission, w.aperture_cm2, gv, den)
             self.w_scale.setText(f"{f:.5g}" + ("" if ec.transmission else "  (no T_EC: τ_W = T_W)"))
 
+    def _update_scale_box(self):
+        t = self.table
+        self.scale_combo.blockSignals(True)
+        self.scale_combo.setCurrentIndex(max(0, self.scale_combo.findData(t.scale or "auto")))
+        self.scale_combo.blockSignals(False)
+        try:
+            used = t.scale_method()
+        except ValueError as exc:
+            used = str(exc)
+        self.scale_used.setText({"water": "water", "direct_beam": "direct beam + efficiency map",
+                                 "relative": "relative – no absolute scale"}.get(used, used))
+        self.eff_combo.blockSignals(True)
+        self.eff_combo.clear()
+        self.eff_combo.addItem("none", "")
+        for other in self.panel.tables():
+            if other.corrections["water"].used:
+                self.eff_combo.addItem(f"water of {other.config}" + (" (this geometry)" if other is t else ""),
+                                       f"geometry:{other.config}")
+        if t.efficiency and self.eff_combo.findData(t.efficiency) < 0:
+            self.eff_combo.addItem(("file: " if not t.efficiency.startswith("geometry:") else "") + t.efficiency,
+                                   t.efficiency)
+        self.eff_combo.addItem("file…", "__file__")
+        self.eff_combo.setCurrentIndex(max(0, self.eff_combo.findData(t.efficiency or "")))
+        self.eff_combo.blockSignals(False)
+        em = next((x for x in getattr(self, "_missing", []) if x.field == "efficiency"), None)
+        self.eff_combo.setStyleSheet("QComboBox { background: rgb(255, 196, 196); }" if em else "")
+        self.eff_combo.setToolTip(em.text if em else "Detector efficiency map for the direct-beam scale: made from "
+                                  "the water rows of a geometry (usually a shorter distance) or read from a file (a "
+                                  "saved map or an efficiency archive)")
+        self.eff_fill.blockSignals(True)
+        self.eff_fill.setChecked(bool(t.efficiency_mask_filled))
+        self.eff_fill.blockSignals(False)
+        for w, v in ((self.db_radius, t.direct_beam_radius_mm), (self.db_att, t.direct_beam_attenuator)):
+            if not w.hasFocus():
+                w.setText("" if v is None else f"{v:g}")
+        ph = "from the instrument file"
+        r = self.ref_raw
+        dbr = t.corrections["direct_beam"]
+        raws = self.panel.raws() if dbr.used else {}
+        atts = sorted({str(raws[n].attenuator) for n in dbr.used if raws.get(n) is not None})
+        if r is not None and atts:
+            try:
+                from .absolute import direct_beam_attenuator
+                from .reduce import load_instrument
+                inst = load_instrument(r)
+                ph = "; ".join(f"{direct_beam_attenuator(a, r.wavelength_A, inst)[0]:.5g} (att. {a})" for a in atts)
+            except Exception:  # noqa: BLE001
+                pass
+        self.db_att.setPlaceholderText(ph)
+
+    def show_missing(self, role: str, index, field: str):
+        """Select the cell of a missing input (or the efficiency map box)."""
+        if field == "efficiency":
+            self.eff_combo.setFocus()
+            return
+        col = FIELD_COLUMN.get(field)
+        if role == "sample":
+            t, i, cols = self.samp, index, COLS_SAMPLE
+        else:
+            t, i, cols = self.corr, list(CORRECTIONS).index(role), COLS_CORR
+        if i is None or not (0 <= i < t.rowCount()):
+            return
+        j = cols.index(col) if col in cols else 0
+        t.setCurrentCell(i, j)
+        t.scrollToItem(t.item(i, j) or t.item(i, 1))
+        t.setFocus()
+
+    def _changed(self):
+        self.refresh()
+        self.changed.emit()
+        self.panel.changed.emit()
+
+    def _on_scale(self, _i):
+        k = self.scale_combo.currentData()
+        if k != self.table.scale:
+            self.table.scale = k
+            self._changed()
+
+    def _on_eff(self, _i):
+        k = self.eff_combo.currentData()
+        if k == "__file__":
+            p, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Efficiency map", self.table.folder or "",
+                                                         "HDF5 (*.h5 *.hdf5 *.nxs)")
+            if not p:
+                self._update_scale_box()
+                return
+            k = p
+        if k != self.table.efficiency:
+            self.table.efficiency = k
+            # a map means: absolute scale from the direct beam, the water of this geometry is not used
+            if k and self.table.scale == "water":
+                self.table.scale = "auto"
+            if not k and self.table.scale == "direct_beam":
+                self.table.scale = "auto"
+            self._changed()
+            if k:
+                self._on_show_eff()          # made (or read) now and shown: errors appear at once
+
+    def _on_show_eff(self):
+        fn = getattr(self.panel, "show_efficiency", None)
+        if fn is None:
+            self._log("the efficiency map can be shown in pySASred's detector panel")
+            return
+        fn(self.table)
+
+    def _on_eff_fill(self, on):
+        self.table.efficiency_mask_filled = bool(on)
+        self._changed()
+
+    def _on_number(self, w, attr):
+        text = w.text().strip()
+        try:
+            v = None if text == "" else float(text)
+        except ValueError:
+            self._log(f"not a number: {text}")
+            return
+        if v is not None and v <= 0:
+            self._log(f"{text}: must be positive")
+            return
+        if v != getattr(self.table, attr):
+            setattr(self.table, attr, v)
+            self._changed()
+
     def _on_g_edit(self):
         text = self.g_edit.text().strip()
         try:
@@ -349,6 +658,18 @@ class GeometryPage(QtWidgets.QWidget):
             return
         cols = COLS_CORR if t is self.corr else COLS_SAMPLE
         name = cols[it.column()]
+        if name == "Use" and t is self.corr:
+            r = self._row_of(t, it.row())
+            off = it.checkState() == QtCore.Qt.CheckState.Unchecked
+            if r.role in OPTIONAL and off != (r.role in self.table.ignored):
+                if off:
+                    self.table.ignored.append(r.role)
+                else:
+                    self.table.ignored.remove(r.role)
+                self.refresh()
+                self.changed.emit()
+                self.panel.changed.emit()
+            return
         attr = _EDIT.get(name)
         if attr is None:
             return
@@ -375,13 +696,32 @@ class GeometryPage(QtWidgets.QWidget):
     def raws(self) -> Dict[int, object]:
         return self.panel.raws()
 
+    def _geometry_runs(self):
+        """(scattering runs of this geometry, transmission runs of its wavelength) of the folder."""
+        from .catalogue import _config_key
+        ref = self.ref_raw
+        if ref is None:
+            return [], []
+        k = _config_key(ref)
+        sc, tr = [], []
+        for e in sorted(self.panel._entries(), key=lambda e: e.run):
+            n, x = e.run, getattr(e, "raw", None)
+            if x is None:
+                continue
+            t = e.kind == "transmission"
+            if t and abs(x.wavelength_A - ref.wavelength_A) <= 0.02 * ref.wavelength_A:
+                tr.append(n)
+            elif not t and _config_key(x) == k:
+                sc.append(n)
+        return sc, tr
+
     def open_runs(self, t, i):
         r = self._row_of(t, i)
         raws = self.raws()
         cands = []
         if r.info:
             cands = sorted(k for k, x in raws.items() if x.sample_name == r.info and k not in {c.run for c in r.runs})
-        d = RunSetDialog(r, raws, self, cands)
+        d = RunSetDialog(r, raws, self, cands, self._geometry_runs())
         if d.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             d.apply()
             if not r.info and r.runs:
@@ -477,6 +817,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
         self._log = log or (lambda s: None)
         self.plan = None
         self.reduce_rows = None                    # set by the main window: (table, rows) -> reduce
+        self.show_efficiency = None                # set by the main window: (table) -> show its efficiency map
         self.excluded: List[str] = []              # geometries removed from the reduction
         lay = QtWidgets.QVBoxLayout(self)
         top = QtWidgets.QHBoxLayout()
@@ -517,6 +858,15 @@ class ReductionTableWidget(QtWidgets.QWidget):
     def pages(self) -> List[GeometryPage]:
         return [self.tabs.widget(i) for i in range(self.tabs.count())]
 
+    def show_missing(self, config: str, role: str, index, field: str) -> bool:
+        """Bring the geometry tab of ``config`` to the front and select the cell of a missing input."""
+        for p in self.pages():
+            if p.table.config == config:
+                self.tabs.setCurrentWidget(p)
+                p.show_missing(role, index, field)
+                return True
+        return False
+
     @property
     def page(self) -> Optional[GeometryPage]:
         return self.tabs.currentWidget()
@@ -541,6 +891,8 @@ class ReductionTableWidget(QtWidgets.QWidget):
         p = GeometryPage(self, table, ref_raw)
         i = self.tabs.addTab(p, title or table.config or "geometry")
         self.tabs.setTabToolTip(i, tip or table.config)
+        for q in self.pages():              # the efficiency-map lists offer the water of every geometry
+            q._update_scale_box()
         return p
 
     def _clear_pages(self):

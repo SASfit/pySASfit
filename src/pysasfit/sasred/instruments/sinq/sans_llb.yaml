@@ -1,0 +1,50 @@
+# SINQ SANS-LLB instrument file (pySASred). Values not yet confirmed carry `uncertainty: null` and are
+# marked "to confirm"; null uncertainty means "not propagated" and is listed as such in every output.
+# Sources: the NeXus files (entry0/SANS-LLB), DarePy-SANS (instrument_registry.yaml), GRASP
+# (SINQ_SANS_LLB.ini), Maren's commissioning data 5250-5280 (2026-08, λ 0.5 nm).
+instrument: SANS-LLB
+facility: SINQ, PSI
+reader: sinq_sans_llb
+detector:
+  type: central 128 x 128 monoblock (5 mm) + wide-angle panels left / bottom (16 3He tubes, 13.4 x 5 mm)
+  pixel_size_m: [0.005, 0.005]           # central; read from the file
+  deadtime:
+    model: nonparalysable
+    rate: global                         # per detector bank (one rate for each of central, left, bottom)
+    tau_s: 3.5e-6                        # file (…/deadtime) and DarePy; to confirm per bank / per tube
+    uncertainty_s: null
+    flag_factor: 1.2
+monitor:
+  normaliser: monitor2                   # the preset monitor (control/preset), as DarePy
+  deadtime:
+    tau_s: 0.0
+    uncertainty_s: null
+beamstop:                                # motor positions x, y in mm (read from the file)
+  x_sign: 1                              # to confirm
+  y_sign: 1                              # to confirm
+  out_mm: 50                             # transmission runs: beam stop moved from y ≈ -7 to -90 mm (Maren)
+attenuator:                              # transmission by selector index (DarePy table)
+  "0": {transmission: 1.0, uncertainty: 0.0}
+  "1": {transmission: 0.406, uncertainty: null}
+  "2": {transmission: 0.186, uncertainty: null}
+  "3": {transmission: 0.050, uncertainty: null}     # wide-angle panels, sample runs att 0 vs 3 (0.5 nm): 0.048-0.058
+  "4": {transmission: 0.250, uncertainty: null}
+  "5": {transmission: 0.049, uncertainty: null}
+  "6": {transmission: 0.008, uncertainty: null}     # wide-angle panels, att 0 vs 6 (0.5 nm): 0.0049-0.0060 (to confirm!)
+  "7": {transmission: 0.004, uncertainty: null}
+  # GRASP SINQ_SANS_LLB.ini lists 1, 1/112.8, 1/421.14, 1/1911.96 for selections 0-3 (other numbering?)
+wavelength:
+  distribution: triangular               # Dornier velocity selector
+  dlam_over_lam_fwhm_default: null        # read from the file (velocity_selector/wavelength_spread, %)
+water:
+  g_lambda:                              # forward excess K0 of the water: SANS-I values, to confirm for SANS-LLB
+    formula: [1.36992, 0.31389, -1.07706, 0.54662]
+    range_nm: [0.47, 1.20]
+    uncertainty_rel: 0.006
+  denominator: water_and_cell
+panels:                                  # wide-angle banks; offsets are preferences (sasred.llb.<bank>.dx_mm …)
+  left:  {tubes: 16, tube_axis: 0, pixels_along: 136}
+  bottom: {tubes: 16, tube_axis: 1, pixels_along: 136}
+  # Maren 2026-08 (λ 0.5 nm): along the tubes the solid-angle apex of D2O (4 m / 17 m) lies at NICOS posy
+  # ≈ +84 ± 13 mm on the left panel (beam at ≈ -1.5 mm) and at posx ≈ -35 ± 28 mm on the bottom panel;
+  # radial offsets and distances need a standard with rings on the panels (AgBe at the 4 m setting).

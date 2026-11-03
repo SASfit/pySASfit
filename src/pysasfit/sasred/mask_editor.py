@@ -169,8 +169,18 @@ class MaskEditor(QtCore.QObject):
         """How masked pixels are drawn: colours, scale (own grey scale) or hidden."""
         return self.display.currentData()
 
+    def _panel_raw(self, shape=None):
+        raw = self.win.displayed_raw()
+        if raw is not None and getattr(raw, "panel", None) is not None and (shape is None or raw.counts.shape == tuple(shape)):
+            return raw
+        return None
+
     def start_mask(self, shape):
-        """Standard border + the first-guess beamstop of the Reduction panel."""
+        """Standard border + the first-guess beamstop of the Reduction panel; a SANS-LLB wide-angle panel:
+        tube ends and dead tubes."""
+        pr = self._panel_raw(shape)
+        if pr is not None:
+            return mk.default_mask(pr, (self.win.xc.value(), self.win.yc.value()))[0]
         m = mk.border_mask(shape, prefs.get("sasred.mask.border_px"))
         guess = self.win.beamstop_guess(shape)
         if guess is not None:
@@ -262,6 +272,19 @@ class MaskEditor(QtCore.QObject):
             return
         v = prefs.values("sasred.mask")
         bc = (self.win.xc.value(), self.win.yc.value())
+        if getattr(raw, "panel", None) is not None:
+            m = mk.default_mask(raw, bc)[0]
+            n_hot = 0
+            if v["hot"]:
+                hot = mk.suggest_hot_pixels(raw.counts, valid=m == 0)
+                hot = hot[0] if isinstance(hot, tuple) else hot
+                m[np.asarray(hot, bool)] |= mk.HOT
+                n_hot = int(np.count_nonzero(np.asarray(hot, bool)))
+            old = self.ensure(raw.counts.shape)
+            m |= old & mk.USER
+            self.set_mask(m, message=f"mask suggested for the {raw.bank} panel of run {raw.run}: tube ends "
+                                     f"({int(np.count_nonzero(m & mk.BORDER))} px), dead tubes, hot pixels {n_hot}")
+            return
         m, rep = mk.suggest_mask(raw.counts, bc, border_width=v["border_px"], search_radius_px=v["search_radius_px"],
                                  drop=v["drop"], grow_px=v["grow_px"], hot=v["hot"], beamstop_shape=v["suggest_shape"])
         old = self.ensure(raw.counts.shape)
@@ -395,6 +418,25 @@ class MaskEditor(QtCore.QObject):
         self._detach()
         ax = getattr(self, "_ax", None)
         key = self.tool.currentData()
+        if key != "navigate":
+            # drawing works on the cartesian image only: switch to it instead of ignoring the mouse silently
+            v = self.win.det_view
+            if v.currentData() != "cartesian":
+                i = v.findData("cartesian")
+                self.win.statusBar().showMessage("mask tools draw on the cartesian detector image: view switched "
+                                                 "to cartesian", 6000)
+                if i >= 0 and v.currentIndex() != i:
+                    v.setCurrentIndex(i)               # redraws the detector and calls attach() again
+                    return
+            # pan / zoom of the toolbar would swallow the mouse: switch it off
+            tb = getattr(self.win.det_canvas, "toolbar", None)
+            mode = str(getattr(tb, "mode", "") or "") if tb is not None else ""
+            if mode:
+                try:
+                    (tb.pan if "pan" in mode else tb.zoom)()
+                    self.win.statusBar().showMessage("pan / zoom switched off for drawing the mask", 6000)
+                except Exception:  # noqa: BLE001
+                    pass
         if ax is None or ax.figure is not self.win.det_canvas.figure or key == "navigate" \
                 or self.win.det_view.currentData() != "cartesian":
             return
@@ -405,7 +447,10 @@ class MaskEditor(QtCore.QObject):
             cls = RectangleSelector if kind == "rect" else EllipseSelector
 
             def done(e0, e1, add=add, kind=kind):
-                if self._navigating() or None in (e0.xdata, e1.xdata):
+                if self._navigating():
+                    self.win.statusBar().showMessage("pan / zoom is on: switch it off to draw the mask", 6000)
+                    return
+                if None in (e0.xdata, e1.xdata):
                     return
                 f = mk.pixels_in_rectangle if kind == "rect" else mk.pixels_in_ellipse
                 self.apply(f(self.mask.shape, e0.xdata, e1.xdata, e0.ydata, e1.ydata), add)

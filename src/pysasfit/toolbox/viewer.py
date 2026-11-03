@@ -91,6 +91,7 @@ class ArrayModel(QtCore.QAbstractTableModel):
 
 class HDF5Viewer(QtWidgets.QWidget):
     status = QtCore.Signal(str)
+    to_2d = QtCore.Signal(object)       # image2d.Image2D of the shown detector image (2D data page)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -292,6 +293,11 @@ class HDF5Viewer(QtWidgets.QWidget):
             bar.addWidget(w)
         self.cmap.currentIndexChanged.connect(lambda _i: self._draw())
         bar.addWidget(self.cmap)
+        self.to2d_button = QtWidgets.QPushButton("→ 2D data")
+        self.to2d_button.setToolTip("open the shown detector image on the 2D data page: beam centre (click, "
+                                    "type or centre of gravity), radial / sector / azimuthal averages, polar view")
+        self.to2d_button.clicked.connect(self.on_to_2d)
+        bar.addWidget(self.to2d_button)
         bar.addStretch(1)
         dv.addLayout(bar)
         self.dims_box = QtWidgets.QWidget()
@@ -624,3 +630,54 @@ class HDF5Viewer(QtWidgets.QWidget):
                 ax.set_ylabel("y [pixel]" + self._pix_label(nd, nd - 2))
         ax.set_title(f"NXdata {nx.title}", fontsize="medium")
         self.canvas.draw_idle()
+
+    # ------------------------------------------------------------------ to the 2D data page
+    def image_of_current(self):
+        """The shown dataset (2D, or summed over the leading dimensions) as an Image2D with the geometry
+        found in the file (SANS-I raw files: everything; NeXus: the pixel size)."""
+        from . import image2d as i2
+        if self.current is None:
+            raise ValueError("no dataset shown")
+        path, h5path = self.current
+        import h5py
+        with h5py.File(path, "r") as f:
+            obj = f[h5path]
+            if not isinstance(obj, h5py.Dataset) or obj.ndim < 2:
+                raise ValueError("not a detector image (a dataset with at least 2 dimensions)")
+            a = np.asarray(obj[()])
+            integer = a.dtype.kind in "iu"
+        a = a.astype(float)
+        while a.ndim > 2:
+            a = a.sum(axis=0)
+        dI = np.sqrt(np.clip(a, 0, None)) if integer else None
+        meta = {"sample": os.path.basename(path)}
+        img = i2.Image2D(a, dI, np.zeros(a.shape, bool), path, "hdf5", meta, entry=h5path,
+                         unit="counts" if integer else "")
+        try:                                           # SANS-I raw file: full geometry and header items
+            from ..sasred.io.metadata import run_metadata
+            from ..sasred.io.raw import read_raw
+            raw = read_raw(path, checksum=False)
+            if raw.counts.shape == a.shape:
+                img.meta.update(run_metadata(raw))
+                img.meta["sample"] = raw.sample_name
+                ps = raw.pixel_size_m
+                img.pixel_m = (ps, ps) if np.isscalar(ps) else tuple(ps)
+                img.L2_m = float(raw.L2_effective_m)
+                img.wavelength_A = float(raw.wavelength_A)
+        except Exception:  # noqa: BLE001  (not a SANS-I raw file)
+            sz = hdf5.pixel_size(path, h5path)
+            if sz:
+                img.pixel_m = tuple(sz)
+        from .analysis2d import beam_centre_of_gravity
+        ny, nx = a.shape
+        img.centre_px = beam_centre_of_gravity(a) if a.max() > 50 * max(np.median(a), 1) else ((nx - 1) / 2, (ny - 1) / 2)
+        return img
+
+    def on_to_2d(self):
+        try:
+            img = self.image_of_current()
+        except Exception as exc:  # noqa: BLE001
+            self.status.emit(f"→ 2D data: {exc}")
+            return
+        self.to_2d.emit(img)
+

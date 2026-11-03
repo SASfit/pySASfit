@@ -36,6 +36,8 @@ warnings.filterwarnings("ignore", message="constrained_layout not applied")
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
+
+from .efficiency_gui import EfficiencyMixin  # noqa: E402
 from matplotlib.ticker import LogFormatterSciNotation, LogLocator, NullFormatter  # noqa: E402
 
 from ..core import settings as prefs  # noqa: E402
@@ -49,6 +51,9 @@ from .units import units as get_units  # noqa: E402
 __all__ = ["MainWindow", "main"]
 
 Area = QtCore.Qt.DockWidgetArea
+
+
+LAYOUT_VERSION = 2       # 2: detector and reduction table as tabs in the middle column
 
 
 def _session_path():
@@ -91,7 +96,7 @@ def _lam_column() -> int:
     return COLUMNS.index("λ [nm]")
 
 
-class MainWindow(DockMixin, QtWidgets.QMainWindow):
+class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
     instances = __import__("weakref").WeakSet()      # open windows (pyTOOLbox takes their results)
 
     def __init__(self, parent=None):
@@ -100,6 +105,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.setWindowIcon(tool_icon("pySASred"))
         self.folder = ""
         self.entries = []            # CatalogueEntry list of the folder
+        self.name_corrections = None # sample names / roles corrected by hand (names.Corrections)
         self.results = {}            # run -> ReducedRun
         self.beam_centre = None      # BeamCentre of the last determination
         self.centres = {}            # geometry (L2, λ) -> GeometryCentre: q and solid angle use it
@@ -130,9 +136,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.splitDockWidget(self.docks["runs"], self.docks["reduction"], QtCore.Qt.Orientation.Vertical)
         self.tabifyDockWidget(self.docks["iq"], self.docks["budget"])
         self.tabifyDockWidget(self.docks["iq"], self.docks["log"])
-        self.tabifyDockWidget(self.docks["iq"], self.docks["table"])
+        self.tabifyDockWidget(self.docks["iq"], self.docks["missing"])
         self.docks["iq"].raise_()
         self._finish_docks()
+        self._middle_tabs_done = False
         self.statusBar().showMessage("Choose the raw-data folder (File → Open raw-data folder)")
         self.resize(1400, 900)
         MainWindow.instances.add(self)
@@ -172,8 +179,17 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         t.verticalHeader().setVisible(False)
         t.horizontalHeader().setStretchLastSection(True)
         t.itemSelectionChanged.connect(self._on_selection)
+        t.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        t.customContextMenuRequested.connect(self._runs_menu)
         self.table = t
         lay.addWidget(t, 1)
+        nb = QtWidgets.QPushButton("Sample names and roles…")
+        nb.setToolTip("Correct the sample name and/or set the role (water, empty cell, …) of the selected runs, "
+                      "e.g. when two cells were swapped or a remeasurement got a long name. The raw files stay "
+                      "untouched; the corrections are kept for this folder and used by the grouping and the "
+                      "reduction table. Also with the right mouse button in the run table.")
+        nb.clicked.connect(self.on_names)
+        lay.addWidget(nb)
         self._add_dock("runs", "Runs", w, Area.LeftDockWidgetArea)
 
     def _build_reduction(self):
@@ -236,6 +252,15 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.spacing.addItem("linear", "lin")
         self.spacing.setCurrentIndex(max(0, self.spacing.findData(v["qbins.spacing"])))
         f.addRow("spacing", self.spacing)
+        self.bank_combo = QtWidgets.QComboBox()
+        for t, d in (("central detector", "central"), ("left wide-angle panel", "left"),
+                     ("bottom wide-angle panel", "bottom"), ("central + both panels", "all")):
+            self.bank_combo.addItem(t, d)
+        self.bank_combo.setToolTip("SANS-LLB: which detector banks are reduced (Reduce selected and the reduction "
+                                   "table). The panels use the beam centre of the central detector and their "
+                                   "offsets from Settings → Preferences → pySASred → SANS-LLB detector geometry; "
+                                   "their mask is the tube ends and dead tubes. SANS-I: central only.")
+        f.addRow("detector (SANS-LLB)", self.bank_combo)
         self.norm = QtWidgets.QComboBox()
         self.norm.addItem("monitor 1", "monitor")
         self.norm.addItem("counting time", "time")
@@ -334,10 +359,43 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.det_view.addItem("cartesian (x, y)", "cartesian")
         self.det_view.addItem("polar (φ, q)", "polar")
         self.det_view.addItem("reduced 2D (result chosen)", "reduced2d")
+        self.det_view.addItem("SANS-LLB: all detectors (scattering angles)", "llb_all")
+        self.det_view.addItem("efficiency map", "efficiency")
         self.det_view.setToolTip("polar: azimuth φ horizontally (0° = horizontal direction +x, counter-clockwise), "
                                  "q vertically; rings become horizontal lines, anisotropy shows as waves")
         self.det_view.currentIndexChanged.connect(lambda _i: self._draw_detector())
         bar.addWidget(labelled("view", self.det_view))
+        self.det_bank = QtWidgets.QComboBox()
+        for t, d in (("central", ""), ("left panel", "left"), ("bottom panel", "bottom")):
+            self.det_bank.addItem(t, d)
+        self.det_bank.setToolTip("SANS-LLB: detector shown and masked (each panel has its own mask per configuration; "
+                                 "a new panel mask starts with the tube ends and dead tubes)")
+        self.det_bank.currentIndexChanged.connect(lambda _i: (self._draw_detector(), self._schedule_preview()))
+        bar.addWidget(labelled("detector", self.det_bank))
+        self.det_eff = QtWidgets.QCheckBox("÷ efficiency")
+        self.det_eff.setToolTip("Divide the raw image by the efficiency map shown (button 'efficiency map'); pixels "
+                                "without an estimate are left blank")
+        self.det_domega = QtWidgets.QCheckBox("÷ solid angle")
+        self.det_domega.setToolTip("Divide the raw image by the solid angle of every pixel (counts per steradian; "
+                                   "with the beam centre of the geometry)")
+        for cb in (self.det_eff, self.det_domega):
+            cb.toggled.connect(lambda _on: self._draw_detector())
+            bar.addWidget(cb)
+        effb = QtWidgets.QToolButton()
+        effb.setText("efficiency map")
+        effb.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        em = QtWidgets.QMenu(effb)
+        mk_menu = em.addMenu("Make from the water of")
+        mk_menu.aboutToShow.connect(lambda m=mk_menu: self.fill_make_menu(m))
+        em.addAction("Make from the water of the shown geometry", self.on_make_efficiency)
+        em.addAction("Load…", self.on_load_efficiency)
+        em.addAction("Save the shown map…", self.on_save_efficiency)
+        em.addAction("Archive the shown map", self.on_archive_efficiency)
+        em.addAction("Show", lambda: self.det_view.setCurrentIndex(self.det_view.findData("efficiency")))
+        effb.setMenu(em)
+        bar.addWidget(effb)
+        self.eff_label = QtWidgets.QLabel("no efficiency map")
+        bar.addWidget(self.eff_label)
         from .mask_editor import MaskEditor
         self.mask_editor = MaskEditor(self)                 # mask: suggest, draw, undo, load / save
         self.mask_editor.changed.connect(self._schedule_preview)
@@ -387,11 +445,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.log_view = QtWidgets.QPlainTextEdit()
         self.log_view.setReadOnly(True)
         self._add_dock("log", "Log", self.log_view, Area.RightDockWidgetArea)
+        self.missing_view = QtWidgets.QTreeWidget()
+        self.missing_view.setHeaderLabels(["Geometry", "Row", "Input", "What the reduction did"])
+        self.missing_view.setRootIsDecorated(False)
+        self.missing_view.setAlternatingRowColors(True)
+        self.missing_view.setToolTip("Inputs missing in the last reduction (red: missing, orange: to check, dark red: "
+                                     "the row was not reduced, grey: optional correction left out). Double-click: the "
+                                     "cell in the reduction table.")
+        self.missing_view.itemDoubleClicked.connect(self._on_missing_clicked)
+        self._add_dock("missing", "Missing input", self.missing_view, Area.RightDockWidgetArea)
 
     def _build_table(self):
         from .table_gui import ReductionTableWidget
         self.table_panel = ReductionTableWidget(lambda: self.entries, self.centre_for, self, log=self.log)
         self.table_panel.reduce_rows = self.reduce_table_rows
+        self.table_panel.show_efficiency = self.show_table_efficiency
         self.table_panel.rows_selected.connect(self._draw_iq)
         self.table_panel.tabs.currentChanged.connect(lambda _i: self._draw_iq())
         self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea)
@@ -407,13 +475,118 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         m.addSeparator()
         m.addAction("Send results to pyTOOLbox &merge (no files)", self.on_send_to_merge)
 
+    def _runs_menu(self, pos):
+        m = QtWidgets.QMenu(self)
+        m.addAction("Sample names and roles…", self.on_names)
+        m.addAction("Reset name and role to the file", lambda: self.set_names([e.run for e in self.selected_entries()]))
+        m.exec(self.table.viewport().mapToGlobal(pos))
+
+    def on_names(self):
+        sel = [e for e in self.selected_entries() if e.raw is not None]
+        if not sel:
+            QtWidgets.QMessageBox.information(self, "Sample names and roles", "Select runs in the run table first.")
+            return
+        from .names import ROLE_CHOICES
+        from .plan import role_of
+        d = QtWidgets.QDialog(self)
+        d.setWindowTitle("Sample names and roles")
+        f = QtWidgets.QFormLayout(d)
+        infile = sorted({e.raw.sample_name_in_file or e.raw.sample_name for e in sel})
+        lab = QtWidgets.QLabel(f"{len(sel)} run(s): {', '.join(str(e.run) for e in sel[:12])}"
+                               + (" …" if len(sel) > 12 else "") + "\nname in the file: " + "; ".join(infile))
+        lab.setWordWrap(True)
+        f.addRow(lab)
+        name = QtWidgets.QLineEdit(sel[0].raw.sample_name if len({e.raw.sample_name for e in sel}) == 1 else "")
+        name.setPlaceholderText("empty: the name in the file")
+        f.addRow("sample name", name)
+        role = QtWidgets.QComboBox()
+        for k, v in ROLE_CHOICES.items():
+            role.addItem(v, k)
+        cur = {getattr(e.raw, "role", "") for e in sel}
+        if len(cur) == 1:
+            role.setCurrentIndex(max(0, role.findData(cur.pop())))
+        f.addRow("role", role)
+        hint = QtWidgets.QLabel("")
+        hint.setStyleSheet("color: grey")
+
+        def upd():
+            n = name.text().strip() or (infile[0] if infile else "")
+            hint.setText(f"role from the name: {role_of(n)}")
+        name.textChanged.connect(lambda _t: upd())
+        upd()
+        f.addRow("", hint)
+        note = QtWidgets.QLineEdit()
+        note.setPlaceholderText("why (optional), e.g. cells swapped: this is D2O")
+        f.addRow("note", note)
+        bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
+                                        | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        bb.accepted.connect(d.accept)
+        bb.rejected.connect(d.reject)
+        f.addRow(bb)
+        if d.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            self.set_names([e.run for e in sel], name.text().strip(), role.currentData(), note.text().strip())
+
+    def set_names(self, runs, name: str = "", role: str = "", note: str = ""):
+        """Correct sample name and/or role of runs (empty: back to the file / the name), keep it for the
+        folder, re-apply to the run table and refill the reduction table."""
+        from . import names as nm
+        if not self.folder or not runs:
+            return
+        if self.name_corrections is None:
+            self.name_corrections = nm.load(self.folder)
+        in_file = {e.run: e.raw.sample_name_in_file or e.raw.sample_name for e in self.entries if e.raw is not None}
+        keep_name = [r for r in runs if name and in_file.get(r) == name]     # same as the file: no rename
+        self.name_corrections.set([r for r in runs if r not in keep_name], name or None, role or None, note)
+        if keep_name:
+            self.name_corrections.set(keep_name, None, role or None, note)
+        p = nm.save(self.name_corrections)
+        for e in self.entries:
+            nm.apply(e.raw, self.name_corrections)
+        what = (f"name '{name}'" if name else "name from the file") + (f", role {role}" if role else ", role from the name")
+        self.log(f"runs {', '.join(map(str, runs))}: {what} (kept in {p})")
+        sel = [e.run for e in self.selected_entries()]
+        self._fill_table()
+        self.select_runs(sel)
+        from .catalogue import beam_centres
+        self.centres = beam_centres([e.raw for e in self.entries])
+        if prefs.get("sasred.table.autofill"):
+            self.table_panel.on_fill()
+            self.log("reduction table filled again with the corrected names and roles")
+
+    def banks_for(self, raw):
+        """Detector banks to reduce for a run: [""] (the area detector) for SANS-I; for SANS-LLB the
+        choice of the Reduction panel ("" = central, "left", "bottom")."""
+        if getattr(raw, "instrument", "sans_i") != "sans_llb":
+            return [""]
+        b = self.bank_combo.currentData()
+        have = list((raw.panels or {}).keys())
+        if b == "all":
+            return [""] + have
+        if b in ("left", "bottom"):
+            return [b] if b in have else []
+        return [""]
+
+    @staticmethod
+    def result_key(run, bank=""):
+        return run if not bank else f"{run} {bank}"
+
     def mask_for(self, raw):
         """The mask for a run and where it comes from: the mask of its instrument configuration
         (L1, L2, λ, beam stop type and position; :func:`catalogue.mask_key`) – the one in the editor
-        or a stored one – else the suggested mask of the run (border, beam stop shadow, hot pixels)."""
+        or a stored one – else the suggested mask of the run (border, beam stop shadow, hot pixels).
+        A SANS-LLB wide-angle panel: tube ends and dead tubes."""
         from .catalogue import mask_key, mask_key_label
         from .core import mask as mk
         k = mask_key(raw)
+        if getattr(raw, "panel", None) is not None:
+            ed = self.mask_editor.mask
+            if k == self._mask_key and ed is not None and ed.shape == raw.counts.shape and not self.mask_editor.pristine:
+                return ed.copy(), f"mask of {mask_key_label(k)} (detector panel)"
+            m = self.masks.get(k)
+            if m is not None and m.shape == raw.counts.shape:
+                return m.copy(), f"mask of {mask_key_label(k)}"
+            return mk.default_mask(raw, self.centre_for(raw))[0], \
+                f"{raw.bank} panel: tube ends and dead tubes masked (no mask edited for it)"
         ed = self.mask_editor.mask
         if k == self._mask_key and ed is not None and ed.shape == raw.counts.shape:
             return self.full_mask(raw.counts.shape), f"mask of {mask_key_label(k)} (detector panel)"
@@ -509,32 +682,66 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         """Reduce sample rows of the reduction table: 2D per pixel, then the average with the q bins,
         sector and normalisation of the Reduction panel. Results appear in I(q) and as 2D image."""
         from .absolute import reduce_row_2d, average
-        from .io.sinq import read_sans_i
+        from .io.raw import read_raw
         paths = {e.run: e.path for e in self.entries}
 
-        def read(n):
-            if n not in paths:
-                raise KeyError(f"run {n} not in the folder")
-            return read_sans_i(paths[n])
+        cache = {}
+
+        def read_bank(bank):
+            def read(n):
+                if n not in paths:
+                    raise KeyError(f"run {n} not in the folder")
+                if n not in cache:
+                    from . import names as nm
+                    cache[n] = nm.apply(read_raw(paths[n]), self.name_corrections)
+                r = cache[n]
+                if bank:
+                    from .io.sans_llb import bank_run
+                    return bank_run(r, bank)
+                return r
+            return read
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
         done = None
         self._last_keys = []
+        self.missing_view.clear()
+        missing_seen = set()
+        jobs = []
+        for row in rows:
+            banks = [""]
+            if row.used and row.used[0] in paths:
+                try:
+                    banks = self.banks_for(read_bank("")(row.used[0])) or [""]
+                except Exception:  # noqa: BLE001
+                    pass
+            jobs += [(row, b) for b in banks]
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
         try:
-            for row in rows:
-                tag = f"{table.config.split(',')[0]} {row.label}"
+            for row, bank in jobs:
+                read = read_bank(bank)
+                tag = f"{table.config.split(',')[0]} {row.label}" + (f" {bank}" if bank else "")
                 try:
                     raw0 = read(row.used[0]) if row.used else None
                     if raw0 is None:
                         raise ValueError("no runs switched on")
                     mask, how = self.mask_for(raw0)
+                    eff = None
+                    if table.scale_method() != "water" and table.efficiency:
+                        eff = self.efficiency_for(table, bank)
                     r2 = reduce_row_2d(table, row, read, self.centre_for(raw0), mask=mask,
-                                       normalise_by=self.norm.currentData(), k0=table.water_g)
+                                       normalise_by=self.norm.currentData(), k0=table.water_g, efficiency=eff)
                     r2.notes.insert(0, how)
                     r1 = average(r2, self._edges(raw0, r2.mask), sector_deg=sector)
                 except Exception as exc:  # noqa: BLE001
                     self.log(f"{tag} ({row.info}): FAILED – {type(exc).__name__}: {exc}")
+                    for x in table.missing_inputs([row]):
+                        self._add_missing(table.config, x.__dict__, missing_seen)
+                    self._add_missing(table.config, dict(role="sample", index=table.samples.index(row)
+                                                         if row in table.samples else None,
+                                                         label=f"{row.label} ({row.info})", field="reduction",
+                                                         text=f"not reduced: {exc}", severity="error"), missing_seen)
                     continue
+                for x in r2.parameters.get("missing") or []:
+                    self._add_missing(table.config, x, missing_seen)
                 self.results[tag] = r1
                 self._last_keys.append(tag)
                 done = tag
@@ -545,13 +752,54 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 QtWidgets.QApplication.processEvents()
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
+        n_all = self.missing_view.topLevelItemCount()
+        n = sum(self.missing_view.topLevelItem(k).data(1, QtCore.Qt.ItemDataRole.UserRole) != "info"
+                for k in range(n_all))
+        self.docks["missing"].setWindowTitle(f"Missing input ({n})" if n else "Missing input")
+        if n_all:
+            self.log(f"{n} inputs missing or to check – see the panel 'Missing input'; the cells are red in the "
+                     "reduction table" if n else "corrections left out (allowed) – see the panel 'Missing input'")
+            for k in range(n_all):
+                it = self.missing_view.topLevelItem(k)
+                self.log(f"    {'not used' if it.data(1, QtCore.Qt.ItemDataRole.UserRole) == 'info' else 'missing'}: "
+                         f"{it.text(0)} · {it.text(1)} · {it.text(2)}: {it.text(3)}")
+        if n:
+            self.statusBar().showMessage(f"{n} inputs missing or to check: panel 'Missing input'", 15000)
         self._refresh_results(select=done)
         if done is not None:
             self.docks["iq"].raise_()
         return done
 
+    _MISSING_COLOURS = {"missing": QtGui.QColor(255, 196, 196), "check": QtGui.QColor(255, 226, 180),
+                        "error": QtGui.QColor(230, 120, 120), "info": QtGui.QColor(232, 232, 232)}
+
+    def _add_missing(self, config, x: dict, seen: set):
+        """One line of the panel 'Missing input' (a correction item only once per geometry)."""
+        key = (config, x.get("role"), x.get("index"), x.get("field"))
+        if key in seen:
+            return
+        seen.add(key)
+        it = QtWidgets.QTreeWidgetItem([config.split(",")[0], x.get("label", ""), x.get("field", ""), x.get("text", "")])
+        col = self._MISSING_COLOURS.get(x.get("severity", "missing"))
+        for j in range(4):
+            it.setBackground(j, QtGui.QBrush(col))
+            it.setToolTip(j, f"{config}\n{x.get('text', '')}")
+        it.setData(0, QtCore.Qt.ItemDataRole.UserRole, (config, x.get("role"), x.get("index"), x.get("field")))
+        it.setData(1, QtCore.Qt.ItemDataRole.UserRole, x.get("severity", "missing"))
+        self.missing_view.addTopLevelItem(it)
+        for j in range(3):
+            self.missing_view.resizeColumnToContents(j)
+
+    def _on_missing_clicked(self, it, _col=0):
+        config, role, index, field = it.data(0, QtCore.Qt.ItemDataRole.UserRole)
+        self.show_table()
+        if field != "reduction":
+            self.table_panel.show_missing(config, role, index, field)
+        elif role == "sample" and index is not None:
+            self.table_panel.show_missing(config, role, index, "runs")
+
     def show_table(self):
-        """Show the reduction table panel (a tab next to I(q) by default)."""
+        """Show the reduction table panel (a tab next to the detector by default)."""
         d = self.docks["table"]
         if d.isHidden():
             self.set_panel_visible("table", True)
@@ -584,6 +832,14 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.entries = scan_folder(folder, progress)
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
+        from . import names as nm
+        self.name_corrections = nm.load(folder)
+        for e in self.entries:
+            nm.apply(e.raw, self.name_corrections)
+        if self.name_corrections:
+            self.log(f"sample names / roles corrected by hand ({nm.store_path(folder)}):")
+            for ln in self.name_corrections.describe().splitlines():
+                self.log("    " + ln)
         self._fill_table()
         from .catalogue import beam_centres
         self.centres = beam_centres([e.raw for e in self.entries])
@@ -596,6 +852,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                                      10000)
 
     def _fill_table(self):
+        from .catalogue import COLUMNS as COLUMNS_RT
         t = self.table
         t.setSortingEnabled(False)
         t.setRowCount(len(self.entries))
@@ -607,8 +864,22 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                     it.setData(QtCore.Qt.ItemDataRole.UserRole, i)
                 else:
                     it.setText(str(val))
-                if e.raw is None or (e.raw is not None and e.raw.aborted):
+                if e.raw is None or getattr(e, "skip", ""):
+                    it.setForeground(QtGui.QBrush(QtGui.QColor("gray")))
+                    f = it.font()
+                    f.setStrikeOut(j > 0 and j < len(COLUMNS_RT) - 1)
+                    it.setFont(f)
+                    it.setToolTip(f"skipped: {e.skip or 'unreadable'} – not used in any reduction")
+                elif e.raw.aborted:
                     it.setForeground(QtGui.QBrush(QtGui.QColor("firebrick")))
+                if j == 1 and e.raw is not None and (e.raw.sample_name != (e.raw.sample_name_in_file or e.raw.sample_name)
+                                                     or getattr(e.raw, "role", "")):
+                    f = it.font()
+                    f.setItalic(True)
+                    it.setFont(f)
+                    it.setForeground(QtGui.QBrush(QtGui.QColor("#1f5fa8")))
+                    it.setToolTip(f"name in the file: {e.raw.sample_name_in_file}"
+                                  + (f"\nrole set by hand: {e.raw.role}" if e.raw.role else ""))
                 t.setItem(i, j, it)
         t.setHorizontalHeaderItem(_lam_column(), QtWidgets.QTableWidgetItem(f"λ [{self.units.length}]"))
         t.setSortingEnabled(True)
@@ -643,7 +914,33 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.table.selectRow(r)
         self.table.setSelectionMode(mode)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._middle_tabs_done:
+            self._middle_tabs_done = True
+            QtCore.QTimer.singleShot(0, self._arrange_middle_tabs)
+
+    def _arrange_middle_tabs(self):
+        """The detector and the reduction table share the wide middle column as tabs (each gets the full
+        width there); I(q), error budget and log stay visible next to them. Done once the window is
+        shown: forming a second tab group before that leaves a stray tab bar in Qt."""
+        det, tab = self.docks["detector"], self.docks["table"]
+        if tab in self.tabifiedDockWidgets(det) or det.isFloating() or tab.isFloating():
+            return                                         # arranged already (last session)
+        if self.dockWidgetArea(det) != self.dockWidgetArea(tab):
+            return
+        self.tabifyDockWidget(det, tab)
+        det.raise_()
+        self.hide_stray_tab_bars()
+
+    def reset_layout(self):
+        """View → Reset layout: the start arrangement, with the detector and the reduction table as tabs."""
+        super().reset_layout()
+        self._arrange_middle_tabs()
+
     def _on_selection(self):
+        if self.selected_entries() and not self.docks["detector"].isFloating():
+            self.docks["detector"].raise_()             # a run chosen: its detector image (tab next to the table)
         self._show_centre_of(self.displayed_raw())
         self._draw_detector()
         self._schedule_preview()          # also redraws I(q) (selected curves)
@@ -758,7 +1055,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.preview = None
         sel = [e for e in self.selected_entries() if e.raw is not None] if self.live.isChecked() else []
         if sel:
-            raw = sel[0].raw
+            raw = self.displayed_raw()
             try:
                 self._sync_mask_config(raw)
                 mask = self._mask(raw.counts.shape)
@@ -821,16 +1118,24 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def displayed_raw(self):
         """The run shown in the detector panel (first selected), or None."""
         sel = [e for e in self.selected_entries() if e.raw is not None]
-        return sel[0].raw if sel else None
+        if not sel:
+            return None
+        raw = sel[0].raw
+        b = self.det_bank.currentData() if hasattr(self, "det_bank") else ""
+        if b and getattr(raw, "instrument", "") == "sans_llb" and raw.panels and b in raw.panels:
+            from .io.sans_llb import bank_run
+            return bank_run(raw, b)
+        return raw
 
     def _edges(self, raw, mask):
         from .core.averaging import q_edges
-        from .core.geometry import pixel_geometry
+        from .core.geometry import run_geometry
         u = self.units
         qmin, qmax = u.q_in(self.qmin.value()), u.q_in(self.qmax.value())      # internal: 1/Å
+        if getattr(raw, "panel", None) is not None:
+            qmin = qmax = 0.0            # a wide-angle panel: its own q range
         if qmin <= 0 or qmax <= 0:
-            g = pixel_geometry(raw.counts.shape, raw.pixel_size_m, self.centre_for(raw),
-                               getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A)
+            g = run_geometry(raw, self.centre_for(raw))
             q = g.q[mask == 0]
             q = q[q > 0]
             qmin = qmin if qmin > 0 else float(q.min())
@@ -842,15 +1147,19 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                            f"{u.q_out(qmin):.4g}–{u.q_out(qmax):.4g} {u.q}")
         return e
 
-    def reduce_entry(self, e):
-        """Reduce one catalogue entry with the panel settings (re-read with checksum)."""
-        from .io.sinq import read_sans_i
+    def reduce_entry(self, e, bank: str = ""):
+        """Reduce one catalogue entry with the panel settings (re-read with checksum); ``bank``: a
+        SANS-LLB wide-angle panel ("left", "bottom") instead of the central detector."""
+        from .io.raw import read_raw
         from .reduce import reduce_run_1d
-        raw = read_sans_i(e.path)
+        from . import names as nm
+        raw = nm.apply(read_raw(e.path, bank=bank), self.name_corrections)
         mask = self.mask_for(raw)[0]
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
         r = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask), mask=mask,
                           normalise_by=self.norm.currentData(), sector_deg=sector)
+        if bank:
+            r.parameters["bank"] = bank
         return r
 
     def on_reduce(self):
@@ -869,15 +1178,16 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
         self._last_keys = []
         try:
-            for e in sel:
+            for e, bank in [(e, b) for e in sel for b in self.banks_for(e.raw)]:
                 try:
-                    r = self.reduce_entry(e)
+                    r = self.reduce_entry(e, bank)
                 except Exception as exc:  # noqa: BLE001
-                    self.log(f"run {e.run}: FAILED – {type(exc).__name__}: {exc}")
+                    self.log(f"run {e.run}{' ' + bank if bank else ''}: FAILED – {type(exc).__name__}: {exc}")
                     continue
-                self.results[r.run] = r
-                self._last_keys.append(r.run)
-                self.log(f"run {r.run} ({r.raw.sample_name}): {len(r.q)} bins ({getattr(self, '_last_bins', '')}), q = {self.units.q_out(r.q[0]):.4g} … "
+                key = self.result_key(r.run, bank)
+                self.results[key] = r
+                self._last_keys.append(key)
+                self.log(f"run {key} ({r.raw.sample_name}): {len(r.q)} bins ({getattr(self, '_last_bins', '')}), q = {self.units.q_out(r.q[0]):.4g} … "
                          f"{self.units.q_out(r.q[-1]):.4g} {self.units.q}, "
                          f"dead-time factor {r.deadtime_factor:.4f}")
                 for n in r.notes:
@@ -885,7 +1195,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 QtWidgets.QApplication.processEvents()
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
-        self._refresh_results(select=sel[-1].run)
+        self._refresh_results(select=self._last_keys[-1] if self._last_keys else None)
 
     def clear_results(self):
         self.results.clear()
@@ -940,20 +1250,33 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.mask_editor._ax = None
             self.det_canvas.draw_idle()
             return
+        if self.det_view.currentData() == "efficiency":
+            self._draw_efficiency(fig)
+            self.mask_editor._ax = None
+            self.det_canvas.draw_idle()
+            return
         sel = [e for e in self.selected_entries() if e.raw is not None]
         if not sel:
             self.det_canvas.draw_idle()
             return
-        raw = sel[0].raw
+        raw = self.displayed_raw()
         self._sync_mask_config(raw)
         ax = fig.add_subplot(111)
+        if self.det_view.currentData() == "llb_all":
+            self._draw_llb_all(fig, ax, sel[0].raw)
+            self.mask_editor._ax = None
+            self.det_canvas.draw_idle()
+            return
         c = raw.counts.astype(float)
+        c, cunit, cnote = self.display_image(raw, c)
         # colour range from the unmasked pixels only: bright pixels at the edge of a badly placed
         # beamstop must not dominate the colours
-        valid = self.full_mask(c.shape) == 0
-        norm = make_norm(self.det_scale.currentData(), c, valid=valid)
-        if self.det_view.currentData() == "polar":
-            self._draw_detector_polar(fig, ax, raw, c, norm)
+        valid = (self.full_mask(c.shape) == 0) & np.isfinite(c)
+        norm = make_norm(self.det_scale.currentData(), np.nan_to_num(c), valid=valid)
+        if self.det_view.currentData() == "polar" and raw.panel is None:
+            self._draw_detector_polar(fig, ax, raw, c, norm, cunit)
+            if cnote:
+                ax.set_title(ax.get_title() + cnote, fontsize="medium")
             self.mask_editor._ax = None                     # editing only in the cartesian view
             self.mask_editor.attach()
             self.det_canvas.draw_idle()
@@ -962,9 +1285,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         im = ax.imshow(c, origin="lower", norm=norm, cmap=self.det_cmap.currentText(),
                        interpolation="nearest", aspect=py / px)        # true pixel aspect ratio
         from ..toolbox.viewer import image_colorbar
-        decorate_colorbar(image_colorbar(fig, ax, im, "counts"), self.det_scale.currentData())
-        self.mask_editor.draw_overlay(ax, c.shape, image=c, scale=self.det_scale.currentData())
+        decorate_colorbar(image_colorbar(fig, ax, im, cunit), self.det_scale.currentData())
+        self.mask_editor.draw_overlay(ax, c.shape, image=np.nan_to_num(c), scale=self.det_scale.currentData())
         x, y = self.xc.value(), self.yc.value()
+        if raw.panel is not None:                  # wide-angle panel: no beam centre on it
+            # orientation as the central detector: x grows against posx, y with posy (the left panel's rows
+            # run from top to bottom)
+            if raw.panel.posy_mm[0] > raw.panel.posy_mm[-1]:
+                ax.invert_yaxis()
+            if raw.panel.posx_mm[0] < raw.panel.posx_mm[-1]:
+                ax.invert_xaxis()
+            ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
+            ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]" + (" (row 0 at the top)" if raw.panel.posy_mm[0] > raw.panel.posy_mm[-1] else ""))
+            ax.set_title(f"run {raw.run}: {raw.sample_name} – {raw.bank} panel{cnote}", fontsize="medium")
+            self.det_canvas.draw_idle()
+            return
         ax.plot([x], [y], "+", color="red", ms=12, mew=1.5, zorder=5)
         if self.sector.isChecked():
             L = max(c.shape)
@@ -976,24 +1311,106 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             ax.set_ylim(-0.5, c.shape[0] - 0.5)
         ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
         ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]")
-        ax.set_title(f"run {raw.run}: {raw.sample_name}", fontsize="medium")
+        ax.set_title(f"run {raw.run}: {raw.sample_name}{cnote}", fontsize="medium")
         self.det_canvas.draw_idle()
 
-    def _draw_detector_polar(self, fig, ax, raw, c, norm):
+    def _draw_llb_all(self, fig, ax, raw):
+        """SANS-LLB: the central detector and the wide-angle panels together over the horizontal and
+        vertical scattering angles (geometry with the current beam centre and the panel offsets), counts
+        per steradian, with the mask of every bank shown as in the cartesian view (mask colours, own grey
+        scale or hidden, and the outline)."""
+        from matplotlib.collections import LineCollection
+        from matplotlib.colors import LogNorm
+        from scipy.interpolate import RegularGridInterpolator
+        from .core.geometry import run_geometry
+        from .mask_editor import MASKED_CMAP, outline_segments, overlay_rgba
+        if getattr(raw, "instrument", "") != "sans_llb" or not raw.panels:
+            ax.text(0.5, 0.5, "not a SANS-LLB run", ha="center", va="center", transform=ax.transAxes)
+            return
+        from .io.sans_llb import bank_run
+        centre = self.centre_for(raw)
+        mode = self.mask_editor.mode
+        alpha = self.mask_editor.opacity.value() / 100
+        parts = []
+        for b in ["", *raw.panels]:
+            r = bank_run(raw, b) if b else raw
+            g = run_geometry(r, centre)
+            ang_x = np.degrees(np.arctan2(g.x, g.z))
+            ang_y = np.degrees(np.arctan2(g.y, g.z))
+            ny, nx = ang_x.shape
+            fx = RegularGridInterpolator((np.arange(ny), np.arange(nx)), ang_x, bounds_error=False, fill_value=None)
+            fy = RegularGridInterpolator((np.arange(ny), np.arange(nx)), ang_y, bounds_error=False, fill_value=None)
+
+            def to_angles(px, py, fx=fx, fy=fy):           # pixel coordinates (x = column, y = row) -> angles
+                pts = np.column_stack([np.ravel(py), np.ravel(px)])
+                return fx(pts).reshape(np.shape(px)), fy(pts).reshape(np.shape(px))
+            ey, ex = np.mgrid[-0.5:ny, -0.5:nx]
+            Xe, Ye = to_angles(ex, ey)
+            dens = r.counts.astype(float) / g.d_omega
+            m = np.asarray(self.mask_for(r)[0], np.uint32)
+            parts.append((b or "central", ang_x, ang_y, Xe, Ye, dens, m, to_angles))
+        good = [d[(m == 0) & (d > 0)] for *_, d, m, _t in parts]
+        allv = np.concatenate(good) if good else np.array([])
+        if allv.size == 0:
+            allv = np.concatenate([d[d > 0] for *_, d, m, _t in parts]) if parts else np.array([1.0])
+        norm = LogNorm(vmin=max(np.percentile(allv, 1), 1e-12), vmax=np.percentile(allv, 99.9))
+        cmap = self.det_cmap.currentText()
+        im = None
+        for name, ax_, ay_, Xe, Ye, d, m, to_angles in parts:
+            masked = m != 0
+            show = np.ma.masked_where((d <= 0) | (masked & (mode != "colours")), d)
+            im = ax.pcolormesh(Xe, Ye, show, norm=norm, cmap=cmap, shading="flat")
+            if masked.any():
+                if mode == "colours":
+                    qm = ax.pcolormesh(Xe, Ye, np.zeros(d.shape), shading="flat", zorder=3)
+                    qm.set_array(None)
+                    qm.set_facecolor(overlay_rgba(m, alpha).reshape(-1, 4))
+                elif mode == "scale":
+                    dm = np.ma.masked_where(~masked | (d <= 0), d)
+                    if dm.count():
+                        ax.pcolormesh(Xe, Ye, dm, cmap=MASKED_CMAP, shading="flat", zorder=3,
+                                      norm=LogNorm(vmin=max(float(dm.min()), 1e-12), vmax=float(dm.max()) * 1.0001))
+                else:
+                    ax.pcolormesh(Xe, Ye, np.ma.masked_where(~masked, np.ones(d.shape)), cmap="Greys", vmin=0, vmax=4,
+                                  shading="flat", zorder=3)
+                if not masked.all():
+                    segs = []
+                    for (x0, y0), (x1, y1) in outline_segments(masked):
+                        n = max(2, int(round(abs(x1 - x0) + abs(y1 - y0))) + 1)   # follow curved pixel rows
+                        px, py = np.linspace(x0, x1, n), np.linspace(y0, y1, n)
+                        X, Y = to_angles(px, py)
+                        segs.append(np.column_stack([X, Y]))
+                    for col, lw in (("black", 2.2), ("white", 0.9)):
+                        ax.add_collection(LineCollection(segs, colors=col, linewidths=lw, zorder=4), autolim=False)
+            ax.text(float(np.median(ax_)), float(np.max(Ye)), name, ha="center", va="bottom", fontsize=8)
+        ax.plot([0], [0], "+", color="red", ms=12, mew=1.5, zorder=5)
+        ax.set_aspect("equal")
+        ax.autoscale_view()
+        ax.set_xlabel("2θ_x [°] (x of the central detector)")
+        ax.set_ylabel("2θ_y [°]")
+        n_m = sum(int(np.count_nonzero(m)) for *_, m, _t in parts)
+        ax.set_title(f"run {raw.run}: {raw.sample_name} – all detectors, counts/sr ({n_m} px masked)",
+                     fontsize="medium")
+        if im is not None:
+            fig.colorbar(im, ax=ax, label="counts / sr")
+
+    def _draw_detector_polar(self, fig, ax, raw, c, norm, cunit="counts"):
         """Detector image over (φ, q): φ = 0 horizontal (+x), counter-clockwise; masked cells in the
         mask colours, outside the detector light grey."""
         import matplotlib
         from .core.polar import polar_image
         u = self.units
         xc, yc = self.xc.value(), self.yc.value()
+        nonfinite = ~np.isfinite(c)
+        c = np.nan_to_num(c)
         pol = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A,
-                          invalid=self._mask(c.shape) != 0)
+                          invalid=(self._mask(c.shape) != 0) | nonfinite)
         cmap = matplotlib.colormaps[self.det_cmap.currentText()].with_extremes(bad="0.85")
         qe = u.q_out(pol.q_edges)
         im = ax.pcolormesh(pol.phi_edges_deg, qe, pol.image, norm=norm, cmap=cmap, shading="flat",
                            rasterized=True)
         from ..toolbox.viewer import image_colorbar
-        decorate_colorbar(image_colorbar(fig, ax, im, "counts"), self.det_scale.currentData())
+        decorate_colorbar(image_colorbar(fig, ax, im, cunit), self.det_scale.currentData())
         ax.set_anchor("W")
         mode = self.mask_editor.mode
         if mode == "scale":                                  # masked cells on their own grey scale
@@ -1118,6 +1535,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 
     def _default_name(self, r, ext):
         base = f"{r.run}_{''.join(ch if ch.isalnum() or ch in '-_' else '_' for ch in r.raw.sample_name)}"
+        if getattr(r.raw, "bank", ""):
+            base += f"_{r.raw.bank}"
         return os.path.join(self.folder or os.getcwd(), base + ext)
 
     def on_save_nxcansas(self):
@@ -1188,11 +1607,13 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 "normalise_by": self.norm.currentData(), "sector": self.sector.isChecked(),
                 "sector_c": self.sector_c.value(), "sector_hw": self.sector_hw.value(),
                 "detector_scale": self.det_scale.currentData(), "detector_cmap": self.det_cmap.currentText(),
-                "detector_view": self.det_view.currentData(),
+                "detector_view": self.det_view.currentData(), "bank": self.bank_combo.currentData(),
+                "detector_bank": self.det_bank.currentData(),
+                "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
                             if c.source != "direct beam" and not c.source.startswith("borrowed")],
-                "dock_state": self.dock_state()}
+                "dock_state": self.dock_state(), "layout_version": LAYOUT_VERSION}
 
     @staticmethod
     def _session_mask_path():
@@ -1271,12 +1692,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         i = self.det_view.findData(s.get("detector_view"))
         if i >= 0:
             self.det_view.setCurrentIndex(i)
+        i = self.bank_combo.findData(s.get("bank"))
+        if i >= 0:
+            self.bank_combo.setCurrentIndex(i)
+        i = self.det_bank.findData(s.get("detector_bank", ""))
+        if i >= 0:
+            self.det_bank.setCurrentIndex(i)
         if "mask_tools" in s:
             self.mask_tools_button.setChecked(bool(s["mask_tools"]))
+        self.det_eff.setChecked(bool(s.get("detector_efficiency", False)))
+        self.det_domega.setChecked(bool(s.get("detector_solid_angle", False)))
         i = self.iq_show.findData(s.get("iq_show"))
         if i >= 0:
             self.iq_show.setCurrentIndex(i)
-        self.restore_dock_state(s.get("dock_state"))
+        if s.get("layout_version") == LAYOUT_VERSION:     # an older arrangement is not restored
+            self.restore_dock_state(s.get("dock_state"))
         if os.path.isfile(self._session_mask_path()):
             try:
                 from .core.mask import BEAMSTOP, beamstop_guess, load_mask

@@ -79,6 +79,7 @@ class Plan:
     missing: List[str]            # e.g. "8.0 m, 6.0 Å: no blocked_beam (scattering)"
     match: dict = field(default_factory=dict)
     beamstop: Dict[str, str] = field(default_factory=dict)   # per configuration
+    skipped: List[tuple] = field(default_factory=list)       # (run, why): time 0, 0 counts or monitor 0
 
     def rows(self, role: Optional[str] = None, config: Optional[str] = None) -> List[Entry]:
         return [e for e in self.entries if (role is None or e.role == role)
@@ -101,11 +102,16 @@ class Plan:
                 out.append("")
                 out.extend(f"* missing: {m[len(cfg) + 2:]}" for m in miss)
             out.append("")
+        if self.skipped:
+            out.append("### Skipped runs\n")
+            out.extend(f"* {r}: {why}" for r, why in self.skipped)
+            out.append("")
         return "\n".join(out)
 
     def save(self, path) -> str:
         with open(path, "w", encoding="utf-8") as fh:
             json.dump({"match": self.match, "missing": self.missing, "beamstop": self.beamstop,
+                       "skipped": [list(x) for x in self.skipped],
                        "entries": [asdict(e) for e in self.entries]}, fh, indent=1, default=str)
         return str(path)
 
@@ -113,7 +119,8 @@ class Plan:
     def load(cls, path) -> "Plan":
         with open(path, encoding="utf-8") as fh:
             d = json.load(fh)
-        return cls([Entry(**e) for e in d["entries"]], d["missing"], d.get("match", {}), d.get("beamstop", {}))
+        return cls([Entry(**e) for e in d["entries"]], d["missing"], d.get("match", {}), d.get("beamstop", {}),
+                   [tuple(x) for x in d.get("skipped", [])])
 
 
 def _runs(rs) -> str:
@@ -138,7 +145,13 @@ def check_rates(raws, alpha: float = 0.01, monitor: str = "monitor1", rel_floor:
     Returns (verdict, outlier run numbers, χ²/ndf), with ``details`` also {run: (relative
     deviation from the mean of the kept runs, deviation in σ)}."""
     c = np.array([float(np.sum(r.counts)) for r in raws])
-    m = np.array([float(r.monitors[monitor]) for r in raws])
+    from .reduce import load_instrument
+
+    def mon(r):
+        if getattr(r, "instrument", "sans_i") == "sans_i":
+            return monitor
+        return load_instrument(r)["monitor"]["normaliser"]
+    m = np.array([float(r.monitors[mon(r)]) for r in raws])
     x, s = c / m, np.sqrt(np.maximum(c, 1)) / m
     s = np.hypot(s, rel_floor * x)
     keep = list(range(len(raws)))
@@ -199,6 +212,9 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
     may then take (raw, centre)); transmission
     groups by their count rate with ``rate_floor`` (0.5 %) for the beam stability (``edges`` and
     ``mask`` may be functions of the first raw run of a group, e.g. to depend on L2)."""
+    skipped = [(r.run, r.empty_reason) for r in (getattr(x, "raw", x) for x in runs)
+               if r is not None and getattr(r, "empty_reason", "")]
+    runs = [x for x in runs if getattr(x, "raw", x) is None or not getattr(getattr(x, "raw", x), "empty_reason", "")]
     raws0 = [getattr(r, "raw", r) for r in runs]
     raws0 = [r for r in raws0 if r is not None]
     geometry_notes: Dict[str, str] = {}
@@ -222,7 +238,8 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
     for g in gr.group_runs(raws, match, fields=fields):
         r0 = g.runs[0]
         kind = "transmission" if transmission(r0) else "scattering"
-        e = Entry(_config(r0), role_of(r0.sample_name, roles), r0.sample_name, kind, g.run_numbers,
+        e = Entry(_config(r0), getattr(r0, "role", "") or role_of(r0.sample_name, roles), r0.sample_name, kind,
+                  g.run_numbers,
                   g.run_numbers, [], "single", start=str(r0.start_time), end=str(g.runs[-1].end_time or ""))
         bad = [f"{x}: {odd[x]}" for x in g.run_numbers if x in odd]
         for x in g.run_numbers:
@@ -231,7 +248,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
         for r in g.runs:
             if getattr(r, "aborted", False):
                 what = (f"{r.counting_time_s:.0f} s of a {r.preset:.0f} s preset" if r.count_mode in ("timer", "time")
-                        else f"monitor {r.monitors.get('monitor1', 0):.4g} of a {r.preset:.4g} preset")
+                        else f"monitor {r.monitors.get(r.preset_monitor, 0):.4g} of a {r.preset:.4g} preset")
                 e.run_notes[str(r.run)] = _join(e.run_notes.get(str(r.run)), f"aborted: {what}")
         ab = [r.run for r in g.runs if getattr(r, "aborted", False)]
         if ab:
@@ -291,7 +308,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
             for role in NEEDED[kind]:
                 if (role, kind) not in here:
                     missing.append(f"{cfg}: no {role} ({kind})")
-    return Plan(entries, missing, {k: v for k, v in match.items()}, geometry_notes)
+    return Plan(entries, missing, {k: v for k, v in match.items()}, geometry_notes, skipped)
 
 
 def main(argv=None):  # pragma: no cover -- thin CLI

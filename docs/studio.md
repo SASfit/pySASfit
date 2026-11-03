@@ -157,6 +157,16 @@ The explorer fits one data set. The engine below can fit several at once.
 
 `pysasfit.studio.fitting.FitProblem` is the engine behind the Fit panel. It can also be used on its own:
 
+**Several data sets.** `add_dataset(data, model)` per data set; models may share contribution objects (the values of a
+data set are set right before it is evaluated). `ModelFunction(contributions, active=[True, False, …])` evaluates only
+the contributions of that data set while keeping the addresses `<i>.ff.R`, `scale.<i>` the same in all models.
+`add_common` / `add_local` make one parameter for all data sets or one per data set. **Global parameters**:
+`add_global("P1", value, lower, upper)` and `link("P1", "1.ff.R", datasets=[1], factor=2.0)` (model value = factor ×
+P1), or any expression of global parameters with `link_expression("0.ff.R", "P1 + P2")` (also `atan(P1)`,
+`sqrt(P1**2 + P2**2)` …; the result's `derived` lists their values); a model parameter can be driven by one parameter
+or link only. Global parameters are never eliminated by
+variable projection; constraints and priors use them by name.
+
 ```python
 from pysasfit.studio import fitting
 

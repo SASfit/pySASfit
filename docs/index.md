@@ -114,6 +114,14 @@ Formerly pySASbox. A local HDF5 / NeXus viewer in the spirit of myHDF5 (tree, se
 NeXus default plots) and the metadata lister for run ranges.
 :::
 
+:::{grid-item-card} pySASmorph: 3D morphology
+:link: morph/index
+:link-type: doc
+
+Representative 3D two-phase structures from SAXS/SANS data (clipped Gaussian random fields, the SAXSMorph
+method): γ(r), g(r), voxel structure, its scattering, S/V and connectivity; VTK/HDF5/TIFF export, 3D view.
+:::
+
 :::{grid-item-card} The launcher
 :link: launcher
 :link-type: doc
@@ -164,6 +172,7 @@ pySASstudio <studio_manual/index>
 pySLDprofile <sldprofile/index>
 pyINVersion <inversion/index>
 pyOZsolver <oz/index>
+pySASmorph <morph/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 API <api/index>

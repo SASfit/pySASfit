@@ -14,6 +14,8 @@ oz          Ornstein-Zernike solvers, closures, polydisperse structure
             factors and SAS models, with a Qt GUI (from pyOZgui)
 sasred      SANS data reduction for SINQ SANS-I with exact error propagation,
             with a Qt GUI (pySASred)
+morph       pySASmorph: representative 3D two-phase morphologies from SAS data
+            (clipped Gaussian random fields, SAXSMorph method), with a Qt GUI
 toolbox     pyTOOLbox, small helpful tools: HDF5 viewer (in the spirit of myHDF5)
             and metadata lister for the raw data files (formerly ``sasbox``)
 gui         common Qt launcher (``pysasfit-gui``)
@@ -26,7 +28,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "toolbox", "gui")
+_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "gui")
 
 __all__ = list(_SUBPACKAGES)
 

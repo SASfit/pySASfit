@@ -28,12 +28,22 @@ The tools' own menu bars are hidden in the launcher; the launcher's menus act on
   launcher does not provide itself (for example *Save project as…* of pySASstudio, *Open raw-data folder…* and
   *Save NXcanSAS…* of pySASred, *Open HDF5 files…* of pyTOOLbox). Their keyboard shortcuts work as in the
   stand-alone window.
-* **View**: the panels of the tool in front (show / hide, panel border, *Dock all panels*, *Reset layout*), or the
+* **View**: the panels of the tool in front (show / hide, panel border, *Arrange panels*, *Dock all panels*,
+  *Reset layout*), or the
   tool's own View entries (pySASstudio), the detach / attach entries described below, and under **Tools** one
   entry per tool with its icon: it brings the tool to the front, also when it is detached (**Alt+1** … **Alt+6**
   in the order of the tabs).
 * **Settings**: *Preferences…* (opens on the page of the tool in front), *Forget last session (all tools)*, and
   the tool's own settings entries (for example *SASfit installation…* and *Integration…* of pySASstudio).
+
+## Panels: active frame, borders, arrangement
+
+The panel last clicked (or holding the keyboard focus) is framed in magenta, as the active window in Origin; the
+other panels have a raised border (*View → Panel border*: raised is the default; sunken, groove, line, none).
+*View → Arrange panels* puts all docked panels **side by side** (tile horizontally), **one above the other**
+(tile vertically), in a **grid**, or **all as tabs** (cascade); the detached panel windows can be cascaded or
+tiled over the screen. *View → Reset layout* returns to the start arrangement. The selected tab of every tab bar
+has a light grey background, a blue edge and bold text.
 
 ## Detaching tabs
 

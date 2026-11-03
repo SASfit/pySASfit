@@ -40,12 +40,12 @@ def test_fill_from_plan():
     assert [c.run for c in s1.trans_runs] == [8, 9] and s1.transmission == 0.42
     assert s2.used == [10] and s2.transmission is None
     probs = t.problems()
-    assert any("Cadmium" in x for x in probs) and any("No. 2 (S2): no transmission" in x for x in probs)
+    assert not any("Cadmium" in x for x in probs) and any("No. 2 (S2): no transmission" in x for x in probs)  # Cd optional
 
 
 def test_manual_table_and_file(tmp_path):
     t = rt.ReductionTable(config="manual")
-    assert [r.label for r in t.rows()] == ["Cadmium", "Water", "Water-BG", "Sample-BG"]
+    assert [r.label for r in t.rows()] == ["Cadmium", "Water", "Water-BG", "Sample-BG", "Direct beam"]
     t.corrections["water"].set_runs(rt.parse_runs("82187, 82190-82192"))
     assert t.corrections["water"].used == [82187, 82190, 82191, 82192]
     assert t.corrections["water"].runs_text() == "82187, 82190–82192"

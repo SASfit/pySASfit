@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Header table of a folder of SANS-I raw files (``sans<year>n<run>.hdf``)."""
+"""Header table of a folder of SANS-I or SANS-LLB raw files (``sans<year>n<run>.hdf``,
+``sans-llb<year>n<run>.hdf``)."""
 from __future__ import annotations
 
 import glob
@@ -10,7 +11,8 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from .io.sinq import RawRun, read_sans_i
+from .io.raw import read_raw
+from .io.sinq import RawRun
 
 __all__ = ["CatalogueEntry", "scan_folder", "raw_files", "is_transmission", "beamstop_limit",
            "BeamstopGeometry", "beamstop_geometry", "GeometryCentre", "beam_centres", "config_key", "beamstop_distance", "classify", "direct_beam_fraction",
@@ -72,8 +74,11 @@ def mask_key(raw) -> tuple:
     """Instrument configuration a mask belongs to: collimation L1 and distance L2 (0.1 m),
     wavelength (0.1 Å), beam stop type and beam stop position (x, y to 1 mm)."""
     bx, by = getattr(raw, "beamstop_xy_mm", (np.nan, np.nan))
+    bst = str(getattr(raw, "beamstop_type", "") or "")
+    if getattr(raw, "bank", ""):                     # SANS-LLB wide-angle panel: a mask of its own
+        bst = f"{bst} | {raw.bank} panel"
     return (round(float(raw.L1_m), 1), round(float(raw.L2_m), 1), round(float(raw.wavelength_A), 1),
-            str(getattr(raw, "beamstop_type", "") or ""), int(round(bx)) if np.isfinite(bx) else None,
+            bst, int(round(bx)) if np.isfinite(bx) else None,
             int(round(by)) if np.isfinite(by) else None)
 
 
@@ -119,8 +124,9 @@ class BeamstopGeometry:
         return None if self.ref_mm is None else self.distance_mm(self.ref_mm)
 
     def describe(self) -> str:
-        if self.ref_mm is None:
-            return "no beam stop shadow found"
+        if self.ref_mm is None or self.shadow_px is None:
+            return "no beam stop shadow found" + ("" if self.ref_mm is None else
+                                                  f" (beam stop at bsx, bsy = {self.ref_mm[0]:g}, {self.ref_mm[1]:g} mm)")
         bc = "?" if self.beam_centre_px is None else f"({self.beam_centre_px[0]:.2f}, {self.beam_centre_px[1]:.2f})"
         off = self.off_centre_mm
         return (f"beam stop in the beam at bsx, bsy = {self.ref_mm[0]:g}, {self.ref_mm[1]:g} mm, shadow centre "
@@ -128,10 +134,10 @@ class BeamstopGeometry:
                 f"from {self.centre_source}" + ("" if off is None else f"; beam stop {off:.1f} mm off the beam centre"))
 
 
-def _signs():
+def _signs(raw=None):
     try:
         from .reduce import load_instrument
-        b = load_instrument().get("beamstop", {})
+        b = load_instrument(raw).get("beamstop", {})
         return (int(b.get("x_sign", 1)), int(b.get("y_sign", 1)))
     except Exception:  # noqa: BLE001
         return (1, 1)
@@ -152,7 +158,7 @@ def beamstop_geometry(raws) -> dict:
     for k, rs in direct.items():
         cs = [masked_centre_of_gravity(r.counts) for r in rs[:20]]
         centres[k] = (float(np.median([c.x for c in cs])), float(np.median([c.y for c in cs])))
-    sign = _signs()
+    sign = _signs(raws[0] if raws else None)
     out = {}
     for k in set(direct) | set(blocked):
         bc, src = centres.get(k), "the direct-beam runs"
@@ -265,7 +271,16 @@ def is_transmission(raw, geometry: Optional[dict] = None, limit: Optional[float]
     if geometry:
         d = beamstop_distance(raw, geometry)
         if d is not None:
-            return d > (beamstop_limit() if limit is None else limit)
+            if limit is None:
+                limit = beamstop_limit()
+                try:
+                    from .reduce import load_instrument
+                    own = load_instrument(raw).get("beamstop", {}).get("out_mm")
+                    if own is not None and getattr(raw, "instrument", "sans_i") != "sans_i":
+                        limit = float(own)
+                except Exception:  # noqa: BLE001
+                    pass
+            return d > limit
     return looks_like_direct_beam(raw)
 
 
@@ -296,13 +311,14 @@ class CatalogueEntry:
     error: Optional[str] = None         # file that could not be read
     kind: str = ""                      # transmission | scattering (set by scan_folder)
     remark: str = ""                    # e.g. beam stop position and image disagree
+    skip: str = ""                      # why the run is skipped (time 0, 0 counts, monitor 0), else ""
 
     def row(self, units="nm"):
         """Values for the run table (wavelength in nm or Å)."""
         from .units import units as _units
         r = self.raw
         if r is None:
-            return [self.run, f"(unreadable: {self.error})"] + [""] * (len(COLUMNS) - 2)
+            return [self.run, f"(unreadable: {self.error})"] + [""] * (len(COLUMNS) - 3) + ["skipped: unreadable"]
         tot = int(r.counts.sum())
         lam = f"{_units(units).lam(r.wavelength_A):.{3 if units == 'nm' else 2}f}"
         kind = {"transmission": "trans.", "scattering": "scatt."}.get(self.kind, "")
@@ -315,12 +331,21 @@ class CatalogueEntry:
         bs = f"{r.beamstop_type or '?'} ({bx:.0f}, {by:.0f})"
         return [r.run, r.sample_name, kind, lam, f"{r.L1_m:.1f}", L2, bs,
                 r.attenuator,
-                f"{r.monitors.get('monitor1', 0):.4g}", f"{r.counting_time_s:.1f}", f"{tot:d}",
-                "yes" if r.aborted else ""]
+                f"{r.monitors.get('monitor1' if r.instrument == 'sans_i' else r.preset_monitor, 0):.4g}", f"{r.counting_time_s:.1f}", f"{tot:d}",
+                "yes" if r.aborted else "", self.comment()]
+
+    def comment(self) -> str:
+        """The comment column: why the run is skipped, and remarks (beam stop / image)."""
+        parts = []
+        if self.skip:
+            parts.append(f"skipped: {self.skip}")
+        if self.remark:
+            parts.append(self.remark)
+        return "; ".join(parts)
 
 
 COLUMNS = ["run", "sample", "kind", "λ [nm]", "L1 [m]", "L2 [m]", "beam stop (x, y mm)", "att.", "monitor1",
-           "time [s]", "counts", "aborted"]
+           "time [s]", "counts", "aborted", "comment"]
 
 
 def raw_files(folder) -> List[str]:
@@ -337,15 +362,18 @@ def scan_folder(folder, progress=None) -> List[CatalogueEntry]:
     for i, p in enumerate(files):
         run = int(_RUN.search(os.path.basename(p)).group(1))
         try:
-            out.append(CatalogueEntry(p, run, read_sans_i(p, checksum=False)))
+            out.append(CatalogueEntry(p, run, read_raw(p, checksum=False)))
         except Exception as e:  # noqa: BLE001 -- listed, not fatal
             out.append(CatalogueEntry(p, run, None, f"{type(e).__name__}: {e}"))
         if progress is not None:
             progress(i + 1, len(files))
-    kinds, odd, _ = classify([e.raw for e in out])
-    odd = dict(odd)
     for e in out:
         if e.raw is not None:
+            e.skip = e.raw.empty_reason
+    kinds, odd, _ = classify([e.raw for e in out if e.raw is not None and not e.skip])
+    odd = dict(odd)
+    for e in out:
+        if e.raw is not None and not e.skip:
             e.kind = kinds[e.run]
             e.remark = odd.get(e.run, "")
     return out

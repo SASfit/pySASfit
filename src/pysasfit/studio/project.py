@@ -1,4 +1,5 @@
-"""Save and reload an explorer session (``*.sasstudio``): mixture, parameters, fit selection, data, fit settings.
+"""Save and reload an explorer session (``*.sasstudio``): mixture, parameters, fit selection, data sets, global
+parameters and links, fit settings.
 
 The file is plain JSON.  The data are stored inside the file, so a project stays usable when the original
 data file moves.  The SASfit installation is *not* stored (it is a property of the computer).
@@ -15,7 +16,7 @@ import numpy as np
 from .contribution_panel import ROLES
 
 FORMAT = "pysasfit-studio-project"
-VERSION = 1
+VERSION = 1  # several data sets, global parameters and links are additions: older versions read the first data set
 SUFFIX = ".sasstudio"
 
 
@@ -47,7 +48,7 @@ def to_dict(ex):
     for p in ex.panels():
         c = {
             "ff": p.names["ff"], "sd": p.names["sd"], "sq": p.names["sq"], "approach": p.approach(),
-            "scale": _row(p.scale_row), "parameters": {},
+            "scale": _row(p.scale_row), "parameters": {}, "datasets": p.datasets_text(),
         }  # fmt: skip
         ff_rows = p.param_rows["ff"]
         c["distributed"] = ff_rows[p._dist].name if 0 <= p._dist < len(ff_rows) else None
@@ -70,14 +71,20 @@ def to_dict(ex):
             "backend": fp.backend.currentData(), "algorithm": fp.algorithm.currentData(), "max_eval": fp.max_eval.value(),
             "polish": fp.polish.isChecked(), "vp": fp.vp.isChecked(), "cache": fp.cache_requested(), "coarse": fp.coarse.isChecked(), "grid": fp.grid.isChecked(), "constraints": fp.constraints.toPlainText(), "priors": fp.priors.toPlainText(),
             "result": fp.result.toPlainText(),
+            "globals": [[n, v, f, _num(lo), _num(hi)] for n, v, f, lo, hi in fp.global_table_values()],
+            "links": fp.links_edit.toPlainText(), "local": sorted(fp.local_addresses()),
         },
+        "datasets": [], "current_ds": ex.current_ds,
+        "overrides": {str(k): v for k, v in ex.overrides.items()},
     }  # fmt: skip
-    if ex.data is not None:
-        dt = ex.data
-        d["data"] = {
+    ex._store_bg()
+    for dt in ex.datasets:
+        d["datasets"].append({
             "name": dt["name"], "q": [_num(v) for v in dt["q"]], "I": [_num(v) for v in dt["I"]],
-            "sigma": [_num(v) for v in dt["sigma"]],
-        }  # fmt: skip
+            "sigma": [_num(v) for v in dt["sigma"]], "bg": dict(dt["bg"]),
+        })  # fmt: skip
+    if d["datasets"]:
+        d["data"] = d["datasets"][0]  # read by version 1
     return d
 
 
@@ -112,6 +119,7 @@ def load_dict(ex, d):
             for name, rd in c["parameters"].get(role, {}).items():
                 _set_row(rows.get(name), rd)
         _set_row(p.scale_row, c.get("scale"))
+        p.set_datasets_text(c.get("datasets", "all"))
     for w in old:
         ex.tabs.removeTab(ex.tabs.indexOf(w))
         w.deleteLater()
@@ -122,11 +130,26 @@ def load_dict(ex, d):
     _set_row(ex.bgA_row, d.get("bg_A"))
     _set_row(ex.bgalpha_row, d.get("bg_alpha"))
     ex.clear_data()
-    dt = d.get("data")
-    if dt:
-        nan = lambda v: np.array([np.nan if x is None else x for x in v], float)  # noqa: E731
-        ex.set_data(nan(dt["q"]), nan(dt["I"]), nan(dt["sigma"]), dt.get("name", "data"))
-        ex.fit_panel.data_label.setText(f"{ex.data['name']}: {ex.data['q'].size} points")
+    nan = lambda v: np.array([np.nan if x is None else x for x in v], float)  # noqa: E731
+    sets = d.get("datasets") or ([d["data"]] if d.get("data") else [])
+    if sets and sets[0].get("bg"):      # the rows hold the background of the data set being added
+        b0 = sets[0]["bg"]
+        ex.bg_row.set_value(b0["background"], emit=False)
+        ex.bgA_row.set_value(b0["bg_A"], emit=False)
+        ex.bgalpha_row.set_value(b0["bg_alpha"], emit=False)
+    for dt in sets:
+        ex.add_dataset(nan(dt["q"]), nan(dt["I"]), nan(dt["sigma"]), dt.get("name", "data"), bg=dt.get("bg"))
+    if sets:
+        ex.current_ds = 0
+        if sets[0].get("bg") is None:      # version 1: the background rows hold that of the one data set
+            ex._store_bg()
+        cur = int(d.get("current_ds", 0))
+        if 0 <= cur < len(ex.datasets):
+            ex.current_ds = cur
+            ex._load_bg(cur)
+            ex._refresh_ds_combo()
+    ex.overrides = {int(k): {a: float(v) for a, v in ov.items()} for k, ov in (d.get("overrides") or {}).items()}
+    ex.fit_panel.refresh_datasets()
     ex.fit_panel._update_buttons()
     # plot settings (after the data: loading data resets the q range)
     if pl:
@@ -161,6 +184,10 @@ def load_dict(ex, d):
     fp.constraints.setPlainText(f.get("constraints", ""))
     fp.priors.setPlainText(f.get("priors", ""))
     fp.result.setPlainText(f.get("result", ""))
+    inf = lambda v, sgn: sgn * math.inf if v is None else float(v)  # noqa: E731
+    fp.set_global_table_values([(n, v, fit, inf(lo, -1), inf(hi, 1)) for n, v, fit, lo, hi in f.get("globals", [])],
+                               f.get("links", ""))
+    fp.set_local_addresses(f.get("local", []))
     fp.refresh_table()
     ex._schedule()
 

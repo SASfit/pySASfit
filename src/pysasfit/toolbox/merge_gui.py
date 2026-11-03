@@ -155,13 +155,19 @@ class MergeTool(QtWidgets.QWidget):
         ob = QtWidgets.QGroupBox("Merge")
         ol = QtWidgets.QFormLayout(ob)
         self.method = QtWidgets.QComboBox()
+        self.method.addItem("keep all points (each with its dI and dq)", "all")
         self.method.addItem("weighted mean in the overlaps", "weighted")
-        self.method.addItem("keep all points (as BerSANS)", "all")
         ol.addRow("overlaps:", self.method)
         self.scale = QtWidgets.QComboBox()
         self.scale.addItem("none – absolute scale of every geometry", None)
         self.scale.setToolTip("Optional: scale the other geometries to this one (factor from the overlaps)")
         ol.addRow("scale to:", self.scale)
+        self.scale_common = QtWidgets.QCheckBox("one factor per geometry for all groups")
+        self.scale_common.setChecked(True)
+        self.scale_common.setToolTip("Checked: every other geometry is multiplied by one factor, the same for all "
+                                     "merged curves (weighted mean of the overlap factors of all groups).\n"
+                                     "Unchecked: every group is scaled with the factors of its own overlaps.")
+        ol.addRow("", self.scale_common)
         self.cuts = QtWidgets.QTableWidget(0, 5)
         self.cuts.setHorizontalHeaderLabels(["geometry", "q min [1/nm]", "q max [1/nm]", "drop first", "drop last"])
         self.cuts.horizontalHeader().setStretchLastSection(True)
@@ -564,7 +570,9 @@ class MergeTool(QtWidgets.QWidget):
         if rest:
             self._log(f"{len(rest)} curves do not match {regex!r}: " + ", ".join(c.sample for c in rest[:10]))
         self.merged = mg.merge_groups(self.groups, cuts=cuts, drop=drop, method=self.method.currentData(),
-                                      scale_to=self.scale.currentData())
+                                      scale_to=self.scale.currentData(), common=self.scale_common.isChecked())
+        if self.scale.currentData() and self.scale_common.isChecked() and self.merged and self.merged[0].notes:
+            self._log(next((n for n in self.merged[0].notes if n.startswith("one scale factor")), ""))
         t = self.table
         t.setRowCount(len(self.merged))
         for i, m in enumerate(self.merged):
@@ -651,10 +659,16 @@ class MergeTool(QtWidgets.QWidget):
                         ax.plot(c.q[ok], c.I[ok] * f * m.scales.get(c.geometry, 1.0),
                                 _MARKERS[gi % len(_MARKERS)], ms=3, mfc="none", color=col, alpha=0.5,
                                 label=f"{c.geometry}" if k == 0 else None)
-                if len(m.q):
-                    ax.errorbar(m.q, m.I * f, m.dI * f, fmt="-", lw=1.2, color=col, elinewidth=0.6,
-                                label=f"{', '.join(sorted({c.sample for c in m.group.curves}))} [{m.group.label}]"
-                                + (f" (× {f:g})" if f != 1 else ""))
+                lab = (f"{', '.join(sorted({c.sample for c in m.group.curves}))} [{m.group.label}]"
+                       + (f" (× {f:g})" if f != 1 else ""))
+                if len(m.q) and m.method == "all" and len(m.geometries) > 1:
+                    # all points kept: one marker per geometry, no line through interleaved points
+                    for gi in np.unique(m.source):
+                        s = m.source == gi
+                        ax.errorbar(m.q[s], m.I[s] * f, m.dI[s] * f, fmt=_MARKERS[int(gi) % len(_MARKERS)],
+                                    ms=3, color=col, elinewidth=0.6, label=lab if gi == m.source.min() else None)
+                elif len(m.q):
+                    ax.errorbar(m.q, m.I * f, m.dI * f, fmt="-", lw=1.2, color=col, elinewidth=0.6, label=lab)
                 for o in m.overlaps:
                     ax.axvspan(*o.q_range, color=col, alpha=0.06)
             if len(sel) == 1:
@@ -695,7 +709,8 @@ class MergeTool(QtWidgets.QWidget):
     # ------------------------------------------------------------------ session
     def state(self) -> dict:
         return dict(regex=self.regex.text(), items=[(f, "" if t is None else str(t)) for f, t in self.grouping().items()],
-                    method=self.method.currentData(), units=self.units.currentData(),
+                    overlap_method=self.method.currentData(), units=self.units.currentData(),
+                    scale_common=self.scale_common.isChecked(),
                     outputs=[self.out_ascii.isChecked(), self.out_nx.isChecked(), self.out_all.isChecked()])
 
     def restore_state(self, s: dict):
@@ -705,7 +720,8 @@ class MergeTool(QtWidgets.QWidget):
         self.items.setRowCount(0)
         for f, t in s.get("items", []):
             self.add_item(f, t)
-        i = self.method.findData(s.get("method"))
+        self.scale_common.setChecked(bool(s.get("scale_common", True)))
+        i = self.method.findData(s.get("overlap_method"))
         if i >= 0:
             self.method.setCurrentIndex(i)
         i = self.units.findData(s.get("units"))

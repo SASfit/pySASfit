@@ -59,17 +59,31 @@ def test_read_group_merge(folder):
     # exact temperatures and repeat number in the key
     g2, _ = mg.group_curves(cs, r"EXP-1-(\w)_(\d)", {"Sample/Temperature": None})
     assert len(g2) == 8 and g2[0].key == "A_1"
-    m = mg.merge(g2[0].curves, group=g2[0])
+    # default: keep every point with its own dI and dq, geometry of each point in source
+    ma0 = mg.merge(g2[0].curves, group=g2[0])
+    assert ma0.method == "all" and len(ma0.q) == sum(len(c.q) for c in g2[0].curves)
+    assert np.all(np.diff(ma0.q) >= 0) and set(np.unique(ma0.source)) == {0, 1}
+    m = mg.merge(g2[0].curves, group=g2[0], method="weighted")
     assert len(m.overlaps) == 1 and abs(m.overlaps[0].factor - 1) < 0.01
     assert np.all(np.diff(m.q) > 0) and (m.source == -1).any()
     assert np.allclose(m.I, model(m.q), rtol=0.05)
     # B is 3 % too high at 2 m: seen in the overlap, removed with scale_to
     gb = [g for g in g2 if g.key == "B_1"][0]
-    mb = mg.merge(gb.curves, group=gb)
+    mb = mg.merge(gb.curves, group=gb, method="weighted")
     assert mb.overlaps[0].factor == pytest.approx(1.03, abs=0.01) and mb.overlaps[0].z > 3
-    ms = mg.merge(gb.curves, group=gb, scale_to=gb.curves[0].geometry)
+    ms = mg.merge(gb.curves, group=gb, scale_to=gb.curves[0].geometry, method="weighted")
     assert ms.scales[gb.curves[1].geometry] == pytest.approx(1 / 1.03, abs=0.01)
     assert np.allclose(ms.I, model(ms.q), rtol=0.05)
+    # scaling: one factor per geometry, the same for all groups (A is right, B 3 % too high at 2 m)
+    g8, g2m = gb.curves[0].geometry, gb.curves[1].geometry
+    cs = mg.common_scales(g2, g8, method="weighted")
+    f, sf, n = cs[g2m]
+    assert n == 8 and 0.97 < f < 1.0 and sf > 0
+    mall = mg.merge_groups(g2, scale_to=g8, method="all")
+    assert all(m.scales[g2m] == f for m in mall if g2m in m.scales)
+    assert all(m.notes[0].startswith("one scale factor") for m in mall)
+    own = mg.merge_groups(g2, scale_to=g8, common=False)
+    assert len({round(m.scales[g2m], 6) for m in own}) > 1
     # keep all points, cuts and dropped points
     g8 = gb.curves[0].geometry
     ma = mg.merge(gb.curves, method="all", cuts={g8: (None, 0.6)}, drop={gb.curves[1].geometry: (2, 3)})
@@ -86,7 +100,8 @@ def test_write_read_series(folder, tmp_path_factory):
     allf = mg.write_nxcansas(out / "all.h5", ms)
     ra, rb, rall = mg.read_curves(a)[0], mg.read_curves(b)[0], mg.read_curves(allf)
     assert ra.fmt == "merged" and ra.sample == "A" and ra.meta["Sample/Temperature"] == pytest.approx(20.1)
-    assert np.allclose(ra.q, ms[0].q, rtol=1e-6) and np.allclose(rb.q, ms[0].q) and np.allclose(rb.I, ms[0].I)
+    assert np.loadtxt(a).shape[1] == 5 and "geometry index: 0 = " in open(a).read()
+    assert np.allclose(ra.q, ms[0].q, rtol=1e-6) and np.allclose(ra.dq, ms[0].dq, rtol=1e-6) and np.allclose(rb.q, ms[0].q) and np.allclose(rb.I, ms[0].I)
     assert len(rall) == 4 and rall[1].meta["Sample/Temperature"] == 40.0
     # series: both temperatures of A, ordered
     s = mg.series(ms, "Sample/Temperature")

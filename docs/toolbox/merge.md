@@ -52,15 +52,20 @@ Files reduced earlier have the sample name, run and parameters only. The geometr
   for example, `hdf:sample/temperature` ± 0.5 K, `Sample/Temperature` for BerSANS files, a magnetic field ± 0.01 T,
   a pressure, a shear rate, or `sample` to keep different names apart while the key joins them.
 
-Curves of the same geometry that fall into one group (repeats that are not separated by an item) are averaged
-where they overlap; the group notes say so.
+Curves of the same geometry that fall into one group (repeats that are not separated by an item) are all
+kept (averaged with *weighted mean*); the group notes say so.
 
 ## 3. Merge
 
-The **absolute scale of every geometry is kept**. Outside the overlaps the points are taken as they are. In an
-overlap the points of all geometries are averaged with weights 1/dI², on the bins of the coarsest curve there
-(q = weighted mean, dq including the spread of the q values). *Keep all points* instead sorts all points by q,
-as BerSANS' merge does.
+The **absolute scale of every geometry is kept**. *overlaps* chooses what happens where geometries overlap:
+
+* **keep all points** (default): every point of every geometry stays as it is, with its own dI and dq
+  (resolution), sorted by q, as BerSANS' merge does. The plot shows the geometries with different markers
+  (no line through the interleaved points); the files carry the geometry of every point (ASCII: 5th column,
+  index explained in the header; NXcanSAS: `source_geometry`).
+* **weighted mean**: in an overlap the points of all geometries are averaged with weights 1/dI², on the bins of
+  the coarsest curve there (q = weighted mean, dq including the spread of the q values); index −1 marks
+  these points.
 
 Every overlap is checked. The curve with the higher q is interpolated (log-log) at the q of the other, and the
 weighted mean of their ratio gives a **mismatch factor** with its statistical uncertainty, z = (f − 1)/σ_f
@@ -69,8 +74,16 @@ red above 5 %. The tooltip lists all overlaps. A mismatch points to a problem in
 transmission, background, beam centre, the edges of a detector); the statistical σ_f does not include the
 systematic uncertainties of the absolute scale.
 
-*scale to* (optional) scales the other geometries to the chosen one with the factors of the overlaps, chained
-from neighbour to neighbour; the factors are written into the output.
+*scale to* (optional) scales the other geometries to the chosen one. Scaling is a pure multiplication: I and dI
+of a geometry are multiplied by one number; q, dq and the points are not changed.
+
+* **one factor per geometry for all groups** (default): the factor of every geometry is the weighted mean
+  (1/σ²) of the overlap factors of all groups (chained from neighbour to neighbour to the reference) and is
+  then applied to all merged curves alike — a calibration of that geometry, not a fit per sample. The log
+  and the notes give f ± σ and the number of groups it comes from.
+* unchecked: every group is scaled with the factors of its own overlaps.
+
+The factors are written into the output.
 
 The table of geometries holds a **q range** and the **points dropped** at the low and high q end of every
 geometry, for all groups, like BerSANS' merge mask (`.smi`, `#` = point not used).

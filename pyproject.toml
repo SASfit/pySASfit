@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pysasfit"
 version = "0.2.0"
-description = "Python tools for small-angle scattering from the SASfit project: SASfit plugin functions, Ornstein-Zernike structure factors, SLD profiles, size distributions and p(r) by inversion, shared resolution/background/IO."
+description = "Python tools for small-angle scattering from the SASfit project: SASfit plugin functions, Ornstein-Zernike structure factors, SLD profiles, size distributions and p(r) by inversion, 3D two- and multi-phase morphologies (SASmorph), shared resolution/background/IO."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
@@ -36,6 +36,11 @@ export = ["openpyxl", "matplotlib>=3.7"]
 sasred = ["h5py>=3.8", "pyyaml>=6"]
 # pyTOOLbox: HDF5 viewer and metadata lister (openpyxl for the Excel export of the listing)
 toolbox = ["h5py>=3.8", "openpyxl"]
+# pySASmorph: 3D panel (pyqtgraph + PyOpenGL, pure Python), HDF5 and TIFF-stack export; scikit-image
+# (faster, smoother marching cubes) is optional -- under MSYS2 install it with pacman, not pip
+morph = ["pyqtgraph>=0.13", "PyOpenGL", "h5py>=3.8", "tifffile"]
+# optional separate PyVista/VTK window of pySASmorph (needs VTK wheels: standard python.org Python)
+morph-pyvista = ["pyvista>=0.46.5", "pyvistaqt"]
 sasbox = ["h5py>=3.8", "openpyxl"]        # old name of the toolbox extra
 dev = ["pytest>=7.0", "matplotlib>=3.7", "PySide6>=6.5", "h5py>=3.8", "pyyaml>=6"]
 # documentation: one Sphinx project in docs/ (Markdown via MyST and reStructuredText)
@@ -50,6 +55,7 @@ pysasfit-explorer = "pysasfit.studio.explorer:main"
 pysasfit-oz = "pysasfit.oz.gui.main_window:main"
 pysasfit-sasred = "pysasfit.sasred.gui:main"
 pysasfit-toolbox = "pysasfit.toolbox.gui:main"
+pysasfit-morph = "pysasfit.morph.gui:main"
 pysasfit-sasbox = "pysasfit.toolbox.gui:main"     # old name
 
 [project.urls]

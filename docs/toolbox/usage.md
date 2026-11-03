@@ -41,6 +41,11 @@ Very large datasets are read with a stride (every n-th element along each shown 
 says) so that a plot never reads more than *Preferences → pyTOOLbox → largest number of elements read for a plot*
 (4 million).
 
+**→ 2D data** hands the 2D dataset shown (detector counts of a raw file, a reduced image) to the tab
+**2D data**: there the beam centre is set by a click or by coordinates (or the centre of gravity), and radial,
+sector or azimuthal averages and the polar view ψ – q follow ({doc}`image2d`). SANS-I raw files come with their
+geometry (pixel size, distance, wavelength); for other data the pixel size of the viewer is used.
+
 **Inspect** lists the object (path, type, shape, number of elements, storage size, chunks, compression filters,
 maximum shape, fill value) and all its attributes with their types.
 

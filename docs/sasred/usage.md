@@ -10,8 +10,12 @@ arrangement.
 1. **Choose the raw-data folder**: *Browse…* in the Runs panel (or *File → Open raw-data folder…*). The table
    lists every `sans<year>n<run>.hdf` with sample name, wavelength, collimation L1, L2, beam stop (type and
    x, y position in mm), attenuator, monitor 1, counting time,
-   total counts and whether the run was aborted (monitor preset not reached). Aborted and unreadable runs are
-   shown in red. The filter field below the folder selects runs by sample name or run number.
+   total counts and whether the run was aborted (monitor preset not reached). Aborted runs are shown in red.
+   **Runs without usable data** – measuring time 0, 0 counts on the detector (all banks) or the normalising
+   monitor at 0 – and unreadable files are **skipped**: grey and struck through, with the reason in the column
+   *comment* (e.g. "skipped: measuring time 0 s, 0 counts, monitor2 0"). They are left out of the plan and the
+   reduction table, never selected by *Add many samples*, cannot be ticked in the run list of a row, and a
+   reduction that is given one anyway leaves it out and says so in the log. The filter field below the folder selects runs by sample name or run number.
 2. **Beam centre**: every geometry (collimation L1, detector distance L2 and wavelength) has its own beam
    centre, because q and the solid angle of each pixel are computed from it, gravity moves the beam with L2 and
    λ and the collimation changes the beam. When the folder
@@ -42,7 +46,8 @@ arrangement.
 The *Reduction table* panel (a tab next to *I(q)*, *Error budget* and *Log*; menu *Reduction → Reduction table*
 brings it to the front, *Reduction → Add many samples…* opens the two-step selection directly) has one tab per
 geometry (detector distance, wavelength, collimation). Each tab holds the correction data (Cadmium, Water,
-Water-BG = empty cell of the water, Sample-BG) and one row per sample, with transmission, thickness, attenuation
+Water-BG = empty cell of the water, Sample-BG, Direct beam = the empty-beam transmission runs of the geometry;
+the column *Use* switches the optional ones – Cadmium, Water-BG, Sample-BG – off) and one row per sample, with transmission, thickness, attenuation
 factor A and scattering probability p_cS, as in the BerSANS data-reduction window.
 
 When a folder is opened the panel is **filled automatically** (preference *fill the reduction table when a folder
@@ -67,7 +72,67 @@ time or monitor reached, beam stop position not matching the image). Outliers ar
 Runs are switched on or off with the check box, added by number (`82187, 82190-82195`), and *show other runs of
 this sample* lists the runs of the same sample from other groups (e.g. another changer position). Rows whose
 runs need a decision (drift, shape change) say so in red in *Notes*; the line below the tables lists what is
-still missing (e.g. no Cadmium). **Save…** / **Load…** keep the table as JSON next to the data.
+still missing (e.g. no water, a sample without transmission), and missing inputs are red in the table (see
+*Missing input* below). **Save…** / **Load…** keep the table as JSON next to the data.
+
+**Choosing the runs of any row by hand** (corrections, transmissions, samples): in the same spreadsheet *list all
+runs of this geometry* adds every scattering run of the geometry (tab *Scattering runs*) and every transmission
+run of the wavelength (tab *Transmission runs*), not ticked; tick the runs that belong to the row and untick the
+others, the *filter* field narrows the list by sample name or run number. **Transmission from the ticked
+transmission runs** recomputes τ (beam spot, each run against the empty beam of the same distance, same
+attenuator preferred) and shows the value of every run; OK takes it over. When the transmission runs of a row
+disagree by more than 3 %, the table says so ("decision needed: the transmission runs disagree").
+
+### Missing input: red cells and the panel *Missing input*
+
+Inputs a reduction needs but does not have are **red** in the table: the cell (transmission, thickness, summed
+runs) or, for a correction row without runs, its button; the tooltip says what the reduction does instead
+(T = 1, d = 1 cm, no Cd subtracted, relative scale …). **Orange** marks inputs to check, e.g. an aperture given
+for the samples but not for the water. The colours follow every edit, before anything is reduced.
+
+**Optional corrections**: Cadmium, Water-BG and Sample-BG may have no runs, or be switched off with the tick in
+the column **Use** (their runs stay in the row). The reduction then simply leaves them out and says so; they are
+not red. Without water (direct beam or relative scale) the water background is not asked for at all.
+
+After a reduction the panel **Missing input** (a tab next to *Log*; its title gives the number) lists every
+missing input of the reduced rows – geometry, row, input and what the reduction did; rows that could not be
+reduced are dark red, optional corrections that were left out grey (not counted in the title). Double-click a line to jump to its cell in the reduction table. The same lines are in the
+*Log* ("missing: …").
+
+### Absolute scale: water or direct beam + efficiency map
+
+The box **Absolute scale** of every geometry tab chooses the method: *automatic* (the direct beam as soon as an
+efficiency map is chosen – the water of the geometry is then not used and its rows are grey –, else water when
+the Water row has runs, else relative), *water*, *direct beam + efficiency map* or
+*relative*; *used* says which one applies. For a long distance without water:
+
+1. The row **Direct beam** holds the empty-beam (transmission) runs of this geometry, filled automatically; its
+   button opens the runs as for every row.
+2. **efficiency map**: *water of &lt;geometry&gt;* makes the map from the water, water background and Cd rows of
+   that geometry (usually a shorter distance; kept for the session), or *file…* reads a saved map or an
+   efficiency archive. **Show** draws it in the detector panel.
+3. Optional: *mask the pixels the map only estimates*, the *direct beam radius* (mm; empty = automatic) and the
+   *attenuator transmission* of the direct beam (empty: the water calibration of the instrument file at this
+   wavelength if there is one, else the nominal value – shown as the grey placeholder).
+
+The log of every reduction gives Φ, the disc, the attenuator factor and the map used (see
+[Reduction steps](reduction.md)).
+
+### Wrong sample names: names and roles by hand
+
+The roles (water, empty cell, Cd, empty beam, sample) and the grouping follow the sample names in the files. When
+a name is wrong — two cells swapped, a remeasurement with a long explanatory name — select the runs in the run
+table and use **Sample names and roles…** (button below the run table, or the right mouse button): give the
+correct sample name and, if needed, the role (otherwise the role follows the new name: `H2O`, `water` → water,
+`EC` → empty cell, …). Do it for the scattering *and* the transmission runs of that sample. The raw files are
+not changed; the corrections are kept for the folder (`sasred_names/` next to the preferences file), applied
+every time the folder is opened (listed in the log), shown in blue italics in the run table (tooltip: the name in
+the file), and the reduction table is filled again. *Reset name and role to the file* undoes it for the selected
+runs.
+
+Example (SANS-LLB, Maren 2026-08): at 4 m the runs named "H2O" (5252, 5256, 5261, transmission 5276) are D2O →
+name `D2O`, role sample; the real water 5278–5280 ("real H2O, the other position is D2O …") → name `H2O`, role
+water.
 
 ### Add many samples
 
@@ -123,6 +188,15 @@ the panel layout (the last session). *Settings → Forget last session* in the l
   subtraction); *asinh*, a smooth version of symlog. The colour bar is labelled 0, 1, 10, 10², … for the
   non-linear scales. The colour range comes from the **unmasked pixels only**.
 * **colours**: the colour map.
+* **÷ efficiency**, **÷ solid angle**: the raw image divided by the efficiency map shown (pixels without an
+  estimate blank) and / or by the solid angle of every pixel (counts per sr, with the beam centre of the
+  geometry); the colour bar gives the unit. Both work in the cartesian and the polar view.
+* **efficiency map**: *Make from the water of* → one entry per geometry with water runs (its reduction-table rows
+  Water, Water-BG and Cd, its mask and beam centre; for SANS-LLB the detector bank chosen in the panel); *Make from
+  the water of the shown geometry* (the geometry of the selected run, else the reduction-table tab shown); *Load…*, *Save the shown map…*, *Archive the shown map* (efficiency archive of
+  the preferences) and *Show*. If a map cannot be made (no water in that geometry, no water transmission, …) a message box says why. The view **efficiency map** draws the shown map around 1 (blue below, red above),
+  the pixels it only estimates (row × column, e.g. behind the beam stop) outlined, undefined pixels grey; the
+  title gives its water runs, distance, wavelength, rms and median σ.
 * **view**: *cartesian (x, y)*, the detector as measured, drawn with the true aspect ratio of the pixels
   (from `x_pixel_size` / `y_pixel_size` of the file) and flush left in the panel; or *polar (φ, q)*: azimuth
   φ horizontally (0° = +x, counter-clockwise, as for the sector), q vertically. In the polar view isotropic

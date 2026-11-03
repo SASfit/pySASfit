@@ -70,6 +70,20 @@ class ContributionPanel(QtWidgets.QWidget):
         self.scale_row.fitToggled.connect(lambda on: self.fit_toggled.emit("scale", "scale", on))
         self.scale_row.boundsEdited.connect(lambda: self.fit_toggled.emit("scale", "scale", self.scale_row.is_fit()))
         lay.addWidget(self.scale_row)
+        drow = QtWidgets.QHBoxLayout()
+        self.ds_label = QtWidgets.QLabel("contributes to data sets")
+        self.ds_edit = QtWidgets.QLineEdit("all")
+        self.ds_edit.setToolTip(
+            "several data sets (SASfit): the data sets this contribution belongs to, numbered as in the data list of the "
+            "Fit panel: 'all', '1, 3' or '2-4'. The model of a data set is the sum of its contributions plus its background."
+        )
+        self.ds_edit.setMaximumWidth(140)
+        self.ds_edit.editingFinished.connect(self._ds_edited)
+        self._ds_text = "all"
+        drow.addWidget(self.ds_label)
+        drow.addWidget(self.ds_edit)
+        drow.addStretch(1)
+        lay.addLayout(drow)
 
         self.picker = {
             "ff": FunctionPicker(placeholder="(select a form factor)"),
@@ -366,8 +380,45 @@ class ContributionPanel(QtWidgets.QWidget):
         self._fill_group("ff")
         self._update_enabled()
         self.scale_row.set_value(other.scale_row.value, emit=False)
+        self._ds_text = other.datasets_text()
+        self.ds_edit.setText(self._ds_text)
         self.sync_rows()
         self.changed.emit()
+
+    # -------------------------------------------------------------- data sets
+    def _ds_edited(self):
+        text = self.ds_edit.text().strip() or "all"
+        try:
+            from .multidata import format_datasets, parse_datasets
+
+            ds = parse_datasets(text)
+            text = format_datasets(ds)
+        except ValueError as exc:
+            self.explorer._status(str(exc), error=True)
+            self.ds_edit.setText(self._ds_text)
+            return
+        if text != self._ds_text:
+            self._ds_text = text
+            self.ds_edit.setText(text)
+            self.structure_changed.emit()
+            self.changed.emit()
+
+    def datasets_text(self):
+        return self._ds_text
+
+    def set_datasets_text(self, text):
+        self.ds_edit.setText(text or "all")
+        self._ds_edited()
+
+    def datasets(self):
+        """0-based indices of the data sets this contribution belongs to, or None (all)."""
+        from .multidata import parse_datasets
+
+        return parse_datasets(self._ds_text)
+
+    def applies_to(self, k, n=None):
+        ds = self.datasets()
+        return ds is None or k in ds
 
     # ------------------------------------------------------------------- info
     @property

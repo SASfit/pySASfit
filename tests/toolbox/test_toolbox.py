@@ -166,6 +166,14 @@ def test_lister_tab_lists_run_range(nxfile, tmp_path):
         L.entry_state[k] = k in ("/entry1/SANS/temperature", "/entry1/SANS/name")
     L.generate()
     assert L.table.rowCount() == 1 and sorted(L.columns) == ["file", "name", "temperature"]
+    # one check box per entry, no "@units" entries offered; units and group in the headers
+    assert "/entry1/SANS/lambda@units" in L.entry_state and "/entry1/SANS/lambda@units" not in L.entry_widgets
+    L.entry_widgets["/entry1/SANS/lambda"][1].setChecked(True)
+    L.generate()
+    i = L.columns.index("lambda")
+    assert L.units[i] == "nm" and L.groups[i] == "SANS"
+    assert L.table.horizontalHeaderItem(i).text() == "SANS\nlambda\n[nm]"
+    assert "lambda [nm]" in L.as_text(L.rows).splitlines()[0].split("\t")
     opened = []
     L.open_file_requested.connect(opened.append)
     L._on_double_click(0, 0)

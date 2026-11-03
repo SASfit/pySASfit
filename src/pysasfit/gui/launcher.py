@@ -39,6 +39,7 @@ TOOLS = [
     ("pySLDprofile", "pysasfit.sldprofile.gui", "MainWindow"),
     ("pyINVersion", "pysasfit.inversion.gui.app", "MainWindow"),
     ("pyOZsolver", "pysasfit.oz.gui.main_window", "OZWidget"),
+    ("pySASmorph", "pysasfit.morph.gui", "MainWindow"),
     ("pyTOOLbox", "pysasfit.toolbox.gui", "MainWindow"),
 ]
 
@@ -57,7 +58,8 @@ _TOOL_INFO = {
     "pySLDprofile": "radial scattering-length-density profiles",
     "pyINVersion": "size distributions and p(r) by inversion",
     "pyOZsolver": "Ornstein-Zernike structure factors",
-    "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data",
+    "pySASmorph": "representative 3D two-phase morphologies from SAS data (SAXSMorph method)",
+    "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data (masks, averages, sums), 1D data arithmetic",
 }
 
 # launcher menus; a tool's own menu entries that the launcher does not provide itself are

@@ -577,6 +577,18 @@ HELP = {
         "When a raw-data folder is opened, the reduction table is filled automatically: one tab per geometry (detector distance, wavelength, collimation), the runs grouped by sample, the roles taken from the sample names and, with 'check repeated runs', the repeated runs compared and outliers switched off. Geometries with few runs or without water / empty cell are marked with '?' (measured for tests?) and can be removed with the × of their tab. Off: the table stays as it is until 'Fill from runs'.",
     "sasred.detector.distance_offset_mm":
         "Effective sample-detector distance (to the detection layer) = recorded distance + this offset, used for q and the solid angle; the recorded distance stays in the run table, the grouping and the selection. Factory value 53 mm: water measured at 8 m and 2 m with the same collimation (Vifor, Sept. 2026) was 4 % apart per steradian, which a common offset of +53 mm explains (the mean conversion depth in the 3He is only about 0.75 cm at 6 Å, so most of it is where the distance is measured). To be measured again, by hand or with water at several distances and the same collimation (pysasfit.sasred.core.water.fit_distance_offset). Once the instrument configuration writes the corrected distance, limit the offset with the date below or set it to 0. The offset is noted in every reduction; its uncertainty is not propagated.",
+    "sasred.llb.central_dz_mm":
+        "SANS-LLB: offset of the detection layer of the central detector from the recorded distance (central_detector/distance), used for q and the solid angle. The SANS-I offset (Detector distance) does not apply to SANS-LLB.",
+    "sasred.llb.left.dx_mm":
+        "SANS-LLB left wide-angle panel: correction of the pixel positions written by NICOS (left_data/posx, posy; the same nominal geometry as GRASP's SINQ_SANS_LLB.ini). Pixel position = (posx + dx, posy + dy) at the distance left_detector/distance + dz; the beam position in that frame comes from the beam centre on the central detector. posx runs across the 16 tubes (away from the beam), posy along the tubes. Determine dx, dy, dz with a standard that puts rings on the panels (AgBe in the 4 m setting: 2.15, 3.23, 4.30 1/nm). Maren's data 2026-08 suggest that along the tubes the beam lies near posy ≈ +84 mm (dy ≈ -85 mm), to confirm.",
+    "sasred.llb.left.dy_mm": "SANS-LLB left panel: offset along posy (along the tubes) [mm]; see dx.",
+    "sasred.llb.left.dz_mm": "SANS-LLB left panel: offset of the detection plane along the beam from left_detector/distance [mm]; see dx.",
+    "sasred.llb.bottom.dx_mm":
+        "SANS-LLB bottom wide-angle panel: offset along posx (along the tubes) [mm]; pixel position = (posx + dx, posy + dy) at bottom_detector/distance + dz. See the left panel.",
+    "sasred.llb.bottom.dy_mm": "SANS-LLB bottom panel: offset along posy (across the tubes, away from the beam) [mm].",
+    "sasred.llb.bottom.dz_mm": "SANS-LLB bottom panel: offset of the detection plane along the beam [mm].",
+    "sasred.llb.end_px":
+        "SANS-LLB wide-angle panels: pixels masked at both ends of every tube (the position response of the tubes falls off there); tubes without counts are masked as well.",
     "sasred.detector.distance_offset_before":
         "Date (YYYY-MM-DD) from which the files already contain the corrected distance: the offset above is applied only to runs started before it. Empty: the offset is applied to all runs.",
     "sasred.transmission.beamstop_out_mm":

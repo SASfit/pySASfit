@@ -8,7 +8,10 @@ moves the panel into an ordinary, independent window: own task-bar entry,
 minimise / maximise, and it does **not** stay on top of the main window (Qt's own
 floating docks are tool windows that always stay above their main window).
 Closing such a window docks the panel again. Every panel has a border (View →
-Panel border: sunken, groove, raised, line or none), docked or detached. Panels
+Panel border: raised (default), sunken, groove, line or none), docked or detached; the active
+panel (last clicked or holding the keyboard focus) is framed in colour. **View → Arrange panels**
+puts the docked panels side by side, one above the other, in a grid or all as tabs, and cascades or
+tiles the detached panel windows. Panels
 can be hidden and shown from the **View** menu; **View → Reset layout** docks everything in the arrangement
 the window started with (optional panels hidden at the start are hidden again). The arrangement, including detached windows and their
 positions, is part of the last session (``dock_state``).
@@ -21,7 +24,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 import json
 
 __all__ = ["DockMixin", "PanelWindow", "plot_panel", "PANEL_BORDERS", "DEFAULT_PANEL_BORDER", "adapt_fonts",
-           "keep_fonts_adapted"]
+           "keep_fonts_adapted", "ACTIVE_PANEL_COLOUR"]
 
 #: border drawn around the content of every detachable panel (View → Panel border):
 #: name -> (menu label, QFrame shape, QFrame shadow, line width, mid-line width)
@@ -32,7 +35,10 @@ PANEL_BORDERS = {
     "line": ("Line", QtWidgets.QFrame.Shape.Box, QtWidgets.QFrame.Shadow.Plain, 1, 0),
     "none": ("None", QtWidgets.QFrame.Shape.NoFrame, QtWidgets.QFrame.Shadow.Plain, 0, 0),
 }
-DEFAULT_PANEL_BORDER = "sunken"
+DEFAULT_PANEL_BORDER = "raised"
+
+#: colour of the frame around the active panel (the one last clicked or holding the keyboard focus)
+ACTIVE_PANEL_COLOUR = "#c8246e"
 
 
 #: icon size (pixels) of the matplotlib toolbars above the plots
@@ -121,6 +127,26 @@ def plot_panel(canvas, toolbar_parent, bars=()):
     canvas.setMinimumSize(120, 90)
     keep_fonts_adapted(canvas)
     return w
+
+
+class _ActivePanelFilter(QtCore.QObject):
+    """Application event filter of a DockMixin window: a click or the keyboard focus inside one of its
+    panels makes that panel the active one (coloured frame)."""
+
+    def __init__(self, win):
+        super().__init__(win)
+        self._win = win
+
+    def eventFilter(self, obj, event):
+        if event.type() in (QtCore.QEvent.Type.MouseButtonPress, QtCore.QEvent.Type.FocusIn) \
+                and isinstance(obj, QtWidgets.QWidget):
+            try:
+                n = self._win._panel_of(obj)
+                if n is not None:
+                    self._win._mark_active(n)
+            except RuntimeError:                      # window being deleted
+                pass
+        return False
 
 
 class PanelWindow(QtWidgets.QWidget):
@@ -242,6 +268,18 @@ class DockMixin:
             sub.addAction(a)
             self.border_actions[key] = a
         menu.addSeparator()
+        arr = menu.addMenu("Arrange panels")
+        for label, how in (("Side by side (tile horizontally)", "horizontal"),
+                           ("One above the other (tile vertically)", "vertical"),
+                           ("Grid", "grid"), ("All as tabs (cascade)", "tabs")):
+            a = QtGui.QAction(label, self)
+            a.triggered.connect(lambda _c=False, h=how: self.arrange_panels(h))
+            arr.addAction(a)
+        arr.addSeparator()
+        for label, how in (("Detached windows: cascade", "cascade"), ("Detached windows: tile", "tile")):
+            a = QtGui.QAction(label, self)
+            a.triggered.connect(lambda _c=False, h=how: self.arrange_detached(h))
+            arr.addAction(a)
         act = QtGui.QAction("Dock all panels", self)
         act.triggered.connect(self.dock_all)
         menu.addAction(act)
@@ -253,6 +291,12 @@ class DockMixin:
         # panels hidden at that point (optional panels) stay hidden after Reset layout
         self._start_layout = self.saveState()
         self._start_hidden = {n for n, d in self.docks.items() if d.isHidden()}
+        # the active panel (last clicked / focused) gets a coloured frame, as the active window in Origin
+        self._active_panel = None
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            self._active_filter = _ActivePanelFilter(self)      # own object: the window's eventFilter stays its own
+            app.installEventFilter(self._active_filter)
 
     # ---------------------------------------------------------------- borders
     @staticmethod
@@ -263,16 +307,111 @@ class DockMixin:
         frame.setLineWidth(lw)
         frame.setMidLineWidth(mlw)
 
-    def set_panel_border(self, key):
+    def set_panel_border(self, key, chosen=True):
         """Border of every panel: 'sunken', 'groove', 'raised', 'line' or 'none'."""
         if key not in PANEL_BORDERS:
             key = DEFAULT_PANEL_BORDER
         self.panel_border = key
+        if chosen:
+            self._border_chosen = True
         for f in getattr(self, "panel_frames", {}).values():
             self._apply_border(f, key)
+        if getattr(self, "_active_panel", None):
+            self._mark_active(self._active_panel, force=True)
         a = getattr(self, "border_actions", {}).get(key)
         if a is not None and not a.isChecked():
             a.setChecked(True)
+
+    # ---------------------------------------------------------------- active panel
+    def _panel_of(self, w):
+        frames = getattr(self, "panel_frames", {})
+        rev = {id(f): n for n, f in frames.items()}
+        while w is not None:
+            n = rev.get(id(w))
+            if n is not None:
+                return n
+            w = w.parentWidget()
+        return None
+
+    def _mark_active(self, name, force=False):
+        """Coloured frame around panel ``name``; the other panels keep the normal border."""
+        if name == getattr(self, "_active_panel", None) and not force:
+            return
+        frames = getattr(self, "panel_frames", {})
+        old = frames.get(getattr(self, "_active_panel", None))
+        if old is not None:
+            old.setStyleSheet("")
+            self._apply_border(old, getattr(self, "panel_border", DEFAULT_PANEL_BORDER))
+        f = frames.get(name)
+        if f is None:
+            return
+        self._active_panel = name
+        f.setStyleSheet(f"QFrame#{f.objectName()} {{ border: 2px solid {ACTIVE_PANEL_COLOUR}; }}")
+
+    @property
+    def active_panel(self):
+        return getattr(self, "_active_panel", None)
+
+    # ---------------------------------------------------------------- arrange
+    def _arrangeable(self):
+        """Docked, visible panels in reading order (left to right, top to bottom)."""
+        ds = [(n, d) for n, d in self.docks.items() if n not in self.detached and not d.isHidden()]
+        return sorted(ds, key=lambda nd: (nd[1].geometry().x() < 0, nd[1].geometry().x(), nd[1].geometry().y()))
+
+    def arrange_panels(self, how="horizontal"):
+        """View → Arrange panels: 'horizontal' (side by side), 'vertical' (one above the other),
+        'grid', or 'tabs' (all in one place as tabs, like cascaded windows)."""
+        ds = [d for _n, d in self._arrangeable()]
+        if len(ds) < 2:
+            return
+        H, V = QtCore.Qt.Orientation.Horizontal, QtCore.Qt.Orientation.Vertical
+        area = QtCore.Qt.DockWidgetArea.LeftDockWidgetArea
+        for d in ds:
+            self.removeDockWidget(d)
+        self.addDockWidget(area, ds[0])
+        ds[0].show()
+        if how == "tabs":
+            for d in ds[1:]:
+                self.tabifyDockWidget(ds[0], d)
+                d.show()
+            ds[0].raise_()
+        elif how in ("horizontal", "vertical"):
+            for a, b in zip(ds, ds[1:]):
+                self.splitDockWidget(a, b, H if how == "horizontal" else V)
+                b.show()
+        else:                                     # grid: columns first, then the panels below each other
+            import math
+            ncol = int(math.ceil(math.sqrt(len(ds))))
+            cols = [ds[i::ncol] for i in range(ncol)]
+            heads = [c[0] for c in cols if c]
+            for a, b in zip(heads, heads[1:]):
+                self.splitDockWidget(a, b, H)
+                b.show()
+            for c in cols:
+                for a, b in zip(c, c[1:]):
+                    self.splitDockWidget(a, b, V)
+                    b.show()
+        self.hide_stray_tab_bars()
+
+    def arrange_detached(self, how="cascade"):
+        """Detached panel windows: 'cascade' (stepped) or 'tile' (side by side on the screen)."""
+        ws = [w for w in self.detached.values() if w.isVisible()]
+        if not ws:
+            return
+        scr = (self.screen() or QtGui.QGuiApplication.primaryScreen()).availableGeometry()
+        if how == "tile":
+            import math
+            ncol = int(math.ceil(math.sqrt(len(ws))))
+            nrow = int(math.ceil(len(ws) / ncol))
+            w0, h0 = scr.width() // ncol, scr.height() // nrow
+            for i, w in enumerate(ws):
+                w.setGeometry(scr.x() + (i % ncol) * w0, scr.y() + (i // ncol) * h0, w0, h0 - 30)
+        else:
+            step = 32
+            for i, w in enumerate(ws):
+                w.setGeometry(scr.x() + 40 + i * step, scr.y() + 40 + i * step,
+                              int(scr.width() * 0.6), int(scr.height() * 0.6))
+                w.raise_()
 
     # ---------------------------------------------------------------- detach / dock
     def detach(self, name, geometry=None):
@@ -355,6 +494,29 @@ class DockMixin:
         for n, d in self.docks.items():
             d.setVisible(n not in getattr(self, "_start_hidden", ()))
             self._sync_view_action(n)
+        self.hide_stray_tab_bars()
+
+    def hide_stray_tab_bars(self):
+        """Qt can leave the tab bar of a former tab group visible after ``restoreState`` (with more
+        than one group of tabbed panels): a tab bar that does not touch the panel of its current tab
+        is hidden. Run again from the event loop, after the layout has settled."""
+        def run():
+            for tb in self.findChildren(QtWidgets.QTabBar):
+                if tb.parent() is not self or not tb.isVisible():
+                    continue
+                if tb.count() == 0:
+                    tb.hide()
+                    continue
+                title = tb.tabText(tb.currentIndex())
+                docks = [d for d in self.docks.values() if d.windowTitle() == title and d.isVisible()
+                         and not d.isFloating()]
+                g = tb.geometry()
+                touch = any(abs(d.geometry().bottom() + 1 - g.top()) <= 6 or abs(g.bottom() + 1 - d.geometry().top()) <= 6
+                            for d in docks)
+                if not touch:
+                    tb.hide()
+        run()
+        QtCore.QTimer.singleShot(0, run)
 
     def closeEvent(self, event):
         self.close_detached()
@@ -367,7 +529,8 @@ class DockMixin:
             g = w.geometry()
             geo[n] = [g.x(), g.y(), g.width(), g.height()]
         return json.dumps({"qt": bytes(self.saveState().toBase64()).decode("ascii"), "detached": geo,
-                           "border": getattr(self, "panel_border", DEFAULT_PANEL_BORDER)})
+                           "border": getattr(self, "panel_border", DEFAULT_PANEL_BORDER),
+                           "border_chosen": bool(getattr(self, "_border_chosen", False))})
 
     def restore_dock_state(self, s) -> bool:
         if not s:
@@ -384,11 +547,12 @@ class DockMixin:
             ok = bool(self.restoreState(QtCore.QByteArray.fromBase64(str(st.get("qt", "")).encode("ascii"))))
         except Exception:  # noqa: BLE001
             pass
-        if st.get("border") in PANEL_BORDERS:
+        if st.get("border") in PANEL_BORDERS and st.get("border_chosen"):   # older sessions: the default
             self.set_panel_border(st["border"])
         for n, g in (st.get("detached") or {}).items():
             if n in self.docks:
                 self.detach(n, g if isinstance(g, list) and len(g) == 4 else None)
         for n in self.docks:
             self._sync_view_action(n)
+        self.hide_stray_tab_bars()
         return ok

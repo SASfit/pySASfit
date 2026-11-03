@@ -68,6 +68,7 @@ from .library import (  # noqa: E402
 )
 from .param_row import ParameterRow, clear_layout, slider_range  # noqa: E402,F401
 from .model import ModelFunction  # noqa: E402
+from . import multidata  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
 
 __all__ = ["ModelExplorer", "ParameterRow", "explore", "main"]
@@ -187,8 +188,10 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self._defs = groups.load_groups()
         self.integration = integration.load_settings()  # size-distribution integral (scipy / Gauss-Legendre)
         self.project_path = None  # file of the project last opened / saved
-        self.data = None  # data set shown with the model and fitted: dict q, I, sigma, name
-        self._data_artist = None
+        self.datasets = []  # data sets shown with the model and fitted: dicts q, I, sigma, name, bg, artists
+        self.current_ds = 0  # the data set whose background the rows show (and whose contributions are drawn dotted)
+        self.overrides = {}  # data set -> {address: value}: values of parameters fitted separately per data set
+        self._linked_rows = []  # parameter rows set by a link to a global parameter (not editable)
         self.show_sliders = False
         self._busy = False  # a fit is running: the parameters must not change
         self._res_visible = False
@@ -275,6 +278,20 @@ class ModelExplorer(QtWidgets.QMainWindow):
         show.addWidget(self.show_parts)
         show.addStretch(1)
         gl.addLayout(show)
+        dsrow = QtWidgets.QHBoxLayout()
+        self.ds_label = QtWidgets.QLabel("background above is that of data set")
+        self.ds_combo = QtWidgets.QComboBox()
+        self.ds_combo.setToolTip(
+            "several data sets: every data set has its own background (and its own values of parameters fitted "
+            "separately per data set); the rows above show those of this data set, its contributions are drawn dotted"
+        )
+        self.ds_combo.currentIndexChanged.connect(self._ds_changed)
+        dsrow.addWidget(self.ds_label)
+        dsrow.addWidget(self.ds_combo, 1)
+        self.ds_widgets = (self.ds_label, self.ds_combo)
+        for w in self.ds_widgets:
+            w.setVisible(False)
+        gl.addLayout(dsrow)
         lv.addWidget(gbox)
 
         self.tabs = QtWidgets.QTabWidget()
@@ -509,7 +526,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.dist_canvas.draw_idle()
 
     def _update_background(self, q):
-        """Dashed grey line: constant background + A q^-alpha (only when there is one)."""
+        """Dashed grey line: constant background + A q^-alpha (only when there is one; of the current data set)."""
         bg = self.bg_row.value + self._power_term(q)
         show = self.mode_combo.currentData() != "S" and bool(np.any(np.asarray(bg) != 0))
         if show:
@@ -699,8 +716,12 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
     def _structure_changed(self):
         """Contributions or their functions changed: tab titles, plot title, fit table."""
+        multi = len(self.datasets) > 1
         for i, p in enumerate(self.panels()):
-            self.tabs.setTabText(i, f"{i + 1}: {p.label()}")
+            ds = p.datasets_text()
+            self.tabs.setTabText(i, f"{i + 1}: {p.label()}" + (f"  [{ds}]" if multi and ds != "all" else ""))
+            for w in (p.ds_label, p.ds_edit):
+                w.setVisible(multi or ds != "all")
         self.mode_combo.setEnabled(any(p.contrib is not None and p.contrib.sq is not None for p in self.panels()))
         self._update_labels()
         self.fit_panel.refresh_table()
@@ -760,8 +781,13 @@ class ModelExplorer(QtWidgets.QMainWindow):
             return np.geomspace(lo, hi, n)
         return np.linspace(lo, hi, n)
 
-    def _compute(self, q):
-        """``(total, parts)``: I(q) of the mixture and scale_i * I_i(q) of every contribution."""
+    def _compute(self, q, k=None):
+        """``(total, parts)``: I(q) of the model of data set ``k`` (None: the whole mixture) and scale_i * I_i(q) of every
+        contribution (None for a contribution not assigned to data set ``k``)."""
+        if k is not None:
+            model = self.model_for(k)
+            with multidata.overridden(model, self.overrides_for(k)):
+                return self._compute_model(q, model)
         mode = self.mode_combo.currentData()
         if mode == "S":  # structure factor of the current contribution alone: no scale, no background
             p = self.current_panel()
@@ -783,6 +809,30 @@ class ModelExplorer(QtWidgets.QMainWindow):
             parts.append(p.scale_row.value * np.asarray(particles, dtype=float))
         return sum(parts) + self.bg_row.value + self._power_term(q), parts
 
+    def _compute_model(self, q, model):
+        mode = self.mode_combo.currentData()
+        if mode == "S":
+            return self._compute(q)
+        parts = []
+        for i, (sc, c) in enumerate(zip(model.scales, model.contributions)):
+            if not model.is_active(i):
+                parts.append(None)
+                continue
+            if mode == "P" and c.sq is not None:
+                sq, c.sq = c.sq, None
+                try:
+                    particles = c.intensity(q)
+                finally:
+                    c.sq = sq
+            else:
+                particles = c.intensity(q)
+            parts.append(sc * np.asarray(particles, dtype=float))
+        total = np.zeros(np.shape(q)) + model._background(q)
+        for pt in parts:
+            if pt is not None:
+                total = total + pt
+        return total, parts
+
     def _power_term(self, q):
         A = self.bgA_row.value
         return A * np.asarray(q, dtype=float) ** (-self.bgalpha_row.value) if A else 0.0
@@ -791,18 +841,26 @@ class ModelExplorer(QtWidgets.QMainWindow):
         if not self.has_model() or self._busy:
             return
         t0 = time.perf_counter()
-        Id, parts = None, []  # the model at the data points; the contributions at the curve points
+        Id, parts = None, []  # the model at the data points (per data set); the contributions at the curve points
+        self._apply_links_to_rows()
+        curves = {}
         try:
             q = self._q()
-            qd = self._data_q()
+            full = self._data_q() is not None
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
-                if qd is None:
+                if not self.datasets:
                     I, parts = self._compute(q)
-                else:  # one call for the curve and the data points
-                    both, parts = self._compute(np.concatenate([q, qd]))
-                    I, Id = both[: q.size], both[q.size :]
-                    parts = [p[: q.size] for p in parts]
+                else:  # per data set: one call for the curve and its data points
+                    Id = []
+                    for k, d in enumerate(self.datasets):
+                        qq = np.concatenate([q, d["q"]]) if full else q
+                        both, pk = self._compute(qq, k)
+                        curves[k] = both[: q.size]
+                        Id.append(both[q.size:] if full else None)
+                        if k == self.current_ds:
+                            parts = [None if p is None else p[: q.size] for p in pk]
+                    I = curves[self.current_ds]
         except Exception as exc:  # noqa: BLE001 -- keep the last good curve on screen
             self._status(f"{type(exc).__name__}: {exc}", error=True)
             return
@@ -810,7 +868,21 @@ class ModelExplorer(QtWidgets.QMainWindow):
             self._status("no positive values to show on the logarithmic I axis (switch 'log I' off)", error=True)
             return
         self._last = (q, I)
+        multi = len(self.datasets) > 1
         self.line.set_data(q, I)
+        self.line.set_visible(not multi)
+        for k, d in enumerate(self.datasets):
+            if multi:
+                if d.get("line") is None:
+                    (d["line"],) = self.ax.plot([], [], lw=1.6, color=self._colour(k), zorder=3)
+                d["line"].set_data(q, curves[k])
+                d["line"].set_visible(True)
+            elif d.get("line") is not None:
+                d["line"].set_visible(False)
+        if multi:
+            self.ax.legend(fontsize=8, loc="best")
+        elif self.ax.get_legend() is not None:
+            self.ax.get_legend().remove()
         self._update_parts(q, parts)
         self._update_background(q)
         self._update_distributions()
@@ -834,47 +906,234 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self._status(msg, error=bool(bad))
 
     def _update_parts(self, q, parts):
-        """Dotted curve of every contribution (only for a mixture)."""
-        show = self.show_parts.isChecked() and len(parts) > 1
+        """Dotted curve of every contribution (only for a mixture; with several data sets those of the current one)."""
+        show = self.show_parts.isChecked() and sum(p is not None for p in parts) > 1
         while len(self._part_lines) < len(parts):
             k = len(self._part_lines)
             (ln,) = self.ax.plot([], [], ls=":", lw=1.2, color=f"C{k + 1}", zorder=2)
             self._part_lines.append(ln)
         for k, ln in enumerate(self._part_lines):
-            if show and k < len(parts):
+            if show and k < len(parts) and parts[k] is not None:
                 ln.set_data(q, parts[k])
                 ln.set_visible(True)
             else:
                 ln.set_visible(False)
 
     # ------------------------------------------------------------ data, fit
+    @property
+    def data(self):
+        """The first data set (dict q, I, sigma, name) or None."""
+        return self.datasets[0] if self.datasets else None
+
     def set_data(self, q, I, sigma, name="data"):
-        """Show a data set with the model (and make it the target of the fit panel)."""
+        """Show one data set with the model (replaces the data sets; see :meth:`add_dataset` for several)."""
+        self.clear_data()
+        return self.add_dataset(q, I, sigma, name)
+
+    def add_dataset(self, q, I, sigma, name="data", bg=None):
+        """Add a data set (shown with its model curve and fitted together with the others); returns its index."""
         q, I = np.asarray(q, float), np.asarray(I, float)
         sigma = np.full(q.shape, np.nan) if sigma is None else np.asarray(sigma, float)
         ok = np.isfinite(q) & np.isfinite(I) & (q > 0)
         if not ok.any():
             raise ValueError("no data points with q > 0")
         q, I, sigma = q[ok], I[ok], sigma[ok]
-        self.clear_data()
-        self.data = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name))}
-        err = np.where(np.isfinite(sigma) & (sigma > 0), sigma, 0.0)
-        self._data_artist = self.ax.errorbar(
-            q, I, yerr=err, fmt="o", ms=3, color="0.25", ecolor="0.7", elinewidth=0.8, zorder=1
+        k = len(self.datasets)
+        if k == 0:
+            first = {"background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value}
+        else:
+            self._store_bg()
+            first = dict(self.datasets[self.current_ds]["bg"])
+        if bg is not None and k == self.current_ds:
+            self.bg_row.set_value(bg["background"], emit=False)
+            self.bgA_row.set_value(bg["bg_A"], emit=False)
+            self.bgalpha_row.set_value(bg["bg_alpha"], emit=False)
+        d = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name)), "bg": dict(bg or first),
+             "artist": None, "line": None, "res": None}  # fmt: skip
+        self.datasets.append(d)
+        for j in range(len(self.datasets)):  # colours and legend labels depend on the number of data sets
+            self._draw_dataset_points(j)
+        all_q = np.concatenate([x["q"] for x in self.datasets])
+        self.qmin.setText(f"{all_q.min() * 0.9:.3g}")  # the curve covers the data
+        self.qmax.setText(f"{all_q.max() * 1.1:.3g}")
+        self._refresh_ds_combo()
+        self.fit_panel.refresh_datasets()
+        self._structure_changed()
+        return k
+
+    def _colour(self, k):
+        return "0.25" if len(self.datasets) == 1 else f"C{k % 10}"
+
+    def _draw_dataset_points(self, k):
+        d = self.datasets[k]
+        if d["artist"] is not None:
+            d["artist"].remove()
+        err = np.where(np.isfinite(d["sigma"]) & (d["sigma"] > 0), d["sigma"], 0.0)
+        d["artist"] = self.ax.errorbar(
+            d["q"], d["I"], yerr=err, fmt="o", ms=3, color=self._colour(k), ecolor="0.7", elinewidth=0.8, zorder=1,
+            label=d["name"] if len(self.datasets) > 1 else None,
         )
         self.line.set_zorder(3)
-        self.qmin.setText(f"{q.min() * 0.9:.3g}")  # the curve covers the data
-        self.qmax.setText(f"{q.max() * 1.1:.3g}")
-        self._schedule()
+
+    def remove_dataset(self, k):
+        """Remove data set ``k`` (index from 0)."""
+        if not 0 <= k < len(self.datasets):
+            return
+        self._store_bg()
+        d = self.datasets.pop(k)
+        for key in ("artist", "line", "res"):
+            if d.get(key) is not None:
+                d[key].remove()
+        self.overrides = {(j if j < k else j - 1): v for j, v in self.overrides.items() if j != k}
+        for j in range(len(self.datasets)):  # colours follow the position
+            self._draw_dataset_points(j)
+            for key in ("line", "res"):
+                if self.datasets[j].get(key) is not None:
+                    self.datasets[j][key].remove()
+                    self.datasets[j][key] = None
+        self.current_ds = min(self.current_ds, max(len(self.datasets) - 1, 0))
+        if self.datasets:
+            self._load_bg(self.current_ds)
+        else:
+            self._show_residuals(False)
+        self._refresh_ds_combo()
+        self.fit_panel.refresh_datasets()
+        self.canvas.draw_idle()
+        self._structure_changed()
 
     def clear_data(self):
-        if self._data_artist is not None:
-            self._data_artist.remove()
-            self._data_artist = None
-        self.data = None
+        while self.datasets:
+            self.remove_dataset(len(self.datasets) - 1)
+        self.overrides = {}
         self._show_residuals(False)
+        self._refresh_ds_combo()
         self.canvas.draw_idle()
         self._schedule()
+
+    # background of the data sets: the rows show that of the current data set
+    def _store_bg(self):
+        if self.datasets and 0 <= self.current_ds < len(self.datasets):
+            self.datasets[self.current_ds]["bg"] = {
+                "background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value,
+            }  # fmt: skip
+
+    def _load_bg(self, k):
+        bg = self.datasets[k]["bg"]
+        self.bg_row.set_value(bg["background"], emit=False)
+        self.bgA_row.set_value(bg["bg_A"], emit=False)
+        self.bgalpha_row.set_value(bg["bg_alpha"], emit=False)
+
+    def background_of(self, k=None):
+        if k is None or not self.datasets or k == self.current_ds:
+            return {"background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value}
+        return dict(self.datasets[k]["bg"])
+
+    def _refresh_ds_combo(self):
+        self.ds_combo.blockSignals(True)
+        self.ds_combo.clear()
+        for k, d in enumerate(self.datasets):
+            self.ds_combo.addItem(f"{k + 1}: {d['name']}", k)
+        self.ds_combo.setCurrentIndex(self.current_ds if self.datasets else -1)
+        self.ds_combo.blockSignals(False)
+        for w in self.ds_widgets:
+            w.setVisible(len(self.datasets) > 1)
+
+    def _ds_changed(self, i):
+        if i < 0 or i == self.current_ds or i >= len(self.datasets):
+            return
+        self._store_bg()
+        self.current_ds = i
+        self._load_bg(i)
+        self._schedule()
+
+    # model of a data set
+    def model_for(self, k=None):
+        """:class:`~pysasfit.studio.ModelFunction` of data set ``k`` (contributions assigned to it, its background);
+        ``None``: the whole mixture with the background rows. The contributions are the live objects."""
+        ms = self.models()
+        n = len(self.datasets)
+        active = None if k is None else [p.applies_to(k, n) for p in ms]
+        bg = self.background_of(k)
+        return ModelFunction(
+            [p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=bg["background"],
+            bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"], active=active,
+        )  # fmt: skip
+
+    def overrides_for(self, k):
+        """``{address: value}`` that differ in data set ``k`` from the rows: parameters fitted separately per data
+        set and links to global parameters that hold only in some data sets."""
+        out = dict(self.overrides.get(k, {})) if k is not None else {}
+        if k is None:
+            return out
+        try:
+            links, glob = self.fit_panel.links(), self.fit_panel.global_values()
+        except ValueError:
+            return out
+        amap = self.label_map()
+        for ln in links:
+            if ln.datasets is not None and k in ln.datasets and ln.target in amap and ln.names <= set(glob):
+                try:
+                    out[amap[ln.target]] = ln.value(glob)
+                except (ValueError, ZeroDivisionError, OverflowError):
+                    pass
+        return out
+
+    def label_map(self):
+        """parameter label -> fit address (also ``c1.ff.R`` with a single contribution, and the address itself)."""
+        out = {}
+        single = len(self.models()) == 1
+        for address, label, _lo, _hi in self.parameter_entries():
+            out[label] = address
+            out[address] = address
+            if single and not label.startswith(("background", "bg.")):
+                out["c1." + label] = address
+        return out
+
+    def _apply_links_to_rows(self):
+        """Links to global parameters that hold in all data sets: the row takes factor * P and cannot be edited."""
+        released = list(self._linked_rows)
+        for r in released:
+            r.set_editable(True)
+        self._linked_rows = []
+        if released:  # rows that a panel keeps disabled for its own reasons (distributed parameter, …)
+            for p in self.panels():
+                if p.contrib is not None:
+                    p._update_enabled()
+        try:
+            links, glob = self.fit_panel.links(), self.fit_panel.global_values()
+        except ValueError as exc:
+            self.fit_panel.link_message(str(exc), error=True)
+            return
+        amap = self.label_map()
+        bad = []
+        model = self.model_for(None)
+        from .fitting import locate
+
+        for ln in links:
+            if ln.target not in amap:
+                bad.append(f"unknown parameter '{ln.target}'")
+                continue
+            missing = ln.names - set(glob)
+            if missing:
+                bad.append(f"unknown global parameter {', '.join(sorted(missing))}")
+                continue
+            if ln.datasets is not None:
+                continue
+            address = amap[ln.target]
+            row = self._row(address)
+            try:
+                v = ln.value(glob)
+            except (ValueError, ZeroDivisionError, OverflowError) as exc:
+                bad.append(f"{ln.text}: {exc}")
+                continue
+            if row is None:
+                continue
+            if not (address.startswith("scale.") or address in ("background", "bg.A", "bg.alpha")):
+                locate(model, address)[1](v)          # the parameter vector of the contribution
+            row.set_value(v, emit=False)
+            row.set_editable(False, f"{ln.target} {ln.describe()} (global parameter, Fit panel)")
+            self._linked_rows.append(row)
+        self.fit_panel.link_message("; ".join(bad), error=bool(bad))
 
     def _data_q(self):
         """q values of the data if the curve shown is the full model (so residuals make sense), else None."""
@@ -894,27 +1153,38 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self._update_labels()
 
     def _update_residuals(self, Id):
-        """Residuals (model - data) / sigma below the plot; returns the chi² note for the status line."""
-        d = self.data
-        if d is None or Id is None:
+        """Residuals (model - data) / sigma below the plot; ``Id``: model at the data points of every data set
+        (list, None where the curve is not the full model). Returns the chi² note for the status line."""
+        if not self.datasets:
             self._show_residuals(False)
-            return "" if d is None else "residuals: the curve shown is not the full model"
-        with np.errstate(invalid="ignore", divide="ignore"):
-            r = (Id - d["I"]) / d["sigma"]
-        r = np.where(np.isfinite(r), r, np.nan)
-        self.res_line.set_data(d["q"], r)
-        self._show_residuals(True)
-        self.ax_res.relim()
-        self.ax_res.autoscale_view(scalex=False)
+            return ""
+        if Id is None or all(x is None for x in Id):
+            self._show_residuals(False)
+            return "residuals: the curve shown is not the full model"
         try:
             rng = self.fit_panel.q_range()
         except ValueError:
             rng = None
-        inside = np.isfinite(r) & ((d["q"] >= rng[0]) & (d["q"] <= rng[1]) if rng else True)
-        n = int(np.count_nonzero(inside))
+        tot, n = 0.0, 0
+        self.res_line.set_data([], [])
+        for k, (d, Ik) in enumerate(zip(self.datasets, Id)):
+            if Ik is None:
+                continue
+            with np.errstate(invalid="ignore", divide="ignore"):
+                r = (Ik - d["I"]) / d["sigma"]
+            r = np.where(np.isfinite(r), r, np.nan)
+            if d.get("res") is None:
+                (d["res"],) = self.ax_res.plot([], [], "o", ms=2.5, color=self._colour(k) if len(self.datasets) > 1 else "C0")
+            d["res"].set_data(d["q"], r)
+            inside = np.isfinite(r) & ((d["q"] >= rng[0]) & (d["q"] <= rng[1]) if rng else True)
+            tot += float(np.sum(r[inside] ** 2))
+            n += int(np.count_nonzero(inside))
+        self._show_residuals(True)
+        self.ax_res.relim()
+        self.ax_res.autoscale_view(scalex=False)
         if not n:
             return ""
-        return f"chi²/n = {np.sum(r[inside] ** 2) / n:.4g} ({n} points)"
+        return f"chi²/n = {tot / n:.4g} ({n} points" + (f", {len(self.datasets)} data sets)" if len(self.datasets) > 1 else ")")
 
     def set_busy(self, busy):
         """A fit is running (``True``): freeze the model controls; ``False``: redraw."""
@@ -960,12 +1230,9 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
     # What the fit panel needs: the model, its parameters, a way back.
     def build_model(self):
-        """A :class:`~pysasfit.studio.ModelFunction` of the mixture (the contributions are the live objects)."""
-        ms = self.models()
-        return ModelFunction(
-            [p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=self.bg_row.value,
-            bg_A=self.bgA_row.value, bg_alpha=self.bgalpha_row.value,
-        )  # fmt: skip
+        """A :class:`~pysasfit.studio.ModelFunction` of the mixture (the contributions are the live objects; with data
+        sets the background of the current one)."""
+        return self.model_for(None)
 
     def parameter_entries(self):
         """``[(address, label, default lower, default upper)]`` of all parameters of the mixture (fit addresses)."""
@@ -1009,8 +1276,12 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
     def snapshot(self):
         """All parameter values, to come back to with :meth:`restore`."""
+        self._store_bg()
         return {
             "background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value,
+            "ds_bg": [dict(d["bg"]) for d in self.datasets],
+            "overrides": {k: dict(v) for k, v in self.overrides.items()},
+            "globals": self.fit_panel.global_table_values(),
             "items": [
                 (p, p.scale_row.value, {r: p.contrib.vector(r).copy() for r in ROLES if p.contrib.vector(r) is not None})
                 for p in self.models()
@@ -1029,6 +1300,11 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.bg_row.set_value(snap["background"], emit=False)
         self.bgA_row.set_value(snap.get("bg_A", 0.0), emit=False)
         self.bgalpha_row.set_value(snap.get("bg_alpha", 4.0), emit=False)
+        for d, bg in zip(self.datasets, snap.get("ds_bg", [])):
+            d["bg"] = dict(bg)
+        self.overrides = {k: dict(v) for k, v in snap.get("overrides", {}).items()}
+        if "globals" in snap:
+            self.fit_panel.set_global_table_values(snap["globals"])
         self.after_fit()
 
     def apply_model_values(self, model):

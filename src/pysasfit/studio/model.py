@@ -236,19 +236,27 @@ class ScatteringContribution:
 
 
 class ModelFunction:
-    def __init__(self, contributions=(), scales=None, background=0.0, resolution=None, bg_A=0.0, bg_alpha=4.0):
+    def __init__(self, contributions=(), scales=None, background=0.0, resolution=None, bg_A=0.0, bg_alpha=4.0,
+                 active=None):
         self.contributions = list(contributions)
         self.scales = list(scales) if scales is not None else [1.0] * len(self.contributions)
+        # several data sets (SASfit): a contribution counts only where it is active; the others keep their place so
+        # that the addresses '<i>.ff.R', 'scale.<i>' are the same in the models of all data sets
+        self.active = list(active) if active is not None else [True] * len(self.contributions)
         self.background = background
         self.bg_A = float(bg_A)  # power-law term of the background: bg_A * q**(-bg_alpha) (off while bg_A = 0)
         self.bg_alpha = float(bg_alpha)
         self.resolution = resolution
         self._bg_z = None
 
-    def include(self, contribution, scale=1.0):
+    def include(self, contribution, scale=1.0, active=True):
         self.contributions.append(contribution)
         self.scales.append(float(scale))
+        self.active.append(bool(active))
         return len(self.contributions) - 1
+
+    def is_active(self, i):
+        return i >= len(self.active) or bool(self.active[i])
 
     def power_term(self, q):
         """The power-law part of the background, ``bg_A * q**(-bg_alpha)`` (0 while ``bg_A`` is 0)."""
@@ -283,6 +291,9 @@ class ModelFunction:
         qe, W = (q, None) if self.resolution is None else self.resolution.setup(q)
         parts = []
         for i, c in enumerate(self.contributions):
+            if not self.is_active(i):
+                parts.append(np.zeros(q.shape))
+                continue
             k = c.amplitude_index() if i in unit_amplitude else None
             if k is not None:
                 old = c.sd_p[k]
@@ -298,8 +309,9 @@ class ModelFunction:
     def particles(self, q):
         q = np.asarray(q, dtype=float)
         I = np.zeros(q.shape)
-        for s, c in zip(self.scales, self.contributions):
-            I = I + s * c.intensity(q)
+        for i, (s, c) in enumerate(zip(self.scales, self.contributions)):
+            if self.is_active(i):
+                I = I + s * c.intensity(q)
         return I
 
     def intensity(self, q):

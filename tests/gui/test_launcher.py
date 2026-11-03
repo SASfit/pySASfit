@@ -18,7 +18,7 @@ def test_launcher_hosts_all_tools():
     w = Launcher()
     titles = [w.tabs.tabText(i) for i in range(w.tabs.count())]
     assert titles == ["pySASred", "pySASstudio", "pySLDprofile", "pyINVersion",
-                      "pyOZsolver", "pyTOOLbox"], titles  # no "(error)" tabs
+                      "pyOZsolver", "pySASmorph", "pyTOOLbox"], titles  # no "(error)" tabs
     oz = w.window_for("pyOZsolver")
     assert oz.count() >= 4 and not any("(error)" in oz.tabText(i) for i in range(oz.count()))
     w.window_for("pySLDprofile").load_file(DATA)

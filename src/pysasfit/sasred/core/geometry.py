@@ -27,7 +27,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-__all__ = ["PixelGeometry", "pixel_geometry"]
+__all__ = ["PixelGeometry", "pixel_geometry", "run_geometry"]
 
 
 @dataclass
@@ -69,3 +69,14 @@ def pixel_geometry(shape, pixel_size_m, beam_center_px, L2_m, wavelength_A,
     d_omega = px * py * cos_psi / d ** 2
     return PixelGeometry(x, y, z, two_theta, np.arctan2(y, x), np.arccos(np.clip(cos_psi, -1, 1)),
                          q, qx, qy, qz, d_omega, float(wavelength_A), float(L2_m), float(a))
+
+
+def run_geometry(raw, beam_center_px, alpha_deg: float = 0.0) -> PixelGeometry:
+    """Geometry of a raw run: the area detector from its pixel size, distance and beam centre; a
+    wide-angle panel of SANS-LLB (``raw.panel``) from its pixel positions and offsets
+    (:func:`pysasfit.sasred.io.sans_llb.panel_geometry`; the beam centre is that of the central detector)."""
+    if getattr(raw, "panel", None) is not None:
+        from ..io.sans_llb import panel_geometry
+        return panel_geometry(raw, beam_center_px)
+    return pixel_geometry(raw.counts.shape, raw.pixel_size_m, beam_center_px,
+                          float(getattr(raw, "L2_effective_m", raw.L2_m)), raw.wavelength_A, alpha_deg=alpha_deg)

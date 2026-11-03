@@ -104,7 +104,7 @@ class Metadata:
                                 v = v.decode(errors="replace").strip()
                             elif isinstance(v, np.generic):
                                 v = v.item()
-                            d[name.split("/", 1)[1] if name.startswith("entry1/") else name] = v
+                            d[name.split("/", 1)[1] if name.startswith(("entry1/", "entry0/")) else name] = v
                     f.visititems(visit)
             except Exception:  # noqa: BLE001 -- missing file: no header items
                 pass
@@ -150,7 +150,8 @@ class Metadata:
 def select_runs(meta: Metadata, run_range: Optional[Tuple[int, int]] = None,
                 pattern: Optional[Tuple[int, int]] = None, criteria: Sequence[Criterion] = ()) -> list:
     """Items in the run range (inclusive), on the pattern (starting with the first run of the range,
-    alternately use ``pattern[0]`` runs and skip ``pattern[1]``), meeting every criterion."""
+    alternately use ``pattern[0]`` runs and skip ``pattern[1]``), meeting every criterion. Runs without usable
+    data (measuring time 0, 0 counts, monitor 0) are never selected."""
     out = []
     lo, hi = run_range if run_range else (None, None)
     start = lo if lo is not None else min((Metadata.raw(i).run for i in meta.items), default=0)
@@ -162,6 +163,8 @@ def select_runs(meta: Metadata, run_range: Optional[Tuple[int, int]] = None,
             use, skip = pattern
             if use > 0 and (r - start) % (use + skip) >= use:
                 continue
+        if getattr(Metadata.raw(it), "empty_reason", ""):
+            continue
         if all(c.test(meta.value(it, c.field)) for c in criteria):
             out.append(it)
     return sorted(out, key=lambda i: Metadata.raw(i).run)

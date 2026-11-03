@@ -119,9 +119,11 @@ The cubic is the least-squares polynomial through the five points (residuals ≤
 freedom: outside 0.47–1.2 nm it is unreliable (it turns up above 1.2 nm, g(1.3 nm) = 1.159 ± 0.021), the
 notes say "extrapolated". The previous quadratic did not pass the points at 1.0 and 1.2 nm (+2.2 % and +1.5 %).
 `reduce_row_2d(..., k0=…)` uses another value.
-Missing measurements do not stop the reduction, the notes say what was left out:
+Missing measurements do not stop the reduction, the notes say what was left out. Cd, water background and
+sample background are optional: they may have no runs or be switched off in the table (column *Use*,
+`ReductionTable.ignored`).
 
-| missing | then |
+| missing (or switched off) | then |
 |---|---|
 | Cd (blocked beam) | nothing subtracted for the beam-independent background |
 | sample background | no background subtracted |
@@ -129,6 +131,19 @@ Missing measurements do not stop the reduction, the notes say what was left out:
 | water | relative scale: N / (ΔΩ · d) [· efficiency], in counts/monitor/sr/cm |
 | transmission | T = 1 |
 | thickness | d = 1 cm |
+| direct beam or efficiency map (direct-beam scale) | the row is not reduced (error) |
+
+{meth}`~pysasfit.sasred.reduction_table.ReductionTable.missing_inputs` lists these cases per row (stored in the
+result as `parameters["missing"]`); the window colours the cells and lists them in the panel *Missing input*.
+
+**Which absolute scale** ({meth}`~pysasfit.sasred.reduction_table.ReductionTable.scale_method`): the table's
+`scale` is *auto* (default), *water*, *direct_beam* or *relative*. *auto* means the direct beam as soon as an
+efficiency map is chosen for the geometry – its own water is then not used, even when measured –, else water
+when the Water row has runs, else relative.
+
+**Runs without data** – measuring time 0, 0 counts (all detector banks) or the normalising monitor at 0
+(`RawRun.empty_reason`) – are skipped everywhere: marked in the run list (column *comment*), left out of the
+plan (`Plan.skipped`), and a reduction given one leaves it out with a note ("run … skipped: …").
 
 In the window: **Reduce all samples (2D → I(q))** or **Reduce selected samples** in a geometry tab of the
 reduction table (or the *Reduction* menu). The mask is the edited mask when the geometry is the one shown in
@@ -163,8 +178,40 @@ Test with the Vifor data at 0.6 nm (water at 8 m and 2 m against the attenuated 
 from the direct beam with the nominal attenuator transmission is therefore about 26 % lower than the
 one from water.** The water calibration is trusted for now (water measured against a standard); the
 attenuator is to be reconfirmed by tests (e.g. the inhomogeneous illumination of the sieve). The value is
-kept in the instrument file as `attenuator."1".water_check`, not used, and the notes of every run with that
-attenuator mention the difference. Transmissions are not affected (the attenuator is in both runs).
+kept in the instrument file as `attenuator."1".water_check`; the notes of every run with that attenuator
+mention the difference. Transmissions are not affected (the attenuator is in both runs).
+
+### Direct beam + efficiency map instead of water
+
+At long distances and long wavelengths water takes too long. Such a geometry is then put on the absolute scale
+with its **direct beam** (beam stop out, usually attenuated: the empty-beam transmission runs of the same
+geometry, filled into the row *Direct beam* of the reduction table) and a **detector efficiency map** ε (mean 1),
+usually made from the water of a shorter distance:
+
+    Φ = Σ_disc (DB − Cd)_kl / ε_kl                          counts/monitor, attenuator corrected
+    dΣ/dΩ_ij = N_ij / (ε_ij ΔΩ_ij d_S Φ) · a_DB / a_S         1/cm/sr
+
+N is the sample minus its background as for water. The absolute efficiency of the detector and its
+λ dependence cancel between N and Φ; only the relative pixel efficiency comes from the map.
+
+* **Disc**: centred on the centre of gravity of the direct beam; its radius by default holds 99.5 % of the counts
+  within the largest disc on the detector, plus two pixels (the notes give it); it can be set in mm.
+* **Attenuator**: its transmission is the water calibration of the instrument file (`water_check`) when that was
+  made within 5 % of the wavelength (its relative uncertainty is propagated as the systematic source
+  `attenuator_db:<n>`), else the nominal value (uncertainty usually unknown – then the absolute scale is only as
+  good as that factor), or a value typed in the table.
+* **Map**: pixels masked or rejected in the water of the map (its beam stop) are estimated as row × column; the
+  table can mask them in the sample instead. The map's uncertainty per pixel is propagated (`flood:…`).
+* A map measured at another wavelength is used as it is (note in the result); a map of another shape is refused.
+* SANS-LLB wide-angle panels: not yet (they would need the efficiency of the panels relative to the central
+  detector).
+
+Test with the Vifor data at 0.6 nm, the water at 8 m reduced as a sample: with the 8 m water, and with the 8 m
+direct beam (82173, 82221, 82269, attenuator 1 with its water calibration) and the efficiency map of the 2 m
+water. Both agree within 1–3 % over q (median +1.4 %); only the first q bin, next to the beam stop where the
+2 m map is estimated, is 8 % low (masking the estimated pixels removes that bin). With the 8 m map the two agree
+to 1.1 % at all q – within the 2 % of the attenuator calibration. With the nominal attenuator factor the direct
+beam would give 27 % more.
 
 ## The SANS-I detector
 
@@ -221,6 +268,12 @@ $$
 Several runs of the same sample (the repeated water and empty-cell runs of a beam time) are summed: corrected
 counts over summed monitor. The transmissions come from the transmission table of the beam time
 ({func}`~pysasfit.sasred.io.transmission.read_transmission_summary`, `trans.txt`).
+
+In the window the map is made from the reduction-table rows of a geometry (Water with T_W, Water-BG with T_EC,
+Cd; rows switched off with *Use* are left out), with the mask and beam centre of that geometry
+({class}`~pysasfit.sasred.efficiency_gui.EfficiencyMixin`): *efficiency map → Make from the water of* in the
+detector panel, or *efficiency map → water of …* in the *Absolute scale* box of the geometry that uses it. The
+log states the formula and the runs and transmissions that went in.
 
 **Masked pixels.** Behind the beamstop (and at hot pixels) the water gives no efficiency. The SANS-I detector is a
 multiwire detector read out in coincidence: a pixel is the crossing of an x wire and a y wire, and its efficiency

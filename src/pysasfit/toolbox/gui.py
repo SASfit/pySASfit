@@ -1,4 +1,4 @@
-"""pyTOOLbox window: HDF5 viewer, metadata lister, merging of reduced curves, 2D data.
+"""pyTOOLbox window: HDF5 viewer, metadata lister, merging of reduced curves, 2D data, 1D data.
 
     pysasfit-toolbox [file.hdf ...]
     python -m pysasfit.toolbox.gui [file.hdf ...]
@@ -24,6 +24,7 @@ from ..core import settings as prefs  # noqa: E402
 from ..core.settings_dialog import add_preferences_menu  # noqa: E402
 from ..core.tabs import DetachableTabWidget  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
+from .data1d_gui import Data1DTool  # noqa: E402
 from .image_gui import ImageTool  # noqa: E402
 from .merge_gui import MergeTool  # noqa: E402
 from .meta_lister import MetaLister  # noqa: E402
@@ -39,7 +40,7 @@ def _session_path():
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("pyTOOLbox – HDF5 viewer, metadata lister, merge geometries, 2D data")
+        self.setWindowTitle("pyTOOLbox – HDF5 viewer, metadata lister, merge geometries, 2D and 1D data")
         self.setWindowIcon(tool_icon("pyTOOLbox"))
         self.tabs = DetachableTabWidget()        # viewer and lister can be separate windows
         self.viewer = HDF5Viewer()
@@ -53,6 +54,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabs.addTab(self.images, "2D data")
         self.images.status.connect(lambda t: self.statusBar().showMessage(t, 10000))
         self.merger.images_requested.connect(self.show_images)
+        self.data1d = Data1DTool()
+        self.data1d.merge_tool = self.merger
+        self.tabs.addTab(self.data1d, "1D data")
+        self.data1d.status.connect(lambda t: self.statusBar().showMessage(t, 10000))
+        self.images.data_produced.connect(self.show_data1d)
+        self.viewer.to_2d.connect(lambda img: self.show_images([img]))
         self.setCentralWidget(self.tabs)
         self.viewer.status.connect(lambda t: self.statusBar().showMessage(t, 10000))
         self.lister.open_file_requested.connect(self.open_in_viewer)
@@ -64,6 +71,10 @@ class MainWindow(QtWidgets.QMainWindow):
                                                              self.merger.on_add_files()))
         add_preferences_menu(self, "toolbox")
         self.resize(1400, 900)
+
+    def show_data1d(self, ds):
+        self.data1d.add_data(ds)
+        self.tabs.show_page(self.data1d)
 
     def show_images(self, imgs):
         self.images.add_images(imgs)

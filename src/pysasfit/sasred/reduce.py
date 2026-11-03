@@ -23,7 +23,7 @@ from .core.averaging import Binning, radial_binning
 from .core.counting import counts_uarray
 from .core.deadtime import monitor_deadtime, nonparalysable
 from .core.efficiency import Efficiency, efficiency_from_water, water_intensity
-from .core.geometry import PixelGeometry, pixel_geometry
+from .core.geometry import PixelGeometry, pixel_geometry, run_geometry
 from .core.normalisation import attenuator, by_monitor, by_time
 from .core.resolution import sigma_q_phase1
 from .data.uarray import Source, UArray, constant
@@ -38,9 +38,24 @@ def _L2(raw) -> float:
     return float(getattr(raw, "L2_effective_m", raw.L2_m))
 
 
-def load_instrument(name: str = "sans_i") -> dict:
-    with resources.files(__package__ + ".instruments.sinq").joinpath(f"{name}.yaml").open() as fh:
-        return yaml.safe_load(fh)
+_INSTRUMENTS: Dict[str, dict] = {}
+
+
+def load_instrument(name="sans_i") -> dict:
+    """The instrument file ``instruments/sinq/<name>.yaml``; ``name`` may also be a raw run (its
+    ``instrument``, SANS-I by default)."""
+    if not isinstance(name, str):
+        name = getattr(name, "instrument", None) or "sans_i"
+    if name not in _INSTRUMENTS:
+        with resources.files(__package__ + ".instruments.sinq").joinpath(f"{name}.yaml").open() as fh:
+            _INSTRUMENTS[name] = yaml.safe_load(fh)
+    import copy
+    return copy.deepcopy(_INSTRUMENTS[name])
+
+
+def _panel_offsets(raw):
+    from .io.sans_llb import panel_offsets
+    return panel_offsets(raw.bank)
 
 
 def uncertain_parameter(value: float, sigma: Optional[float], key: str, group: str,
@@ -145,7 +160,7 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
                   sector_deg: Optional[tuple] = None,
                   dlam_over_lam_fwhm: Optional[float] = None,
                   efficiency: Optional[Efficiency] = None) -> ReducedRun:
-    inst = instrument or load_instrument()
+    inst = instrument or load_instrument(raw)
     notes: List[str] = []
     run = raw.run
     c, factor, mask, unit = normalised_counts(raw, inst, notes, mask, normalise_by)
@@ -155,8 +170,10 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
     if getattr(raw, "L2_offset_m", 0.0):
         notes.append(f"detector distance {raw.L2_effective_m:.4f} m = recorded {raw.L2_m:.4f} m "
                      f"{1000 * raw.L2_offset_m:+.1f} mm offset (uncertainty not propagated)")
-    geo = pixel_geometry(raw.counts.shape, raw.pixel_size_m, beam_center_px, _L2(raw),
-                         raw.wavelength_A, alpha_deg=0.0)
+    geo = run_geometry(raw, beam_center_px)
+    if raw.bank:
+        notes.append(f"SANS-LLB {raw.bank} detector: geometry from the pixel positions + offsets "
+                     f"(dx, dy, dz) = {tuple(round(v, 2) for v in _panel_offsets(raw))} mm")
     if abs(raw.detector_tilt_deg) > 0.01:
         notes.append(f"chi_position = {raw.detector_tilt_deg} deg not applied as tilt (to confirm)")
     img = c / geo.d_omega
@@ -226,6 +243,12 @@ def combined_normalised_counts(runs, inst: dict, notes: List[str], mask=None, no
     runs = _as_list(runs)
     if not runs:
         raise ValueError("no runs")
+    bad = [(r.run, r.empty_reason) for r in runs if getattr(r, "empty_reason", "")]
+    for x, why in bad:
+        notes.append(f"run {x} skipped: {why}")
+    runs = [r for r in runs if not getattr(r, "empty_reason", "")]
+    if not runs:
+        raise ValueError("no usable runs: " + "; ".join(f"{x}: {why}" for x, why in bad))
     total, wsum = None, 0.0
     mname = inst["monitor"]["normaliser"]
     for r in runs:
@@ -254,14 +277,17 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
     image is divided by it so that the map holds the detector efficiency only."""
     from .core.geometry import pixel_geometry
     from .core import mask as mk
-    inst = instrument or load_instrument()
-    notes: List[str] = []
     waters, cells, blocks = _as_list(water), _as_list(empty_cell), _as_list(blocked)
     if not waters:
         raise ValueError("no water run")
     water = waters[0]
+    inst = instrument or load_instrument(water)
+    notes: List[str] = []
     if mask is None:
-        mask, _ = mk.suggest_mask(np.sum([w.counts for w in waters], axis=0), beam_center_px)
+        if water.panel is not None:
+            mask, _ = mk.default_mask(water, beam_center_px)
+        else:
+            mask, _ = mk.suggest_mask(np.sum([w.counts for w in waters], axis=0), beam_center_px)
     W, mask = combined_normalised_counts(waters, inst, notes, mask, normalise_by)
     EC = B = None
     if cells:
@@ -278,7 +304,7 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
     empty_cell = cells[0] if cells else None
     tw = _transmission(t_water, f"transmission:{water.run}")
     te = None if empty_cell is None else _transmission(t_empty, f"transmission:{empty_cell.run}")
-    geo = pixel_geometry(water.counts.shape, water.pixel_size_m, beam_center_px, _L2(water), water.wavelength_A)
+    geo = run_geometry(water, beam_center_px)
     I = water_intensity(W, EC, tw, te if te is not None else 1.0, geo.d_omega, B)
     if water_k is not None:
         I = I / np.asarray(water_k(geo.two_theta), float)

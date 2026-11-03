@@ -31,15 +31,15 @@ import numpy as np
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
-    QAbstractItemView, QApplication, QButtonGroup, QCheckBox, QFileDialog, QFrame,
+    QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFrame,
     QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QMessageBox, QPushButton, QRadioButton, QScrollArea, QSplitter,
+    QMessageBox, QPushButton, QScrollArea, QSplitter,
     QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from ..core import settings as prefs
 
-__all__ = ["MetaLister", "collect_entries", "write_values", "short_names", "to_native"]
+__all__ = ["MetaLister", "collect_entries", "write_values", "short_names", "to_native", "column_group"]
 
 OLD_CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".hdf_meta_lister.json")
 
@@ -109,6 +109,15 @@ def short_names(keys):
                         dup = True
         if not dup:
             return names
+
+
+def column_group(key):
+    """Group a listed entry belongs to: the HDF group holding it, e.g. '/entry1/SANS/attenuator/selection'
+    -> 'attenuator', '/entry1/sample/name' -> 'sample', '/entry1/SANS/detector@x' -> 'detector'."""
+    path = key.split("@", 1)[0].strip("/").split("/")
+    if "@" in key:
+        return path[-1] if path and path[-1] else ""
+    return path[-2] if len(path) >= 2 else ""
 
 
 def collect_entries(path):
@@ -246,8 +255,10 @@ class MetaLister(QWidget):
 
         # entry key -> selected (True = list, False = skip); keeps insertion order
         self.entry_state = {k: bool(v) for k, v in cfg.get("entries", {}).items()}
-        self.entry_widgets = {}          # key -> (row widget, list radio, skip radio)
+        self.entry_widgets = {}          # key -> (row widget, check box: listed or not)
         self.columns = []                # single-line names (used for copy / save)
+        self.units = []                  # unit of each column ("" if none), from the @units attribute
+        self.groups = []                 # group of each column (attenuator, beam_stop, detector, ...)
         self.rows = []                   # current values (edits included)
         self.keys = []                   # entry keys of the listed columns (after "file")
         self.paths = []                  # HDF file of each row
@@ -284,7 +295,7 @@ class MetaLister(QWidget):
         fl.addLayout(r1)
         fl.addLayout(r2)
 
-        # ---- left: entry selection (radio buttons)
+        # ---- left: entry selection (a check box per entry)
         left_box = QGroupBox("Entries to list")
         scan_btn = QPushButton("Scan files for entries")
         scan_btn.clicked.connect(self.scan)
@@ -396,36 +407,35 @@ class MetaLister(QWidget):
         vl.setSpacing(2)
         self.entry_widgets = {}
         for key, sel in self.entry_state.items():
+            if key.endswith("@units"):          # units go into the column headers, not into columns
+                continue
             row = QWidget()
             hl = QHBoxLayout(row)
             hl.setContentsMargins(0, 0, 0, 0)
-            rb_list, rb_skip = QRadioButton("list"), QRadioButton("skip")
-            grp = QButtonGroup(row)       # one exclusive group per entry
-            grp.addButton(rb_list)
-            grp.addButton(rb_skip)
-            (rb_list if sel else rb_skip).setChecked(True)
-            rb_list.toggled.connect(lambda on, k=key: self.entry_state.__setitem__(k, on))
+            cb = QCheckBox()                     # checked: listed; no text, little space
+            cb.setChecked(bool(sel))
+            cb.setToolTip("list this entry")
+            cb.toggled.connect(lambda on, k=key: self.entry_state.__setitem__(k, on))
             label = QLabel(key)
             label.setToolTip(key)
-            hl.addWidget(rb_list)
-            hl.addWidget(rb_skip)
+            hl.addWidget(cb)
             hl.addWidget(label, 1)
             vl.addWidget(row)
-            self.entry_widgets[key] = (row, rb_list, rb_skip)
+            self.entry_widgets[key] = (row, cb)
         vl.addStretch(1)
         self.scroll.setWidget(container)
         self.apply_filter()
 
     def apply_filter(self):
         needle = self.filter_edit.text().strip().lower()
-        for key, (row, _, _) in self.entry_widgets.items():
+        for key, (row, _) in self.entry_widgets.items():
             row.setVisible(needle in key.lower())
 
     def set_all(self, value):
         needle = self.filter_edit.text().strip().lower()
-        for key, (_, rb_list, rb_skip) in self.entry_widgets.items():
+        for key, (_, cb) in self.entry_widgets.items():
             if needle in key.lower():
-                (rb_list if value else rb_skip).setChecked(True)
+                cb.setChecked(bool(value))
 
     # ---- file handling
     def browse(self):
@@ -482,9 +492,9 @@ class MetaLister(QWidget):
 
     # ---- listing
     def generate(self):
-        keys = [k for k, v in self.entry_state.items() if v]
+        keys = [k for k, v in self.entry_state.items() if v and not k.endswith("@units")]
         if not keys:
-            self.warn("Nothing selected", "Select at least one entry (use 'list').")
+            self.warn("Nothing selected", "Select at least one entry (tick it in the list).")
             return
         if self.pending and QMessageBox.question(
                 self, "Unsaved changes",
@@ -501,6 +511,8 @@ class MetaLister(QWidget):
             return
         self.keys = keys
         self.columns = ["file"] + short_names(keys)
+        self.units = [""] * len(self.columns)
+        self.groups = [""] + [column_group(k) for k in keys]
         self.paths = [p for p, _ in files]
         self.rows, self.missing = [], set()
         self.pending, self.original = {}, {}
@@ -510,6 +522,10 @@ class MetaLister(QWidget):
                 self.set_status(f"Reading {name} ({r + 1}/{len(files)}) ...")
                 try:
                     data = collect_entries(path)
+                    for c, key in enumerate(keys, 1):
+                        u = data.get(f"{key}@units")
+                        if u and not self.units[c]:
+                            self.units[c] = str(u)
                     row = [name]
                     for c, key in enumerate(keys, 1):
                         if key in data:
@@ -529,16 +545,14 @@ class MetaLister(QWidget):
         self.persist()
 
     def fill_table(self):
-        # Two-line headers: "beamstop/y-position" -> "beamstop" over "y-position".
-        # (The copied/saved header stays a single line with the full name.)
-        any_parent = any("/" in c for c in self.columns)
+        # Headers: the group (attenuator, beam_stop, detector, sample, monitor1, ...) over the name,
+        # the unit in brackets below. Copied / saved headers are one line: "name [unit]".
+        any_unit = any(self.units)
         heads = []
-        for c in self.columns:
-            parent, _, last = c.rpartition("/")
-            if parent:
-                heads.append(f"{parent}\n{last}")
-            else:
-                heads.append(f"\n{c}" if any_parent else c)
+        for c, (col, grp) in enumerate(zip(self.columns, self.groups)):
+            last = col.rpartition("/")[2]
+            unit = f"[{self.units[c]}]" if self.units[c] else ""
+            heads.append(f"{grp}\n{last}" + (f"\n{unit}" if any_unit else ""))
         self.table.blockSignals(True)
         self.table.clear()
         self.table.setColumnCount(len(self.columns))
@@ -716,8 +730,13 @@ class MetaLister(QWidget):
     def clean(x):
         return str(x).replace("\t", " ").replace("\r", " ").replace("\n", " ")
 
+    def column_titles(self):
+        """One-line column titles for copy / save: "name [unit]"."""
+        units = self.units or [""] * len(self.columns)
+        return [c + (f" [{u}]" if u else "") for c, u in zip(self.columns, units)]
+
     def as_text(self, rows):
-        lines = ["\t".join(self.clean(c) for c in self.columns)]
+        lines = ["\t".join(self.clean(c) for c in self.column_titles())]
         lines += ["\t".join(self.clean(x) for x in r) for r in rows]
         return "\n".join(lines) + "\n"
 
@@ -751,14 +770,14 @@ class MetaLister(QWidget):
                 wb = Workbook()
                 ws = wb.active
                 ws.title = "Metadata"
-                ws.append(self.columns)
+                ws.append(self.column_titles())
                 for r in self.rows:
                     ws.append([x if isinstance(x, (int, float)) else str(x) for x in r])
                 wb.save(path)
             elif ext == ".csv":
                 with open(path, "w", newline="", encoding="utf-8-sig") as fh:
                     w = csv.writer(fh)
-                    w.writerow(self.columns)
+                    w.writerow(self.column_titles())
                     w.writerows(self.rows)
             else:
                 with open(path, "w", encoding="utf-8") as fh:

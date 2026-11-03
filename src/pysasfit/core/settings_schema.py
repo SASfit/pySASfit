@@ -320,6 +320,17 @@ register(T, TT, "Detector distance", [
     S("sasred.detector.distance_offset_before", "", "apply the offset to runs started before",
       "Date YYYY-MM-DD; empty: all runs.", kind="str"),
 ])
+register(T, TT, "SANS-LLB detector geometry", [
+    S("sasred.llb.central_dz_mm", 0.0, "central detector: offset of the detection layer [mm]",
+      "Added to the recorded distance of the central detector (q and solid angle).", lo=-500, hi=500),
+    S("sasred.llb.left.dx_mm", 0.0, "left panel: offset dx along posx [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.left.dy_mm", 0.0, "left panel: offset dy along posy (along the tubes) [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.left.dz_mm", 0.0, "left panel: offset dz along the beam [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dx_mm", 0.0, "bottom panel: offset dx along posx (along the tubes) [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dy_mm", 0.0, "bottom panel: offset dy along posy [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dz_mm", 0.0, "bottom panel: offset dz along the beam [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.end_px", 10, "pixels masked at both ends of every tube", "", kind="int", lo=0, hi=60),
+])
 register(T, TT, "Transmission runs", [
     S("sasred.transmission.beamstop_out_mm", 100.0, "beam stop out of the beam beyond [mm]",
       "Distance of the beam stop from the beam centre on the detector above which a run is a transmission run.",

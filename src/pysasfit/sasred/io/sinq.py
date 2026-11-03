@@ -57,6 +57,14 @@ class RawRun:
     missing_optional: List[str] = field(default_factory=list)
     L2_offset_m: float = 0.0      # distance offset for the geometry (L2_m stays as recorded)
     beamstop_type: str = ""       # beam stop selector (size/type), SANS/beam_stop/out_flag
+    instrument: str = "sans_i"    # instrument file (instruments/sinq/<instrument>.yaml)
+    preset_monitor: str = "monitor1"   # monitor the preset refers to (monitor mode)
+    bank: str = ""                # detector bank: "" = the (central) area detector; SANS-LLB: "left", "bottom"
+    panels: Optional[dict] = None     # SANS-LLB: {name: Panel} of the wide-angle banks (central run only)
+    panel: Optional[object] = None    # the Panel of a bank run (geometry from pixel positions)
+    central_pos_mm: Optional[tuple] = None   # SANS-LLB: (posx, posy) of the central pixels in the frame of the panels
+    sample_name_in_file: Optional[str] = None  # set when the sample name was corrected by hand (names.py)
+    role: str = ""                # role set by hand (names.py); empty: from the sample name
 
     @property
     def L2_recorded_m(self) -> float:
@@ -69,11 +77,35 @@ class RawRun:
         return self.L2_m + self.L2_offset_m
 
     @property
+    def empty_reason(self) -> str:
+        """Why the run holds no usable data, or "": measuring time 0, no counts on the detector (all banks) or the
+        normalising monitor (instrument file) at 0. Such runs are skipped by the reduction."""
+        why = []
+        if not (float(self.counting_time_s or 0.0) > 0):
+            why.append("measuring time 0 s")
+        total = float(np.sum(self.counts)) if self.counts is not None else 0.0
+        for p in (self.panels or {}).values():
+            c = getattr(p, "counts", None)
+            if c is not None:
+                total += float(np.sum(c))
+        if not total > 0:
+            why.append("0 counts")
+        try:
+            from ..reduce import load_instrument
+            mname = load_instrument(self)["monitor"]["normaliser"]
+        except Exception:  # noqa: BLE001
+            mname = self.preset_monitor
+        mon = (self.monitors or {}).get(mname)
+        if mon is None or not float(mon) > 0:
+            why.append(f"{mname} 0" if mon is not None else f"no {mname}")
+        return ", ".join(why)
+
+    @property
     def aborted(self) -> bool:
         """Run that stopped before reaching its preset: the monitor count (monitor mode) or the
         counting time (timer mode) is below 99 % of the preset."""
         if self.count_mode == "monitor":
-            m = self.monitors.get("monitor1")
+            m = self.monitors.get(self.preset_monitor)
             return m is not None and m < 0.99 * self.preset
         if self.count_mode in ("timer", "time"):
             return self.counting_time_s < 0.99 * self.preset

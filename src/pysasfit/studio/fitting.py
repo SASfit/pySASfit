@@ -5,6 +5,9 @@ table of fit parameters:
 
 * a **common** parameter drives the same model parameter in several (default: all) data sets;
 * a **local** parameter belongs to one data set only (``add_local`` creates one per data set);
+* a **global** parameter (``add_global``, e.g. ``P1``) is not a model parameter itself: ``link`` makes model parameters
+  of any contributions and data sets follow it, each as ``factor * P1`` (SASfit's global parameters with a factor);
+  constraints and priors may use it like any other parameter;
 * ``fixed`` parameters keep their value, ``lower``/``upper`` are bounds;
 * **constraints** are inequalities or equalities of the parameter names (``"ff_R + ff_t < 100"``,
   ``"scale_0_a + scale_0_b == 1"``): the label of a parameter with every run of non-word characters turned into ``_``,
@@ -154,13 +157,21 @@ class FitParameter:
     lower: float = -math.inf
     upper: float = math.inf
     fixed: bool = False
+    links: tuple = ()  # global parameter: ((data set, address, factor), ...) -- the model value is factor * value
 
     @property
     def ident(self):
         return _ident(self.label)
 
+    def targets(self):
+        """``[(data set, address, factor)]`` this parameter drives."""
+        out = [(k, self.address, 1.0) for k in self.datasets] if self.address else []
+        return out + [tuple(t) for t in self.links]
 
-_FUNCS = {"sqrt": math.sqrt, "exp": math.exp, "log": math.log, "abs": abs, "min": min, "max": max, "pi": math.pi}
+
+_FUNCS = {"sqrt": math.sqrt, "exp": math.exp, "log": math.log, "log10": math.log10, "abs": abs, "min": min, "max": max,
+          "sin": math.sin, "cos": math.cos, "tan": math.tan, "asin": math.asin, "acos": math.acos, "atan": math.atan,
+          "atan2": math.atan2, "sinh": math.sinh, "cosh": math.cosh, "tanh": math.tanh, "pi": math.pi}
 _NODES = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Name, ast.Constant, ast.Call, ast.Load, ast.Add, ast.Sub,
           ast.Mult, ast.Div, ast.Pow, ast.Mod, ast.USub, ast.UAdd)  # fmt: skip
 
@@ -201,6 +212,45 @@ class _Constraint:
         return float(eval(self._lhs, env) - eval(self._rhs, env))  # noqa: S307 -- AST checked above
 
 
+class _Expression:
+    """An arithmetic expression of parameter identifiers (``2*P1``, ``P1 + P2``, ``atan(P1)``, ``sqrt(P1**2 + P2**2)``):
+    + - * / ** %, numbers, ``pi`` and the functions of ``_FUNCS``."""
+
+    def __init__(self, text):
+        self.text = str(text).strip()
+        try:
+            tree = ast.parse(self.text, mode="eval")
+        except SyntaxError as exc:
+            raise ValueError(f"expression '{self.text}': {exc.msg}") from None
+        self.names = set()
+        for node in ast.walk(tree):
+            if not isinstance(node, _NODES):
+                raise ValueError(f"expression '{self.text}': '{type(node).__name__}' is not allowed")
+            if isinstance(node, ast.Call) and not (isinstance(node.func, ast.Name) and node.func.id in _FUNCS):
+                raise ValueError(f"expression '{self.text}': only {', '.join(f for f in _FUNCS if f != 'pi')} can be called")
+            if isinstance(node, ast.Name) and node.id not in _FUNCS:
+                self.names.add(node.id)
+        self._code = compile(tree, "<expression>", "eval")
+
+    def __call__(self, values):
+        env = {"__builtins__": {}, **_FUNCS, **values}
+        return float(eval(self._code, env))  # noqa: S307 -- AST checked above
+
+
+@dataclass
+class ExpressionLink:
+    """Model parameter ``address`` of the data sets ``datasets`` = ``expression`` of global parameters."""
+
+    address: str
+    datasets: tuple
+    expression: object  # _Expression
+    label: str = ""
+
+    @property
+    def text(self):
+        return self.expression.text
+
+
 # --------------------------------------------------------------------------- result
 @dataclass
 class FitSummary:
@@ -222,6 +272,7 @@ class FitSummary:
     at_bounds: list = field(default_factory=list)
     constraints: list = field(default_factory=list)  # [(text, g, satisfied)]
     asymmetric: dict = field(default_factory=dict)  # label -> (minus, plus): MINOS / posterior 68 % intervals
+    derived: list = field(default_factory=list)  # [(label, expression, value)] of the expression links
 
     @property
     def values(self):
@@ -253,6 +304,8 @@ class FitSummary:
                 if p.label in self.asymmetric:
                     lo, hi = self.asymmetric[p.label]
                     lines[-1] += f"   ({lo:+.3g} / {hi:+.3g})"
+        for label, expr, v in self.derived:
+            lines.append(f"  {label:24s} = {v:.6g}   (= {expr})")
         for text, g, ok in self.constraints:
             lines.append(f"  constraint {text}: {'ok' if ok else 'VIOLATED'} (lhs - rhs = {g:.4g})")
         corr = self.correlation_text()
@@ -300,6 +353,7 @@ class FitProblem:
         self.log_uniform = []  # parameter indices with a log-uniform prior (scalar term, no residual)
         self._access = {}  # (dataset, address) -> (getter, setter)
         self._base = {}  # (dataset, address) -> value of the model before the fit
+        self.expr_links = []  # ExpressionLink: model parameters computed from global parameters
         self.last_error = None
 
     # ---------------------------------------------------------------- data
@@ -323,7 +377,12 @@ class FitProblem:
         k = len(self.datasets)
         self.datasets.append(FitDataset(name or f"data{k}", q[ok], I[ok], s[ok], model, float(weight)))
         for p in self.parameters:  # remember what the new model has for the addresses already in use
-            self._remember(k, p.address)
+            for a in {p.address} | {t[1] for t in p.links}:
+                if a:
+                    try:
+                        self._remember(k, a)
+                    except KeyError:
+                        pass
         return k
 
     def _access_for(self, k, address):
@@ -345,9 +404,7 @@ class FitProblem:
         for k in ds:
             if not 0 <= k < len(self.datasets):
                 raise ValueError(f"no data set {k}")
-            for p in self.parameters:
-                if p.address == address and k in p.datasets:
-                    raise ValueError(f"'{address}' of data set {k} is already driven by parameter '{p.label}'")
+            self._check_free(k, address)
         for k in range(len(self.datasets)):
             self._remember(k, address)
         if label is None:
@@ -360,6 +417,70 @@ class FitProblem:
             v = min(max(v, lower), upper)
         par = FitParameter(label, address, ds, v, float(lower), float(upper), bool(fixed))
         self.parameters.append(par)
+        return par
+
+    def _check_free(self, k, address):
+        for p in self.parameters:
+            for kk, a, _f in p.targets():
+                if a == address and kk == k:
+                    raise ValueError(f"'{address}' of data set {k} is already driven by parameter '{p.label}'")
+        for el in getattr(self, "expr_links", []):
+            if el.address == address and k in el.datasets:
+                raise ValueError(f"'{address}' of data set {k} is already set by the expression '{el.text}'")
+
+    def link_expression(self, address, expression, datasets=None, label=None):
+        """Model parameter ``address`` (in ``datasets``, default all) = ``expression`` of global parameters, e.g.
+        ``"P1 + P2"``, ``"atan(P1)"``, ``"2*P1"`` (functions: those of the constraints, plus trigonometric ones)."""
+        ex = expression if isinstance(expression, _Expression) else _Expression(expression)
+        glob = {p.ident: p for p in self.parameters if not p.address}
+        unknown = ex.names - set(glob)
+        if unknown:
+            raise ValueError(f"expression '{ex.text}': {', '.join(sorted(unknown))} is not a global parameter "
+                             f"(known: {', '.join(sorted(glob)) or 'none'})")
+        ds = tuple(range(len(self.datasets))) if datasets is None else tuple(int(k) for k in datasets)
+        for k in ds:
+            if not 0 <= k < len(self.datasets):
+                raise ValueError(f"no data set {k}")
+            self._access_for(k, address)
+            self._check_free(k, address)
+        for k in range(len(self.datasets)):
+            try:
+                self._remember(k, address)
+            except KeyError:
+                pass
+        el = ExpressionLink(address, ds, ex, label or address)
+        self.expr_links.append(el)
+        return el
+
+    def add_global(self, label, value=0.0, lower=-math.inf, upper=math.inf, fixed=False):
+        """A global parameter (e.g. ``"P1"``) that drives model parameters through :meth:`link`."""
+        if not label or any(p.label == label or _ident(p.label) == _ident(label) for p in self.parameters):
+            raise ValueError(f"parameter label '{label}' is empty or not unique")
+        v = min(max(float(value), lower), upper)
+        par = FitParameter(label, "", (), v, float(lower), float(upper), bool(fixed), ())
+        self.parameters.append(par)
+        return par
+
+    def link(self, label, address, datasets=None, factor=1.0):
+        """Make ``address`` (in the given data sets, default all) follow the global parameter ``label``:
+        model value = ``factor * label``."""
+        par = self.parameter(label)
+        if par.address:
+            raise ValueError(f"'{label}' is not a global parameter (add it with add_global)")
+        ds = tuple(range(len(self.datasets))) if datasets is None else tuple(int(k) for k in datasets)
+        new = []
+        for k in ds:
+            if not 0 <= k < len(self.datasets):
+                raise ValueError(f"no data set {k}")
+            self._access_for(k, address)              # raises for an address the model does not have
+            self._check_free(k, address)
+            new.append((k, address, float(factor)))
+        for k in range(len(self.datasets)):
+            try:
+                self._remember(k, address)
+            except KeyError:
+                pass
+        par.links = tuple(par.links) + tuple(new)
         return par
 
     def add_common(self, address, **kw):
@@ -484,19 +605,40 @@ class FitProblem:
     def apply(self, k, values=None):
         """Set the model of data set ``k`` to the values of the parameters (or to ``values``, a full vector)."""
         vals = np.array([p.value for p in self.parameters]) if values is None else values
-        covered = {p.address for p in self.parameters if k in p.datasets}
+        covered = {a for p in self.parameters for kk, a, _f in p.targets() if kk == k}
+        covered |= {el.address for el in self.expr_links if k in el.datasets}
         for (kk, address), v in self._base.items():
             if kk == k and address not in covered:
                 self._access_for(k, address)[1](v)
         for i, p in enumerate(self.parameters):
-            if k in p.datasets:
-                self._access_for(k, p.address)[1](vals[i])
+            for kk, a, f in p.targets():
+                if kk == k:
+                    self._access_for(k, a)[1](f * vals[i])
+        if self.expr_links:
+            env = {p.ident: vals[i] for i, p in enumerate(self.parameters)}
+            for el in self.expr_links:
+                if k in el.datasets:
+                    self._access_for(k, el.address)[1](el.expression(env))
+
+    def derived_values(self, values=None):
+        """``[(label, expression, value)]`` of the expression links (per data set where they differ)."""
+        vals = np.array([p.value for p in self.parameters]) if values is None else values
+        env = {p.ident: vals[i] for i, p in enumerate(self.parameters)}
+        out = []
+        for el in self.expr_links:
+            try:
+                v = el.expression(env)
+            except (ValueError, ZeroDivisionError, OverflowError):
+                v = math.nan
+            ds = "" if len(el.datasets) == len(self.datasets) else "[" + ", ".join(self.datasets[k].name for k in el.datasets) + "]"
+            out.append((el.label + ds, el.text, v))
+        return out
 
     def _residuals(self, vals):
         out = []
         for k, d in enumerate(self.datasets):
-            self.apply(k, vals)
             try:
+                self.apply(k, vals)  # an expression link may fail (e.g. sqrt of a negative trial value)
                 I = np.asarray(d.model.intensity(d.q), float)
                 r = (I - d.I) / d.sigma * math.sqrt(d.weight)
             except FitCancelled:
@@ -538,6 +680,8 @@ class FitProblem:
     def _linear_kind(self, p):
         from .model import ScatteringContribution
 
+        if not p.address or p.links:            # global parameters stay with the optimiser
+            return None
         parts = p.address.split(".")
         try:
             if p.address == "background":
@@ -571,7 +715,13 @@ class FitProblem:
         total = nrows + self.n_prior_rows()
         Ms, bs = [], []
         for k, d in enumerate(self.datasets):
-            self.apply(k, vals)
+            try:
+                self.apply(k, vals)
+            except FitCancelled:
+                raise
+            except Exception as exc:  # noqa: BLE001 -- an expression link that cannot be evaluated here
+                self.last_error = f"{type(exc).__name__}: {exc}"
+                return np.full(total, BIG)
             wt = math.sqrt(d.weight) / d.sigma
             sc_cols, n_cols, bg_col, pw_col = {}, {}, None, None
             for pi, j in col.items():
@@ -797,7 +947,7 @@ class FitProblem:
         constraints = [(c.text, gi, c.violation(gi) <= CONSTRAINT_TOL) for c, gi in zip(self.constraints, g)]
         return FitSummary(
             backend, algorithm or "", success, message, ctx.nfev, seconds, [FitParameter(**vars(p)) for p in self.parameters],
-            errors, chi2, chi2 / dof, dof, per_set, curves, cov, free_labels, at_bounds, constraints, asym,
+            errors, chi2, chi2 / dof, dof, per_set, curves, cov, free_labels, at_bounds, constraints, asym, derived=self.derived_values(vals),
         )  # fmt: skip
 
 

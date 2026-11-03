@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """The correction matrix and the sample table of one configuration (as in BerSANS' data-reduction
 window): which runs are summed for the blocked beam (Cd), the water, the water background (empty
-cell), the sample background and every sample, with transmissions, scaling (thickness),
-attenuation factor and scattering probability.
+cell), the sample background, the direct beam and every sample, with transmissions, scaling
+(thickness), attenuation factor and scattering probability.
+
+The absolute scale (:meth:`ReductionTable.scale_method`) comes from the water of this geometry or,
+where water takes too long (long distances, long wavelengths), from the **direct beam** of this
+geometry (attenuated, beam stop out) together with a detector **efficiency map** (usually made from
+the water of a shorter distance; :attr:`ReductionTable.efficiency`).
 
 The table can be filled automatically from a :class:`~pysasfit.sasred.plan.Plan` (runs grouped
 by metadata, outliers left out with the reason in the comment of the run) and edited or filled
@@ -18,11 +23,34 @@ import numpy as np
 from dataclasses import asdict, dataclass, field
 from typing import Dict, Iterable, List, Optional
 
-__all__ = ["CORRECTIONS", "RunChoice", "RowSet", "ReductionTable", "from_plan", "parse_runs", "configurations"]
+__all__ = ["OPTIONAL", "Missing", "transmission_from_runs", "empty_beam_runs", "CORRECTIONS", "SCALE_METHODS", "RunChoice", "RowSet", "ReductionTable", "from_plan", "parse_runs", "configurations"]
 
 #: correction rows: role -> label (BerSANS names)
 CORRECTIONS = {"blocked_beam": "Cadmium", "water": "Water", "empty_cell": "Water-BG",
-               "sample_background": "Sample-BG"}
+               "sample_background": "Sample-BG", "direct_beam": "Direct beam"}
+#: how the absolute scale is made: auto (water if there is water, else direct beam + efficiency map),
+#: water, direct_beam (direct beam + efficiency map), relative (no absolute scale)
+SCALE_METHODS = ("auto", "water", "direct_beam", "relative")
+#: correction rows that may be left out (no runs) or switched off (ReductionTable.ignored)
+OPTIONAL = ("blocked_beam", "empty_cell", "sample_background")
+
+
+@dataclass
+class Missing:
+    """An input missing for a reduction (or to be checked) and what the reduction does instead.
+
+    ``role``: the correction role or "sample"; ``index``: the sample row (0-based) or None; ``field``: "runs",
+    "transmission", "thickness", "aperture" or "efficiency" (the efficiency map of the table); ``severity``:
+    "missing" (a value is assumed) or "check" (inconsistent input)."""
+    role: str
+    index: Optional[int]
+    label: str
+    field: str
+    text: str
+    severity: str = "missing"
+
+    def describe(self) -> str:
+        return f"{self.label}: {self.field} – {self.text}"
 
 
 @dataclass
@@ -79,6 +107,12 @@ class ReductionTable:
     created: str = ""
     source: str = "manual"                     # manual | plan
     water_g: Optional[float] = None            # g(λ) of the water by hand; None: instrument file (absolute.water_g)
+    scale: str = "auto"                        # one of SCALE_METHODS
+    efficiency: str = ""                       # efficiency map: "file.h5", "file.h5::entry" or "geometry:<config>"
+    direct_beam_radius_mm: Optional[float] = None   # direct beam summed within this radius; None: automatic
+    direct_beam_attenuator: Optional[float] = None  # attenuator transmission of the direct beam by hand; None: file
+    efficiency_mask_filled: bool = False       # mask the pixels the efficiency map only estimates (row × column)
+    ignored: List[str] = field(default_factory=list)   # optional correction roles switched off (OPTIONAL)
 
     def __post_init__(self):
         for role, label in CORRECTIONS.items():
@@ -167,18 +201,121 @@ class ReductionTable:
     def rows(self) -> List[RowSet]:
         return [self.corrections[k] for k in CORRECTIONS] + list(self.samples)
 
+    def uses(self, role: str) -> bool:
+        """The correction row is used: it has runs switched on and is not switched off (:attr:`ignored`)."""
+        return bool(self.corrections[role].used) and role not in self.ignored
+
+    def scale_method(self) -> str:
+        """The absolute scale actually used: "water", "direct_beam" or "relative". With ``scale = "auto"``:
+        the direct beam whenever an efficiency map is chosen (the water of this geometry is then not used),
+        else water when the water row has runs, else relative."""
+        s = self.scale or "auto"
+        if s not in SCALE_METHODS:
+            raise ValueError(f"scale = {s!r}: one of {', '.join(SCALE_METHODS)}")
+        if s != "auto":
+            return s
+        if self.efficiency:
+            return "direct_beam"
+        if self.corrections["water"].used:
+            return "water"
+        return "relative"
+
+    def missing_inputs(self, rows: Optional[Iterable[RowSet]] = None) -> List[Missing]:
+        """Inputs missing for the reduction of ``rows`` (default: all sample rows with runs), with what the
+        reduction does instead – the same cases as :func:`~pysasfit.sasred.absolute.reduce_row_2d`."""
+        out: List[Missing] = []
+        corr = self.corrections
+        method = self.scale_method()
+        rows = [r for r in (self.samples if rows is None else rows)]
+
+        def c(role, field, text, severity="missing"):
+            out.append(Missing(role, None, CORRECTIONS[role], field, text, severity))
+
+        if "blocked_beam" in self.ignored:
+            c("blocked_beam", "use", "switched off: no beam-independent background subtracted", "info")
+        elif not corr["blocked_beam"].used:
+            c("blocked_beam", "runs", "no Cd: no beam-independent background subtracted", "info")
+        sb = corr["sample_background"]
+        if "sample_background" in self.ignored:
+            c("sample_background", "use", "switched off: no sample background subtracted", "info")
+        elif not sb.used:
+            c("sample_background", "runs", "no sample background: none subtracted", "info")
+        elif sb.transmission is None:
+            c("sample_background", "transmission", "no transmission: T = 1 assumed")
+        if method == "water":
+            w, ec = corr["water"], corr["empty_cell"]
+            if w.transmission is None:
+                c("water", "transmission", "no water transmission: no absolute factor, result in units of water")
+            if "empty_cell" in self.ignored:
+                c("empty_cell", "use", "switched off: the water is not corrected for its cell", "info")
+            elif not ec.used:
+                c("empty_cell", "runs", "no water background: the water is not corrected for its cell", "check")
+            elif ec.transmission is None:
+                c("empty_cell", "transmission", "no transmission: T = 1 assumed (τ_W = T_W)")
+        elif method == "direct_beam":
+            if not corr["direct_beam"].used:
+                c("direct_beam", "runs", "no direct-beam runs: the reduction stops")
+            if not self.efficiency:
+                c("direct_beam", "efficiency", "no efficiency map: the reduction stops")
+        elif (self.scale or "auto") == "auto":
+            c("water", "runs", "no water (and no direct beam + efficiency map): relative scale only, not absolute")
+            if corr["direct_beam"].used and not self.efficiency:
+                c("direct_beam", "efficiency", "direct beam without an efficiency map: not used")
+        ref = corr["water"] if method == "water" else corr["direct_beam"] if method == "direct_beam" else None
+        for r in rows:
+            if r not in self.samples:
+                continue
+            i = self.samples.index(r)
+
+            def m(field, text, severity="missing"):
+                out.append(Missing("sample", i, f"{r.label} ({r.info})" if r.info else r.label, field, text, severity))
+            if r.runs and not r.used:
+                m("runs", "all runs switched off: not reduced")
+                continue
+            if not r.used:
+                continue
+            if r.transmission is None:
+                m("transmission", "no transmission: T = 1 assumed")
+            if not r.scaling:
+                m("thickness", "no thickness: d = 1 cm assumed")
+            if ref is not None and bool(r.aperture_cm2) != bool(ref.aperture_cm2):
+                m("aperture", f"aperture given for only one of sample and {CORRECTIONS[ref.role].lower()}: "
+                              "same illuminated area assumed", "check")
+                if not ref.aperture_cm2:
+                    c(ref.role, "aperture", "aperture missing (the samples have one)", "check")
+        # each correction item once
+        seen, uniq = set(), []
+        for x in out:
+            k = (x.role, x.index, x.field)
+            if k not in seen:
+                seen.add(k)
+                uniq.append(x)
+        return uniq
+
     def problems(self) -> List[str]:
         """What is still missing before an absolute reduction."""
         out = []
-        for role in ("water", "empty_cell"):
-            if not self.corrections[role].used:
-                out.append(f"{CORRECTIONS[role]}: no runs")
-        if not self.corrections["blocked_beam"].used:
-            out.append("Cadmium: no runs (beam-independent background not subtracted)")
+        method = self.scale_method()
+        if method == "water" or (method == "relative" and self.scale == "auto"):
+            if not self.corrections["water"].used:
+                out.append("Water: no runs")
+            elif not self.uses("empty_cell") and "empty_cell" not in self.ignored:
+                out.append("Water-BG: no runs")
+            if method == "relative" and not self.efficiency:
+                out.append("or: direct beam + efficiency map")
+        elif method == "direct_beam":
+            if not self.corrections["direct_beam"].used:
+                out.append("Direct beam: no runs")
+            if not self.efficiency:
+                out.append("no efficiency map for the direct-beam scale")
         for r in self.rows():
-            if r.used and r.role != "blocked_beam" and r.transmission is None:
+            if r.role in self.ignored:
+                continue
+            if r.used and r.role not in ("blocked_beam", "direct_beam") and r.transmission is None:
+                if r.role in ("water", "empty_cell") and method != "water":
+                    continue
                 out.append(f"{r.label} ({r.info}): no transmission")
-            if r.runs and not r.used:
+            if r.runs and not r.used and r.role not in OPTIONAL:
                 out.append(f"{r.label} ({r.info}): all runs switched off")
         if not self.samples:
             out.append("no samples")
@@ -199,7 +336,9 @@ class ReductionTable:
         return cls(d.get("config", ""), d.get("folder", ""),
                    {k: rowset(v) for k, v in d.get("corrections", {}).items()},
                    [rowset(v) for v in d.get("samples", [])], d.get("created", ""), d.get("source", "manual"),
-                   d.get("water_g"))
+                   d.get("water_g"), d.get("scale", "auto") or "auto", d.get("efficiency", "") or "",
+                   d.get("direct_beam_radius_mm"), d.get("direct_beam_attenuator"),
+                   bool(d.get("efficiency_mask_filled", False)), list(d.get("ignored") or []))
 
     def save(self, path) -> str:
         with open(path, "w", encoding="utf-8") as fh:
@@ -245,6 +384,55 @@ def _lam(config: str) -> str:
 
 POSITION_TOL_MM = 1.0          # transmission runs and trans.txt values belong to a sample position within this
 SLOT_TOL_MM = 5.0              # another sample this close (beam size): the same slot of the changer
+
+
+def empty_beam_runs(raws: Dict[int, object]) -> List[int]:
+    """Transmission runs of the empty beam among ``raws`` (role from the sample name or set by hand)."""
+    from .catalogue import is_transmission
+    from .plan import role_of
+    out = []
+    for k, r in raws.items():
+        if r is None:
+            continue
+        role = getattr(r, "role", "") or role_of(r.sample_name)
+        if role == "empty_beam":
+            try:
+                if is_transmission(r):
+                    out.append(k)
+            except Exception:  # noqa: BLE001
+                pass
+    return sorted(out)
+
+
+def transmission_from_runs(runs, raws: Dict[int, object], eb_runs: Optional[List[int]] = None):
+    """τ (beam spot) of transmission runs, each against an empty-beam transmission run at the same distance
+    (the same attenuator preferred, then the nearest run number): (mean, σ, runs used, empty-beam run) or
+    None. ``eb_runs``: candidate empty-beam runs (default: :func:`empty_beam_runs` of ``raws``)."""
+    from .core.beamcentre import masked_centre_of_gravity
+    from .core.scattering_strength import aperture_transmission_runs
+    if eb_runs is None:
+        eb_runs = empty_beam_runs(raws)
+    vals = []
+    for x in runs:
+        s = raws.get(x)
+        ebs = [raws[y] for y in eb_runs if y in raws and s is not None
+               and abs(raws[y].L2_m - s.L2_m) <= 0.01 * s.L2_m
+               and abs(raws[y].wavelength_A - s.wavelength_A) <= 0.02 * s.wavelength_A]
+        if not ebs:
+            continue
+        # same attenuator first (the nominal attenuator factors then cancel), then the nearest run
+        eb = min(ebs, key=lambda r: (str(r.attenuator) != str(s.attenuator), abs(r.run - x)))
+        try:
+            c = masked_centre_of_gravity(eb.counts)
+            t = aperture_transmission_runs(s, eb, (c.x, c.y))
+            vals.append((t.tau_ul, t.tau_ul_sigma, x, eb.run))
+        except Exception:  # noqa: BLE001
+            continue
+    if not vals:
+        return None
+    v = np.array([a[0] for a in vals])
+    sig = float(np.std(v, ddof=1) / np.sqrt(len(v))) if len(v) > 1 else float(vals[0][1])
+    return float(v.mean()), sig, [a[2] for a in vals], vals[0][3], [float(a[0]) for a in vals]
 
 
 def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, transmissions=None,
@@ -297,28 +485,7 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
                and _lam(e.config) == lam for x in e.summed or e.runs]
 
     def computed_T(runs):
-        """τ (beam spot) of the transmission runs against an empty-beam transmission run."""
-        from .core.beamcentre import masked_centre_of_gravity
-        from .core.scattering_strength import aperture_transmission_runs
-        vals = []
-        for x in runs:
-            s = raws.get(x)
-            ebs = [raws[y] for y in eb_runs if y in raws and s is not None
-                   and abs(raws[y].L2_m - s.L2_m) <= 0.01 * s.L2_m]
-            if not ebs:
-                continue
-            eb = min(ebs, key=lambda r: abs(r.run - x))
-            try:
-                c = masked_centre_of_gravity(eb.counts)
-                t = aperture_transmission_runs(s, eb, (c.x, c.y))
-                vals.append((t.tau_ul, t.tau_ul_sigma, x, eb.run))
-            except Exception:  # noqa: BLE001
-                continue
-        if not vals:
-            return None
-        v = np.array([a[0] for a in vals])
-        sig = float(np.std(v, ddof=1) / np.sqrt(len(v))) if len(v) > 1 else float(vals[0][1])
-        return float(v.mean()), sig, [a[2] for a in vals], vals[0][3]
+        return transmission_from_runs(runs, raws, eb_runs)
 
     def fill(row: RowSet, e):
         row.info = e.sample
@@ -361,6 +528,10 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
             if ct is not None:
                 row.transmission, row.transmission_sigma = ct[0], ct[1]
                 row.transmission_source = f"runs {ct[2]} / empty beam {ct[3]} (beam spot)"
+                if len(ct) > 4 and len(ct[4]) > 1 and np.std(ct[4]) > 0.03 * np.mean(ct[4]):
+                    notes.append("decision needed: the transmission runs disagree (" +
+                                 ", ".join(f"{x}: {v:.3f}" for x, v in zip(ct[2], ct[4])) +
+                                 ") – other sample under the same name? Open the row and untick runs")
         if p0 is not None and e.role == "sample":
             mine = slots.get(e.sample, {}).get(round(p0, 1))
             others = sorted({(n, q) for n, ps in slots.items() if n != e.sample for q, w in ps.items()
@@ -382,13 +553,35 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
             continue
         if e.role in CORRECTIONS:
             row = t.corrections[e.role]
-            if row.runs:                                   # a second group of the same role
-                row.notes = (row.notes + "; " if row.notes else "") + \
-                    f"also {e.sample} runs {e.runs} (other position?) not taken"
+            if row.runs:                                   # a second group of the same role: keep the stronger one
+                def weight(runs):
+                    rs = [raws.get(x) for x in runs]
+                    return sum(float(r.counting_time_s) for r in rs if r is not None and not getattr(r, "aborted", False))
+                old_runs = [c.run for c in row.runs]
+                if weight(e.runs) > weight(old_runs):
+                    old_note = row.notes
+                    fill(row, e)
+                    row.notes = "; ".join(x for x in (row.notes, f"also runs {old_runs} (shorter or aborted) not taken",
+                                                     old_note) if x)
+                else:
+                    row.notes = (row.notes + "; " if row.notes else "") + \
+                        f"also {e.sample} runs {e.runs} (other position, attenuator or shorter?) not taken"
                 continue
             fill(row, e)
         elif e.role == "sample":
             fill(t.add_sample(), e)
+    db = t.corrections["direct_beam"]
+    for e in plan.entries:
+        if e.config == config and e.kind == "transmission" and e.role == "empty_beam":
+            db.set_runs([c.run for c in _choices(e) if c.use])
+            db.set_runs([c.run for c in _choices(e) if not c.use], use=False, comment="outlier")
+            if not db.info:
+                db.info = e.sample
+    if db.runs:
+        atts = sorted({str(getattr(raws.get(c.run), "attenuator", "?")) for c in db.runs if raws.get(c.run) is not None})
+        db.notes = ("empty-beam transmission runs of this geometry" +
+                    (f", attenuator {', '.join(atts)}" if atts else "") +
+                    ": absolute scale with an efficiency map when there is no water")
     sb = t.corrections["sample_background"]
     if not sb.runs and sample_background:
         src = t.corrections.get(sample_background)

@@ -5,7 +5,8 @@ The explorer's Fit dock and the script interface use the same engine, `pysasfit.
 ## Ingredients
 
 **Parameters** are the ticked rows. Each has a start value and optional bounds; bounds are a uniform prior.
-Parameters can be common to several data sets or local to each (script interface; the explorer fits one data set).
+Parameters can be common to several data sets or separate per data set; global parameters `P1`, `P2`, … drive model
+parameters through links (see [Several data sets](#several-data-sets-and-global-parameters)).
 
 **Constraints** are inequalities or equalities between parameters, for example that the first population is larger
 than the second (`c1_sd_mu > c2_sd_mu`) or that two fractions add up to 1 (`c1_scale + c2_scale == 1`). The names are
@@ -25,6 +26,46 @@ digit gets a `c` in front (`c1_sd_mu`). `problem.identifiers()` lists the usable
 
 See [Priors](../studio.md#priors-for-positive-parameters-and-ranges) in the reference for the penalty terms and
 which optimisers accept which prior.
+
+## Several data sets and global parameters
+
+As in SASfit, several data sets can be fitted together with one model whose contributions belong to some of them.
+
+1. **Add data…** in the Fit dock takes one or several files; every file is a data set, numbered 1, 2, … in the list
+   below the buttons (shown from two data sets on). *Remove* drops the selected ones, *Clear all* all.
+2. Every contribution tab has **contributes to data sets**: `all` (default), `1, 3` or `2-4`. The model curve of a
+   data set is the sum of its contributions plus **its own background**. The tab title shows the data sets.
+3. The background rows of the *Mixture* box show the background of the data set chosen in **background above is
+   that of data set**; switch it to edit (or tick for fitting) the background of another data set. Data points, model
+   curves and residuals have one colour per data set; the dotted contributions are those of the chosen data set.
+4. A ticked parameter is **common** to all data sets it appears in. Tick **per data set** in the table of parameters to
+   fit to get one value per data set instead (`background[a.dat]`, `background[b.dat]`, …) — typically the
+   backgrounds, or the scale of a contribution shared by data sets of different concentration.
+5. **Global parameters** (tab *Global parameters*): *Add P* makes `P1`, `P2`, … with value, *fit* box and bounds.
+   **Links**, one per line, make model parameters follow them, each with a factor:
+
+   ```text
+   c1.ff.R = P1              radius of contribution 1 = P1
+   c2.ff.R = 2 * P1          contribution 2: twice that
+   c1.sd.mu[2] = 0.5 * P2    only in data set 2
+   background[1,3] = P3      the same background in data sets 1 and 3
+   ```
+
+   The left side is a parameter name of the fit table (`ff.R`, `c1.ff.R`, `c1.scale`, `background`, `bg.A` …; with a
+   single contribution `ff.R` or `c1.ff.R`), the right side any expression of the global parameters: `P1 + P2`,
+   `2*P1 - 1`, `P1**2`, `atan(P1)`, `sqrt(P1**2 + P2**2)` with + - * / ** and the functions sqrt, exp, log, log10, abs,
+   min, max, sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh (angles in radians) and `pi`. The fit result lists
+   the values of the expression-linked parameters. A linked
+   row shows its value and cannot be edited or ticked (its tooltip names the link). **Constraints** and **priors** may
+   use the global parameters by name, e.g. `P1 + P2 < 100` — unlike SASfit, where the P's cannot be constrained.
+   Scale factors are fitted only when their fit box is ticked (off by default).
+6. After the fit the result lists χ² per data set; common values go to the rows, values per data set are kept per
+   data set (the curves use them), the global parameters go to their table. *Undo fit* restores all of them. The
+   project file keeps the data sets, assignments, global parameters, links and the per-data-set choice.
+
+In a script the same is `FitProblem.add_dataset` per data set (with `ModelFunction(..., active=[...])` for the
+contributions of each), `add_local` for separate parameters, `add_global("P1", …)` and `link("P1", "1.ff.R",
+datasets=[1], factor=2)`.
 
 ## The engine in a script
 

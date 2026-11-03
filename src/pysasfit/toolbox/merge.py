@@ -15,12 +15,12 @@ All q are handled in 1/nm. Every curve carries its header items (:attr:`Curve.me
 items ``sample``, ``L2_m``, ``L1_m``, ``wavelength_A``, ``run`` and everything else the file holds
 (``hdf:<path>`` for pySASred, ``Sample/Temperature`` etc. for BerSANS).
 
-Merging (:func:`merge`) keeps the absolute scale of every geometry: outside the overlaps the points
-are kept as they are; in an overlap the points of all geometries are averaged with weights 1/dI² on
-the bins of the coarsest curve there. Each overlap is checked: the ratio of the two curves
-(log-log interpolation) gives a mismatch factor with its uncertainty and χ²/ndf. Scaling to a
-reference geometry is optional (``scale_to``). ``method="all"`` keeps every point (as BerSANS'
-merge). q ranges per geometry (``cuts``) and dropped points at the ends (``drop``) as BerSANS'
+Merging (:func:`merge`) keeps the absolute scale of every geometry. By default (``method="all"``) every
+point of every geometry is kept with its own dI and dq, sorted by q; with ``method="weighted"`` the points
+in an overlap are averaged with weights 1/dI² on the bins of the coarsest curve there. Each overlap is
+checked: the ratio of the two curves (log-log interpolation) gives a mismatch factor with its uncertainty
+and χ²/ndf. Scaling to a reference geometry is optional (``scale_to``): one factor per geometry for all groups
+(:func:`merge_groups`, :func:`common_scales`), a pure multiplication of I and dI. q ranges per geometry (``cuts``) and dropped points at the ends (``drop``) as BerSANS'
 merge mask.
 """
 from __future__ import annotations
@@ -72,6 +72,10 @@ class Curve:
             s.append(f"λ {lam / 10:.3f} nm")
         if L1 is not None:
             s.append(f"L1 {L1:.1f} m")
+        bank = m.get("bank")
+        if bank:                                   # SANS-LLB wide-angle panel: a geometry of its own
+            d = _num(m.get("bank_distance_m"))
+            s.append(f"{bank} panel" + (f" {d:.2f} m" if d is not None else ""))
         return ", ".join(s)
 
     @property
@@ -415,7 +419,7 @@ def group_curves(curves: Sequence[Curve], sample_regex: Optional[str] = None,
             for gname in set(geo):
                 n = geo.count(gname)
                 if n > 1:
-                    g.notes.append(f"{n} curves of geometry {gname}: averaged where they overlap; "
+                    g.notes.append(f"{n} curves of geometry {gname}: all points kept (averaged with 'weighted mean'); "
                                    "add a grouping item to separate them (e.g. hdf:sample/position ± 1 "
                                    "for a sample measured at two changer positions)")
             units = {c.I_unit for c in g.curves if c.I_unit}
@@ -479,7 +483,8 @@ class Merged:
     scales: Dict[str, float] = field(default_factory=dict)
     cuts: Dict[str, Tuple[Optional[float], Optional[float]]] = field(default_factory=dict)
     notes: List[str] = field(default_factory=list)
-    method: str = "weighted"
+    method: str = "all"
+    scale_sigma: Dict[str, float] = field(default_factory=dict)   # relative uncertainty of each factor
     I_unit: str = ""
 
 
@@ -538,10 +543,13 @@ def _overlap(ga, a, gb, b) -> Optional[Overlap]:
 
 
 def merge(curves: Sequence[Curve], cuts: Optional[Dict[str, Tuple[Optional[float], Optional[float]]]] = None,
-          drop: Optional[Dict[str, Tuple[int, int]]] = None, method: str = "weighted",
-          scale_to: Optional[str] = None, group: Optional[CurveGroup] = None) -> Merged:
+          drop: Optional[Dict[str, Tuple[int, int]]] = None, method: str = "all",
+          scale_to: Optional[str] = None, group: Optional[CurveGroup] = None,
+          scales: Optional[Dict[str, float]] = None) -> Merged:
     """Merge the curves of one group (see the module text). ``cuts``/``drop`` per geometry label;
-    ``scale_to``: geometry label to which the others are scaled (chained through the overlaps)."""
+    ``scale_to``: geometry label to which the others are scaled (chained through the overlaps of this
+    group); ``scales``: fixed factors per geometry label instead (e.g. the common factors of
+    :func:`merge_groups`), I and dI of that geometry are multiplied by it."""
     cuts, drop = dict(cuts or {}), dict(drop or {})
     notes: List[str] = []
     data, geos = [], []
@@ -566,8 +574,18 @@ def merge(curves: Sequence[Curve], cuts: Optional[Dict[str, Tuple[Optional[float
                              f"{data[i][0].max():.4g}–{data[i + 1][0].min():.4g} 1/nm")
         else:
             overlaps.append(o)
-    scales = {g: 1.0 for g in geos}
-    if scale_to:
+    scales_out = {g: 1.0 for g in geos}
+    rel = {g: 0.0 for g in geos}
+    if scales:
+        for i, g in enumerate(geos):
+            f = float(scales.get(g, 1.0))
+            if f != 1.0:
+                data[i] = (data[i][0], data[i][1] * f, data[i][2] * f, data[i][3])
+                scales_out[g] = f
+        if any(v != 1.0 for v in scales_out.values()):
+            notes.append("common scale factors: " + ", ".join(f"{g} × {f:.4f}" for g, f in scales_out.items()
+                                                              if f != 1.0))
+    elif scale_to:
         if scale_to not in geos:
             notes.append(f"reference geometry {scale_to} not in this group: not scaled")
         else:
@@ -578,18 +596,20 @@ def merge(curves: Sequence[Curve], cuts: Optional[Dict[str, Tuple[Optional[float
                     notes.append(f"{geos[i]}: no overlap with {geos[i - 1]}, not scaled")
                     break
                 s = 1.0 / o.factor
+                rel[geos[i]] = float(np.hypot(rel[geos[i - 1]], o.sigma / o.factor))
                 data[i] = (data[i][0], data[i][1] * s, data[i][2] * s, data[i][3])
-                scales[geos[i]] = scales[geos[i]] * s
+                scales_out[geos[i]] = scales_out[geos[i]] * s
             for i in range(k - 1, -1, -1):                     # and downwards
                 o = _overlap(geos[i], data[i], geos[i + 1], data[i + 1])
                 if o is None:
                     notes.append(f"{geos[i]}: no overlap with {geos[i + 1]}, not scaled")
                     break
                 s = o.factor
+                rel[geos[i]] = float(np.hypot(rel[geos[i + 1]], o.sigma / o.factor))
                 data[i] = (data[i][0], data[i][1] * s, data[i][2] * s, data[i][3])
-                scales[geos[i]] = scales[geos[i]] * s
+                scales_out[geos[i]] = scales_out[geos[i]] * s
             notes.append("scaled to " + scale_to + ": " +
-                         ", ".join(f"{g} × {s:.4f}" for g, s in scales.items() if g != scale_to))
+                         ", ".join(f"{g} × {s:.4f}" for g, s in scales_out.items() if g != scale_to))
     q = np.concatenate([d[0] for d in data])
     I = np.concatenate([d[1] for d in data])
     dI = np.concatenate([d[2] for d in data])
@@ -600,7 +620,7 @@ def merge(curves: Sequence[Curve], cuts: Optional[Dict[str, Tuple[Optional[float
         res = (q[o], I[o], dI[o], dq[o], src[o])
     else:
         res = _weighted(q, I, dI, dq, src, data)
-    m = Merged(*res, geometries=geos, group=group, overlaps=overlaps, scales=scales,
+    m = Merged(*res, geometries=geos, group=group, overlaps=overlaps, scales=scales_out, scale_sigma=rel,
                cuts={g: cuts.get(g, (None, None)) for g in geos}, notes=notes, method=method,
                I_unit=next((c.I_unit for c in curves if c.I_unit), ""))
     return m
@@ -649,11 +669,50 @@ def _weighted(q, I, dI, dq, src, data):
     return tuple(np.concatenate([x[i] for x in out])[o] for i in range(5))
 
 
-def merge_groups(groups: Sequence[CurveGroup], **kw) -> List[Merged]:
+def common_scales(groups: Sequence[CurveGroup], scale_to: str, **kw) -> Dict[str, Tuple[float, float, int]]:
+    """One factor per geometry, the same for all groups: the factors of the single groups (chained through
+    their overlaps to ``scale_to``) averaged with weights 1/σ². Returns {geometry: (factor, σ, n groups)}."""
+    acc: Dict[str, List[Tuple[float, float]]] = {}
+    for g in groups:
+        try:
+            m = merge(g.curves, group=g, scale_to=scale_to, **kw)
+        except ValueError:
+            continue
+        if scale_to not in m.geometries:
+            continue
+        for geo, f in m.scales.items():
+            r = m.scale_sigma.get(geo, 0.0)
+            if geo != scale_to and f != 1.0 and r > 0:
+                acc.setdefault(geo, []).append((f, f * r))
+    out = {}
+    for geo, v in acc.items():
+        f = np.array([x[0] for x in v])
+        w = 1.0 / np.array([x[1] for x in v]) ** 2
+        out[geo] = (float(np.sum(w * f) / np.sum(w)), float(1.0 / np.sqrt(np.sum(w))), len(v))
+    return out
+
+
+def merge_groups(groups: Sequence[CurveGroup], scale_to: Optional[str] = None, common: bool = True,
+                 **kw) -> List[Merged]:
+    """Merge every group. With ``scale_to`` and ``common`` (default) every other geometry is multiplied by
+    one factor that is the same for all groups (:func:`common_scales`); ``common=False`` scales every
+    group with its own overlap factors."""
+    fixed = None
+    common_note = None
+    if scale_to and common:
+        cs = common_scales(groups, scale_to, **kw)
+        fixed = {g: f for g, (f, _s, _n) in cs.items()}
+        common_note = (f"one scale factor per geometry for all groups, relative to {scale_to}: " +
+                       ("; ".join(f"{g} × {f:.4f} ± {s:.4f} (from {n} groups)" for g, (f, s, n) in cs.items())
+                        or "no overlaps found, not scaled"))
     out = []
     for g in groups:
         try:
-            m = merge(g.curves, group=g, **kw)
+            if fixed is not None:
+                m = merge(g.curves, group=g, scales=fixed, **kw)
+                m.notes = [common_note] + [n for n in m.notes if not n.startswith("common scale factors")]
+            else:
+                m = merge(g.curves, group=g, scale_to=scale_to, **kw)
         except ValueError as exc:
             m = Merged(*(np.array([]),) * 5, geometries=[], group=g, notes=[str(exc)])
         m.notes = list(g.notes) + m.notes
@@ -712,8 +771,11 @@ def write_ascii(path, m: Merged, units: str = "nm") -> str:
     head += [f"overlap: {t}" for t in p["overlaps"]] + [f"note: {n}" for n in p["notes"]]
     head.append(f"unit of I: {m.I_unit}")
     head.append(f"group_json = {json.dumps(p['group_values'], default=str)}")
-    head.append(f"q [{qu}]  I  dI  dq [{qu}]")
-    np.savetxt(path, np.column_stack([m.q / f, m.I, m.dI, m.dq / f]), fmt="%.8e", header="\n".join(head))
+    head.append("geometry index: " + "; ".join(f"{i} = {g}" for i, g in enumerate(m.geometries))
+                + ("; -1 = averaged in an overlap" if np.any(m.source < 0) else ""))
+    head.append(f"q [{qu}]  I  dI  dq [{qu}]  geometry")
+    np.savetxt(path, np.column_stack([m.q / f, m.I, m.dI, m.dq / f, m.source]),
+               fmt=["%.8e"] * 4 + ["%d"], header="\n".join(head))
     return str(path)
 
 

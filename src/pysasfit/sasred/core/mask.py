@@ -298,3 +298,14 @@ def load_mask(path, shape=None):
     if shape is not None and tuple(m.shape) != tuple(shape):
         raise ValueError(f"mask shape {m.shape} does not match the detector {tuple(shape)}")
     return m, info
+
+
+def default_mask(raw, beam_center_px, **kw):
+    """Suggested mask of a raw run (:func:`suggest_mask` of its counts); a SANS-LLB wide-angle panel
+    gets the tube ends and dead tubes (:func:`pysasfit.sasred.io.sans_llb.panel_mask`). Returns
+    (uint32 mask, report dict)."""
+    if getattr(raw, "panel", None) is not None:
+        from ..io.sans_llb import panel_mask
+        m = panel_mask(raw)
+        return m, {"panel": raw.bank, "masked": int((m != 0).sum())}
+    return suggest_mask(raw.counts, beam_center_px, **kw)

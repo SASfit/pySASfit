@@ -36,6 +36,7 @@ WORDMARKS = {
     "pySLDprofile": ("py", "SLD", "profile"),
     "pySASstudio": ("py", "SAS", "studio"),
     "pyTOOLbox": ("py", "TOOL", "box"),
+    "pySASmorph": ("py", "SAS", "morph"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -52,6 +53,7 @@ TOOL_COLOURS = {
     "pySLDprofile": ("#C23A93", "#D77FB9"),
     "pySASstudio": ("#2F6FED", "#78A1F3"),
     "pyTOOLbox": ("#D9730D", "#E6A462"),
+    "pySASmorph": ("#0F7C80", "#5FB0B3"),      # teal; no logo files yet (not in TOOLS)
 }
 
 #: old tool names -> current ones

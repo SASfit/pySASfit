@@ -38,13 +38,19 @@ def run_metadata(raw, max_log: int = 100000) -> Dict[str, object]:
             v = getattr(raw, "start_time", None)
         out[k] = _plain(v)
     out["run"] = int(getattr(raw, "run", 0) or 0)
+    out["instrument"] = getattr(raw, "instrument", "sans_i")
+    if getattr(raw, "bank", ""):
+        out["bank"] = raw.bank
+        g = getattr(raw, "panel", None)
+        if g is not None:
+            out["bank_distance_m"] = float(g.distance_m)
     try:
         import h5py
         with h5py.File(raw.path, "r") as f:
             def visit(name, o):
                 if not isinstance(o, h5py.Dataset):
                     return
-                key = "hdf:" + (name.split("/", 1)[1] if name.startswith("entry1/") else name)
+                key = "hdf:" + (name.split("/", 1)[1] if name.startswith(("entry1/", "entry0/")) else name)
                 try:
                     if o.size == 1:
                         out[key] = _plain(np.asarray(o[()]).ravel()[0])
