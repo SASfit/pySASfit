@@ -2,7 +2,9 @@
 """NXcanSAS 1D output with full uncertainty information.
 
 Standard fields: I with @uncertainties = "Idev" (statistical part only),
-Q with @resolutions = "Qdev". Non-standard additions, all inside SASdata::
+Q with @resolutions = "Qdev" (left out when the resolution was not determined: no direct-beam
+measurement of the geometry). 2D: Qx, Qy with @resolutions = "Qxdev" / "Qydev" (per pixel). Non-standard
+additions, all inside SASdata::
 
   I_covariance_statistical   (n x n)  covariance of the non-systematic sources
   I_systematic/<source>      sensitivity dI/ds of each systematic source,
@@ -47,8 +49,10 @@ def write_nxcansas_1d(path, reduced, title=None, i_unit="arbitrary", units="nm")
         d.attrs.update({"NX_class": _s("NXdata"), "canSAS_class": _s("SASdata"),
                         "signal": _s("I"), "I_axes": _s("Q"), "Q_indices": np.int32(0)})
         q = d.create_dataset("Q", data=u.q_out(reduced.q))
-        q.attrs.update({"units": _s(u.nexus_q), "resolutions": _s("Qdev")})
-        d.create_dataset("Qdev", data=u.q_out(reduced.q_sigma)).attrs["units"] = _s(u.nexus_q)
+        q.attrs["units"] = _s(u.nexus_q)
+        if reduced.q_sigma is not None:
+            q.attrs["resolutions"] = _s("Qdev")
+            d.create_dataset("Qdev", data=u.q_out(reduced.q_sigma)).attrs["units"] = _s(u.nexus_q)
         i = d.create_dataset("I", data=I.value)
         i.attrs.update({"units": _s(i_unit), "uncertainties": _s("Idev"),
                         "sasred_unit": _s(I.unit)})
@@ -110,8 +114,20 @@ def write_nxcansas_2d(path, reduced, title=None, units="nm"):
         i.attrs.update({"units": _s("1/cm" if "cm" in unit and "sr" in unit and "monitor" not in unit else
                                     "arbitrary"), "uncertainties": _s("Idev"), "sasred_unit": _s(unit)})
         d.create_dataset("Idev", data=np.asarray(img.std(systematic=False), float), compression="gzip")
+        res = getattr(r, "resolution", None)
         for k, a in (("Qx", geo.qx), ("Qy", geo.qy)):
-            d.create_dataset(k, data=u.q_out(np.asarray(a, float)), compression="gzip").attrs["units"] = _s(u.nexus_q)
+            ds = d.create_dataset(k, data=u.q_out(np.asarray(a, float)), compression="gzip")
+            ds.attrs["units"] = _s(u.nexus_q)
+            if res is not None:
+                ds.attrs["resolutions"] = _s(k + "dev")
+        if res is not None:
+            # per pixel: sigma along the detector axes (standard), along / across q and the q_x-q_y
+            # correlation (non-standard, for 2D smearing with the full Gaussian)
+            for k, key in (("Qxdev", "qx_dev"), ("Qydev", "qy_dev"), ("Qdev_parallel", "q_parallel_dev"),
+                           ("Qdev_perpendicular", "q_perpendicular_dev")):
+                d.create_dataset(k, data=u.q_out(np.asarray(res[key], float)), compression="gzip").attrs["units"] = \
+                    _s(u.nexus_q)
+            d.create_dataset("Qxy_correlation", data=np.asarray(res["rho_xy"], float), compression="gzip")
         d.create_dataset("Mask", data=(mask != 0).astype(np.int8), compression="gzip")
         d.create_dataset("mask_bits", data=mask, compression="gzip")
         ins = e.create_group("sasinstrument")

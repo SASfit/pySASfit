@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Plain-text output: q, I, Idev (statistical), Qdev, and the systematic standard
-deviation as a fifth column. The header lists the run, parameters and notes."""
+deviation as a fifth column. The header lists the run, parameters and notes. Without a resolution
+(no direct-beam measurement of the geometry) Qdev is written as 0, as readers take a fourth column as
+the resolution, and the header says so."""
 from __future__ import annotations
 
 import numpy as np
@@ -23,7 +25,11 @@ def write_ascii_1d(path, reduced, units="nm"):
     from .metadata import metadata_json
     head.append(f"metadata_json = {metadata_json(r.raw)}")
     qu = "1/A" if u.key == "A" else u.q
+    qs = r.q_sigma
+    if qs is None:
+        head.append("Qdev = 0: resolution not determined (no direct-beam measurement of this geometry)")
+        qs = np.zeros(len(r.q))
     head.append(f"q [{qu}]  I  Idev(statistical)  Qdev [{qu}]  sigma_systematic")
-    data = np.column_stack([u.q_out(r.q), r.I, r.idev(), u.q_out(r.q_sigma), r.systematic_std()])
+    data = np.column_stack([u.q_out(r.q), r.I, r.idev(), u.q_out(qs), r.systematic_std()])
     np.savetxt(path, data, fmt="%.8e", header="\n".join(head))
     return path

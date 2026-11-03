@@ -47,7 +47,7 @@ Instrument constants come from `pysasfit/sasred/instruments/sinq/sans_i.yaml`.
 | 7, 11 geometry, solid angle | lab-frame position of every pixel relative to the beam centre **of the geometry of the run** (L2, λ; from its direct-beam runs), with the detector tilt α about the vertical axis through the beam spot; 2θ = atan2(√(x²+y²), z); ΔΩ = A·L2·cos α / r³ (exact to first order in the pixel area, checked against brute-force integration). L2 is the effective distance (recorded + offset, if set) | – |
 | 12 efficiency | optional: divided by the detector efficiency from water (below) | water, empty-cell and transmission sources |
 | 14 average | radial or sector average as a sparse linear map over the valid pixels whose centre falls in the bin (no pixel splitting yet) | linear, exact |
-| resolution | Qdev² = (q σ_λ/λ)² + spread of the pixel q in the bin; triangular wavelength distribution, σ = FWHM/√6 | – |
+| resolution | Qdev² = (q σ_λ/λ)² + beam divergence from the direct beam of the geometry + spread of the pixel q in the bin (below); without a direct-beam measurement no Qdev | – |
 
 The solid angle is computed only once the beam centre of the run's geometry is known: q, 2θ and ΔΩ of every pixel
 are measured from it. The order relative to steps 3–6 does not matter (all are factors per pixel); it is applied
@@ -57,6 +57,134 @@ direct-beam run and borrows the 8 m centre; moving it by ±0.5 pixel changes the
 0.05 % and K(15°) by 0.1 %.
 
 The result is I(q) in counts / monitor / sr (counts / s / sr when normalised by time) on the bin-averaged q.
+
+## Resolution: direct-beam profile, divergence and Qdev
+
+The direct-beam measurements of a geometry are used for three things:
+1. the absolute scale (with an efficiency map);
+2. the beam centre: the median of the masked centres of gravity, the default centre of the geometry;
+3. the **beam profile**, which gives the divergence and with it the resolution.
+
+**Beam profile** ({func}`~pysasfit.sasred.core.beamprofile.beam_profiles`). Every direct-beam run of the geometry
+gets a 2D Gaussian with a flat background, integrated over each pixel and fitted with Poisson weights in a window
+around the beam (up to 10 runs; the medians are kept):
+
+$$
+N_{ij} = A\,\bigl[\Phi\bigl(\tfrac{x_j+\frac12-x_0}{s_x}\bigr)-\Phi\bigl(\tfrac{x_j-\frac12-x_0}{s_x}\bigr)\bigr]
+         \bigl[\Phi\bigl(\tfrac{y_i+\frac12-y_0}{s_y}\bigr)-\Phi\bigl(\tfrac{y_i-\frac12-y_0}{s_y}\bigr)\bigr] + B .
+$$
+
+- **Which runs:** the empty-beam runs when there are any. A sample in the beam broadens it by its own small-angle
+  scattering, so sample transmission runs are used only when there is no empty beam, and the log says so.
+- **Pixel size:** because the model is integrated over the pixel, $s_x, s_y$ are the widths of the beam itself,
+  without the pixel size.
+- **Divergence:** the angular standard deviations seen from the sample are
+  $\sigma_{\theta,x} = s_x p_x / L_2$ and $\sigma_{\theta,y} = s_y p_y / L_2$.
+- **Non-Gaussian beams:** the second moments of the beam are compared. A difference above 25 % (box-shaped beam,
+  tails) is noted.
+- **No borrowing:** a geometry without a direct-beam run gets no profile, because the beam size depends on L1, L2
+  and the apertures.
+
+**1D: Qdev per point** ({func}`~pysasfit.sasred.core.resolution.sigma_q_1d`). With $q = 2k\sin\theta$,
+$k = 2\pi/\lambda$, $\mathrm dq/\mathrm d(2\theta) = k\cos\theta$, and $\phi$ the azimuth of a pixel:
+
+$$
+\mathrm{Qdev}^2 = (q\,\sigma_\lambda/\lambda)^2
+  + \bigl\langle k^2\cos^2\theta\,(\sigma_{\theta,x}^2\cos^2\phi + \sigma_{\theta,y}^2\sin^2\phi)\bigr\rangle_\text{bin}
+  + \operatorname{var}(q_\text{pixel})_\text{bin} .
+$$
+
+**dλ/λ from the selector tilt (SANS-I).** dλ/λ of the Dornier selector depends only on its tilt angle
+(`SANS/Dornier-VS/tilt`, 0 … −10°). The reader takes it from the calibration table in the instrument file
+(`wavelength.selector_tilt` in `instruments/sinq/sans_i.yaml`), interpolated monotonically (PCHIP), and not from
+`monochromator/wavelength_spread`, which is a fixed 0.1 in the files:
+
+| tilt [°] | 0 | −2 | −4 | −6 | −8 | −10 |
+|---|---|---|---|---|---|---|
+| dλ/λ (FWHM) | 0.0983 | 0.1081 | 0.1267 | 0.1579 | 0.2062 | 0.2718 |
+
+A tilt outside the table is clipped to its end, with a note. Files without the tilt keep the header value. The
+Qdev note and the parameters of every reduced curve give the tilt and where dλ/λ came from; the run list shows
+dλ/λ and the tilt in the column *dλ/λ (tilt)*.
+
+**Flux and tilt.** At the same wavelength the flux grows roughly in proportion to dλ/λ (double dλ/λ, about
+double the flux; no exact calibration). Runs of one reduction (sample, water, empty cell, direct beam, …) at
+different tilts (dλ/λ differing by more than 2 %, i.e. about 0.6° near 0°) are therefore checked:
+- with the **monitor normalisation** the flux cancels only if the normalising monitor is **behind the
+  selector**: an *info* line in *Missing input* and the log. A monitor in front of the selector sees the white
+  beam and does not follow the selector setting: a *check* line (orange), as when the position is unknown;
+- with the **time normalisation** the flux is not corrected: a *check* line – use runs of the same tilt. No
+  approximate factor is applied.
+
+**Before or after the selector?** A monitor in front of the selector keeps its ratio to the proton beam
+(`integrated_beam`) at every wavelength and tilt; one behind it does not. When a folder is read, pySASred
+compares monitor / proton beam between the settings (λ, tilt) of its runs
+({func}`~pysasfit.sasred.core.monitors.selector_test`): constant within max(3 × scatter, 5 %) → in front,
+changing by more than max(5 × scatter, 15 %) → behind; the log reports the normalising monitor. It needs runs at
+two settings (the Vifor folder, 6 Å only, cannot decide); every frame of a selector speed scan counts as a
+setting of its own. The instrument file states it (`monitor.normaliser_after_selector`; null = take it from the
+data).
+
+**SANS-I monitors (AgBe 2025, runs 1964–1980: 8.3, 11.7, 16.4, 50 and 57.5 Å, and the speed scans 1976 and
+1980, 18 frames of 600 s at 11000–28000 rpm):**
+
+| counter | ratio to the proton beam | position |
+|---|---|---|
+| monitor1 (= monitor4) | changes by a factor 3–15 with λ | **behind the selector** – the normaliser |
+| monitor2 | 0.0086, constant within 0.7 % | in front of the selector |
+| monitor_7 | 0.0655, constant within 0.6 % | in front of the selector |
+| monitor_5 | identical to `integrated_beam` | proton beam |
+
+So the normalisation by monitor1 follows any change of the selector (λ, tilt, speed); monitor2 – used by
+BerSANS in 2024 and by DarePy – does not, it only follows the proton current.
+
+**Multi-frame runs.** Counts, measuring times and monitors of the frames are summed (the per-frame values are
+kept in `RawRun.frames`). A run whose frames have different selector speeds is a speed scan with a different λ
+in every frame (λ ∝ 1/speed; the stored λ is that of the last frame): it is listed as skipped
+(*selector speed scan … – λ differs between the frames*) and not reduced.
+- Sample runs of one row at different tilts are summed; dλ/λ of the first run is used (*check*).
+
+The beam centre, the beam profile (divergence) and the efficiency map do not depend on the tilt and are shared
+by all tilts of a geometry (L1, L2, λ).
+
+The triangular wavelength distribution has $\sigma_\lambda/\lambda = \mathrm{FWHM}/\sqrt6$. The divergence term
+is averaged over the pixels of the bin, i.e. in the radial direction of each pixel; the last term contains the
+pixel size.
+
+**2D: a Gaussian per pixel** ({func}`~pysasfit.sasred.core.resolution.resolution_2d`). In the detector axes the
+covariance of $(q_x, q_y)$ is
+
+$$
+\Sigma = k^2\cos^2\theta\,\operatorname{diag}\bigl(\sigma_{\theta,x}^2 + \tfrac{(p_x/L_2)^2}{12},\;
+          \sigma_{\theta,y}^2 + \tfrac{(p_y/L_2)^2}{12}\bigr)
+       + (q\,\sigma_\lambda/\lambda)^2\,\hat q\hat q^{\mathsf T} .
+$$
+
+The divergence and the pixel width act along the detector axes; the wavelength term acts along $\hat q$.
+
+**Files:**
+- **2D NXcanSAS:** Qx and Qy carry `resolutions` = `Qxdev` / `Qydev`. Non-standard extras: `Qdev_parallel`,
+  `Qdev_perpendicular` (along and across q) and `Qxy_correlation`.
+- **1D NXcanSAS:** `Qdev`.
+- **Text files:** the fourth column.
+
+**Without a direct-beam measurement** the reduction runs without resolution:
+- the notes, the log and the panel *Missing input* (row Direct beam, "resolution") say so;
+- NXcanSAS files have no Qdev (and Q no `resolutions`);
+- text files have Qdev = 0, with a header line saying the resolution was not determined, because readers take the
+  fourth column as the resolution.
+
+The same happens without dλ/λ in the raw file.
+
+**Vifor, 8 m, λ = 0.6 nm, tilt 0°, dλ/λ = 9.8 % FWHM.** The profile comes from the empty beam 82173, 82221, 82269:
+- the beam is σ = 13.6 mm in x and y, i.e. a divergence σθ = 1.69 mrad;
+- the second moments give 16.8 mm (the beam is somewhat box-shaped).
+
+Qdev/q is 27 % at q = 0.0066 Å⁻¹, where the divergence dominates, and 4.7 % at q = 0.084 Å⁻¹, where the wavelength
+spread (4.1 %) dominates. The 2 m geometry has no direct-beam run, so it gets no resolution.
+
+The formulas use the small-angle form of the divergence term along the detector axes. For the SANS-LLB wide-angle
+panels the divergence measured on the central detector is applied as an angle.
 
 The detector tilt is read from the file (`chi_position`) but not yet applied, until it is confirmed that this
 field is the tilt; the notes say so. The dead time of the monitor is 0 for now (a factor 1.0252 seen in a BerSANS

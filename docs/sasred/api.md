@@ -48,6 +48,12 @@ Generated from the docstrings.
 .. automodule:: pysasfit.sasred.core.averaging
    :members:
 
+.. automodule:: pysasfit.sasred.core.beamprofile
+   :members:
+
+.. automodule:: pysasfit.sasred.core.monitors
+   :members:
+
 .. automodule:: pysasfit.sasred.core.resolution
    :members:
 

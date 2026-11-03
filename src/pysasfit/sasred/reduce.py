@@ -25,7 +25,7 @@ from .core.deadtime import monitor_deadtime, nonparalysable
 from .core.efficiency import Efficiency, efficiency_from_water, water_intensity
 from .core.geometry import PixelGeometry, pixel_geometry, run_geometry
 from .core.normalisation import attenuator, by_monitor, by_time
-from .core.resolution import sigma_q_phase1
+from .core.resolution import sigma_q_1d
 from .data.uarray import Source, UArray, constant
 from .io.sinq import RawRun
 
@@ -73,7 +73,7 @@ class ReducedRun:
     run: int
     q: np.ndarray
     intensity: UArray            # 1D, counts / monitor / sr
-    q_sigma: np.ndarray
+    q_sigma: Optional[np.ndarray]    # None: resolution not determined (no direct-beam measurement)
     binning: Binning
     geometry: PixelGeometry
     image: UArray                # 2D, counts / monitor / sr, before averaging
@@ -159,7 +159,9 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
                   mask: Optional[np.ndarray] = None, normalise_by: str = "monitor",
                   sector_deg: Optional[tuple] = None,
                   dlam_over_lam_fwhm: Optional[float] = None,
-                  efficiency: Optional[Efficiency] = None) -> ReducedRun:
+                  efficiency: Optional[Efficiency] = None, beam_profile=None) -> ReducedRun:
+    """One run to I(q). ``beam_profile``: the direct-beam profile of the geometry
+    (:func:`pysasfit.sasred.core.beamprofile.beam_profiles`); without it Qdev is not determined."""
     inst = instrument or load_instrument(raw)
     notes: List[str] = []
     run = raw.run
@@ -206,17 +208,37 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
     I.unit = unit
 
     dl = raw.dlam_over_lam_fwhm if raw.dlam_over_lam_fwhm is not None else dlam_over_lam_fwhm
-    if dl is None:
-        raise ValueError("dlambda/lambda not in the raw file: give dlam_over_lam_fwhm")
-    qs = sigma_q_phase1(b.q_mean, b.q_var_in_bin, dl, inst["wavelength"]["distribution"])
-    notes.append("Qdev: wavelength and in-bin pixel spread only; collimation term not yet included")
+    qs, res_note = q_resolution_1d(b, geo, dl, inst, beam_profile,
+                                   raw.dlam_source if raw.dlam_over_lam_fwhm is not None else "given")
+    notes.append(res_note)
     return ReducedRun(run, b.q_mean, I, qs, b, geo, img, float(np.max(factor.value)),
                       mask, raw,
                       parameters=dict(beam_center_px=tuple(beam_center_px), normalise_by=normalise_by,
                                       tau_s=dt["tau_s"], attenuator=raw.attenuator,
-                                      dlam_over_lam_fwhm=dl, sector_deg=sector_deg,
-                                      efficiency=None if efficiency is None else dict(efficiency.meta)),
+                                      dlam_over_lam_fwhm=dl, selector_tilt_deg=getattr(raw, "selector_tilt_deg", None), sector_deg=sector_deg,
+                                      efficiency=None if efficiency is None else dict(efficiency.meta),
+                                      beam_profile=None if beam_profile is None else beam_profile.to_dict()),
                       notes=notes)
+
+
+NO_RESOLUTION = "no direct-beam measurement of this geometry: resolution (Qdev) not determined"
+
+
+def q_resolution_1d(binning, geo, dlam_over_lam_fwhm, inst, beam_profile, dlam_source: str = ""):
+    """(sigma_q per bin or None, note). Needs the direct-beam profile and dλ/λ; without either the
+    resolution is not determined."""
+    if beam_profile is None:
+        return None, NO_RESOLUTION
+    if dlam_over_lam_fwhm is None:
+        return None, "dλ/λ not in the raw file: resolution (Qdev) not determined"
+    qs, parts = sigma_q_1d(binning, geo, dlam_over_lam_fwhm, inst["wavelength"]["distribution"], beam_profile)
+    tx, ty = beam_profile.divergence_rad
+    with np.errstate(invalid="ignore", divide="ignore"):
+        share = parts["geometry"] / (qs ** 2)
+    src = f", {dlam_source}" if dlam_source else ""
+    return qs, (f"Qdev: wavelength (dλ/λ = {dlam_over_lam_fwhm:.3g} FWHM{src}), beam divergence σθ = {1e3 * tx:.3f} × "
+                f"{1e3 * ty:.3f} mrad from the direct beam (runs {', '.join(map(str, beam_profile.runs[:4]))}) and the "
+                f"pixel spread in each bin; divergence share of σ_q² {100 * np.nanmax(share):.0f} % at the lowest q")
 
 
 def _transmission(t, key: str) -> UArray:

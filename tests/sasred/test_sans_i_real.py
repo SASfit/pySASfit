@@ -27,7 +27,7 @@ def test_reader_units_and_fields():
     assert abs(r.wavelength_A - 6.0) < 0.01          # stored in nm
     assert abs(r.L2_m - 8.0) < 0.01                  # stored in mm
     assert r.pixel_size_m == (0.0075, 0.0075)
-    assert r.dlam_over_lam_fwhm == pytest.approx(0.1)
+    assert r.dlam_over_lam_fwhm == pytest.approx(0.09832)   # selector tilt 0° (table), not the header 0.1
     assert r.monitors["monitor1"] == 8e6 and not r.aborted
 
 

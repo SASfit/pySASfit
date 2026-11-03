@@ -252,6 +252,57 @@ class RunSetDialog(QtWidgets.QDialog):
             self.row.transmission_source = f"runs {ct[2]} / empty beam {ct[3]} (beam spot)"
 
 
+_TABLE_SETTINGS = ("water_g", "scale", "efficiency", "direct_beam_radius_mm", "direct_beam_attenuator",
+                   "efficiency_mask_filled", "ignored")
+_ROW_VALUES = ("scaling", "aperture_cm2", "attenuator", "probability", "notes")
+
+
+def carry_over(new, old) -> str:
+    """Refilling a geometry (folder read again, names corrected) keeps what was set by hand in its table
+    before: the absolute-scale settings (method, efficiency map, direct beam, g(λ), switched-off rows),
+    and per row (corrections by role, samples by name) the runs switched off and their comments, a
+    transmission typed by hand, and thickness, aperture, attenuator, probability and notes that differ
+    from the values the files give. New runs are added as usual. Returns a short summary ("" = nothing)."""
+    if old is None:
+        return ""
+    what = []
+    for k in _TABLE_SETTINGS:
+        v = getattr(old, k)
+        if v != getattr(new, k):
+            setattr(new, k, list(v) if isinstance(v, list) else v)
+            what.append(k.replace("_", " "))
+    pairs = [(new.corrections[r], old.corrections.get(r)) for r in new.corrections]
+    olds = {}
+    for r in old.samples:
+        olds.setdefault(r.info, r)
+    pairs += [(r, olds.get(r.info)) for r in new.samples]
+    n_off = n_val = 0
+    for nr, orow in pairs:
+        if orow is None:
+            continue
+        for lst, olst in ((nr.runs, orow.runs), (nr.trans_runs, orow.trans_runs)):
+            o = {c.run: c for c in olst}
+            for c in lst:
+                if c.run in o:
+                    if c.use != o[c.run].use:
+                        n_off += 1
+                    c.use, c.comment = o[c.run].use, o[c.run].comment or c.comment
+        if orow.transmission_source == "by hand":
+            nr.transmission, nr.transmission_sigma = orow.transmission, orow.transmission_sigma
+            nr.transmission_source = "by hand"
+            n_val += 1
+        for k in _ROW_VALUES:
+            v = getattr(orow, k)
+            if v != getattr(nr, k) and v not in (None, ""):
+                setattr(nr, k, v)
+                n_val += 1
+    if n_off:
+        what.append(f"{n_off} run(s) switched on/off")
+    if n_val:
+        what.append(f"{n_val} value(s) set by hand")
+    return ", ".join(what)
+
+
 class _PopupCombo(QtWidgets.QComboBox):
     """Combo box that rebuilds its entries just before it opens."""
 
@@ -992,12 +1043,16 @@ class ReductionTableWidget(QtWidgets.QWidget):
         trans = self._trans_table()
         es = self._entries()
         folder = os.path.dirname(es[0].path) if es else ""
+        prev = {t.config: t for t in self.tables() if t.source == "plan" and t.folder == folder}
         self._clear_pages()
         for cfg in configurations(self.plan):
             if cfg in self.excluded:
                 continue
             t = from_plan(self.plan, cfg, raws, trans)
             t.folder = folder
+            kept = carry_over(t, prev.get(cfg))
+            if kept:
+                self._log(f"{cfg}: kept from the table before – {kept}")
             ents = [e for e in self.plan.entries if e.config == cfg and e.kind == "scattering"]
             n = sum(len(e.runs) for e in ents)
             ref = raws.get(ents[0].runs[0]) if ents else None

@@ -65,6 +65,10 @@ class RawRun:
     central_pos_mm: Optional[tuple] = None   # SANS-LLB: (posx, posy) of the central pixels in the frame of the panels
     sample_name_in_file: Optional[str] = None  # set when the sample name was corrected by hand (names.py)
     role: str = ""                # role set by hand (names.py); empty: from the sample name
+    selector_tilt_deg: Optional[float] = None   # Dornier selector tilt (SANS/Dornier-VS/tilt)
+    dlam_source: str = ""         # where dlam_over_lam_fwhm comes from ("selector tilt …", "file header", …)
+    frames: Optional[dict] = None  # multi-frame runs: per-frame counting_time_s, monitors, rotation_speed, wavelength_A
+    scan: str = ""                # a selector speed scan (λ differs between the frames): not reduced
 
     @property
     def L2_recorded_m(self) -> float:
@@ -81,6 +85,8 @@ class RawRun:
         """Why the run holds no usable data, or "": measuring time 0, no counts on the detector (all banks) or the
         normalising monitor (instrument file) at 0. Such runs are skipped by the reduction."""
         why = []
+        if getattr(self, "scan", ""):
+            why.append(self.scan + " – λ differs between the frames")
         if not (float(self.counting_time_s or 0.0) > 0):
             why.append("measuring time 0 s")
         total = float(np.sum(self.counts)) if self.counts is not None else 0.0
@@ -110,6 +116,44 @@ class RawRun:
         if self.count_mode in ("timer", "time"):
             return self.counting_time_s < 0.99 * self.preset
         return False
+
+
+def _frames(run: "RawRun", t_frames, frame_monitors, rpm) -> None:
+    """Multi-frame runs: the counts, times and monitors of the frames are summed; the per-frame values
+    are kept in ``run.frames``. A selector speed scan (rotation speed differing between the frames) has a
+    different λ in every frame (λ ∝ 1/speed; the stored λ belongs to the last frame): it is marked in
+    ``run.scan`` and not reduced, but its frames serve the monitor test (core.monitors)."""
+    if run.n_frames <= 1 and not frame_monitors:
+        return
+    sp = None if rpm is None else np.asarray(rpm, float).ravel()
+    fr = {"counting_time_s": t_frames, "monitors": frame_monitors}
+    if sp is not None and sp.size == run.n_frames and np.all(sp > 0):
+        fr["rotation_speed"] = sp
+        fr["wavelength_A"] = run.wavelength_A * sp[-1] / sp
+        if sp.max() > 1.01 * sp.min():
+            run.scan = (f"selector speed scan: {run.n_frames} frames, {sp.min():.0f}–{sp.max():.0f} rpm "
+                        f"(λ {fr['wavelength_A'].min():.2f}–{fr['wavelength_A'].max():.2f} Å)")
+    run.frames = fr
+
+
+def _dlam_from_selector(run: "RawRun", tilt, dlam_header) -> None:
+    """dλ/λ from the selector tilt and the calibration table of the instrument file (it depends only on
+    the tilt); the header value SANS/monochromator/wavelength_spread when the tilt or the table is missing."""
+    run.dlam_source = "" if dlam_header is None else "file header (monochromator/wavelength_spread)"
+    if tilt is None:
+        return
+    run.selector_tilt_deg = float(np.asarray(tilt).ravel()[0])
+    try:
+        from ..reduce import load_instrument
+        table = (load_instrument(run.instrument).get("wavelength") or {}).get("selector_tilt")
+    except Exception:  # noqa: BLE001
+        table = None
+    if not table:
+        return
+    from ..core.resolution import dlam_from_tilt
+    dl, note = dlam_from_tilt(run.selector_tilt_deg, table)
+    run.dlam_over_lam_fwhm = dl
+    run.dlam_source = f"selector tilt {round(run.selector_tilt_deg, 2) + 0.0:.2f}° (calibration table)" + (f"; {note}" if note else "")
 
 
 def _read(g, path, required=True, missing=None):
@@ -193,6 +237,7 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         if lf is None:
             raise ValueError(f"wavelength unit '{lu}' unknown or missing")
         dlam, _ = _read(g, "SANS/monochromator/wavelength_spread", False, missing)
+        tilt, _ = _read(g, "SANS/Dornier-VS/tilt", False, missing)
         L2, L2u = _read(g, "SANS/detector/distance")
         L1, L1u = _read(g, "SANS/collimator/geometry/size")
         pxs, pxu = _read(g, "SANS/detector/x_pixel_size")
@@ -200,15 +245,22 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         dx, dxu = _read(g, "SANS/detector/x_null", False, missing)   # not a translation; kept raw
         dy, dyu = _read(g, "SANS/detector/y_position", False, missing)
         chi, chiu = _read(g, "SANS/detector/chi_position", False, missing)
-        monitors = {}
+        rpm, _ = _read(g, "SANS/Dornier-VS/rotation_speed", False, missing)
+        monitors, frame_monitors = {}, {}
         for k in ["monitor1", "monitor2", "monitor3", "monitor4", "monitor_5", "monitor_6",
                   "monitor_7", "monitor_8", "integrated_beam"]:
             v, _ = _read(g, f"SANS/{k}/counts", False, missing)
             if v is not None:
-                monitors[k] = float(v)
+                a = np.asarray(v, float).ravel()
+                monitors[k] = float(a.sum())          # several frames: counted over all of them
+                if a.size > 1:
+                    frame_monitors[k] = a
         if "monitor1" not in monitors:
             raise MissingField("monitor1 missing")
         preset, _ = _read(g, "control/preset")
+        preset = float(np.asarray(preset, float).ravel()[0])          # per frame in multi-frame runs
+        t_frames = np.asarray(t, float).ravel()
+        t = float(t_frames.sum())
         mode, _ = _read(g, "control/mode")
         att, _ = _read(g, "SANS/attenuator/selection")
         bsx, _ = _read(g, "SANS/beam_stop/x_position")
@@ -240,6 +292,8 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         sample_name=str(name), sample_position_mm=None if pos is None else float(pos),
         sample_thickness_cm=None if thk is None else float(thk),
         start_time=str(start), end_time=end, missing_optional=missing)
+    _dlam_from_selector(run, tilt, dlam)
+    _frames(run, t_frames, frame_monitors, rpm)
     off = distance_offset_for(run.start_time) if distance_offset_m is None else float(distance_offset_m)
     if off:
         run.L2_offset_m = off

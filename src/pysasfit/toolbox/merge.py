@@ -320,7 +320,7 @@ def curve_from_reduced(reduced, key=None) -> Curve:
     if par.get("label"):
         meta["label"] = par["label"]
     q = np.asarray(r.q, float) * A_PER_NM                       # 1/Å -> 1/nm
-    dq = np.asarray(r.q_sigma, float) * A_PER_NM
+    dq = (np.zeros(len(r.q)) if r.q_sigma is None else np.asarray(r.q_sigma, float)) * A_PER_NM   # zeros: unknown
     tag = key if key is not None else (par.get("label") or r.run)
     return Curve(q, np.asarray(r.I, float), np.asarray(r.idev(), float), dq,
                  f"pySASred:{tag}", "pySASred (memory)", meta, "", getattr(r.intensity, "unit", ""))

@@ -108,7 +108,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.name_corrections = None # sample names / roles corrected by hand (names.Corrections)
         self.results = {}            # run -> ReducedRun
         self.beam_centre = None      # BeamCentre of the last determination
+        self.monitor_tests = {}      # monitor -> core.monitors.MonitorTest (before/after the selector)
         self.centres = {}            # geometry (L2, λ) -> GeometryCentre: q and solid angle use it
+        self.profiles = {}           # geometry -> BeamProfile of its direct beam: the resolution uses it
         self.masks = {}              # instrument configuration (catalogue.mask_key) -> edited uint32 mask
         self._mask_key = None        # configuration of the mask in the editor
         self._centre_sync = False
@@ -143,6 +145,15 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.statusBar().showMessage("Choose the raw-data folder (File → Open raw-data folder)")
         self.resize(1400, 900)
         MainWindow.instances.add(self)
+        # the session is also written every two minutes: a launcher that is killed (closed console,
+        # crash, logout) does not lose the work since the start
+        self._autosave = QtCore.QTimer(self)
+        self._autosave.setInterval(120_000)
+        self._autosave.timeout.connect(self._autosave_session)
+        self._autosave.start()
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._autosave_session)
         # preferences that set panel controls: a change in Settings → Preferences is applied at once
         self._pref_seen = {k: prefs.get(k) for k in self._PANEL_PREFS}
         from ..core.settings_dialog import on_saved
@@ -547,8 +558,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         sel = [e.run for e in self.selected_entries()]
         self._fill_table()
         self.select_runs(sel)
-        from .catalogue import beam_centres
-        self.centres = beam_centres([e.raw for e in self.entries])
+        self._update_centres(log=False)
+        self._find_profiles(log=False)
         if prefs.get("sasred.table.autofill"):
             self.table_panel.on_fill()
             self.log("reduction table filled again with the corrected names and roles")
@@ -727,8 +738,17 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                     eff = None
                     if table.scale_method() != "water" and table.efficiency:
                         eff = self.efficiency_for(table, bank)
+                    prof = self.profile_for(raw0)
                     r2 = reduce_row_2d(table, row, read, self.centre_for(raw0), mask=mask,
-                                       normalise_by=self.norm.currentData(), k0=table.water_g, efficiency=eff)
+                                       instrument=self.instrument_for(raw0),
+                                       normalise_by=self.norm.currentData(), k0=table.water_g, efficiency=eff,
+                                       beam_profile=prof)
+                    if prof is None:
+                        self._add_missing(table.config, dict(role="direct_beam", index=None, label="Direct beam",
+                                                             field="resolution",
+                                                             text="no direct-beam measurement of this geometry: no "
+                                                                  "resolution (Qdev) – reduced without it",
+                                                             severity="check"), missing_seen)
                     r2.notes.insert(0, how)
                     r1 = average(r2, self._edges(raw0, r2.mask), sector_deg=sector)
                 except Exception as exc:  # noqa: BLE001
@@ -841,15 +861,86 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             for ln in self.name_corrections.describe().splitlines():
                 self.log("    " + ln)
         self._fill_table()
-        from .catalogue import beam_centres
-        self.centres = beam_centres([e.raw for e in self.entries])
-        for c in sorted(self.centres.values(), key=lambda c: c.key):
-            self.log("beam centre " + c.describe())
+        self._update_centres(log=True)
+        self._find_profiles()
+        self._test_monitors()
         if prefs.get("sasred.table.autofill"):
             self.table_panel.on_fill()
         bad = sum(e.raw is None for e in self.entries)
         self.statusBar().showMessage(f"{len(self.entries)} runs in {folder}" + (f", {bad} unreadable" if bad else ""),
                                      10000)
+
+    def _test_monitors(self):
+        """Which monitors are in front of / behind the selector (ratio to the proton beam at different
+        λ or tilts, core.monitors); the normaliser's position decides whether a change of the selector
+        tilt cancels in the monitor normalisation."""
+        from .core.monitors import selector_test
+        from .reduce import load_instrument
+        raws = [e.raw for e in self.entries if e.raw is not None]
+        self.monitor_tests = {}
+        if not raws:
+            return
+        try:
+            self.monitor_tests = selector_test(raws)
+        except Exception as exc:  # noqa: BLE001
+            self.log(f"monitor test failed: {exc}")
+            return
+        mon = load_instrument(raws[0]).get("monitor") or {}
+        name = mon.get("normaliser", "monitor1")
+        t = self.monitor_tests.get(name)
+        if t is None:
+            return
+        given = mon.get("normaliser_after_selector")
+        if given is not None:
+            self.log(f"normalising monitor {name}: {'behind' if given else 'in front of'} the selector "
+                     "(instrument file)" + (f"; data: {t.position}" if t.after_selector is not None
+                                            and t.after_selector != given else ""))
+        else:
+            self.log("normalising monitor " + t.describe())
+        for m, x in sorted(self.monitor_tests.items()):
+            if m != name and x.after_selector is not None:
+                self.log("    monitor " + x.describe())
+
+    def instrument_for(self, raw) -> dict:
+        """Instrument file of a run, with the selector position of the normalising monitor from the data
+        when the file does not give it."""
+        from .reduce import load_instrument
+        inst = load_instrument(raw)
+        mon = inst.setdefault("monitor", {})
+        if mon.get("normaliser_after_selector") is None:
+            t = (getattr(self, "monitor_tests", None) or {}).get(mon.get("normaliser", "monitor1"))
+            if t is not None and t.after_selector is not None:
+                mon["normaliser_after_selector"] = t.after_selector
+        return inst
+
+    @staticmethod
+    def _user_centre(c) -> bool:
+        """A centre set by hand or fitted to a chosen run (not the automatic direct-beam one)."""
+        return c.source != "direct beam" and not c.source.startswith("borrowed")
+
+    def _update_centres(self, log=True):
+        """Beam centres of the geometries from their direct-beam runs; centres set by hand or fitted to a
+        run before (also from the last session) are kept – a folder read again or names corrected do
+        not forget them."""
+        from .catalogue import beam_centres
+        kept = {k: c for k, c in (self.centres or {}).items() if self._user_centre(c)}
+        self.centres = beam_centres([e.raw for e in self.entries])
+        self.centres.update(kept)
+        if log:
+            for c in sorted(self.centres.values(), key=lambda c: c.key):
+                self.log("beam centre " + c.describe() + ("  (kept: set before)" if c.key in kept else ""))
+        raw = self.displayed_raw() if hasattr(self, "displayed_raw") else None
+        if raw is not None:
+            from .catalogue import config_key
+            c = self.centres.get(config_key(raw))
+            if c is not None:
+                self._centre_sync = True
+                try:
+                    self.xc.setValue(c.x)
+                    self.yc.setValue(c.y)
+                finally:
+                    self._centre_sync = False
+                self.bc_label.setText(c.describe())
 
     def _fill_table(self):
         from .catalogue import COLUMNS as COLUMNS_RT
@@ -946,6 +1037,29 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self._schedule_preview()          # also redraws I(q) (selected curves)
 
     # ------------------------------------------------------------------ beam centre per geometry
+    def _find_profiles(self, log=True):
+        """Direct-beam profile (2D Gaussian fit) of every geometry: beam divergence for the resolution."""
+        from .catalogue import _key_text, config_key
+        from .core.beamprofile import beam_profiles
+        try:
+            self.profiles = beam_profiles([e.raw for e in self.entries if e.raw is not None])
+        except Exception as exc:  # noqa: BLE001 -- a bad run must not stop opening the folder
+            self.profiles = {}
+            self.log(f"beam profiles: {type(exc).__name__}: {exc}")
+        if not log:
+            return
+        for p in sorted(self.profiles.values(), key=lambda p: p.key):
+            self.log("beam profile " + p.describe())
+        keys = sorted({config_key(e.raw) for e in self.entries if e.raw is not None and not e.skip})
+        missing = [k for k in keys if k not in self.profiles]
+        for k in missing:
+            self.log(f"WARNING {_key_text(k)}: no direct-beam measurement – no resolution (Qdev) for this geometry")
+
+    def profile_for(self, raw):
+        """Direct-beam profile of the geometry of ``raw`` (None: none measured)."""
+        from .catalogue import config_key
+        return self.profiles.get(config_key(raw)) if raw is not None else None
+
     def centre_for(self, raw) -> tuple:
         """Beam centre of the geometry of ``raw`` (direct beam of that geometry, a borrowed one,
         or set by hand); the spin boxes when there is none."""
@@ -1157,7 +1271,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         mask = self.mask_for(raw)[0]
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
         r = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask), mask=mask,
-                          normalise_by=self.norm.currentData(), sector_deg=sector)
+                          normalise_by=self.norm.currentData(), sector_deg=sector,
+                          beam_profile=self.profile_for(raw))
         if bank:
             r.parameters["bank"] = bank
         return r
@@ -1612,7 +1727,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
-                            if c.source != "direct beam" and not c.source.startswith("borrowed")],
+                            if self._user_centre(c)],
+                "tables": dict(self.table_panel.to_dict(), folder=self.folder),
+                "table_tab": self.table_panel.tabs.currentIndex(),
                 "dock_state": self.dock_state(), "layout_version": LAYOUT_VERSION}
 
     @staticmethod
@@ -1645,6 +1762,14 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             with open(p, "w", encoding="utf-8") as fh:
                 json.dump(self._session(), fh, indent=1)
         except OSError:
+            pass
+
+    def _autosave_session(self):
+        if not getattr(self, "folder", ""):            # nothing opened yet: keep the last session
+            return
+        try:
+            self.save_session()
+        except Exception:  # noqa: BLE001 -- the session is a convenience
             pass
 
     def restore_session(self):
@@ -1725,10 +1850,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 self.load_masks(self._session_masks_path())
             except Exception:  # noqa: BLE001
                 pass
-        if s.get("folder") and os.path.isdir(s["folder"]):
-            self.set_folder(s["folder"])
         from .catalogue import GeometryCentre
-        for item in s.get("centres", []) or []:
+        for item in s.get("centres", []) or []:      # before the folder: set_folder keeps them
             try:
                 if len(item) == 5:          # sessions before the centre depended on L1: not used
                     continue
@@ -1737,6 +1860,18 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 self.centres[k] = GeometryCentre(k, float(x), float(y), 0.0, 0.0, [], str(src))
             except (TypeError, ValueError):
                 pass
+        if s.get("folder") and os.path.isdir(s["folder"]):
+            self.set_folder(s["folder"])
+            tb = s.get("tables") or {}
+            if tb.get("geometries") and os.path.normpath(tb.get("folder") or "") == os.path.normpath(self.folder):
+                try:                        # the reduction tables as they were, with every change by hand
+                    self.table_panel.from_dict(tb)
+                    i = s.get("table_tab")
+                    if isinstance(i, int) and 0 <= i < self.table_panel.tabs.count():
+                        self.table_panel.tabs.setCurrentIndex(i)
+                    self.log("reduction tables of the last session restored")
+                except Exception as exc:  # noqa: BLE001 -- the session is a convenience
+                    self.log(f"reduction tables of the last session not restored: {exc}")
         return True
 
     def forget_session(self):
@@ -1751,6 +1886,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         self.shutdown()
+        MainWindow.instances.discard(self)          # a closed window no longer offers its results
         super().closeEvent(event)
 
 

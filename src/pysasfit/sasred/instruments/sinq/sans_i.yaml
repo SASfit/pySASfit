@@ -24,6 +24,14 @@ detector:
     flag_factor: 1.2
 monitor:
   normaliser: monitor1                   # BerSANS 2026 used Moni1, 2024 Moni2, DarePy monitor2
+  # Is the normaliser behind the velocity selector? Only then does it cancel a change of the selector
+  # setting (tilt: flux ~ dλ/λ). null: unknown – then determined from the data when the folder has runs at
+  # two wavelengths or tilts (core.monitors.selector_test: a monitor before the selector keeps its ratio to
+  # the proton beam, integrated_beam).
+  # AgBe 2025 (runs 1964-1980, 8.3 / 11.7 / 16.4 / 50 / 57.5 Å and the selector speed scans 1976, 1980):
+  # monitor1 = monitor4 behind the selector (ratio to the proton beam changes by a factor 3-15);
+  # monitor2 and monitor_7 in front of it (constant within 0.7 %); monitor_5 = integrated_beam (protons).
+  normaliser_after_selector: true
   deadtime:
     tau_s: 0.0                           # factor 1.0252 in the BerSANS copy suggests ~3.3 us (to confirm)
     uncertainty_s: null
@@ -44,6 +52,13 @@ attenuator:                              # transmission factors by selector inde
 wavelength:
   distribution: triangular               # Dornier velocity selector
   dlam_over_lam_fwhm_default: null        # read from file; else the user must give it
+  # dλ/λ (FWHM) of the Dornier selector depends only on its tilt angle (SANS/Dornier-VS/tilt, 0 ... -10 deg).
+  # When the file has the tilt, dλ/λ comes from this table (monotone cubic interpolation), not from
+  # SANS/monochromator/wavelength_spread (a fixed number in the files).
+  selector_tilt:
+    tilt_deg:           [-10, -8, -6, -4, -2, 0]
+    dlam_over_lam_fwhm: [0.27177, 0.20619, 0.1579, 0.12666, 0.1081, 0.09832]
+    source: "SANS-I selector calibration (J. Kohlbrecher, 2026-11)"
 water:                                   # calibration standard
   g_lambda:                              # forward excess K0 of the water (Strunz et al. 2000, eq. 6), λ in nm
     formula: [1.36992, 0.31389, -1.07706, 0.54662]   # g = c0 + c1 λ + c2 λ² + c3 λ³, least squares through the points

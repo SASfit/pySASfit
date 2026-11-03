@@ -155,13 +155,13 @@ def test_row_reduction_banks_and_merge_label(tmp_path):
 
 
 def test_catalogue_and_sans_i_untouched(tmp_path):
-    from pysasfit.sasred.catalogue import scan_folder
+    from pysasfit.sasred.catalogue import COLUMNS, scan_folder
     for n, name, bsy in ((5274, "EB", -90.0), (5262, "S", -7.0)):
         write_llb(tmp_path / f"sans-llb2026n{n:06d}.hdf", name, seed=n, bsy=bsy)
     cat = scan_folder(str(tmp_path))
     assert [e.run for e in cat] == [5262, 5274] and all(e.raw.instrument == "sans_llb" for e in cat)
     row = cat[0].row()
-    assert row[8] == "2e+07"                          # the preset monitor (monitor2)
+    assert row[COLUMNS.index("monitor1")] == "2e+07"                          # the preset monitor (monitor2)
 
 
 MAREN = os.environ.get("PYSASRED_LLB_RAW", "/mnt/user-data/uploads/Maren")

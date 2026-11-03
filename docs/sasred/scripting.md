@@ -51,7 +51,7 @@ without the checksum, so it is fast).
 
 | item | content |
 |---|---|
-| `sasdata01/Q`, `Qdev` | q and its resolution, units `1/nm` or `1/angstrom` |
+| `sasdata01/Q`, `Qdev` | q and its resolution, units `1/nm` or `1/angstrom`. `Qdev` (and `Q@resolutions`) only when the geometry has a direct-beam measurement; without it the curve has no resolution and a note says so |
 | `sasdata01/I`, `Idev` | intensity and its **statistical** standard deviation (`I@uncertainties = "Idev"`) |
 | `I_covariance_statistical` | n × n covariance of the statistical sources (counts) |
 | `I_systematic/<source>` | sensitivity dI/ds of every systematic source, with its σ and group (fully correlated scale terms such as the monitor) |
@@ -70,4 +70,10 @@ five columns:
 ```
 
 `sigma_systematic` is the standard deviation from the systematic sources (monitor, …), which is common to all
-points of the curve.
+points of the curve. Without a direct-beam measurement of the geometry, `Qdev` is 0 and a header line says
+`Qdev = 0: resolution not determined`.
+
+The 2D NXcanSAS file (`write_nxcansas_2d`) carries, when the beam profile is known, `Qxdev` and `Qydev`
+(`Qx@resolutions`, `Qy@resolutions`) plus `Qdev_parallel`, `Qdev_perpendicular` and `Qxy_correlation` per pixel
+(see {doc}`reduction`, *Resolution*). In Python the profiles come from
+{func}`pysasfit.sasred.core.beamprofile.beam_profiles` and are passed as `beam_profile=` to `reduce_row`.

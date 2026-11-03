@@ -329,7 +329,11 @@ class CatalogueEntry:
         L2 = f"{r.L2_m:.2f}"
         bx, by = r.beamstop_xy_mm
         bs = f"{r.beamstop_type or '?'} ({bx:.0f}, {by:.0f})"
-        return [r.run, r.sample_name, kind, lam, f"{r.L1_m:.1f}", L2, bs,
+        dl = "" if r.dlam_over_lam_fwhm is None else f"{r.dlam_over_lam_fwhm:.3f}"
+        tilt = getattr(r, "selector_tilt_deg", None)
+        if tilt is not None:
+            dl += f" ({round(tilt, 1) + 0.0:g}°)"
+        return [r.run, r.sample_name, kind, lam, dl, f"{r.L1_m:.1f}", L2, bs,
                 r.attenuator,
                 f"{r.monitors.get('monitor1' if r.instrument == 'sans_i' else r.preset_monitor, 0):.4g}", f"{r.counting_time_s:.1f}", f"{tot:d}",
                 "yes" if r.aborted else "", self.comment()]
@@ -344,7 +348,7 @@ class CatalogueEntry:
         return "; ".join(parts)
 
 
-COLUMNS = ["run", "sample", "kind", "λ [nm]", "L1 [m]", "L2 [m]", "beam stop (x, y mm)", "att.", "monitor1",
+COLUMNS = ["run", "sample", "kind", "λ [nm]", "dλ/λ (tilt)", "L1 [m]", "L2 [m]", "beam stop (x, y mm)", "att.", "monitor1",
            "time [s]", "counts", "aborted", "comment"]
 
 

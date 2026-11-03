@@ -44,7 +44,7 @@ import numpy as np
 from .core import mask as mk
 from .core.averaging import radial_binning
 from .core.geometry import PixelGeometry, run_geometry
-from .core.resolution import sigma_q_phase1
+from .core.resolution import resolution_2d
 from .data.uarray import UArray, constant
 from .reduce import ReducedRun, _L2, _transmission, combined_normalised_counts, load_instrument
 
@@ -230,6 +230,8 @@ class Reduced2D:
     absolute: bool
     notes: List[str] = field(default_factory=list)
     parameters: Dict[str, object] = field(default_factory=dict)
+    beam_profile: object = None   # direct-beam profile of the geometry (None: no resolution)
+    resolution: Optional[dict] = None   # 2D resolution per pixel (resolution_2d), None without beam profile
 
     @property
     def I(self):
@@ -252,9 +254,69 @@ def _trans(row, notes, what):
                          row.transmission, key)
 
 
+TILT_TOL_DEG = 0.25        # without a dλ/λ(tilt) table
+DLAM_TOL_REL = 0.02        # with it: dλ/λ, and so roughly the flux, differs by more than 2 %
+
+
+def _tilt_checks(table, row, tilts, normalise_by, notes, inst=None) -> list:
+    """Runs of one reduction at different selector tilts. The tilt sets dλ/λ, and the flux grows roughly
+    in proportion to dλ/λ: with the monitor normalisation the flux cancels (the monitor sees the same
+    beam), with the time normalisation it does not. Returns Missing-input items (dicts); adds notes."""
+    if not tilts:
+        return []
+    out = []
+    s_t = [tilts[n] for n in row.used if n in tilts]
+    if not s_t:
+        return []
+    t0 = s_t[0]
+    table_dl = ((inst or {}).get("wavelength") or {}).get("selector_tilt")
+
+    def differs(a, b):
+        # with the calibration table: dλ/λ (and so the flux) differs by more than 2 %; else the tilt by 0.25°
+        if table_dl:
+            from .core.resolution import dlam_from_tilt
+            return abs(dlam_from_tilt(a, table_dl)[0] / dlam_from_tilt(b, table_dl)[0] - 1) > DLAM_TOL_REL
+        return abs(a - b) > TILT_TOL_DEG
+    if any(differs(t, t0) for t in s_t):
+        txt = (f"sample runs at different selector tilts ({', '.join(f'{t:+.1f}°' for t in sorted(set(s_t)))}): "
+               f"summed; dλ/λ of the first run ({t0:+.1f}°) used for the resolution")
+        notes.append(txt)
+        out.append(dict(role="sample", index=table.samples.index(row) if row in table.samples else None,
+                        label=f"{row.label} ({row.info})", field="selector tilt", text=txt, severity="check"))
+    for role, r in table.corrections.items():
+        if role == "blocked_beam" or not r.used or role in (getattr(table, "ignored", ()) or ()):
+            continue
+        other = sorted({round(tilts[n], 1) for n in r.used if n in tilts and differs(tilts[n], t0)})
+        if not other:
+            continue
+        ts = ", ".join(f"{t:+.1f}°" for t in other)
+        mon = (inst or {}).get("monitor") or {}
+        after = mon.get("normaliser_after_selector")
+        mname = mon.get("normaliser", "monitor")
+        if normalise_by == "monitor" and after:
+            txt = (f"{r.label} measured at selector tilt {ts}, the sample at {t0:+.1f}°: the different flux "
+                   f"cancels in the normalisation by {mname} (behind the selector); dλ/λ of the sample used")
+            sev = "info"
+        elif normalise_by == "monitor":
+            where = ("is in front of the selector" if after is False else
+                     "may be in front of the selector (not known: needs runs at two wavelengths or tilts)")
+            txt = (f"{r.label} measured at selector tilt {ts}, the sample at {t0:+.1f}°: the flux changes with "
+                   f"the tilt (≈ ∝ dλ/λ) and {mname} {where}, so the normalisation may not correct it – "
+                   "use runs of the same tilt")
+            sev = "check"
+        else:
+            txt = (f"{r.label} measured at selector tilt {ts}, the sample at {t0:+.1f}°: the flux changes with "
+                   "the tilt (≈ ∝ dλ/λ) and the time normalisation does not correct it – normalise by monitor "
+                   "or use runs of the same tilt")
+            sev = "check"
+        notes.append(txt)
+        out.append(dict(role=role, index=None, label=r.label, field="selector tilt", text=txt, severity=sev))
+    return out
+
+
 def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mask=None, instrument=None,
                   normalise_by: str = "monitor", k0: Optional[float] = None, efficiency=None,
-                  scale: Optional[str] = None) -> Reduced2D:
+                  scale: Optional[str] = None, beam_profile=None) -> Reduced2D:
     """2D reduction of a sample row of a :class:`~pysasfit.sasred.reduction_table.ReductionTable`.
 
     ``read(run)``: the raw run (e.g. :func:`~pysasfit.sasred.io.sinq.read_sans_i` with checksum);
@@ -263,11 +325,22 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
     uncertainty as a systematic source (:func:`water_g`); a number: that value; ``efficiency``: the
     detector efficiency map (:class:`~pysasfit.sasred.core.efficiency.Efficiency`), needed for the
     direct-beam scale, used also for a relative scale, not with water; ``scale``: "water",
-    "direct_beam" or "relative" (default: :meth:`ReductionTable.scale_method`)."""
+    "direct_beam" or "relative" (default: :meth:`ReductionTable.scale_method`); ``beam_profile``: the
+    direct-beam profile of the geometry for the resolution (:mod:`pysasfit.sasred.core.beamprofile`);
+    without it no resolution is determined (noted)."""
     notes: List[str] = []
     if not row.used:
         raise ValueError(f"{row.label} ({row.info}): no runs switched on")
     corr = table.corrections
+    tilts: dict = {}                    # run -> selector tilt of every run read (flux and dλ/λ depend on it)
+    _read_raw = read
+
+    def read(n):
+        r = _read_raw(n)
+        t = getattr(r, "selector_tilt_deg", None)
+        if t is not None:
+            tilts[getattr(r, "run", n)] = float(t)
+        return r
     S_runs = _runs(row.used, read)
     raw0 = S_runs[0]
     inst = instrument or load_instrument(raw0)
@@ -455,12 +528,26 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
     if hasattr(table, "missing_inputs"):
         from dataclasses import asdict
         missing = [asdict(x) for x in table.missing_inputs([row])]
+    for x in _tilt_checks(table, row, tilts, normalise_by, notes, inst):
+        missing.append(x)
+    resolution = None
+    dl = raw0.dlam_over_lam_fwhm
+    if beam_profile is None:
+        from .reduce import NO_RESOLUTION
+        notes.append(NO_RESOLUTION)
+    elif dl is None:
+        notes.append("dλ/λ not in the raw file: resolution (Qdev) not determined")
+    else:
+        resolution = resolution_2d(geo, dl, inst["wavelength"]["distribution"], beam_profile, raw0.pixel_size_m,
+                                   _L2(raw0))
     return Reduced2D(row.label, row.info, list(row.used), img, mask, geo, unit, raw0, absolute, notes,
                      parameters=dict(beam_center_px=tuple(map(float, beam_center_px)), normalise_by=normalise_by,
                                      k0=k0_used, thickness_cm=d, attenuator_factor=A, p_cs=p,
                                      aperture_cm2=row.aperture_cm2, missing=missing, scale=method if absolute or method == "relative"
                                      else "relative", direct_beam=db_info,
-                                     config=table.config))
+                                     beam_profile=None if beam_profile is None else beam_profile.to_dict(),
+                                     config=table.config),
+                     beam_profile=beam_profile, resolution=resolution)
 
 
 def average(r2: Reduced2D, edges, sector_deg=None, dlam_over_lam_fwhm=None, instrument=None) -> ReducedRun:
@@ -473,13 +560,13 @@ def average(r2: Reduced2D, edges, sector_deg=None, dlam_over_lam_fwhm=None, inst
     I.unit = r2.unit
     raw = r2.raw
     dl = raw.dlam_over_lam_fwhm if raw.dlam_over_lam_fwhm is not None else dlam_over_lam_fwhm
-    if dl is None:
-        raise ValueError("dlambda/lambda not in the raw file: give dlam_over_lam_fwhm")
-    qs = sigma_q_phase1(b.q_mean, b.q_var_in_bin, dl, inst["wavelength"]["distribution"])
-    notes = list(r2.notes) + ["Qdev: wavelength and in-bin pixel spread only; collimation term not yet included"]
+    from .reduce import NO_RESOLUTION, q_resolution_1d
+    qs, res_note = q_resolution_1d(b, r2.geometry, dl, inst, r2.beam_profile,
+                                   getattr(raw, "dlam_source", "") if raw.dlam_over_lam_fwhm is not None else "given")
+    notes = [n for n in r2.notes if n != NO_RESOLUTION] + [res_note]
     return ReducedRun(raw.run, b.q_mean, I, qs, b, r2.geometry, r2.image, 1.0, r2.mask, raw,
                       parameters=dict(r2.parameters, runs=r2.runs, label=r2.label, sample=r2.sample,
-                                      sector_deg=sector_deg, dlam_over_lam_fwhm=dl),
+                                      sector_deg=sector_deg, dlam_over_lam_fwhm=dl, selector_tilt_deg=getattr(raw, "selector_tilt_deg", None)),
                       notes=notes)
 
 
