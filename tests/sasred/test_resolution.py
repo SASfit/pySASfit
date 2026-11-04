@@ -143,7 +143,8 @@ def test_gui_reports_missing_resolution():
     assert any("from the direct beam" in n for n in w.results[tag].notes)
     tag2 = w.reduce_table_rows(t2, t2.samples)
     assert w.results[tag2].q_sigma is not None
-    assert any("estimated from the collimation (guide 50×50" in n for n in w.results[tag2].notes)
+    assert any("estimated from the collimation (calibrated on the direct beam of coll 8 m, runs 82173" in n
+               for n in w.results[tag2].notes)
     items = [w.missing_view.topLevelItem(i) for i in range(w.missing_view.topLevelItemCount())]
     assert any(it.text(2) == "resolution" and "estimated from the" in it.text(3) for it in items)
     w.close()
@@ -289,3 +290,102 @@ def test_legacy_names_are_read():
     c = Curve(np.ones(2), np.ones(2), np.ones(2), np.zeros(2), "x", "nxcansas", {"L2_m": 2.0, "L1_m": 8.0,
                                                                                  "wavelength_A": 6.0})
     assert c.meta["SD_m"] == 2.0 and "SD 2.00 m" in c.geometry
+
+
+def test_iq_plot_shows_q_error_bars():
+    """With a resolution the I(q) plot has horizontal (q) error bars as well; without, only dI."""
+    if not os.path.isdir(RAW):
+        pytest.skip("Vifor raw data not available")
+    pytest.importorskip("PySide6")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6 import QtWidgets
+    QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    from matplotlib.collections import LineCollection
+    from pysasfit.sasred.gui import MainWindow, _qerr
+    w = MainWindow()
+    w.set_folder(RAW)
+    w.select_runs([82130])
+    w.update_preview()
+    p = w.preview
+    if p is None:
+        from pysasfit.sasred.reduce import reduce_run_1d
+        raw = next(e.raw for e in w.entries if e.run == 82130)
+        mask = w._mask(raw.counts.shape)
+        p = reduce_run_1d(raw, w.centre_for(raw), w._edges(raw, mask), mask=mask, beam_profile=w.profile_for(raw))
+    assert p.q_sigma is not None
+    xe = _qerr(p, w.units)
+    assert xe.shape == p.q.shape and np.all(xe > 0) and np.all(xe < w.units.q_out(p.q))
+    w.preview = p
+    w._draw_iq()
+    ax = w.iq_canvas.figure.axes[0]
+    segs = [c for c in ax.collections if isinstance(c, LineCollection)]
+    assert len(segs) >= 2                       # vertical (dI) and horizontal (Qdev) bars
+    n_bars = len(segs)
+    w.iq_err_q.setChecked(False)                # switched off: only the I error bars
+    segs = [c for c in w.iq_canvas.figure.axes[0].collections if isinstance(c, LineCollection)]
+    assert len(segs) == n_bars - 1
+    w.iq_err_I.setChecked(False)                # both off: points only
+    segs = [c for c in w.iq_canvas.figure.axes[0].collections if isinstance(c, LineCollection)]
+    assert len(segs) == n_bars - 2
+    w.iq_err_q.setChecked(True)
+    w.iq_err_I.setChecked(True)
+    p.q_sigma = None
+    assert _qerr(p, w.units) is None
+    w.close()
+
+
+def test_resolution_preferences(tmp_path, monkeypatch):
+    """Apertures and the default dλ/λ come from Settings → Preferences → SANS reduction → Resolution."""
+    from types import SimpleNamespace as NS
+    from pysasfit.core import settings as prefs
+    from pysasfit.sasred.core.beamprofile import collimation_profile
+    from pysasfit.sasred.core.resolution import default_dlam
+    inst = {"collimation": {"source_aperture_mm": [50, 50], "sample_aperture_mm": [8, 14]}}
+    r = NS(coll_m=8.0, SD_m=8.0, SD_effective_m=8.0, wavelength_A=6.0, pixel_size_m=(7.5e-3, 7.5e-3))
+    assert default_dlam() == pytest.approx(0.1)
+    p0 = collimation_profile(r, inst)
+    assert p0.sigma_x_mm == pytest.approx(np.sqrt(50 ** 2 / 12 + 16 ** 2 / 12))
+    prefs.set_value("sasred.resolution.sample_aperture_x_mm", 4.0)
+    prefs.set_value("sasred.resolution.dlam_default", 0.15)
+    try:
+        p1 = collimation_profile(r, inst)
+        assert p1.sigma_x_mm == pytest.approx(np.sqrt(50 ** 2 / 12 + 8 ** 2 / 12)) and "sample aperture 4×14" in p1.origin()
+        assert default_dlam() == pytest.approx(0.15)
+        prefs.set_value("sasred.resolution.dlam_default", 0.0)
+        assert default_dlam() is None
+        inst2 = {"collimation": dict(inst["collimation"], from_preferences=False)}
+        assert collimation_profile(r, inst2).sigma_x_mm == pytest.approx(p0.sigma_x_mm)
+    finally:
+        prefs.set_value("sasred.resolution.sample_aperture_x_mm", 8.0)      # back to the defaults
+        prefs.set_value("sasred.resolution.dlam_default", 0.1)
+
+
+def _beam(SD, a1=(40.0, 45.0), a2=(10.0, 12.0), coll=8.0, runs=(1,), source="empty beam"):
+    s = [np.sqrt(((a1[i] * SD / coll) ** 2 + (a2[i] * (coll + SD) / coll) ** 2) / 12) for i in (0, 1)]
+    return BeamProfile((SD, 6.0, coll), 64, 64, s[0] / 7.5, s[1] / 7.5, pixel_size_m=(7.5e-3, 7.5e-3), SD_m=SD,
+                       wavelength_A=6.0, runs=list(runs), source=source)
+
+
+def test_divergence_transferred_from_other_distances():
+    """No direct beam at this distance: the collimation model calibrated on the direct beams of the same
+    collimation (two distances: both apertures; one distance: the guide width), not the divergence copied."""
+    from types import SimpleNamespace as NS
+    from pysasfit.sasred.core.beamprofile import calibrated_profile, fit_apertures
+    a1, a2, how = fit_apertures([_beam(2.0), _beam(8.0)], 8.0, (50, 50), (8, 14))
+    assert a1 == pytest.approx((40, 45)) and a2 == pytest.approx((10, 12)) and "fitted" in how
+    a1, a2, how = fit_apertures([_beam(8.0, a2=(8, 14))], 8.0, (50, 50), (8, 14))   # one distance
+    assert a1 == pytest.approx((40, 45)) and a2 == pytest.approx((8, 14)) and "kept" in how
+    a1, a2, _ = fit_apertures([_beam(7.6), _beam(8.0, runs=(1, 2, 3))], 8.0, (50, 50), (10, 12))
+    assert a1 == pytest.approx((40, 45))            # distances too close: one-distance calibration
+    inst = {"collimation": {"source_aperture_mm": [50, 50], "sample_aperture_mm": [10, 12], "from_preferences": False}}
+    r = NS(coll_m=8.0, SD_m=4.0, SD_effective_m=4.0, wavelength_A=6.0, pixel_size_m=(7.5e-3, 7.5e-3))
+    p = calibrated_profile(r, {(2.0, 6.0, 8.0): _beam(2.0), (8.0, 6.0, 8.0): _beam(8.0)}, inst)
+    exact = _beam(4.0)
+    assert p.estimated and p.sigma_x_mm == pytest.approx(exact.sigma_x_mm) and p.sigma_y_mm == pytest.approx(exact.sigma_y_mm)
+    assert p.divergence_rad[0] > _beam(8.0).divergence_rad[0]      # shorter distance: wider angular resolution
+    assert calibrated_profile(NS(**dict(vars(r), coll_m=4.0)), {(8.0, 6.0, 8.0): _beam(8.0)}, inst) is None
+    # a sample transmission run is not used when an empty beam of that collimation exists
+    p2 = calibrated_profile(r, {(8.0, 6.0, 8.0): _beam(8.0, a2=(10, 12)),
+                                (2.0, 6.0, 8.0): _beam(2.0, a1=(80, 80), source="direct beam (sample transmission runs)")},
+                            inst)
+    assert "a₁ fitted (direct beam at SD 8 m)" in p2.notes[0]

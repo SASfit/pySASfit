@@ -10,9 +10,12 @@ detector:
   construction:                          # from J. Kohlbrecher, 2026-10-26 (null: still to confirm)
     window: {material: Al, thickness_m: 0.007, diameter_m: 1.300, radius_of_curvature_m: 0.930,
              apex_to_detector_m: 0.265}  # dome convex towards the sample, apex 26.5 cm in front of the detection plane (confirmed)
-    fill_gas: {gas: 4He, pressure_bar: 2.7, path_m: null}         # between dome window and membrane
+    fill_gas: {gas: 4He, pressure_bar: 2.7, path_m: null}         # pure He cover gas between dome window and membrane
     membrane: {material: Al, shape: flat, thickness_m: 0.002}   # separates 4He from the detection gas
-    detection_gas: {gas: 3He, pressure_bar: 2.7, stopping_gas: CF4, stopping_pressure_bar: null,
+    # total pressure of the detection gas = that of the 4He cover gas (2.7 bar, J. Kohlbrecher 2026-11-04);
+    # the CF4 partial pressure is not known: a conventional mixture of about 25 % CF4 is assumed
+    detection_gas: {gas: 3He, total_pressure_bar: 2.7, pressure_bar: 2.0, stopping_gas: CF4,
+                    stopping_pressure_bar: 0.7, stopping_pressure_assumed: true,
                     active_depth_m: null, inactive_layer_m: null}
     distance_reference: null             # which plane the recorded SD refers to
     temperature_K: 293.0

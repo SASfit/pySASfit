@@ -33,7 +33,8 @@ import numpy as np
 from scipy.optimize import least_squares
 from scipy.special import ndtr
 
-__all__ = ["BeamProfile", "fit_beam_profile", "beam_profiles", "collimation_profile"]
+__all__ = ["BeamProfile", "fit_beam_profile", "beam_profiles", "collimation_profile", "calibrated_profile",
+           "fit_apertures"]
 
 
 @dataclass
@@ -98,6 +99,18 @@ class BeamProfile:
                 "runs": list(self.runs), "source": self.source, "chi2": self.chi2}
 
 
+def _aperture_prefs(a1, a2):
+    """Source and sample apertures (x, y) [mm] of the preferences; the instrument-file values when the
+    preferences cannot be read."""
+    try:
+        from ...core import settings as prefs
+        g = lambda k: float(prefs.get(f"sasred.resolution.{k}"))   # noqa: E731
+        return ((g("source_aperture_x_mm"), g("source_aperture_y_mm")),
+                (g("sample_aperture_x_mm"), g("sample_aperture_y_mm")))
+    except Exception:  # noqa: BLE001
+        return a1, a2
+
+
 def collimation_profile(raw, instrument=None) -> Optional[BeamProfile]:
     """Beam profile of the geometry of ``raw`` estimated from the collimation when no direct beam was
     measured: source aperture a1 (the neutron guide cross-section) at the distance coll before the
@@ -108,13 +121,17 @@ def collimation_profile(raw, instrument=None) -> Optional[BeamProfile]:
         σ_spot² = (a1 SD/coll)²/12 + (a2 (coll + SD)/coll)²/12 ,  σθ = σ_spot / SD
 
     (Mildner & Carpenter 1984, rectangular apertures). The apertures come from the instrument file
-    (``collimation.source_aperture_mm``, ``collimation.sample_aperture_mm``, (x, y)); coll and SD from the
-    run. None when either is missing."""
+    (``collimation.source_aperture_mm``, ``collimation.sample_aperture_mm``, (x, y)), replaced by the
+    preferences (SANS reduction → Resolution: 50 × 50 and 8 × 14 mm² by default) for an instrument whose
+    file has a collimation section (SANS-I; ``from_preferences: false`` there keeps the file values);
+    coll and SD from the run. None when either is missing."""
     if instrument is None:
         from ..reduce import load_instrument
         instrument = load_instrument(raw)
     col = (instrument or {}).get("collimation") or {}
     a1, a2 = col.get("source_aperture_mm"), col.get("sample_aperture_mm")
+    if a1 and a2 and col.get("from_preferences", True):
+        a1, a2 = _aperture_prefs(a1, a2)          # Settings → Preferences → SANS reduction → Resolution
     try:
         coll = float(raw.coll_m)
         SD = float(getattr(raw, "SD_effective_m", raw.SD_m))
@@ -134,6 +151,98 @@ def collimation_profile(raw, instrument=None) -> Optional[BeamProfile]:
     return BeamProfile(_config_key(raw), np.nan, np.nan, float(s_px[0]), float(s_px[1]), np.nan, np.nan,
                        (float(ps[0]), float(ps[1])), SD, float(raw.wavelength_A), [],
                        source="collimation (no direct beam: estimated)", notes=[text])
+
+
+def _spot_terms(SD, coll):
+    """Coefficients (u, v) of σ_spot² = (u a₁² + v a₂²)/12 for source / sample aperture widths a₁, a₂."""
+    return (SD / coll) ** 2, ((coll + SD) / coll) ** 2
+
+
+def fit_apertures(measured, coll, a1_pref, a2_pref):
+    """Effective source and sample aperture widths (a₁, a₂) per axis [mm] from direct-beam profiles of one
+    collimation length ``coll`` [m]: σ_spot² = (a₁² (SD/coll)² + a₂² ((coll+SD)/coll)²)/12.
+
+    Two or more detector distances: both widths, non-negative least squares on σ². One distance: the sample
+    aperture of the preferences is kept and a₁ follows from the measured width (if the width is smaller
+    than the sample-aperture term alone, a₁ of the preferences is kept and a₂ fitted instead).
+    Returns ((a1x, a1y), (a2x, a2y), how)."""
+    from scipy.optimize import nnls
+    SDs = sorted({round(float(p.SD_m), 2) for p in measured})
+    two = len(SDs) >= 2 and SDs[-1] >= 1.5 * SDs[0]     # distances close together cannot separate a₁ and a₂
+    if not two and len(measured) > 1:                   # one distance: the profile from the most runs
+        measured = [max(measured, key=lambda p: (len(p.runs), -abs(p.SD_m - SDs[-1])))]
+        SDs = [round(float(measured[0].SD_m), 2)]
+    a1, a2 = [0.0, 0.0], [0.0, 0.0]
+    for ax in (0, 1):
+        rows, rhs = [], []
+        for p in measured:
+            s = p.sigma_x_mm if ax == 0 else p.sigma_y_mm
+            u, v = _spot_terms(float(p.SD_m), coll)
+            rows.append([u, v])
+            rhs.append(12.0 * s * s)
+        A, b = np.asarray(rows), np.asarray(rhs)
+        if two:
+            sol, _ = nnls(A, b)
+            a1[ax], a2[ax] = float(np.sqrt(sol[0])), float(np.sqrt(sol[1]))
+        if not two or not (a1[ax] > 0 and a2[ax] > 0):     # one distance (or an implausible two-distance fit)
+            i = int(np.argmax([len(p.runs) for p in measured]))   # the profile from the most runs
+            u, v, bb = A[i, 0], A[i, 1], b[i]
+            r1 = (bb - v * a2_pref[ax] ** 2) / u
+            if r1 > 0:
+                a1[ax], a2[ax] = float(np.sqrt(r1)), float(a2_pref[ax])
+            else:
+                a1[ax] = float(a1_pref[ax])
+                a2[ax] = float(np.sqrt(max(bb - u * a1_pref[ax] ** 2, 0.0) / v))
+    how = ("a₁ and a₂ fitted (direct beams at SD " + ", ".join(f"{s:g}" for s in SDs) + " m)" if two
+           else f"sample aperture of the preferences kept, a₁ fitted (direct beam at SD {SDs[0]:g} m)")
+    return (a1[0], a1[1]), (a2[0], a2[1]), how
+
+
+def calibrated_profile(raw, profiles, instrument=None) -> Optional[BeamProfile]:
+    """Beam profile of the geometry of ``raw`` (no direct beam) from the collimation model calibrated on
+    the measured direct-beam profiles of the same collimation length (``profiles``: {key: BeamProfile};
+    same wavelength preferred, else all wavelengths). The divergence is not simply copied: the
+    sample-aperture term grows as 1/SD, so a shorter distance has a wider angular resolution. None when no
+    direct beam of that collimation was measured (then :func:`collimation_profile`)."""
+    try:
+        coll = float(raw.coll_m)
+        SD = float(getattr(raw, "SD_effective_m", raw.SD_m))
+        lam = float(raw.wavelength_A)
+    except (TypeError, ValueError, AttributeError):
+        return None
+    if not (coll > 0 and SD > 0):
+        return None
+    meas = [p for p in (profiles or {}).values()
+            if not p.estimated and len(p.key) > 2 and abs(float(p.key[2]) - coll) < 0.05
+            and np.isfinite(p.sigma_x_mm) and np.isfinite(p.sigma_y_mm) and np.isfinite(p.SD_m)]
+    same = [p for p in meas if abs(float(p.key[1]) - lam) < 0.05]
+    meas = same or meas
+    empty = [p for p in meas if p.source == "empty beam"]   # a sample in the beam broadens it
+    meas = empty or meas
+    if not meas:
+        return None
+    if instrument is None:
+        from ..reduce import load_instrument
+        instrument = load_instrument(raw)
+    col = (instrument or {}).get("collimation") or {}
+    a1p, a2p = col.get("source_aperture_mm") or (50.0, 50.0), col.get("sample_aperture_mm") or (8.0, 14.0)
+    if col.get("from_preferences", True):
+        a1p, a2p = _aperture_prefs(a1p, a2p)
+    a1p = tuple(np.broadcast_to(np.asarray(a1p, float), (2,)))
+    a2p = tuple(np.broadcast_to(np.asarray(a2p, float), (2,)))
+    a1, a2, how = fit_apertures(meas, coll, a1p, a2p)
+    u, v = _spot_terms(SD, coll)
+    s_mm = np.sqrt((u * np.square(a1) + v * np.square(a2)) / 12.0)
+    ps = np.broadcast_to(np.asarray(raw.pixel_size_m, float), (2,))
+    s_px = 1e-3 * s_mm / ps
+    runs = sorted({n for p in meas for n in p.runs})
+    from ..catalogue import _config_key
+    text = (f"calibrated on the direct beam{'s' if len(meas) > 1 else ''} of coll {coll:g} m, runs "
+            f"{', '.join(map(str, runs[:6]))}{'…' if len(runs) > 6 else ''}: effective guide {a1[0]:.1f}×{a1[1]:.1f} mm², "
+            f"sample aperture {a2[0]:.1f}×{a2[1]:.1f} mm² ({how}); SD {SD:.2f} m")
+    return BeamProfile(_config_key(raw), np.nan, np.nan, float(s_px[0]), float(s_px[1]), np.nan, np.nan,
+                       (float(ps[0]), float(ps[1])), SD, lam, runs,
+                       source="collimation calibrated on direct beams (no direct beam here)", notes=[text])
 
 
 def _model(p, X, Y):

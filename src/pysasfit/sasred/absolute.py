@@ -532,11 +532,14 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
         missing.append(x)
     resolution = None
     dl = raw0.dlam_over_lam_fwhm
+    if dl is None:
+        from .core.resolution import default_dlam
+        dl = default_dlam()
     if beam_profile is None:
         from .reduce import NO_RESOLUTION
         notes.append(NO_RESOLUTION)
     elif dl is None:
-        notes.append("dλ/λ not in the raw file: resolution (Qdev) not determined")
+        notes.append("dλ/λ not in the raw file and no default (preferences): resolution (Qdev) not determined")
     else:
         resolution = resolution_2d(geo, dl, inst["wavelength"]["distribution"], beam_profile, raw0.pixel_size_m,
                                    _SD(raw0))
@@ -560,9 +563,13 @@ def average(r2: Reduced2D, edges, sector_deg=None, dlam_over_lam_fwhm=None, inst
     I.unit = r2.unit
     raw = r2.raw
     dl = raw.dlam_over_lam_fwhm if raw.dlam_over_lam_fwhm is not None else dlam_over_lam_fwhm
+    dl_src = getattr(raw, "dlam_source", "") if raw.dlam_over_lam_fwhm is not None else "given"
+    if dl is None:
+        from .core.resolution import DEFAULT_DLAM_SOURCE, default_dlam
+        dl, dl_src = default_dlam(), DEFAULT_DLAM_SOURCE
     from .reduce import NO_RESOLUTION, q_resolution_1d
     qs, res_note = q_resolution_1d(b, r2.geometry, dl, inst, r2.beam_profile,
-                                   getattr(raw, "dlam_source", "") if raw.dlam_over_lam_fwhm is not None else "given")
+                                   dl_src)
     notes = [n for n in r2.notes if n != NO_RESOLUTION] + [res_note]
     return ReducedRun(raw.run, b.q_mean, I, qs, b, r2.geometry, r2.image, 1.0, r2.mask, raw,
                       parameters=dict(r2.parameters, runs=r2.runs, label=r2.label, sample=r2.sample,

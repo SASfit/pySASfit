@@ -19,7 +19,21 @@ from __future__ import annotations
 
 import numpy as np
 
-__all__ = ["dlam_from_tilt", "sigma_lambda_rel", "sigma_q_phase1", "sigma_q_1d", "resolution_2d"]
+__all__ = ["default_dlam", "dlam_from_tilt", "sigma_lambda_rel", "sigma_q_phase1", "sigma_q_1d", "resolution_2d"]
+
+
+def default_dlam():
+    """dλ/λ (FWHM) of the preferences for runs whose file gives none (Settings → Preferences → SANS
+    reduction → Resolution; 0.1 by default); None when set to 0."""
+    try:
+        from ...core import settings as prefs
+        v = float(prefs.get("sasred.resolution.dlam_default"))
+    except Exception:  # noqa: BLE001
+        v = 0.1
+    return v if v > 0 else None
+
+
+DEFAULT_DLAM_SOURCE = "default of the preferences (not in the raw file)"
 
 
 def dlam_from_tilt(tilt_deg: float, table: dict):

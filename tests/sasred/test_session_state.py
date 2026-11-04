@@ -91,3 +91,33 @@ def test_session_restores_tables_and_centres(win):
     assert t2.scale == "direct_beam"
     assert next(r for r in t2.samples if r.info == info).runs[0].use is False
     assert "reduction tables of the last session restored" in w2.log_view.toPlainText()
+
+
+def test_complete_check_of_all_geometries(win):
+    """Reading the folder fills 'Missing input' for every geometry, without reducing."""
+    from PySide6 import QtWidgets
+    w = win()
+    w.set_folder(RAW)
+    items = [w.missing_view.topLevelItem(k) for k in range(w.missing_view.topLevelItemCount())]
+    rows = [(it.text(0), it.text(1), it.text(2)) for it in items]
+    assert ("SD 2.0 m · λ 6.00 Å · coll 8.0 m", "Direct beam", "resolution") in rows
+    assert ("SD 2.0 m · λ 6.00 Å · coll 8.0 m", "Beam centre", "beam centre") in rows
+    assert ("SD 3.9 m · λ 6.00 Å · coll 8.0 m", "Water", "runs") in rows
+    assert not any(r[0].startswith("SD 8.0 m") and r[2] == "resolution" for r in rows)
+    assert w.docks["missing"].windowTitle() == "Missing input (5)"
+    assert "check of 3 geometries" in w.log_view.toPlainText()
+    tabs = w.table_panel.tabs
+    red = {tabs.tabText(i).split(" ·")[0]: "⚠" in tabs.tabToolTip(i) for i in range(tabs.count())}
+    assert red["SD 2.0 m"] and red["SD 3.9 m"]
+    # an edit is checked again: the 8 m sample-BG switched off appears
+    t8 = next(p.table for p in w.table_panel.pages() if p.table.config.startswith("SD 8.0"))
+    t8.ignored.append("sample_background")
+    w.check_all_geometries(log=False)
+    rows = [(w.missing_view.topLevelItem(k).text(0), w.missing_view.topLevelItem(k).text(1))
+            for k in range(w.missing_view.topLevelItemCount())]
+    assert ("SD 8.0 m · λ 6.00 Å · coll 8.0 m", "Sample-BG") in rows
+    # a reduction keeps the complete list and adds its own findings
+    t2 = next(p.table for p in w.table_panel.pages() if p.table.config.startswith("SD 2.0"))
+    n = w.missing_view.topLevelItemCount()
+    w.reduce_table_rows(t2, t2.samples[:1])
+    assert w.missing_view.topLevelItemCount() >= n

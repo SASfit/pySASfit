@@ -97,11 +97,29 @@ $$
 $$
 
 ({func}`~pysasfit.sasred.core.beamprofile.collimation_profile`). coll and SD come from the raw file, the apertures
-from the instrument file (`collimation.source_aperture_mm`, `collimation.sample_aperture_mm`): the sample aperture
-actually used is not recorded. The estimate is used like a measured profile; the log, the notes ("estimated from
+from **Settings → Preferences → SANS reduction → Resolution** (source 50 × 50 mm², sample 8 × 14 mm², x × y, by
+default; they replace the values of the instrument file): the sample aperture actually used is not recorded. The estimate is used like a measured profile; the log, the notes ("estimated from
 the collimation (guide 50×50 mm², sample aperture 8×14 mm², …)") and *Missing input* (orange) say so. For Vifor at
 coll = SD = 8 m it gives σ = 15.3 × 16.6 mm against 13.6 × 13.6 mm measured: about 15–20 % too large, on the safe
-side. Without the collimation data (or without apertures in the instrument file, as for SANS-LLB) there is no
+side.
+
+**Calibrated on the direct beams of the same collimation.** When another detector distance with the same
+collimation length (and preferably the same wavelength) has a direct beam, the model is calibrated on it first
+({func}`~pysasfit.sasred.core.beamprofile.calibrated_profile`) and then evaluated at the distance without a
+direct beam. The divergence is not copied: the sample-aperture term grows as 1/SD, so a shorter distance has a
+wider angular resolution.
+- direct beams at two or more distances (differing by at least a factor 1.5): both effective widths a₁, a₂ are
+  fitted per axis (non-negative least squares on σ²);
+- one distance: the sample aperture of the preferences is kept and the effective guide width a₁ follows from the
+  measured beam;
+- empty-beam runs are preferred: a sample in the beam broadens it.
+
+For Vifor (8 m: σ = 13.6 mm) this gives an effective guide of 44 × 37.5 mm² and, at 2 m, σθ = 2.1 × 2.8 mrad
+instead of 2.3 × 3.1 mrad from the nominal apertures. The notes and the log say which direct beams were used. Even
+so, a short attenuated direct-beam run at every distance is better: it also gives the beam centre and the flux
+for the absolute scale.
+
+Without the collimation data (or without apertures in the instrument file, as for SANS-LLB) there is no
 resolution.
 
 **1D: Qdev per point** ({func}`~pysasfit.sasred.core.resolution.sigma_q_1d`). With $q = 2k\sin\theta$,
@@ -122,7 +140,9 @@ $$
 |---|---|---|---|---|---|---|
 | dλ/λ (FWHM) | 0.0983 | 0.1081 | 0.1267 | 0.1579 | 0.2062 | 0.2718 |
 
-A tilt outside the table is clipped to its end, with a note. Files without the tilt keep the header value. The
+A tilt outside the table is clipped to its end, with a note. Files without the tilt keep the header value; files
+with neither use dλ/λ = 0.1 (FWHM) from **Settings → Preferences → SANS reduction → Resolution** (0: no
+resolution), and the notes say so. The
 Qdev note and the parameters of every reduced curve give the tilt and where dλ/λ came from; the run list shows
 dλ/λ and the tilt in the column *dλ/λ (tilt)*.
 
@@ -202,7 +222,7 @@ The same happens without dλ/λ in the raw file.
 
 Qdev/q is 27 % at q = 0.0066 Å⁻¹, where the divergence dominates, and 4.7 % at q = 0.084 Å⁻¹, where the wavelength
 spread (4.1 %) dominates. The 2 m geometry has no direct-beam run: its divergence is estimated from the
-collimation (σθ = 2.3 × 3.1 mrad).
+collimation calibrated on the 8 m direct beam (σθ = 2.1 × 2.8 mrad).
 
 The formulas use the small-angle form of the divergence term along the detector axes. For the SANS-LLB wide-angle
 panels the divergence measured on the central detector is applied as an angle.
@@ -365,18 +385,27 @@ beam would give 27 % more.
 ## The SANS-I detector
 
 Construction (instrument file, `detector.construction`; {mod}`pysasfit.sasred.core.detector_model`): Al dome
-window 7 mm thick, Ø 1300 mm, radius of curvature 930 mm (cap depth 26.5 cm); ⁴He at 2.7 bar in the dome; a
-flat 2 mm Al membrane; ³He at 2.7 bar with CF₄ as stopping gas. Still to confirm: active depth, ⁴He path between window and membrane, CF₄ pressure and the plane the recorded SD refers to. The dome apex lies
+window 7 mm thick, Ø 1300 mm, radius of curvature 930 mm (cap depth 26.5 cm); pure ⁴He cover gas at 2.7 bar in
+the dome; a flat 2 mm Al membrane; the detection gas at the same total pressure of 2.7 bar, ³He with CF₄ as
+stopping gas. The CF₄ partial pressure is not known: a conventional mixture of about 25 % CF₄ (0.7 bar, ³He
+2.0 bar) is assumed. Still to confirm: active depth, ⁴He path between window and membrane, the CF₄ fraction and
+the plane the recorded SD refers to. The dome apex lies
 26.5 cm in front of the detection plane (confirmed), i.e. the rim of the dome is in the detection plane.
 
 | λ [Å] | Σ(³He) [cm⁻¹] | 1/Σ [cm] | T Al 7 mm (+ 2 mm) | efficiency, depth 2 / 3 / 5 cm | ⟨z⟩, depth 3 cm [cm] |
 |---|---|---|---|---|---|
-| 4.7 | 0.93 | 1.07 | 0.970 (0.962) | 0.81 / 0.90 / 0.95 | 0.88 |
-| 6 | 1.19 | 0.84 | 0.964 (0.953) | 0.87 / 0.93 / 0.95 | 0.75 |
-| 8 | 1.58 | 0.63 | 0.953 (0.940) | 0.90 / 0.93 / 0.94 | 0.61 |
-| 12 | 2.38 | 0.42 | 0.933 (0.914) | 0.91 / 0.91 / 0.91 | 0.42 |
+| 4.7 | 0.69 | 1.45 | 0.970 (0.962) | 0.72 / 0.84 / 0.93 | 1.02 |
+| 6 | 0.88 | 1.14 | 0.964 (0.953) | 0.79 / 0.89 / 0.94 | 0.91 |
+| 8 | 1.17 | 0.85 | 0.953 (0.940) | 0.85 / 0.91 / 0.94 | 0.76 |
+| 12 | 1.76 | 0.57 | 0.933 (0.914) | 0.89 / 0.91 / 0.91 | 0.55 |
 
-(Al above the Bragg cut-off 4.68 Å: absorption, incoherent and about 0.1 b inelastic; the membrane taken as Al.)
+(³He at 2.0 bar, the assumed partial pressure; with pure ³He at 2.7 bar the efficiency at a depth of 3 cm would be
+0.90 / 0.93 / 0.93 / 0.91 and ⟨z⟩ 0.88 / 0.75 / 0.61 / 0.42 cm. Al above the Bragg cut-off 4.68 Å: absorption,
+incoherent and about 0.1 b inelastic; the membrane taken as Al.)
+
+The reduction does not depend on the CF₄ fraction: only the Al dome and membrane transmission enter it (water
+comparison at two distances), and the ³He efficiency at one wavelength is removed by the water / efficiency map.
+It matters only for the numbers below (λ dependence of the efficiency, conversion depth ⟨z⟩, parallax).
 
 Consequences:
 
@@ -390,17 +419,17 @@ Consequences:
   `compare_water_runs(..., dome=True)` divides it (and the flat membrane, −0.03 % at the 2 m edge) out first: for Vifor (with the +53 mm offset) the water
   anisotropy becomes K(10°) = 0.993 and K(15°) = 0.984 instead of 0.988 and 0.974, C = 1.0016 (offset 5.5 cm
   without the offset applied); about a third of the drop attributed to the water was the dome.
-* **³He at an angle:** the ³He absorbs more along the longer path (+0.4 % at 17°, depth 3 cm); the flat Al membrane
+* **³He at an angle:** the ³He absorbs more along the longer path (+0.9 % at 17°, depth 3 cm; +0.4 % for pure ³He at 2.7 bar); the flat Al membrane
   loses 0.06 % there.
-* **Parallax:** neutrons at ψ = 15° are detected 0.2 cm farther out than their entrance point (0.27 pixel).
-* **Distance:** the neutrons are detected on average ⟨z⟩ ≈ 0.75 cm (6 Å) behind the start of the active volume.
+* **Parallax:** neutrons at ψ = 15° are detected about 0.25 cm farther out than their entrance point (0.3 pixel).
+* **Distance:** the neutrons are detected on average ⟨z⟩ ≈ 0.9 cm (6 Å; 0.75 cm for pure ³He) behind the start of the active volume.
   This explains less than 1 cm of the +5.3 cm distance offset found with water at 8 m and 2 m; the rest has to
   come from where SD is measured (e.g. to the dome window, followed by the ⁴He layer and the membrane). ⟨z⟩
-  changes with λ (0.88 cm at 4.7 Å, 0.42 cm at 12 Å), so water at two distances at another wavelength tells
+  changes with λ (1.0 cm at 4.7 Å, 0.55 cm at 12 Å), so water at two distances at another wavelength tells
   the constant part from the conversion depth.
 * **Wavelength:** the efficiency falls from about 0.93 at 6 Å by the window absorption at long λ and rises with
   the ³He absorption: with water at the same λ the λ dependence cancels for the absolute scale.
-* **⁴He:** 2.7 bar scatter about 0.09 % per 10 cm of path, almost isotropically (a flat background).
+* **⁴He:** the pure He cover gas at 2.7 bar scatters about 0.09 % per 10 cm of path, almost isotropically (a flat background).
 
 ## Detector efficiency from water
 

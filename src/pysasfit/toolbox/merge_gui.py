@@ -73,6 +73,18 @@ def _parse(text: str):
     return float(t)
 
 
+
+def _dq(m, sel=None):
+    """q error bars (resolution dq, 1 σ) of a merged curve, or None when no point has one (dq = 0:
+    unknown); kept below q for the log axis."""
+    dq = np.asarray(getattr(m, "dq", None) if getattr(m, "dq", None) is not None else [], float)
+    q = np.asarray(m.q, float)
+    if sel is not None and len(dq):
+        dq, q = dq[sel], q[sel]
+    if not len(dq) or not np.any(np.isfinite(dq) & (dq > 0)):
+        return None
+    return np.minimum(np.where(np.isfinite(dq), dq, 0.0), 0.999 * q)
+
 class MergeTool(QtWidgets.QWidget):
     status = QtCore.Signal(str)
     images_requested = QtCore.Signal(object)       # list of image2d.Image2D for the 2D page
@@ -255,9 +267,15 @@ class MergeTool(QtWidgets.QWidget):
         self.show_src = QtWidgets.QCheckBox("geometries")
         self.show_src.setChecked(True)
         self.show_src.toggled.connect(self.replot)
-        for w in (self.mode, QtWidgets.QLabel("by:"), self.series_key, self.offset, self.show_src):
-            bar.addWidget(w)
-        bar.addStretch(1)
+        self.err_I = QtWidgets.QCheckBox("I error bars")
+        self.err_q = QtWidgets.QCheckBox("q resolution bars")
+        self.err_q.setToolTip("horizontal bars: dq (1 σ) of the curves that carry a resolution")
+        for cb in (self.err_I, self.err_q):
+            cb.setChecked(True)
+            cb.toggled.connect(self.replot)
+        from ..core.flowlayout import flow_bar
+        bar.addWidget(flow_bar(self.mode, "by:", self.series_key, self.offset, self.show_src, self.err_I,
+                               self.err_q), 1)
         split.addWidget(plot_panel(self.canvas, self, bars=[bar]))
         self.log = QtWidgets.QPlainTextEdit()
         self.log.setReadOnly(True)
@@ -616,6 +634,12 @@ class MergeTool(QtWidgets.QWidget):
         rows = sorted({i.row() for i in self.table.selectedIndexes()})
         return [self.merged[r] for r in rows if r < len(self.merged)]
 
+    def _dI(self, dI):
+        return dI if self.err_I.isChecked() else None
+
+    def _dq(self, m, sel=None):
+        return _dq(m, sel) if self.err_q.isChecked() else None
+
     def replot(self):
         fig = self.canvas.figure
         fig.clear()
@@ -639,7 +663,7 @@ class MergeTool(QtWidgets.QWidget):
                     continue
                 col = cmap(norm(v)) if (norm and v is not None) else None
                 f = off ** k
-                ax.errorbar(m.q, m.I * f, m.dI * f, fmt="-", lw=1, color=col, elinewidth=0.5,
+                ax.errorbar(m.q, m.I * f, self._dI(m.dI * f), self._dq(m), fmt="-", lw=1, color=col, elinewidth=0.5,
                             label=f"{mg._short(key)} = {v:.4g}" if v is not None else m.group.label)
             if norm:
                 sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
@@ -665,10 +689,10 @@ class MergeTool(QtWidgets.QWidget):
                     # all points kept: one marker per geometry, no line through interleaved points
                     for gi in np.unique(m.source):
                         s = m.source == gi
-                        ax.errorbar(m.q[s], m.I[s] * f, m.dI[s] * f, fmt=_MARKERS[int(gi) % len(_MARKERS)],
+                        ax.errorbar(m.q[s], m.I[s] * f, self._dI(m.dI[s] * f), self._dq(m, s), fmt=_MARKERS[int(gi) % len(_MARKERS)],
                                     ms=3, color=col, elinewidth=0.6, label=lab if gi == m.source.min() else None)
                 elif len(m.q):
-                    ax.errorbar(m.q, m.I * f, m.dI * f, fmt="-", lw=1.2, color=col, elinewidth=0.6, label=lab)
+                    ax.errorbar(m.q, m.I * f, self._dI(m.dI * f), self._dq(m), fmt="-", lw=1.2, color=col, elinewidth=0.6, label=lab)
                 for o in m.overlaps:
                     ax.axvspan(*o.q_range, color=col, alpha=0.06)
             if len(sel) == 1:

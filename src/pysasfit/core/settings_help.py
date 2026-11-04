@@ -544,6 +544,25 @@ HELP = {
         "Suggest. Until the mask is edited, the guess follows the beam centre and the size.",
     "sasred.mask.beamstop_shape":
         "Shape of the first-guess beamstop: square (the SANS-I beamstops are square) or disc.",
+    "sasred.resolution.dlam_default":
+        "Relative wavelength spread (FWHM) used for the resolution Qdev when the raw file gives none: on "
+        "SANS-I dλ/λ comes from the selector tilt and its calibration table, else from the header "
+        "(monochromator/wavelength_spread); only when both are missing is this value used, and the notes say "
+        "so. 0 switches the resolution off for such runs.",
+    "sasred.resolution.source_aperture_x_mm":
+        "When a geometry has no direct-beam run, the beam divergence is estimated from the collimation: the "
+        "source aperture (on SANS-I the neutron-guide cross-section, 50 × 50 mm²) at the collimation length "
+        "coll before the sample aperture, detector SD behind it: σ_spot² = (a₁ SD/coll)²/12 + "
+        "(a₂ (coll+SD)/coll)²/12 per axis. These preferences override the instrument file.",
+    "sasred.resolution.source_aperture_y_mm":
+        "Vertical size of the source aperture (neutron-guide cross-section, 50 mm on SANS-I) for the "
+        "divergence estimate from the collimation when a geometry has no direct-beam run.",
+    "sasred.resolution.sample_aperture_y_mm":
+        "Vertical size of the sample aperture (typically 14 mm on SANS-I) for the divergence estimate from "
+        "the collimation when a geometry has no direct-beam run.",
+    "sasred.resolution.sample_aperture_x_mm":
+        "Sample aperture used for the divergence estimate (typical SANS-I value 8 × 14 mm², x × y); the "
+        "aperture actually used is not recorded in the raw file.",
     "sasred.qbins.n":
         "Start value of the number of q bins of the radial / sector average. Empty bins are dropped, so "
         "the curve can have fewer points.",

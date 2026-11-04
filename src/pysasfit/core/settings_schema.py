@@ -331,6 +331,18 @@ register(T, TT, "SANS-LLB detector geometry", [
     S("sasred.llb.bottom.dz_mm", 0.0, "bottom panel: offset dz along the beam [mm]", "", lo=-1000, hi=1000),
     S("sasred.llb.end_px", 10, "pixels masked at both ends of every tube", "", kind="int", lo=0, hi=60),
 ])
+register(T, TT, "Resolution", [
+    S("sasred.resolution.dlam_default", 0.1, "dλ/λ (FWHM) when the raw file has none",
+      "Used for Qdev when neither the selector tilt (SANS-I calibration table) nor the file gives dλ/λ; "
+      "0: no resolution then.", lo=0.0, hi=1.0),
+    S("sasred.resolution.source_aperture_x_mm", 50.0, "source aperture (guide cross-section) x [mm]",
+      "SANS-I: divergence estimated from the collimation when a geometry has no direct beam.", lo=0.1, hi=500),
+    S("sasred.resolution.source_aperture_y_mm", 50.0, "source aperture (guide cross-section) y [mm]", "",
+      lo=0.1, hi=500),
+    S("sasred.resolution.sample_aperture_x_mm", 8.0, "sample aperture x [mm]",
+      "Typical sample aperture; the one used is not recorded in the file.", lo=0.1, hi=200),
+    S("sasred.resolution.sample_aperture_y_mm", 14.0, "sample aperture y [mm]", "", lo=0.1, hi=200),
+])
 register(T, TT, "Transmission runs", [
     S("sasred.transmission.beamstop_out_mm", 100.0, "beam stop out of the beam beyond [mm]",
       "Distance of the beam stop from the beam centre on the detector above which a run is a transmission run.",

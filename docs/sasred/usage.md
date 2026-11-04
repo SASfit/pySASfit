@@ -36,7 +36,8 @@ arrangement.
    average of the selected run is drawn as a dashed curve in the I(q) panel and follows every change of the beam
    centre, mask, q range, binning, normalisation or sector within a fraction of a second. It is not kept.
 5. **Reduce selected** reduces every selected run with the current settings (the file is read again, with its
-   checksum) and keeps the result: it appears as points with error bars (Idev) in I(q) and in the list
+   checksum) and keeps the result: it appears as points with error bars in I(q) – vertical Idev and, when the resolution is known (direct beam or
+   collimation estimate), horizontal Qdev (1 σ); *I error bars* and *q resolution bars* above the plot switch them on and off – and in the list
    *Reduced runs*. *Clear curves* removes them.
 6. **Save**: *NXcanSAS…* or *ASCII…* for the run chosen under *Reduced runs*, *All…* for every reduced run
    (both formats, file names `<run>_<sample>.h5` / `.dat`). See {doc}`scripting` for the content of the files.
@@ -94,10 +95,20 @@ for the samples but not for the water. The colours follow every edit, before any
 the column **Use** (their runs stay in the row). The reduction then simply leaves them out and says so; they are
 not red. Without water (direct beam or relative scale) the water background is not asked for at all.
 
-After a reduction the panel **Missing input** (a tab next to *Log*; its title gives the number) lists every
-missing input of the reduced rows – geometry, row, input and what the reduction did; rows that could not be
-reduced are dark red, optional corrections that were left out grey (not counted in the title). Double-click a line to jump to its cell in the reduction table. The same lines are in the
-*Log* ("missing: …").
+The panel **Missing input** (a tab next to *Log*; its title gives the number) lists what is missing **for every
+geometry**, without reducing: it is filled when the folder is read, again whenever a table is edited, and by
+*Reduction → Check all geometries*. Each line gives the geometry, the row, the input and what the reduction would
+do. Besides the cells of the tables (runs, transmissions, thickness, aperture, absolute scale) it lists:
+- the resolution: no direct beam – divergence estimated from the collimation (or calibrated on another distance)
+  or no resolution at all; dλ/λ missing in the file (default of the preferences used);
+- the beam centre taken from another geometry (no direct beam);
+- an efficiency map chosen that cannot be used (file not found, or a geometry without water);
+- correction runs at another selector tilt than the samples.
+
+Geometry tabs with something missing have a dark red title and the count in their tool tip; the log has a one-line
+summary ("check of 3 geometries: …"). A reduction keeps this list and adds what it finds itself (rows that could not
+be reduced are dark red); its log lists the lines of the geometry reduced. Optional corrections left out are grey
+and not counted. Double-click a line to jump to its cell in the reduction table.
 
 ### Absolute scale: water or direct beam + efficiency map
 

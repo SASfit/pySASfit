@@ -100,7 +100,7 @@ is no need to go back to pySASred by hand.
 ## 4. Plot and save
 
 The plot shows the selected groups: the curves of each geometry (open symbols, scaled when *scale to* is
-used), the merged curve (line with error bars) and the overlap regions (shaded). Several groups can be selected;
+used), the merged curve (line with error bars in I and, where the curves carry a resolution dq, in q; *I error bars* / *q resolution bars* switch them) and the overlap regions (shaded). Several groups can be selected;
 *offset ×* separates them. **series of the selected sample** shows all merged curves with the same key as the
 selected group, ordered and coloured by the header item chosen under *by* (e.g. the temperature), with a
 colour bar.

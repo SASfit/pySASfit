@@ -4,9 +4,10 @@ probability in the detection gas, as a function of wavelength λ and of the angl
 neutron path and the detector normal.
 
 Layers (instrument file ``detector.construction``): Al dome window (7 mm, Ø 1300 mm, radius of
-curvature 930 mm), ⁴He at 2.7 bar, a flat 2 mm Al membrane, then ³He at 2.7 bar with CF₄ as stopping
-gas. Values still unknown
-(active depth, membrane material, ⁴He path, CF₄ pressure) are parameters.
+curvature 930 mm), pure ⁴He cover gas at 2.7 bar, a flat 2 mm Al membrane, then the detection gas at the
+same total pressure, 2.7 bar: ³He with CF₄ as stopping gas. The CF₄ partial pressure is not known; a
+conventional mixture (about 0.7 bar CF₄, ³He 2.0 bar) is assumed. Values still unknown (active depth, ⁴He
+path, the CF₄ fraction) are parameters (``pressure_bar`` is the ³He partial pressure).
 
 Cross sections (thermal, 1.798 Å; absorption ∝ λ):
 

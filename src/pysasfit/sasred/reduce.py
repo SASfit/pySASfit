@@ -208,8 +208,12 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
     I.unit = unit
 
     dl = raw.dlam_over_lam_fwhm if raw.dlam_over_lam_fwhm is not None else dlam_over_lam_fwhm
+    dl_src = raw.dlam_source if raw.dlam_over_lam_fwhm is not None else "given"
+    if dl is None:
+        from .core.resolution import DEFAULT_DLAM_SOURCE, default_dlam
+        dl, dl_src = default_dlam(), DEFAULT_DLAM_SOURCE
     qs, res_note = q_resolution_1d(b, geo, dl, inst, beam_profile,
-                                   raw.dlam_source if raw.dlam_over_lam_fwhm is not None else "given")
+                                   dl_src)
     notes.append(res_note)
     return ReducedRun(run, b.q_mean, I, qs, b, geo, img, float(np.max(factor.value)),
                       mask, raw,

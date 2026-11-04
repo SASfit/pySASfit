@@ -951,6 +951,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
 
     def _add_page(self, table: ReductionTable, ref_raw=None, title=None, tip="") -> GeometryPage:
         p = GeometryPage(self, table, ref_raw)
+        p.changed.connect(self.changed)            # an edit in a geometry: the window checks again
         i = self.tabs.addTab(p, title or table.config or "geometry")
         self.tabs.setTabToolTip(i, tip or table.config)
         for q in self.pages():              # the efficiency-map lists offer the water of every geometry

@@ -91,6 +91,17 @@ def _canvas():
     return FigureCanvasQTAgg(fig)
 
 
+def _qerr(r, u):
+    """Horizontal error bars of a reduced curve: the q resolution Qdev (1 σ) in the display unit, or None
+    when it is not determined (no direct beam and no collimation estimate)."""
+    qs = getattr(r, "q_sigma", None)
+    if qs is None:
+        return None
+    qs = np.asarray(u.q_out(np.asarray(qs, float)), float)
+    q = np.asarray(u.q_out(np.asarray(r.q, float)), float)
+    return np.minimum(np.where(np.isfinite(qs), qs, 0.0), 0.999 * q)       # q − σ stays > 0 on the log axis
+
+
 def _lam_column() -> int:
     from .catalogue import COLUMNS
     return COLUMNS.index("λ [nm]")
@@ -451,9 +462,16 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.iq_offset.setPrefix("offset × ")
         self.iq_offset.setToolTip("successive curves multiplied by this factor (1: none)")
         self.iq_offset.valueChanged.connect(lambda _v: self._draw_iq())
-        iq_bar.addWidget(labelled("show", self.iq_show))
-        iq_bar.addWidget(self.iq_offset)
-        iq_bar.addStretch(1)
+        self.iq_err_I = QtWidgets.QCheckBox("I error bars")
+        self.iq_err_I.setToolTip("vertical error bars: Idev (statistical, 1 σ)")
+        self.iq_err_q = QtWidgets.QCheckBox("q resolution bars")
+        self.iq_err_q.setToolTip("horizontal bars: Qdev (1 σ), when the resolution is known (direct beam or "
+                                 "collimation estimate)")
+        for cb in (self.iq_err_I, self.iq_err_q):
+            cb.setChecked(True)
+            cb.toggled.connect(lambda _on: self._draw_iq())
+        from ..core.flowlayout import flow_bar
+        iq_bar.addWidget(flow_bar(labelled("show", self.iq_show), self.iq_offset, self.iq_err_I, self.iq_err_q), 1)
         self._last_keys = []
         self._add_dock("iq", "I(q)", plot_panel(self.iq_canvas, self, bars=(iq_bar,)), Area.RightDockWidgetArea)
         self.budget_canvas = _canvas()
@@ -480,6 +498,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.table_panel.reduce_rows = self.reduce_table_rows
         self.table_panel.show_efficiency = self.show_table_efficiency
         self.table_panel.rows_selected.connect(self._draw_iq)
+        self.table_panel.changed.connect(self._schedule_check)      # a table edited: check again
         self.table_panel.tabs.currentChanged.connect(lambda _i: self._draw_iq())
         self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea,
                        scrollable=True)                    # no large minimum size: scrolls in a small window
@@ -489,6 +508,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         m.addAction("Add &many samples… (select runs, then group)",
                     lambda: (self.show_table(), self.table_panel.on_add_many()))
         m.addAction("&Empty table (fill by hand)", lambda: (self.show_table(), self.table_panel.on_clear()))
+        m.addAction("&Check all geometries (missing input)", lambda: (self.check_all_geometries(),
+                                                                       self.docks["missing"].raise_()))
         m.addSeparator()
         m.addAction("&Reduce geometry shown (2D, then I(q))", lambda: self.table_panel.page.on_reduce(all_rows=True))
         m.addAction("Reduce &selected rows", lambda: self.table_panel.page.on_reduce(all_rows=False))
@@ -723,8 +744,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
         done = None
         self._last_keys = []
-        self.missing_view.clear()
-        missing_seen = set()
+        missing_seen = self.check_all_geometries(log=False)    # every geometry, then what the reduction finds
+        n_before = self.missing_view.topLevelItemCount()
         jobs = []
         for row in rows:
             banks = [""]
@@ -783,23 +804,150 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 QtWidgets.QApplication.processEvents()
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
-        n_all = self.missing_view.topLevelItemCount()
-        n = sum(self.missing_view.topLevelItem(k).data(1, QtCore.Qt.ItemDataRole.UserRole) != "info"
-                for k in range(n_all))
-        self.docks["missing"].setWindowTitle(f"Missing input ({n})" if n else "Missing input")
-        if n_all:
-            self.log(f"{n} inputs missing or to check – see the panel 'Missing input'; the cells are red in the "
-                     "reduction table" if n else "corrections left out (allowed) – see the panel 'Missing input'")
-            for k in range(n_all):
-                it = self.missing_view.topLevelItem(k)
+        n = self._finish_missing()
+        mine = [self.missing_view.topLevelItem(k) for k in range(self.missing_view.topLevelItemCount())
+                if self.missing_view.topLevelItem(k).data(0, QtCore.Qt.ItemDataRole.UserRole)[0] == table.config
+                or k >= n_before]
+        if mine:                                       # the log lists what concerns the geometry reduced
+            self.log(f"{table.config}: {len(mine)} inputs missing, to check or left out – see the panel "
+                     "'Missing input'; the cells are coloured in the reduction table")
+            for it in mine:
                 self.log(f"    {'not used' if it.data(1, QtCore.Qt.ItemDataRole.UserRole) == 'info' else 'missing'}: "
-                         f"{it.text(0)} · {it.text(1)} · {it.text(2)}: {it.text(3)}")
+                         f"{it.text(1)} · {it.text(2)}: {it.text(3)}")
         if n:
             self.statusBar().showMessage(f"{n} inputs missing or to check: panel 'Missing input'", 15000)
         self._refresh_results(select=done)
         if done is not None:
             self.docks["iq"].raise_()
         return done
+
+    # ------------------------------------------------------------------ complete check of all geometries
+    def check_all_geometries(self, log: bool = True) -> set:
+        """Fill the panel 'Missing input' for every geometry of the reduction table without reducing:
+        the inputs of each table (runs, transmissions, thickness, absolute scale), the resolution (direct
+        beam or estimate), dλ/λ, the beam centre, the efficiency map chosen, and runs of one reduction at
+        different selector tilts. Runs automatically when the folder is read and when a table changes;
+        Reduction → Check all geometries. Returns the set of items shown (keys)."""
+        self.missing_view.clear()
+        seen: set = set()
+        raws = {e.run: e.raw for e in self.entries if e.raw is not None}
+        counts = {}
+        for page in self.table_panel.pages():
+            t = page.table
+            n0 = len(seen)
+            try:
+                for x in t.missing_inputs():
+                    self._add_missing(t.config, x.__dict__, seen)
+                for x in self._geometry_checks(t, page, raws):
+                    self._add_missing(t.config, x, seen)
+            except Exception as exc:  # noqa: BLE001 -- a broken table must not stop the check
+                self._add_missing(t.config, dict(role="sample", index=None, label="table", field="check",
+                                                 text=f"check failed: {type(exc).__name__}: {exc}",
+                                                 severity="error"), seen)
+            counts[t.config] = self._missing_count(t.config)
+        self._mark_tabs(counts)
+        n = self._finish_missing()
+        if log:
+            bad = {c: k for c, k in counts.items() if k[0]}
+            self.log(f"check of {len(counts)} geometr{'y' if len(counts) == 1 else 'ies'}: "
+                     + ("nothing missing" if not bad else
+                        "; ".join(f"{c}: {k[0]} missing / to check" for c, k in bad.items()))
+                     + (" – see the panel 'Missing input'" if n else ""))
+        return seen
+
+    def _geometry_checks(self, t, page, raws) -> list:
+        """Checks of one geometry that need the runs (not only the table)."""
+        from .absolute import _tilt_checks
+        from .catalogue import config_key
+        out = []
+        used = [n for r in t.samples for n in r.used]
+        raw = next((raws[n] for n in used if n in raws), None) or page.ref_raw
+        if raw is None:
+            return out
+
+        def item(role, label, field, text, severity="check"):
+            out.append(dict(role=role, index=None, label=label, field=field, text=text, severity=severity))
+        prof = self.profile_for(raw)
+        if prof is None:
+            item("direct_beam", "Direct beam", "resolution",
+                 "no direct beam and no collimation data: no resolution (Qdev)")
+        elif prof.estimated:
+            item("direct_beam", "Direct beam", "resolution",
+                 "no direct-beam measurement of this geometry: beam divergence " + prof.origin())
+        if raw.dlam_over_lam_fwhm is None:
+            from .core.resolution import default_dlam
+            d = default_dlam()
+            item("direct_beam", "Direct beam", "dλ/λ",
+                 f"dλ/λ not in the raw file: {d:g} (FWHM) of the preferences used" if d else
+                 "dλ/λ not in the raw file and no default: no resolution (Qdev)", "info" if d else "check")
+        c = self.centres.get(config_key(raw))
+        if c is None:
+            item("sample", "Beam centre", "beam centre", "no beam centre for this geometry: the x / y fields are used")
+        elif c.source.startswith("borrowed"):
+            item("sample", "Beam centre", "beam centre", f"no direct beam: centre {c.source}")
+        spec = (t.efficiency or "").strip()
+        if spec and t.scale_method() != "water":
+            from .efficiency_gui import GEOMETRY_PREFIX
+            if spec.startswith(GEOMETRY_PREFIX):
+                src = self._table_of(spec[len(GEOMETRY_PREFIX):])
+                if src is None or not src.corrections["water"].used:
+                    item("direct_beam", "Direct beam", "efficiency",
+                         f"efficiency map from {spec[len(GEOMETRY_PREFIX):]}: that geometry has no water runs",
+                         "missing")
+            else:
+                path = spec.partition("::")[0].strip()
+                if not os.path.isabs(path) and self.folder:
+                    path = os.path.join(self.folder, path)
+                if not os.path.isfile(path):
+                    item("direct_beam", "Direct beam", "efficiency", f"efficiency map file {path} not found", "missing")
+        tilts = {n: float(r.selector_tilt_deg) for n, r in raws.items()
+                 if getattr(r, "selector_tilt_deg", None) is not None}
+        if tilts:
+            inst = self.instrument_for(raw)
+            for row in t.samples:
+                if row.used:
+                    out += _tilt_checks(t, row, tilts, self.norm.currentData(), [], inst)
+        return out
+
+    def _missing_count(self, config) -> tuple:
+        n = n_info = 0
+        for k in range(self.missing_view.topLevelItemCount()):
+            it = self.missing_view.topLevelItem(k)
+            if it.data(0, QtCore.Qt.ItemDataRole.UserRole)[0] != config:
+                continue
+            if it.data(1, QtCore.Qt.ItemDataRole.UserRole) == "info":
+                n_info += 1
+            else:
+                n += 1
+        return n, n_info
+
+    def _mark_tabs(self, counts):
+        """Geometry tabs with something missing: dark red text and the count in the tool tip."""
+        tabs = self.table_panel.tabs
+        for i in range(tabs.count()):
+            page = tabs.widget(i)
+            cfg = getattr(getattr(page, "table", None), "config", None)
+            n, n_info = counts.get(cfg, (0, 0))
+            tabs.tabBar().setTabTextColor(i, QtGui.QColor("#b00020") if n else QtGui.QColor())
+            tip = (tabs.tabToolTip(i) or "").split("\n⚠")[0]
+            if n or n_info:
+                tip += f"\n⚠ {n} inputs missing or to check, {n_info} left out (panel 'Missing input')"
+            tabs.setTabToolTip(i, tip)
+
+    def _finish_missing(self) -> int:
+        n_all = self.missing_view.topLevelItemCount()
+        n = sum(self.missing_view.topLevelItem(k).data(1, QtCore.Qt.ItemDataRole.UserRole) != "info"
+                for k in range(n_all))
+        self.docks["missing"].setWindowTitle(f"Missing input ({n})" if n else "Missing input")
+        return n
+
+    def _schedule_check(self):
+        if not hasattr(self, "_check_timer"):
+            self._check_timer = QtCore.QTimer(self)
+            self._check_timer.setSingleShot(True)
+            self._check_timer.setInterval(400)
+            self._check_timer.timeout.connect(lambda: self.check_all_geometries(log=False))
+        self._check_timer.start()
 
     _MISSING_COLOURS = {"missing": QtGui.QColor(255, 196, 196), "check": QtGui.QColor(255, 226, 180),
                         "error": QtGui.QColor(230, 120, 120), "info": QtGui.QColor(232, 232, 232)}
@@ -810,7 +958,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if key in seen:
             return
         seen.add(key)
-        it = QtWidgets.QTreeWidgetItem([config.split(",")[0], x.get("label", ""), x.get("field", ""), x.get("text", "")])
+        short = config.replace(", λ", " · λ").replace(", coll", " · coll")
+        it = QtWidgets.QTreeWidgetItem([short, x.get("label", ""), x.get("field", ""), x.get("text", "")])
         col = self._MISSING_COLOURS.get(x.get("severity", "missing"))
         for j in range(4):
             it.setBackground(j, QtGui.QBrush(col))
@@ -877,6 +1026,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self._test_monitors()
         if prefs.get("sasred.table.autofill"):
             self.table_panel.on_fill()
+        self.check_all_geometries()
         bad = sum(e.raw is None for e in self.entries)
         self.statusBar().showMessage(f"{len(self.entries)} runs in {folder}" + (f", {bad} unreadable" if bad else ""),
                                      10000)
@@ -1079,21 +1229,24 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 self.log("beam profile " + p.describe())
         keys = sorted({config_key(e.raw) for e in self.entries if e.raw is not None and not e.skip})
         missing = [k for k in keys if k not in self.profiles]
-        from .core.beamprofile import collimation_profile
+        from .core.beamprofile import calibrated_profile, collimation_profile
+        measured = dict(self.profiles)
         first = {}
         for e in self.entries:
             if e.raw is not None and not e.skip:
                 first.setdefault(config_key(e.raw), e.raw)
         for k in missing:
             try:
-                est = collimation_profile(first[k], self.instrument_for(first[k]))
+                inst = self.instrument_for(first[k])
+                est = calibrated_profile(first[k], measured, inst) or collimation_profile(first[k], inst)
             except Exception:  # noqa: BLE001
                 est = None
             if est is not None:
                 self.profiles[k] = est
                 if log:
                     self.log(f"WARNING {_key_text(k)}: no direct-beam measurement – beam divergence estimated from "
-                             f"the collimation: " + est.describe())
+                             f"the collimation{' (calibrated on direct beams)' if 'calibrated' in est.source else ''}: "
+                             + est.describe())
             elif log:
                 self.log(f"WARNING {_key_text(k)}: no direct-beam measurement and no collimation data – no "
                          "resolution (Qdev) for this geometry")
@@ -1218,7 +1371,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 mask = self._mask(raw.counts.shape)
                 sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
                 self.preview = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask),
-                                             mask=mask, normalise_by=self.norm.currentData(), sector_deg=sector)
+                                             mask=mask, normalise_by=self.norm.currentData(), sector_deg=sector,
+                                             beam_profile=self.profile_for(raw))
             except Exception as exc:  # noqa: BLE001 -- e.g. beam centre outside, empty q range
                 self.statusBar().showMessage(f"live I(q) of run {raw.run}: {exc}", 8000)
         self._draw_iq()
@@ -1637,13 +1791,18 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         u = self.units
         shown_items = self.shown_results()
         f = self.iq_offset.value() if hasattr(self, "iq_offset") else 1.0
+        show_dI = self.iq_err_I.isChecked() if hasattr(self, "iq_err_I") else True
+        show_dq = self.iq_err_q.isChecked() if hasattr(self, "iq_err_q") else True
         for k, (key, r) in enumerate(shown_items):
             lab = r.parameters.get("label") or key
-            ax.errorbar(u.q_out(r.q), r.I * f ** k, yerr=r.idev() * f ** k, fmt="o", ms=3, capsize=0, lw=0.8,
+            ax.errorbar(u.q_out(r.q), r.I * f ** k, yerr=r.idev() * f ** k if show_dI else None,
+                        xerr=_qerr(r, u) if show_dq else None, fmt="o", ms=3,
+                        capsize=0, lw=0.8,
                         label=f"{lab} {r.parameters.get('sample', r.raw.sample_name)}" + (f" ×{f ** k:g}" if k and f != 1 else ""))
         p = self.preview
         if p is not None:
-            ax.errorbar(u.q_out(p.q), p.I, yerr=p.idev(), fmt="--", color="0.15", lw=1.0, capsize=0,
+            ax.errorbar(u.q_out(p.q), p.I, yerr=p.idev() if show_dI else None, xerr=_qerr(p, u) if show_dq else None,
+                        fmt="--", color="0.15", lw=1.0, capsize=0,
                         elinewidth=0.6, label=f"live: {p.run} {p.raw.sample_name}")
         shown = [r for _, r in shown_items] + ([p] if p is not None else [])
         if shown:
@@ -1769,6 +1928,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "detector_bank": self.det_bank.currentData(),
                 "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
+                "iq_error_bars_I": self.iq_err_I.isChecked(), "iq_error_bars_q": self.iq_err_q.isChecked(),
                 "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
                             if self._user_centre(c)],
                 "tables": dict(self.table_panel.to_dict(), folder=self.folder),
@@ -1870,6 +2030,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             self.mask_tools_button.setChecked(bool(s["mask_tools"]))
         self.det_eff.setChecked(bool(s.get("detector_efficiency", False)))
         self.det_domega.setChecked(bool(s.get("detector_solid_angle", False)))
+        for key, cb in (("iq_error_bars_I", self.iq_err_I), ("iq_error_bars_q", self.iq_err_q)):
+            if key in s:
+                cb.setChecked(bool(s[key]))
         i = self.iq_show.findData(s.get("iq_show"))
         if i >= 0:
             self.iq_show.setCurrentIndex(i)
