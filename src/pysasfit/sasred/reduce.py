@@ -33,9 +33,9 @@ __all__ = ["load_instrument", "ReducedRun", "reduce_run_1d", "uncertain_paramete
            "combined_normalised_counts", "efficiency_from_runs"]
 
 
-def _L2(raw) -> float:
+def _SD(raw) -> float:
     """Distance for the geometry: the effective distance (recorded + offset) when known."""
-    return float(getattr(raw, "L2_effective_m", raw.L2_m))
+    return float(getattr(raw, "SD_effective_m", raw.SD_m))
 
 
 _INSTRUMENTS: Dict[str, dict] = {}
@@ -169,9 +169,9 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
     dt = inst["detector"]["deadtime"]
 
     # step 7 and 11: geometry and solid angle
-    if getattr(raw, "L2_offset_m", 0.0):
-        notes.append(f"detector distance {raw.L2_effective_m:.4f} m = recorded {raw.L2_m:.4f} m "
-                     f"{1000 * raw.L2_offset_m:+.1f} mm offset (uncertainty not propagated)")
+    if getattr(raw, "SD_offset_m", 0.0):
+        notes.append(f"detector distance {raw.SD_effective_m:.4f} m = recorded {raw.SD_m:.4f} m "
+                     f"{1000 * raw.SD_offset_m:+.1f} mm offset (uncertainty not propagated)")
     geo = run_geometry(raw, beam_center_px)
     if raw.bank:
         notes.append(f"SANS-LLB {raw.bank} detector: geometry from the pixel positions + offsets "
@@ -186,9 +186,9 @@ def reduce_run_1d(raw: RawRun, beam_center_px, edges, instrument: Optional[dict]
         mask = mask | efficiency.mask_bits()
         src = efficiency.meta.get("water_runs") or efficiency.meta.get("water_run") or efficiency.meta.get("file", "?")
         notes.append(f"divided by the detector efficiency from {src}")
-        L2 = efficiency.meta.get("L2_m")
-        if L2 and abs(float(L2) - raw.L2_m) > 0.01 * raw.L2_m:
-            notes.append(f"efficiency measured at L2 = {float(L2):.2f} m, this run at {raw.L2_m:.2f} m")
+        SD = efficiency.meta.get("SD_m")
+        if SD and abs(float(SD) - raw.SD_m) > 0.01 * raw.SD_m:
+            notes.append(f"efficiency measured at SD = {float(SD):.2f} m, this run at {raw.SD_m:.2f} m")
         lam = efficiency.meta.get("wavelength_A")
         if lam and abs(float(lam) - raw.wavelength_A) > 0.02 * raw.wavelength_A:
             notes.append(f"efficiency measured at λ = {float(lam):.2f} Å, this run at {raw.wavelength_A:.2f} Å")
@@ -237,7 +237,7 @@ def q_resolution_1d(binning, geo, dlam_over_lam_fwhm, inst, beam_profile, dlam_s
         share = parts["geometry"] / (qs ** 2)
     src = f", {dlam_source}" if dlam_source else ""
     return qs, (f"Qdev: wavelength (dλ/λ = {dlam_over_lam_fwhm:.3g} FWHM{src}), beam divergence σθ = {1e3 * tx:.3f} × "
-                f"{1e3 * ty:.3f} mrad from the direct beam (runs {', '.join(map(str, beam_profile.runs[:4]))}) and the "
+                f"{1e3 * ty:.3f} mrad {beam_profile.origin()} and the "
                 f"pixel spread in each bin; divergence share of σ_q² {100 * np.nanmax(share):.0f} % at the lowest q")
 
 
@@ -319,7 +319,7 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
     if blocks:
         B, mask = combined_normalised_counts(blocks, inst, notes, mask, normalise_by)
     for r in waters[1:] + cells + blocks:
-        if (abs(r.L2_m - water.L2_m) > 0.01 * water.L2_m
+        if (abs(r.SD_m - water.SD_m) > 0.01 * water.SD_m
                 or abs(r.wavelength_A - water.wavelength_A) > 0.02 * water.wavelength_A
                 or abs(r.detector_tilt_deg - water.detector_tilt_deg) > 0.05):
             notes.append(f"run {r.run}: other distance, wavelength or detector tilt than the water run {water.run}")
@@ -336,9 +336,9 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
                 blocked_runs=[r.run for r in blocks],
                 t_water=[float(tw.value), float(tw.std())],
                 t_empty=None if te is None else [float(te.value), float(te.std())],
-                L2_m=water.L2_m, wavelength_A=water.wavelength_A, beam_center_px=list(map(float, beam_center_px)),
+                SD_m=water.SD_m, wavelength_A=water.wavelength_A, beam_center_px=list(map(float, beam_center_px)),
                 dlam_over_lam_fwhm=water.dlam_over_lam_fwhm, detector_tilt_deg=water.detector_tilt_deg,
-                L1_m=water.L1_m, pixel_size_m=list(water.pixel_size_m), water_k_applied=water_k is not None,
+                coll_m=water.coll_m, pixel_size_m=list(water.pixel_size_m), water_k_applied=water_k is not None,
                 detector_offset_m=list(water.detector_offset_m), attenuator=water.attenuator,
                 measured_start=min(str(r.start_time) for r in waters),
                 measured_end=max(str(r.end_time or r.start_time) for r in waters),

@@ -44,19 +44,19 @@ def test_deadtime_factor_and_tube_mode():
 
 
 def test_solid_angle_untilted_and_tilted():
-    shape, px, L2, lam = (64, 64), 0.0075, 2.0, 6.0
-    g = pixel_geometry(shape, px, (31.3, 30.7), L2, lam)
-    np.testing.assert_allclose(g.d_omega, px * px * np.cos(g.two_theta) ** 3 / L2 ** 2, rtol=1e-12)
+    shape, px, SD, lam = (64, 64), 0.0075, 2.0, 6.0
+    g = pixel_geometry(shape, px, (31.3, 30.7), SD, lam)
+    np.testing.assert_allclose(g.d_omega, px * px * np.cos(g.two_theta) ** 3 / SD ** 2, rtol=1e-12)
     np.testing.assert_allclose(g.q, 4 * np.pi / lam * np.sin(g.two_theta / 2), rtol=1e-12)
     np.testing.assert_allclose(np.hypot(np.hypot(g.qx, g.qy), g.qz), g.q, rtol=1e-12)
     # tilted: compare with brute-force integration of one pixel's solid angle
     a = 20.0
-    gt = pixel_geometry(shape, px, (31.3, 30.7), L2, lam, alpha_deg=a)
+    gt = pixel_geometry(shape, px, (31.3, 30.7), SD, lam, alpha_deg=a)
     ar = np.deg2rad(a)
     for iy, ix in [(0, 0), (40, 63), (31, 31)]:
         s = np.linspace(-0.5, 0.5, 401)[:-1] + 1 / 800
         uu, vv = np.meshgrid((ix + s - 31.3) * px, (iy + s - 30.7) * px)
-        r = np.stack([uu * np.cos(ar), vv, L2 + uu * np.sin(ar)])
+        r = np.stack([uu * np.cos(ar), vv, SD + uu * np.sin(ar)])
         d = np.linalg.norm(r, axis=0)
         n = np.array([-np.sin(ar), 0, np.cos(ar)])
         dom = ((np.tensordot(n, r, 1) / d) / d ** 2).mean() * px * px

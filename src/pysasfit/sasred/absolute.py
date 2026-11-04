@@ -46,7 +46,7 @@ from .core.averaging import radial_binning
 from .core.geometry import PixelGeometry, run_geometry
 from .core.resolution import resolution_2d
 from .data.uarray import UArray, constant
-from .reduce import ReducedRun, _L2, _transmission, combined_normalised_counts, load_instrument
+from .reduce import ReducedRun, _SD, _transmission, combined_normalised_counts, load_instrument
 
 __all__ = ["Reduced2D", "reduce_row_2d", "average", "reduce_row", "water_g", "water_denominator",
            "water_scaling_factor", "load_efficiency", "direct_beam_flux", "direct_beam_attenuator", "DirectBeam"]
@@ -366,11 +366,11 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
             return None
         rs = _runs(r.used, read)
         x, mask = combined_normalised_counts(rs, inst, notes, mask, normalise_by)
-        other = [q.run for q in rs if abs(q.L2_m - raw0.L2_m) > 0.01 * raw0.L2_m
+        other = [q.run for q in rs if abs(q.SD_m - raw0.SD_m) > 0.01 * raw0.SD_m
                  or abs(q.wavelength_A - raw0.wavelength_A) > 0.02 * raw0.wavelength_A]
         if other:
             raise ValueError(f"{what}: runs {other} have another distance or wavelength than the sample "
-                             f"(L2 {raw0.L2_m:.2f} m, λ {raw0.wavelength_A:.2f} Å)")
+                             f"(SD {raw0.SD_m:.2f} m, λ {raw0.wavelength_A:.2f} Å)")
         return x
     B = combined(corr["blocked_beam"], "Cd")
     if B is None:
@@ -393,15 +393,15 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
     geo = run_geometry(raw0, beam_center_px)
     if raw0.bank:
         from .io.sans_llb import panel_offsets
-        notes.append(f"SANS-LLB {raw0.bank} detector at {geo.L2_m:.4f} m: geometry from the pixel positions + "
+        notes.append(f"SANS-LLB {raw0.bank} detector at {geo.SD_m:.4f} m: geometry from the pixel positions + "
                      f"offsets (dx, dy, dz) = {tuple(round(v, 2) for v in panel_offsets(raw0.bank))} mm")
         if corr["water"].used:
             notes.append(f"{raw0.bank} detector: water per pixel at 2θ up to "
                          f"{np.degrees(geo.two_theta.max()):.0f}°; its angular dependence (inelastic, "
                          f"self-absorption) is not corrected")
-    if getattr(raw0, "L2_offset_m", 0.0):
-        notes.append(f"detector distance {raw0.L2_effective_m:.4f} m = recorded {raw0.L2_m:.4f} m "
-                     f"{1000 * raw0.L2_offset_m:+.1f} mm offset")
+    if getattr(raw0, "SD_offset_m", 0.0):
+        notes.append(f"detector distance {raw0.SD_effective_m:.4f} m = recorded {raw0.SD_m:.4f} m "
+                     f"{1000 * raw0.SD_offset_m:+.1f} mm offset")
     d = row.scaling
     if not d:
         notes.append("no sample thickness: d = 1 cm")
@@ -425,20 +425,20 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
         if not dbrow.used:
             raise ValueError("the direct-beam scale needs direct-beam runs (row Direct beam)")
         db_runs = _runs(dbrow.used, read)
-        other = [q.run for q in db_runs if abs(q.L2_m - raw0.L2_m) > 0.01 * raw0.L2_m
+        other = [q.run for q in db_runs if abs(q.SD_m - raw0.SD_m) > 0.01 * raw0.SD_m
                  or abs(q.wavelength_A - raw0.wavelength_A) > 0.02 * raw0.wavelength_A
-                 or abs(getattr(q, "L1_m", 0) - getattr(raw0, "L1_m", 0)) > 0.01 * max(getattr(raw0, "L1_m", 0), 1e-9)]
+                 or abs(getattr(q, "coll_m", 0) - getattr(raw0, "coll_m", 0)) > 0.01 * max(getattr(raw0, "coll_m", 0), 1e-9)]
         if other:
             raise ValueError(f"direct beam: runs {other} have another distance, wavelength or collimation than the "
-                             f"sample (L2 {raw0.L2_m:.2f} m, λ {raw0.wavelength_A:.2f} Å)")
+                             f"sample (SD {raw0.SD_m:.2f} m, λ {raw0.wavelength_A:.2f} Å)")
         db = direct_beam_flux(db_runs, inst, efficiency=efficiency, blocked=B, normalise_by=normalise_by,
                               radius_mm=getattr(table, "direct_beam_radius_mm", None),
                               attenuator_transmission=getattr(table, "direct_beam_attenuator", None))
         notes.extend(db.notes)
         notes.append(db.describe())
         em = efficiency.meta or {}
-        src = f"efficiency map {em.get('file', '')}" + (f" (water runs {em.get('water_runs')}, L2 "
-                                                        f"{em.get('L2_m', float('nan')):.2f} m, λ "
+        src = f"efficiency map {em.get('file', '')}" + (f" (water runs {em.get('water_runs')}, SD "
+                                                        f"{em.get('SD_m', float('nan')):.2f} m, λ "
                                                         f"{em.get('wavelength_A', float('nan')):.2f} Å)"
                                                         if em.get("water_runs") else "")
         notes.append(src)
@@ -539,7 +539,7 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
         notes.append("dλ/λ not in the raw file: resolution (Qdev) not determined")
     else:
         resolution = resolution_2d(geo, dl, inst["wavelength"]["distribution"], beam_profile, raw0.pixel_size_m,
-                                   _L2(raw0))
+                                   _SD(raw0))
     return Reduced2D(row.label, row.info, list(row.used), img, mask, geo, unit, raw0, absolute, notes,
                      parameters=dict(beam_center_px=tuple(map(float, beam_center_px)), normalise_by=normalise_by,
                                      k0=k0_used, thickness_cm=d, attenuator_factor=A, p_cs=p,

@@ -11,8 +11,8 @@ RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
 need = pytest.mark.skipif(not os.path.isdir(RAW), reason="Vifor raw data not available")
 
 
-def _raw(run, sample="S", T=None, L2=8.0, start="2026-09-29 14:00:00"):
-    return SimpleNamespace(run=run, sample_name=sample, L2_m=L2, wavelength_A=6.0, attenuator="0",
+def _raw(run, sample="S", T=None, SD=8.0, start="2026-09-29 14:00:00"):
+    return SimpleNamespace(run=run, sample_name=sample, SD_m=SD, wavelength_A=6.0, attenuator="0",
                            start_time=start, counting_time_s=600.0, temperature=T, path="")
 
 
@@ -28,8 +28,8 @@ def test_group_by_metadata_with_precision():
     chain = [_raw(i, T=20 + 0.3 * i) for i in range(5)]
     assert [len(x.runs) for x in gr.group_runs(chain, {"temperature": 0.5}, fields=f)] == [2, 2, 1]
     # relative precision and min_runs
-    L = [_raw(i, L2=v) for i, v in enumerate((8.0, 8.05, 2.0))]
-    assert [x.run_numbers for x in gr.group_runs(L, {"L2_m": "1%"}, min_runs=2)] == [[0, 1]]
+    L = [_raw(i, SD=v) for i, v in enumerate((8.0, 8.05, 2.0))]
+    assert [x.run_numbers for x in gr.group_runs(L, {"SD_m": "1%"}, min_runs=2)] == [[0, 1]]
     with pytest.raises(KeyError):
         gr.group_runs(runs, {"pressure": 1.0})
 
@@ -115,9 +115,9 @@ def test_real_data_misplaced_sample():
     from pysasfit.sasred.core.beamcentre import masked_centre_of_gravity
     from pysasfit.sasred.io.sinq import read_sans_i
     cat = scan_folder(RAW)
-    match = {"sample": None, "L2_m": "1%", "wavelength_A": "2%", "attenuator": None}
+    match = {"sample": None, "SD_m": "1%", "wavelength_A": "2%", "attenuator": None}
     g = {x.label(): x for x in gr.group_runs(cat, match, min_runs=2)}
-    a2 = next(x for k, x in g.items() if "A_2" in k and "L2_m=2" in k)
+    a2 = next(x for k, x in g.items() if "A_2" in k and "SD_m=2" in k)
     assert a2.run_numbers == [82097, 82148]
     split = gr.group_runs(a2.runs, dict(match, sample_position_mm=0.5))
     assert [x.run_numbers for x in split] == [[82097], [82148]]
@@ -126,7 +126,7 @@ def test_real_data_misplaced_sample():
     m, _ = mk.suggest_mask(a2.runs[0].counts, c)
     e = gr.check_runs(a2, c, q_edges(0.02, 0.35, 30), mask=m)
     assert e.verdict.startswith("shape") and e.chi2_ndf > 100
-    ok = next(x for k, x in g.items() if "A_4" in k and "L2_m=2" in k)
+    ok = next(x for k, x in g.items() if "A_4" in k and "SD_m=2" in k)
     assert gr.check_runs(ok, c, q_edges(0.02, 0.35, 30), mask=m).verdict == "equivalent"
 
 
@@ -140,11 +140,11 @@ def _image(kind, rate, rng, centre=(20.3, 18.7), shadow=(21.5, 18.5), n=40):
     return rng.poisson(lam / lam.sum() * rate * 1e5).astype(float)
 
 
-def _run(run, sample, kind, bs, rate=1.0, att="1", rng=None, L2=8.0):
-    r = _raw(run, sample=sample, L2=L2, start=f"2026-09-29 1{run % 10}:00:00")
+def _run(run, sample, kind, bs, rate=1.0, att="1", rng=None, SD=8.0):
+    r = _raw(run, sample=sample, SD=SD, start=f"2026-09-29 1{run % 10}:00:00")
     r.counts = _image(kind, rate, rng)
     r.monitors = {"monitor1": 1e5}
-    r.attenuator, r.L1_m, r.end_time, r.sample_position_mm = att, 8.0, None, 1.0
+    r.attenuator, r.coll_m, r.end_time, r.sample_position_mm = att, 8.0, None, 1.0
     r.beamstop_xy_mm, r.pixel_size_m = bs, (0.0075, 0.0075)
     return r
 

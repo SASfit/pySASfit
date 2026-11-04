@@ -579,7 +579,7 @@ class MergeTool(QtWidgets.QWidget):
             g = m.group
             worst = max(m.overlaps, key=lambda o: abs(o.factor - 1), default=None)
             mis = "" if worst is None else f"{100 * (worst.factor - 1):+.1f} % (z {worst.z:+.1f})"
-            # geometries: only the parts that differ between them (e.g. "L2 8.00 m | L2 2.00 m")
+            # geometries: only the parts that differ between them (e.g. "SD 8.00 m | SD 2.00 m")
             parts = [x.split(", ") for x in m.geometries]
             keep = [i for i in range(max(map(len, parts), default=0))
                     if len({p[i] if i < len(p) else "" for p in parts}) > 1] or [0]

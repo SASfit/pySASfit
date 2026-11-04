@@ -192,7 +192,7 @@ def _join(a: Optional[str], b: str) -> str:
 
 
 def _config(r) -> str:
-    return f"L2 {r.L2_m:.1f} m, λ {r.wavelength_A:.2f} Å, L1 {r.L1_m:.1f} m"
+    return f"SD {r.SD_m:.1f} m, λ {r.wavelength_A:.2f} Å, coll {r.coll_m:.1f} m"
 
 
 def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dict] = None,
@@ -203,7 +203,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
 
     Transmission runs are found from the distance of the beam stop to the beam centre
     (:func:`catalogue.classify`); runs where that and the image disagree are noted.
-    ``match``: the grouping precisions (default: sample name, L2 1 %, λ 2 %, L1 1 %, attenuator,
+    ``match``: the grouping precisions (default: sample name, SD 1 %, λ 2 %, coll 1 %, attenuator,
     sample-changer position 0.5 mm). ``transmission(raw)`` tells transmission (direct-beam) runs
     from scattering runs (default: :func:`catalogue.is_transmission`, beam stop moved out of the
     beam; the attenuator does not decide). Scattering groups are checked with
@@ -211,7 +211,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
     may be a function of the first raw run of a group, to use the centre of its geometry; ``mask``
     may then take (raw, centre)); transmission
     groups by their count rate with ``rate_floor`` (0.5 %) for the beam stability (``edges`` and
-    ``mask`` may be functions of the first raw run of a group, e.g. to depend on L2)."""
+    ``mask`` may be functions of the first raw run of a group, e.g. to depend on SD)."""
     skipped = [(r.run, r.empty_reason) for r in (getattr(x, "raw", x) for x in runs)
                if r is not None and getattr(r, "empty_reason", "")]
     runs = [x for x in runs if getattr(x, "raw", x) is None or not getattr(getattr(x, "raw", x), "empty_reason", "")]
@@ -230,7 +230,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
             g = geo.get(_config_key(r))
             if g is not None:
                 geometry_notes.setdefault(_config(r), g.describe())
-    match = match or {"sample": None, "L2_m": "1%", "wavelength_A": "2%", "L1_m": "1%",
+    match = match or {"sample": None, "SD_m": "1%", "wavelength_A": "2%", "coll_m": "1%",
                       "attenuator": None, "sample_position_mm": 0.5}
     raws = [getattr(r, "raw", r) for r in runs]
     raws = [r for r in raws if r is not None]
@@ -344,8 +344,8 @@ def main(argv=None):  # pragma: no cover -- thin CLI
                 return tuple(a.centre)
 
         def edges(r):
-            q_min = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(4 * r.pixel_size_m[0] / r.L2_m))
-            q_max = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(60 * r.pixel_size_m[0] / r.L2_m))
+            q_min = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(4 * r.pixel_size_m[0] / r.SD_m))
+            q_max = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(60 * r.pixel_size_m[0] / r.SD_m))
             return q_edges(q_min, q_max, 30)
         kw = dict(beam_center_px=c_of, edges=edges, mask=lambda r, c: mk.suggest_mask(r.counts, c)[0])
     else:

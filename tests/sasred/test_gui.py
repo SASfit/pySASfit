@@ -200,8 +200,8 @@ def test_preferences_applied_to_panel():
 
 
 def test_mask_and_centre_per_configuration(tmp_path):
-    """Each instrument configuration (L1, L2, λ, beam stop) keeps its own mask; beam centres are
-    kept per (L2, λ, L1)."""
+    """Each instrument configuration (coll, SD, λ, beam stop) keeps its own mask; beam centres are
+    kept per (SD, λ, coll)."""
     from pysasfit.sasred.catalogue import mask_key
     from pysasfit.sasred.core import mask as mk
     app = _app()
@@ -210,7 +210,7 @@ def test_mask_and_centre_per_configuration(tmp_path):
     by_run = {e.run: e.raw for e in w.entries if e.raw is not None}
     r8, r2, rt = by_run[82130], by_run[82203], by_run[82173]
     assert r8.beamstop_type == "3" and mask_key(r8) == (8.0, 8.0, 6.0, "3", -27, 1)
-    assert mask_key(r2) != mask_key(r8) and mask_key(rt) != mask_key(r8)      # other L2 / beam stop out
+    assert mask_key(r2) != mask_key(r8) and mask_key(rt) != mask_key(r8)      # other SD / beam stop out
     assert all(len(k) == 3 for k in w.centres) and (8.0, 6.0, 8.0) in w.centres
     w.select_runs([82130])
     app.processEvents()
@@ -222,7 +222,7 @@ def test_mask_and_centre_per_configuration(tmp_path):
     w._draw_detector()
     assert w.mask_editor.pristine and not (w.mask_editor.mask & mk.USER).any()
     m8, how = w.mask_for(r8)
-    assert np.count_nonzero(m8 & mk.USER) == 4 and "L2 8 m" in how
+    assert np.count_nonzero(m8 & mk.USER) == 4 and "SD 8 m" in how
     _, how2 = w.mask_for(by_run[82204])                       # same 2 m configuration as the editor
     assert "detector panel" in how2
     w.select_runs([82130])
@@ -233,7 +233,7 @@ def test_mask_and_centre_per_configuration(tmp_path):
     assert w.load_masks(p) == 1 and np.count_nonzero(w.masks[mask_key(r8)] & mk.USER) == 4
     from pysasfit.sasred.catalogue import COLUMNS
     row = [e for e in w.entries if e.run == 82130][0].row()
-    assert row[COLUMNS.index("L1 [m]")] == "8.0" and row[COLUMNS.index("beam stop (x, y mm)")] == "3 (-27, 1)"
+    assert row[COLUMNS.index("coll [m]")] == "8.0" and row[COLUMNS.index("beam stop (x, y mm)")] == "3 (-27, 1)"
     w.close()
 
 

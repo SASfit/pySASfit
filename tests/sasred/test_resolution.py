@@ -11,8 +11,8 @@ from pysasfit.sasred.core.geometry import pixel_geometry
 from pysasfit.sasred.core.resolution import resolution_2d, sigma_lambda_rel, sigma_q_1d
 
 RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
-C8 = "L2 8.0 m, λ 6.00 Å, L1 8.0 m"
-C2 = "L2 2.0 m, λ 6.00 Å, L1 8.0 m"
+C8 = "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
+C2 = "SD 2.0 m, λ 6.00 Å, coll 8.0 m"
 
 
 def _gauss_image(x0=60.3, y0=64.7, sx=1.6, sy=2.4, A=2e5, B=3.0, n=128, seed=4):
@@ -33,8 +33,8 @@ def test_fit_recovers_pixel_integrated_gaussian():
     assert g["sigma_x"] == pytest.approx(0.4, rel=0.05) and g["sigma_y"] == pytest.approx(0.5, rel=0.05)
 
 
-def _profile(tx, ty, L2=8.0, px=7.5e-3):
-    return BeamProfile((L2, 6.0, 8.0), 64, 64, tx * L2 / px, ty * L2 / px, pixel_size_m=(px, px), L2_m=L2,
+def _profile(tx, ty, SD=8.0, px=7.5e-3):
+    return BeamProfile((SD, 6.0, 8.0), 64, 64, tx * SD / px, ty * SD / px, pixel_size_m=(px, px), SD_m=SD,
                        wavelength_A=6.0, runs=[1])
 
 
@@ -122,6 +122,8 @@ def test_row_reduction_with_and_without_resolution(vifor, tmp_path):
 
 
 def test_gui_reports_missing_resolution():
+    """2 m has no direct beam: the divergence is estimated from the collimation, said in the log and in
+    'Missing input'; 8 m uses the fitted profile."""
     if not os.path.isdir(RAW):
         pytest.skip("Vifor raw data not available")
     pytest.importorskip("PySide6")
@@ -132,17 +134,39 @@ def test_gui_reports_missing_resolution():
     w = MainWindow()
     w.set_folder(RAW)
     log = w.log_view.toPlainText()
-    assert "beam profile L1 8 m, L2 8 m" in log and "no direct-beam measurement" in log
+    assert "beam profile coll 8 m, SD 8 m" in log and "divergence estimated from the collimation" in log
     pages = {p.table.config: p for p in w.table_panel.pages()}
     t8, t2 = pages[C8].table, pages[C2].table
     t8.samples, t2.samples = t8.samples[:1], t2.samples[:1]
     tag = w.reduce_table_rows(t8, t8.samples)
     assert w.results[tag].q_sigma is not None
+    assert any("from the direct beam" in n for n in w.results[tag].notes)
     tag2 = w.reduce_table_rows(t2, t2.samples)
-    assert w.results[tag2].q_sigma is None
+    assert w.results[tag2].q_sigma is not None
+    assert any("estimated from the collimation (guide 50×50" in n for n in w.results[tag2].notes)
     items = [w.missing_view.topLevelItem(i) for i in range(w.missing_view.topLevelItemCount())]
-    assert any(it.text(2) == "resolution" and "no resolution" in it.text(3) for it in items)
+    assert any(it.text(2) == "resolution" and "estimated from the" in it.text(3) for it in items)
     w.close()
+
+
+def test_collimation_estimate():
+    """σ_spot² = (a1 SD/coll)²/12 + (a2 (coll+SD)/coll)²/12 per axis; close to the measured 8 m beam."""
+    from types import SimpleNamespace as NS
+    from pysasfit.sasred.core.beamprofile import collimation_profile
+    inst = {"collimation": {"source_aperture_mm": [50, 50], "sample_aperture_mm": [8, 14]}}
+    r = NS(coll_m=8.0, SD_m=8.0, SD_effective_m=8.0, wavelength_A=6.0, pixel_size_m=(7.5e-3, 7.5e-3), L=None)
+    p = collimation_profile(r, inst)
+    sx = np.sqrt((50 * 1.0) ** 2 / 12 + (8 * 2.0) ** 2 / 12)
+    sy = np.sqrt((50 * 1.0) ** 2 / 12 + (14 * 2.0) ** 2 / 12)
+    assert p.estimated and p.sigma_x_mm == pytest.approx(sx) and p.sigma_y_mm == pytest.approx(sy)
+    assert p.divergence_rad[0] == pytest.approx(sx * 1e-3 / 8.0)
+    assert "estimated from the collimation (guide 50×50 mm², sample aperture 8×14 mm²" in p.origin()
+    assert collimation_profile(r, {}) is None                                   # no apertures known
+    assert collimation_profile(NS(**dict(vars(r), coll_m=0.0)), inst) is None   # no collimation length
+    if os.path.isdir(RAW):                                                      # measured 8 m: σ = 13.6 mm
+        from pysasfit.sasred.io.sinq import read_sans_i
+        est = collimation_profile(read_sans_i(os.path.join(RAW, "sans2026n082173.hdf"), checksum=False))
+        assert 13.6 < est.sigma_x_mm < 1.3 * 13.6
 
 
 def test_dlam_from_selector_tilt():
@@ -249,3 +273,19 @@ def test_agbe_monitors_and_selector_scans():
         assert t["monitor1"].position == "after selector" and t["monitor4"].position == "after selector"
         assert t["monitor2"].position == "before selector" and t["monitor_7"].position == "before selector"
         assert t["monitor_5"].position == "proton beam"
+
+
+def test_legacy_names_are_read():
+    """Files and tables written with L1 / L2 before the rename to coll / SD."""
+    from pysasfit.sasred.legacy import rename_config, rename_keys
+    from pysasfit.sasred.reduction_table import ReductionTable
+    assert rename_keys({"L2_m": 8.0, "L1_m": 8.0, "x": {"L2_effective_m": 8.1}, "L2": 1}) == \
+        {"SD_m": 8.0, "coll_m": 8.0, "x": {"SD_effective_m": 8.1}, "SD": 1}
+    assert rename_config("L2 8.0 m, λ 6.00 Å, L1 8.0 m") == "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
+    t = ReductionTable.from_dict({"config": "L2 8.0 m, λ 6.00 Å, L1 8.0 m",
+                                  "efficiency": "geometry:L2 2.0 m, λ 6.00 Å, L1 8.0 m"})
+    assert t.config == "SD 8.0 m, λ 6.00 Å, coll 8.0 m" and t.efficiency == "geometry:SD 2.0 m, λ 6.00 Å, coll 8.0 m"
+    from pysasfit.toolbox.merge import Curve
+    c = Curve(np.ones(2), np.ones(2), np.ones(2), np.zeros(2), "x", "nxcansas", {"L2_m": 2.0, "L1_m": 8.0,
+                                                                                 "wavelength_A": 6.0})
+    assert c.meta["SD_m"] == 2.0 and "SD 2.00 m" in c.geometry

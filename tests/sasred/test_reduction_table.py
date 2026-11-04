@@ -8,7 +8,7 @@ from pysasfit.sasred.plan import Entry, Plan
 
 RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
 need = pytest.mark.skipif(not os.path.isdir(RAW), reason="Vifor raw data not available")
-CFG = "L2 8.0 m, λ 6.00 Å, L1 8.0 m"
+CFG = "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
 
 
 def _plan():
@@ -20,14 +20,14 @@ def _plan():
         E("sample", "S1", "scattering", [6, 7], [], [], "shape drift"),
         E("sample", "S1", "transmission", [8, 9], [8, 9], [], "equivalent"),
         E("sample", "S2", "scattering", [10], [10], [], "single"),
-        E("sample", "S2", "scattering", [11], [11], [], "single", cfg="L2 2.0 m, λ 6.00 Å, L1 8.0 m"),
+        E("sample", "S2", "scattering", [11], [11], [], "single", cfg="SD 2.0 m, λ 6.00 Å, coll 8.0 m"),
     ], [])
 
 
 def test_fill_from_plan():
     from pysasfit.sasred.io.transmission import Transmission
     p = _plan()
-    assert rt.configurations(p) == [CFG, "L2 2.0 m, λ 6.00 Å, L1 8.0 m"]
+    assert rt.configurations(p) == [CFG, "SD 2.0 m, λ 6.00 Å, coll 8.0 m"]
     t = rt.from_plan(p, CFG, transmissions=[Transmission("D1", 8, "S1", 0.42, 0.001),
                                             Transmission("D2", 3, "H2O", 0.24, 0.001)])
     w = t.corrections["water"]
@@ -76,8 +76,8 @@ def test_gui_table_panel(tmp_path):
     w.set_folder(RAW)                             # filled automatically (preference, default on)
     p = w.table_panel
     titles = [p.tabs.tabText(i) for i in range(p.tabs.count())]
-    assert len(titles) == 3 and titles[0].startswith("L2 8.0 m") and titles[1].startswith("L2 2.0 m")
-    assert titles[2].startswith("L2 3.9 m") and titles[2].endswith("?") and "(1 run)" in titles[2]
+    assert len(titles) == 3 and titles[0].startswith("SD 8.0 m") and titles[1].startswith("SD 2.0 m")
+    assert titles[2].startswith("SD 3.9 m") and titles[2].endswith("?") and "(1 run)" in titles[2]
     t = p.table
     assert t.corrections["water"].info == "H2O" and len(t.samples) >= 30
     assert p.corr.cellWidget(1, 0).text() == "Water" and p.samp.rowCount() == len(t.samples)
@@ -107,10 +107,10 @@ def test_gui_table_panel(tmp_path):
     assert t.water_g is None
     # the geometry of the tab is preset in Add many samples
     pre = dict(p.page.presets())
-    assert pre["L2_m"][0] < 8.0 < pre["L2_m"][1] and pre["kind"] == ("scattering",)
+    assert pre["SD_m"][0] < 8.0 < pre["SD_m"][1] and pre["kind"] == ("scattering",)
     # a test geometry removed completely, also when filling again; restored on demand
     p.remove_geometry(2, confirm=False)
-    assert p.tabs.count() == 2 and p.excluded == ["L2 3.9 m, λ 6.00 Å, L1 8.0 m"]
+    assert p.tabs.count() == 2 and p.excluded == ["SD 3.9 m, λ 6.00 Å, coll 8.0 m"]
     p.check.setChecked(False)
     p.on_fill()
     assert p.tabs.count() == 2
@@ -178,7 +178,7 @@ def test_positions_and_transmissions():
     from pysasfit.sasred.io.transmission import read_transmission_summary
     cat = scan_folder(RAW)
     raws = {e.run: e.raw for e in cat if e.raw}
-    t = rt.from_plan(pl.build_plan(cat), "L2 8.0 m, λ 6.00 Å, L1 8.0 m", raws,
+    t = rt.from_plan(pl.build_plan(cat), "SD 8.0 m, λ 6.00 Å, coll 8.0 m", raws,
                      read_transmission_summary(os.path.join(RAW, "trans.txt")))
     a2 = {r.used[0]: r for r in t.samples if r.info == "EXP-005370-A_2"}
     wrong, right = a2[82080], a2[82131]

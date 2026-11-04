@@ -104,7 +104,7 @@ def test_real_transmission_runs():
     assert w.T_si == pytest.approx(0.2399, abs=0.006) and w.plateau_reached
     assert any("incoherent" in n for n in w.notes)               # no coherent scattering to see
     assert ss.aperture_transmission_runs(run(82172), eb, c).p_cs_lower < 0.002   # empty cell
-    with pytest.raises(ValueError, match="L2"):
+    with pytest.raises(ValueError, match="SD"):
         ss.aperture_transmission_runs(run(82113), eb, c)          # A_1 transmission at 7.63 m
     with pytest.raises(ValueError, match="beam stop"):
         ss.aperture_transmission_runs(run(82079), eb, c)          # a scattering run (bsy = 1 mm)

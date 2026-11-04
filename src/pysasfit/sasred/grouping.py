@@ -3,7 +3,7 @@
 runs of a group are statistically equivalent before they are summed.
 
 Grouping follows BerSANS: a run belongs to a group when every selected metadata entry agrees
-within its *precision* (sample name exactly, temperature within ±0.5 K, L2 within 1 %, ...).
+within its *precision* (sample name exactly, temperature within ±0.5 K, SD within 1 %, ...).
 
 BerSANS then sums all files of the group. :func:`check_runs` adds what is missing there: it
 compares the reduced I(q) of the runs with their propagated uncertainties and tells
@@ -65,8 +65,8 @@ def mid_time(raw) -> Optional[float]:
 #: selectable metadata entries of a run (name -> getter of the raw run)
 FIELDS: Dict[str, Callable] = {
     "sample": lambda r: r.sample_name,
-    "L2_m": lambda r: r.L2_m,
-    "L1_m": lambda r: r.L1_m,
+    "SD_m": lambda r: r.SD_m,
+    "coll_m": lambda r: r.coll_m,
     "wavelength_A": lambda r: r.wavelength_A,
     "dlam_over_lam": lambda r: r.dlam_over_lam_fwhm,
     "attenuator": lambda r: r.attenuator,
@@ -185,7 +185,7 @@ def group_runs(runs, match: Dict[str, Precision], fields: Optional[Dict[str, Cal
 
     ``match`` maps a metadata entry to its precision: ``None`` = equal values, a number = the
     largest spread within a group in the unit of the entry, ``"1%"`` = relative spread.
-    Example: ``{"sample": None, "L2_m": "1%", "wavelength_A": "2%", "attenuator": None,
+    Example: ``{"sample": None, "SD_m": "1%", "wavelength_A": "2%", "attenuator": None,
     "temperature": 0.5}``. Groups are sorted by their first start time."""
     f = dict(FIELDS, **(fields or {}))
     raws = [getattr(r, "raw", r) for r in runs]
@@ -515,7 +515,7 @@ _RX = re.compile(r"^(?P<k>[^=]+)=(?P<v>.*)$")
 
 
 def main(argv=None):  # pragma: no cover -- thin CLI
-    """``pysasred-groups RAW_FOLDER sample L2_m=1% wavelength_A=2% attenuator`` lists the groups."""
+    """``pysasred-groups RAW_FOLDER sample SD_m=1% wavelength_A=2% attenuator`` lists the groups."""
     import argparse
 
     from .catalogue import scan_folder

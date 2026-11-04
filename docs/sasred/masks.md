@@ -13,7 +13,7 @@ the pixel is used, any set bit excludes it and says why.
 | 32 | efficiency | orange | no detector-efficiency estimate for the pixel (its whole row or column was masked in the water run; set by the reduction) |
 
 A new detector image starts with the standard mask and a **first guess of the beamstop**: a square of half
-width 6 pixels around the beam centre (the SANS-I beamstops are square; shape and size under *beamstop guess*
+width 6 pixels around the beam centre (the SANS-I beamstops are square; shape and size under *beamstop*
 on the Reduction panel). It is only a start and is meant to be adjusted with the mask tools or replaced by
 *Suggest*. As long as the mask is untouched, the guess follows the beam centre and the size; *Into mask* puts
 the current guess into an edited mask (replacing its beamstop pixels). The mask is used at once by the live
@@ -29,7 +29,7 @@ leaking at its left edge (cyan, under the outline) and the rectangle (magenta).*
 
 ## One mask per instrument configuration
 
-Every instrument configuration has its own mask: collimation L1 and detector distance L2 (0.1 m), wavelength
+Every instrument configuration has its own mask: collimation coll and detector distance SD (0.1 m), wavelength
 (0.1 Å), beam stop type (`SANS/beam_stop/out_flag`, BerSANS "Beamstop") and beam stop position x, y (1 mm)
 ({func}`pysasfit.sasred.catalogue.mask_key`). Selecting a run of another configuration switches the mask in the
 editor; the edited mask of the previous configuration is kept. The line below the mask tools names the

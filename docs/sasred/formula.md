@@ -155,8 +155,8 @@ Vifor, water 8 m (82280–82292, empty cell 82281–82291) against 2 m (82203, 8
 * The offset is applied by default: preference *offset added to the recorded distance*
   (`sasred.detector.distance_offset_mm`, factory **53 mm**), optionally only for runs started before
   a date (`sasred.detector.distance_offset_before`) once the instrument configuration writes the
-  corrected distance. The recorded distance stays `RawRun.L2_m` (run table, grouping, selection,
-  labels); the distance to the detection layer `RawRun.L2_effective_m` = recorded + offset is used for
+  corrected distance. The recorded distance stays `RawRun.SD_m` (run table, grouping, selection,
+  labels); the distance to the detection layer `RawRun.SD_effective_m` = recorded + offset is used for
   q and the solid angle, and every reduction notes it. With +53 mm the 8 m and 2 m water agree per
   steradian (C = 1.0001 ± 0.0005) and the water anisotropy becomes K(2θ)/K(0) = 0.997 at 5°, 0.988 at
   10°, 0.974 at 15° (0.993 and 0.984 with the dome divided out).
@@ -197,4 +197,4 @@ attenuator 1 at 8 m, empty beam 82173, no Cd run:
 * EXP-005370-A_2: `trans.txt` gives 0.2966, run 82114 at changer position 29.3 mm gives 0.418
   (B_2, C_2, D_2, E_2: 0.419–0.422). The first-night runs of A_2 (position 3.0 mm, next to A_1 at
   0.3 mm) have the transmission of A_1.
-* The A_1 transmission run 82113 was recorded at L2 = 7.63 m instead of 8 m.
+* The A_1 transmission run 82113 was recorded at SD = 7.63 m instead of 8 m.

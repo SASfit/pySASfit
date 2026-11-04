@@ -51,18 +51,18 @@ def looks_like_direct_beam(raw, fraction: float = 0.6) -> bool:
 
 
 def _config_key(raw):
-    """(L2 to 0.1 m, λ to 0.1 Å, L1 to 0.1 m): the beam centre moves with all three (gravity
-    with L2, λ and the collimation)."""
-    return (round(raw.L2_m, 1), round(raw.wavelength_A, 1), round(float(raw.L1_m), 1))
+    """(SD to 0.1 m, λ to 0.1 Å, coll to 0.1 m): the beam centre moves with all three (gravity
+    with SD, λ and the collimation)."""
+    return (round(raw.SD_m, 1), round(raw.wavelength_A, 1), round(float(raw.coll_m), 1))
 
 
 def _key_text(k) -> str:
-    return f"L1 {k[2]:g} m, L2 {k[0]:g} m, λ {k[1]:g} Å" if len(k) > 2 else f"L2 {k[0]:g} m, λ {k[1]:g} Å"
+    return f"coll {k[2]:g} m, SD {k[0]:g} m, λ {k[1]:g} Å" if len(k) > 2 else f"SD {k[0]:g} m, λ {k[1]:g} Å"
 
 
 def _nearest(cands, k, weight=None):
-    """Donor configuration for ``k``: same λ required; same collimation L1 preferred; then the
-    nearest L2 (``weight(kk)``: further preference, e.g. more direct-beam runs)."""
+    """Donor configuration for ``k``: same λ required; same collimation coll preferred; then the
+    nearest SD (``weight(kk)``: further preference, e.g. more direct-beam runs)."""
     same = [kk for kk in cands if kk[1] == k[1]]
     if not same:
         return None
@@ -71,25 +71,25 @@ def _nearest(cands, k, weight=None):
 
 
 def mask_key(raw) -> tuple:
-    """Instrument configuration a mask belongs to: collimation L1 and distance L2 (0.1 m),
+    """Instrument configuration a mask belongs to: collimation coll and distance SD (0.1 m),
     wavelength (0.1 Å), beam stop type and beam stop position (x, y to 1 mm)."""
     bx, by = getattr(raw, "beamstop_xy_mm", (np.nan, np.nan))
     bst = str(getattr(raw, "beamstop_type", "") or "")
     if getattr(raw, "bank", ""):                     # SANS-LLB wide-angle panel: a mask of its own
         bst = f"{bst} | {raw.bank} panel"
-    return (round(float(raw.L1_m), 1), round(float(raw.L2_m), 1), round(float(raw.wavelength_A), 1),
+    return (round(float(raw.coll_m), 1), round(float(raw.SD_m), 1), round(float(raw.wavelength_A), 1),
             bst, int(round(bx)) if np.isfinite(bx) else None,
             int(round(by)) if np.isfinite(by) else None)
 
 
 def mask_key_label(key) -> str:
-    L1, L2, lam, bst, bx, by = key
-    return (f"L1 {L1:g} m, L2 {L2:g} m, λ {lam:g} Å, beam stop {bst or '?'} at ({bx}, {by}) mm")
+    coll, SD, lam, bst, bx, by = key
+    return (f"coll {coll:g} m, SD {SD:g} m, λ {lam:g} Å, beam stop {bst or '?'} at ({bx}, {by}) mm")
 
 
 @dataclass
 class BeamstopGeometry:
-    """Where the beam stop is relative to the beam centre, per configuration (L2, λ).
+    """Where the beam stop is relative to the beam centre, per configuration (SD, λ).
 
     The beam stop motors (bsx, bsy) [mm] are tied to detector pixels by the shadow of the beam stop
     in the scattering runs (``ref_mm`` <-> ``shadow_px``, signs ``sign`` from the instrument file);
@@ -144,7 +144,7 @@ def _signs(raw=None):
 
 
 def beamstop_geometry(raws) -> dict:
-    """:class:`BeamstopGeometry` per configuration key (L2, λ, L1) of a set of runs."""
+    """:class:`BeamstopGeometry` per configuration key (SD, λ, coll) of a set of runs."""
     from collections import Counter
 
     from .core.beamcentre import masked_centre_of_gravity
@@ -198,14 +198,14 @@ def beamstop_geometry(raws) -> dict:
 
 @dataclass
 class GeometryCentre:
-    """Beam centre of one geometry (L2, λ, L1)."""
+    """Beam centre of one geometry (SD, λ, coll)."""
     key: tuple
     x: float
     y: float
     sigma_x: float
     sigma_y: float
     runs: List[int]
-    source: str                      # "direct beam" | "borrowed from L2 = … m" | "by hand"
+    source: str                      # "direct beam" | "borrowed from SD = … m" | "by hand"
 
     def describe(self) -> str:
         return (f"{_key_text(self.key)}: x = {self.x:.3f} ± {self.sigma_x:.3f}, "
@@ -214,15 +214,15 @@ class GeometryCentre:
 
 
 def config_key(raw) -> tuple:
-    """Geometry key (L2 to 0.1 m, λ to 0.1 Å, L1 to 0.1 m) under which beam centres are kept."""
+    """Geometry key (SD to 0.1 m, λ to 0.1 Å, coll to 0.1 m) under which beam centres are kept."""
     return _config_key(raw)
 
 
 def beam_centres(raws, borrow: bool = True) -> Dict[tuple, GeometryCentre]:
-    """Beam centre per geometry (L2, λ, L1) from its direct-beam runs (beam stop out): median of the
+    """Beam centre per geometry (SD, λ, coll) from its direct-beam runs (beam stop out): median of the
     masked centres of gravity, σ from their spread (or the statistical σ for one run). The solid
     angle and q of every pixel depend on it, so each geometry needs its own centre (gravity shifts
-    it with L2 and λ, the collimation L1 changes the beam). With ``borrow`` a geometry without
+    it with SD and λ, the collimation coll changes the beam). With ``borrow`` a geometry without
     direct-beam run gets the centre of the same wavelength, preferably the same collimation, at the
     nearest distance, marked as borrowed."""
     from .core.beamcentre import masked_centre_of_gravity
@@ -326,14 +326,14 @@ class CatalogueEntry:
             kind = "trans." if is_transmission(r) else "scatt."
         if self.remark:
             kind += " ?"
-        L2 = f"{r.L2_m:.2f}"
+        SD = f"{r.SD_m:.2f}"
         bx, by = r.beamstop_xy_mm
         bs = f"{r.beamstop_type or '?'} ({bx:.0f}, {by:.0f})"
         dl = "" if r.dlam_over_lam_fwhm is None else f"{r.dlam_over_lam_fwhm:.3f}"
         tilt = getattr(r, "selector_tilt_deg", None)
         if tilt is not None:
             dl += f" ({round(tilt, 1) + 0.0:g}°)"
-        return [r.run, r.sample_name, kind, lam, dl, f"{r.L1_m:.1f}", L2, bs,
+        return [r.run, r.sample_name, kind, lam, dl, f"{r.coll_m:.1f}", SD, bs,
                 r.attenuator,
                 f"{r.monitors.get('monitor1' if r.instrument == 'sans_i' else r.preset_monitor, 0):.4g}", f"{r.counting_time_s:.1f}", f"{tot:d}",
                 "yes" if r.aborted else "", self.comment()]
@@ -348,7 +348,7 @@ class CatalogueEntry:
         return "; ".join(parts)
 
 
-COLUMNS = ["run", "sample", "kind", "λ [nm]", "dλ/λ (tilt)", "L1 [m]", "L2 [m]", "beam stop (x, y mm)", "att.", "monitor1",
+COLUMNS = ["run", "sample", "kind", "λ [nm]", "dλ/λ (tilt)", "coll [m]", "SD [m]", "beam stop (x, y mm)", "att.", "monitor1",
            "time [s]", "counts", "aborted", "comment"]
 
 

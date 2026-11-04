@@ -22,8 +22,8 @@ def test_criteria():
     assert not Criterion("sample", text="EXP-.*").test("H2O")
     assert not Criterion("sample", text="EXP-.*", regex=False).test("EXP-1")
     assert Criterion("attenuator", text="0").test("0") and Criterion("attenuator", text="0").test(0.0)
-    assert Criterion("L2_m", "range", lo=1.99, hi=2.01).test(2.0007)
-    assert not Criterion("L2_m", "range", lo=1.99, hi=2.01).test(8.0)
+    assert Criterion("SD_m", "range", lo=1.99, hi=2.01).test(2.0007)
+    assert not Criterion("SD_m", "range", lo=1.99, hi=2.01).test(8.0)
     assert Criterion("x", "range", lo=None, hi=5).test(-3) and not Criterion("x", "range", lo=1).test(None)
 
 
@@ -49,8 +49,8 @@ def test_vifor_like_bersans():
     meta = Metadata(scan_folder(RAW))
     assert "hdf:SANS/Dornier-VS/lambda" in meta.fields() and "hdf:sample/name" in meta.fields()
     crit = [Criterion("sample", text="EXP-.*"), Criterion("hdf:SANS/Dornier-VS/lambda", "range", lo=0.59, hi=0.61),
-            Criterion("attenuator", text="0"), Criterion("L1_m", "range", lo=8, hi=8),
-            Criterion("L2_m", "range", lo=1.99, hi=2.01)]
+            Criterion("attenuator", text="0"), Criterion("coll_m", "range", lo=8, hi=8),
+            Criterion("SD_m", "range", lo=1.99, hi=2.01)]
     sel = select_runs(meta, (82059, 82294), criteria=crit)
     assert len(sel) == 52 and sel[0].run == 82096
     groups = group_selected(meta, sel, {"sample": None})
@@ -76,7 +76,7 @@ def test_add_many_samples_dialog():
     d.search.set_values("sample", "EXP-.*")
     d.search.set_values("hdf:SANS/Dornier-VS/lambda", 0.59, 0.61)
     d.search.set_values("attenuator", "0")
-    d.search.set_values("L2_m", 1.99, 2.01)
+    d.search.set_values("SD_m", 1.99, 2.01)
     d.on_search()
     assert len(d.selected) == 52 and d.tabs.currentIndex() == 1 and d.sel_list.count() == 52
     assert len(d.groups()) == 30 and d.preview.rowCount() == 30

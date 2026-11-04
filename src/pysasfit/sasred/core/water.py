@@ -160,9 +160,9 @@ def compare_water(I_a, s_a, tt_a, I_b, s_b, tt_b, valid, L_a: float, L_b: float,
 
 
 def water_image(waters, empties, blocked, centre, t_water, t_empty, instrument=None, dome: bool = False,
-                L2_m: Optional[float] = None):
-    """Solid-angle corrected water image of summed runs: returns (I, σ, mask, geometry, L2, rate).
-    ``L2_m``: distance for the geometry (default: the effective distance of the first water run)."""
+                SD_m: Optional[float] = None):
+    """Solid-angle corrected water image of summed runs: returns (I, σ, mask, geometry, SD, rate).
+    ``SD_m``: distance for the geometry (default: the effective distance of the first water run)."""
     from ..reduce import _as_list, _transmission, combined_normalised_counts, load_instrument
     from .efficiency import water_intensity
     from .geometry import pixel_geometry
@@ -182,24 +182,24 @@ def water_image(waters, empties, blocked, centre, t_water, t_empty, instrument=N
         E, m = combined_normalised_counts(ecs, inst, notes, m)
     if bls:
         B, m = combined_normalised_counts(bls, inst, notes, m)
-    L2 = float(getattr(ws[0], "L2_effective_m", ws[0].L2_m)) if L2_m is None else float(L2_m)
+    SD = float(getattr(ws[0], "SD_effective_m", ws[0].SD_m)) if SD_m is None else float(SD_m)
     if getattr(ws[0], "panel", None) is not None:
         from .geometry import run_geometry
         g = run_geometry(ws[0], centre)
-        L2 = g.L2_m
+        SD = g.SD_m
     else:
-        g = pixel_geometry(ws[0].counts.shape, ws[0].pixel_size_m, centre, L2, ws[0].wavelength_A)
+        g = pixel_geometry(ws[0].counts.shape, ws[0].pixel_size_m, centre, SD, ws[0].wavelength_A)
     I = water_intensity(W, E, tw, te if E is not None else 1.0, g.d_omega, B)
     if dome:
         from .detector_model import window_transmission
         con = inst["detector"].get("construction", {})
         c, mem = con.get("window", {}), con.get("membrane", {})
-        T = window_transmission(ws[0].wavelength_A, g.x, g.y, L2, c.get("thickness_m", 0.007),
+        T = window_transmission(ws[0].wavelength_A, g.x, g.y, SD, c.get("thickness_m", 0.007),
                                 mem.get("thickness_m", 0.002) if mem.get("material") == "Al" else 0.0,
                                 c.get("radius_of_curvature_m") or 0.93, c.get("apex_to_detector_m"))
         I = I / T
     rate = float(np.sum([w.counts.sum() for w in ws]) / np.sum([w.counting_time_s for w in ws]))
-    return I.value, I.std(systematic=False), m, g, L2, rate
+    return I.value, I.std(systematic=False), m, g, SD, rate
 
 
 def compare_water_runs(water_a, empty_a, water_b, empty_b, beam_center_px, t_water, t_empty,
@@ -260,7 +260,7 @@ def fit_distance_offset(sets, t_water, t_empty, instrument=None, dome: bool = Tr
     for st in sets:
         ws = st["water"] if isinstance(st["water"], (list, tuple)) else [st["water"]]
         imgs.append(water_image(ws, st.get("empty"), st.get("blocked"), st["centre"], t_water, t_empty, inst, dome,
-                                L2_m=ws[0].L2_m))
+                                SD_m=ws[0].SD_m))
     return fit_offset_images([(I, s, m, g.two_theta, L) for I, s, m, g, L, _ in imgs], free_constant, deltas)
 
 

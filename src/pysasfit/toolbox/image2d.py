@@ -41,10 +41,17 @@ class Image2D:
     unit: str = ""
     centre_px: Optional[Tuple[float, float]] = None     # (x, y) 0-based
     pixel_m: Optional[Tuple[float, float]] = None
-    L2_m: Optional[float] = None
+    SD_m: Optional[float] = None
     wavelength_A: Optional[float] = None
     entry: str = ""
     _qxy: Optional[Tuple[np.ndarray, np.ndarray]] = None   # given q (1/nm) when the geometry is unknown
+
+    def __post_init__(self):
+        from ..sasred.legacy import rename_keys
+        new = rename_keys(self.meta)                # files written before coll / SD (L1_m, L2_m)
+        if new != self.meta:                        # in place: readers keep filling the same dict
+            self.meta.clear()
+            self.meta.update(new)
 
     # ------------------------------------------------------------------ naming
     @property
@@ -59,11 +66,11 @@ class Image2D:
     @property
     def geometry_label(self) -> str:
         s = []
-        L1 = _num(self.meta.get("L1_m")) if self.meta.get("L1_m") is not None else _num(self.meta.get("Setup/Collimation"))
-        if L1 is not None:
-            s.append(f"L1 {L1:.1f} m")
-        if self.L2_m is not None:
-            s.append(f"L2 {self.L2_m:.2f} m")
+        coll = _num(self.meta.get("coll_m")) if self.meta.get("coll_m") is not None else _num(self.meta.get("Setup/Collimation"))
+        if coll is not None:
+            s.append(f"coll {coll:.1f} m")
+        if self.SD_m is not None:
+            s.append(f"SD {self.SD_m:.2f} m")
         if self.wavelength_A is not None:
             s.append(f"λ {self.wavelength_A / 10:.3f} nm")
         return ", ".join(s) or "pixels"
@@ -71,19 +78,19 @@ class Image2D:
     # ------------------------------------------------------------------ geometry
     @property
     def has_q(self) -> bool:
-        return self._qxy is not None or None not in (self.centre_px, self.pixel_m, self.L2_m, self.wavelength_A)
+        return self._qxy is not None or None not in (self.centre_px, self.pixel_m, self.SD_m, self.wavelength_A)
 
-    def set_geometry(self, centre_px=None, pixel_m=None, L2_m=None, wavelength_A=None):
+    def set_geometry(self, centre_px=None, pixel_m=None, SD_m=None, wavelength_A=None):
         """Set (or correct) the geometry; q and ψ then follow from it."""
         if centre_px is not None:
             self.centre_px = (float(centre_px[0]), float(centre_px[1]))
         if pixel_m is not None:
             self.pixel_m = (float(pixel_m), float(pixel_m)) if np.isscalar(pixel_m) else tuple(map(float, pixel_m))
-        if L2_m is not None:
-            self.L2_m = float(L2_m)
+        if SD_m is not None:
+            self.SD_m = float(SD_m)
         if wavelength_A is not None:
             self.wavelength_A = float(wavelength_A)
-        if None not in (self.centre_px, self.pixel_m, self.L2_m, self.wavelength_A):
+        if None not in (self.centre_px, self.pixel_m, self.SD_m, self.wavelength_A):
             self._qxy = None
 
     def qxy(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -97,7 +104,7 @@ class Image2D:
         x = (ix - self.centre_px[0]) * self.pixel_m[0]
         y = (iy - self.centre_px[1]) * self.pixel_m[1]
         r = np.hypot(x, y)
-        tth = np.arctan2(r, self.L2_m)
+        tth = np.arctan2(r, self.SD_m)
         q = 4 * np.pi / (self.wavelength_A / 10.0) * np.sin(tth / 2)          # 1/nm
         with np.errstate(invalid="ignore", divide="ignore"):
             c = np.where(r > 0, x / r, 0.0)
@@ -200,11 +207,13 @@ def _read_nxcansas(path) -> List[Image2D]:
                                 img.centre_px = (gv["beam_center_x"], gv["beam_center_y"])
                             if gv.get("x_pixel_size"):
                                 img.pixel_m = (gv["x_pixel_size"], gv.get("y_pixel_size") or gv["x_pixel_size"])
-                            img.L2_m = gv.get("SDD")
+                            img.SD_m = gv.get("SDD")
                             img.wavelength_A = gv.get("wavelength")
+                from ..sasred.legacy import rename_keys
+                meta.update(rename_keys(meta))
                 meta.setdefault("sample", meta.get("title", ""))
-                if img.L2_m is None and _num(meta.get("L2_m")) is not None:
-                    img.L2_m = _num(meta["L2_m"])
+                if img.SD_m is None and _num(meta.get("SD_m")) is not None:
+                    img.SD_m = _num(meta["SD_m"])
                 if img.wavelength_A is None and _num(meta.get("wavelength_A")) is not None:
                     img.wavelength_A = _num(meta["wavelength_A"])
                 if not img.has_q and "Qx" in d and "Qy" in d:
@@ -248,11 +257,11 @@ def _read_bersans(path) -> Image2D:
     I = arr(blocks["Counts"])
     dI = arr(blocks["Errors"]) if "Errors" in blocks else None
     meta["sample"] = meta.get("Sample/SampleName", os.path.basename(path))
-    L2 = _num(meta.get("Setup/SD"))
+    SD = _num(meta.get("Setup/SD"))
     lam = _num(meta.get("Setup/Lambda"))
     img = Image2D(I, dI, np.zeros(I.shape, bool), str(path), "bersans-2d", meta,
                   unit="1/cm/sr (BerSANS)", pixel_m=(SANS_I_PIXEL_M, SANS_I_PIXEL_M),
-                  L2_m=L2, wavelength_A=10 * lam if lam else None)
+                  SD_m=SD, wavelength_A=10 * lam if lam else None)
     for kx, ky in (("History/BeamcenterX", "History/BeamcenterY"), ("Setup/BeamcenterX", "Setup/BeamcenterY")):
         if _num(meta.get(kx)) is not None and _num(meta.get(ky)) is not None:
             img.centre_px = (_num(meta[kx]) - 1.0, _num(meta[ky]) - 1.0)      # BerSANS counts from 1
@@ -294,5 +303,5 @@ def image_from_reduced(reduced, key=None) -> Image2D:
                    np.asarray(mask) != 0, f"pySASred:{tag}", "pySASred (memory)", meta,
                    unit=getattr(img, "unit", "") or getattr(r, "unit", ""),
                    centre_px=tuple(map(float, par.get("beam_center_px", (np.nan, np.nan)))),
-                   pixel_m=(ps, ps) if np.isscalar(ps) else tuple(ps), L2_m=float(r.geometry.L2_m),
+                   pixel_m=(ps, ps) if np.isscalar(ps) else tuple(ps), SD_m=float(r.geometry.SD_m),
                    wavelength_A=float(raw.wavelength_A))

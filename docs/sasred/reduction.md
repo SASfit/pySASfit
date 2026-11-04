@@ -44,10 +44,10 @@ Instrument constants come from `pysasfit/sasred/instruments/sinq/sans_i.yaml`.
 | 4 dead time | non-paralysable, N·f with f = 1/(1 − τR), R = total counts / time (global for the multiwire detector, per tube for tube detectors); τ = 6.6·10⁻⁷ s | rank-1 coupling of all pixels; τ when its uncertainty is known |
 | 5 attenuator | divided by the transmission of the selected attenuator | when known |
 | 6 normalisation | divided by monitor 1 (Poisson σ² = M) or by the counting time | `monitor1:<run>`, systematic |
-| 7, 11 geometry, solid angle | lab-frame position of every pixel relative to the beam centre **of the geometry of the run** (L2, λ; from its direct-beam runs), with the detector tilt α about the vertical axis through the beam spot; 2θ = atan2(√(x²+y²), z); ΔΩ = A·L2·cos α / r³ (exact to first order in the pixel area, checked against brute-force integration). L2 is the effective distance (recorded + offset, if set) | – |
+| 7, 11 geometry, solid angle | lab-frame position of every pixel relative to the beam centre **of the geometry of the run** (SD, λ; from its direct-beam runs), with the detector tilt α about the vertical axis through the beam spot; 2θ = atan2(√(x²+y²), z); ΔΩ = A·SD·cos α / r³ (exact to first order in the pixel area, checked against brute-force integration). SD is the effective distance (recorded + offset, if set) | – |
 | 12 efficiency | optional: divided by the detector efficiency from water (below) | water, empty-cell and transmission sources |
 | 14 average | radial or sector average as a sparse linear map over the valid pixels whose centre falls in the bin (no pixel splitting yet) | linear, exact |
-| resolution | Qdev² = (q σ_λ/λ)² + beam divergence from the direct beam of the geometry + spread of the pixel q in the bin (below); without a direct-beam measurement no Qdev | – |
+| resolution | Qdev² = (q σ_λ/λ)² + beam divergence from the direct beam of the geometry + spread of the pixel q in the bin (below); without a direct-beam measurement the divergence is estimated from the collimation | – |
 
 The solid angle is computed only once the beam centre of the run's geometry is known: q, 2θ and ΔΩ of every pixel
 are measured from it. The order relative to steps 3–6 does not matter (all are factors per pixel); it is applied
@@ -79,11 +79,30 @@ $$
 - **Pixel size:** because the model is integrated over the pixel, $s_x, s_y$ are the widths of the beam itself,
   without the pixel size.
 - **Divergence:** the angular standard deviations seen from the sample are
-  $\sigma_{\theta,x} = s_x p_x / L_2$ and $\sigma_{\theta,y} = s_y p_y / L_2$.
+  $\sigma_{\theta,x} = s_x p_x / \mathrm{SD}$ and $\sigma_{\theta,y} = s_y p_y / \mathrm{SD}$.
 - **Non-Gaussian beams:** the second moments of the beam are compared. A difference above 25 % (box-shaped beam,
   tails) is noted.
-- **No borrowing:** a geometry without a direct-beam run gets no profile, because the beam size depends on L1, L2
-  and the apertures.
+- **No borrowing:** a geometry without a direct-beam run does not take the profile of another geometry, because
+  the beam size depends on coll, SD and the apertures. Its divergence is **estimated from the collimation**
+  instead (below).
+
+**Divergence from the collimation (no direct beam yet).** The source aperture a₁ (on SANS-I the neutron-guide
+cross-section, 50 × 50 mm²) lies the collimation length coll before the sample aperture a₂ (typically 8 × 14 mm²,
+x × y), the detector SD behind it. Each aperture adds a uniform distribution to the beam spot on the detector
+(Mildner & Carpenter 1984), so per detector axis
+
+$$
+\sigma_\text{spot}^2 = \frac{(a_1\,\mathrm{SD}/\mathrm{coll})^2}{12} + \frac{\bigl(a_2\,(\mathrm{coll}+\mathrm{SD})/\mathrm{coll}\bigr)^2}{12},
+\qquad \sigma_\theta = \sigma_\text{spot}/\mathrm{SD}
+$$
+
+({func}`~pysasfit.sasred.core.beamprofile.collimation_profile`). coll and SD come from the raw file, the apertures
+from the instrument file (`collimation.source_aperture_mm`, `collimation.sample_aperture_mm`): the sample aperture
+actually used is not recorded. The estimate is used like a measured profile; the log, the notes ("estimated from
+the collimation (guide 50×50 mm², sample aperture 8×14 mm², …)") and *Missing input* (orange) say so. For Vifor at
+coll = SD = 8 m it gives σ = 15.3 × 16.6 mm against 13.6 × 13.6 mm measured: about 15–20 % too large, on the safe
+side. Without the collimation data (or without apertures in the instrument file, as for SANS-LLB) there is no
+resolution.
 
 **1D: Qdev per point** ({func}`~pysasfit.sasred.core.resolution.sigma_q_1d`). With $q = 2k\sin\theta$,
 $k = 2\pi/\lambda$, $\mathrm dq/\mathrm d(2\theta) = k\cos\theta$, and $\phi$ the azimuth of a pixel:
@@ -145,7 +164,7 @@ in every frame (λ ∝ 1/speed; the stored λ is that of the last frame): it is 
 - Sample runs of one row at different tilts are summed; dλ/λ of the first run is used (*check*).
 
 The beam centre, the beam profile (divergence) and the efficiency map do not depend on the tilt and are shared
-by all tilts of a geometry (L1, L2, λ).
+by all tilts of a geometry (coll, SD, λ).
 
 The triangular wavelength distribution has $\sigma_\lambda/\lambda = \mathrm{FWHM}/\sqrt6$. The divergence term
 is averaged over the pixels of the bin, i.e. in the radial direction of each pixel; the last term contains the
@@ -155,8 +174,8 @@ pixel size.
 covariance of $(q_x, q_y)$ is
 
 $$
-\Sigma = k^2\cos^2\theta\,\operatorname{diag}\bigl(\sigma_{\theta,x}^2 + \tfrac{(p_x/L_2)^2}{12},\;
-          \sigma_{\theta,y}^2 + \tfrac{(p_y/L_2)^2}{12}\bigr)
+\Sigma = k^2\cos^2\theta\,\operatorname{diag}\bigl(\sigma_{\theta,x}^2 + \tfrac{(p_x/\mathrm{SD})^2}{12},\;
+          \sigma_{\theta,y}^2 + \tfrac{(p_y/\mathrm{SD})^2}{12}\bigr)
        + (q\,\sigma_\lambda/\lambda)^2\,\hat q\hat q^{\mathsf T} .
 $$
 
@@ -168,7 +187,8 @@ The divergence and the pixel width act along the detector axes; the wavelength t
 - **1D NXcanSAS:** `Qdev`.
 - **Text files:** the fourth column.
 
-**Without a direct-beam measurement** the reduction runs without resolution:
+**Without a direct-beam measurement and without the collimation estimate** (or in a script without a profile)
+the reduction runs without resolution:
 - the notes, the log and the panel *Missing input* (row Direct beam, "resolution") say so;
 - NXcanSAS files have no Qdev (and Q no `resolutions`);
 - text files have Qdev = 0, with a header line saying the resolution was not determined, because readers take the
@@ -181,7 +201,8 @@ The same happens without dλ/λ in the raw file.
 - the second moments give 16.8 mm (the beam is somewhat box-shaped).
 
 Qdev/q is 27 % at q = 0.0066 Å⁻¹, where the divergence dominates, and 4.7 % at q = 0.084 Å⁻¹, where the wavelength
-spread (4.1 %) dominates. The 2 m geometry has no direct-beam run, so it gets no resolution.
+spread (4.1 %) dominates. The 2 m geometry has no direct-beam run: its divergence is estimated from the
+collimation (σθ = 2.3 × 3.1 mrad).
 
 The formulas use the small-angle form of the divergence term along the detector axes. For the SANS-LLB wide-angle
 panels the divergence measured on the central detector is applied as an angle.
@@ -277,7 +298,7 @@ In the window: **Reduce all samples (2D → I(q))** or **Reduce selected samples
 reduction table (or the *Reduction* menu). The mask is the edited mask when the geometry is the one shown in
 the detector panel, otherwise the suggested mask of the first sample run; the beam centre is that of the
 geometry; q bins, sector and normalisation come from the Reduction panel. The results appear in I(q) as
-*"L2 8.0 m No. 3"* etc., *view → reduced 2D* in the detector panel shows the 2D image of the result chosen,
+*"SD 8.0 m No. 3"* etc., *view → reduced 2D* in the detector panel shows the 2D image of the result chosen,
 and they are saved like single runs. With the Vifor data (water and empty cell, no Cd) A_3 and D_3 at 8 m and
 2 m agree within 1 % in the q range both cover, and water reduced as a sample gives the flat
 g(λ) (1 − τ_W)/(4π T_W d) = 1.289 × 1.208 = 1.557 cm⁻¹ sr⁻¹ for d = 0.2 cm at 0.6 nm (T_W = 0.2399,
@@ -345,7 +366,7 @@ beam would give 27 % more.
 
 Construction (instrument file, `detector.construction`; {mod}`pysasfit.sasred.core.detector_model`): Al dome
 window 7 mm thick, Ø 1300 mm, radius of curvature 930 mm (cap depth 26.5 cm); ⁴He at 2.7 bar in the dome; a
-flat 2 mm Al membrane; ³He at 2.7 bar with CF₄ as stopping gas. Still to confirm: active depth, ⁴He path between window and membrane, CF₄ pressure and the plane the recorded L2 refers to. The dome apex lies
+flat 2 mm Al membrane; ³He at 2.7 bar with CF₄ as stopping gas. Still to confirm: active depth, ⁴He path between window and membrane, CF₄ pressure and the plane the recorded SD refers to. The dome apex lies
 26.5 cm in front of the detection plane (confirmed), i.e. the rim of the dome is in the detection plane.
 
 | λ [Å] | Σ(³He) [cm⁻¹] | 1/Σ [cm] | T Al 7 mm (+ 2 mm) | efficiency, depth 2 / 3 / 5 cm | ⟨z⟩, depth 3 cm [cm] |
@@ -374,7 +395,7 @@ Consequences:
 * **Parallax:** neutrons at ψ = 15° are detected 0.2 cm farther out than their entrance point (0.27 pixel).
 * **Distance:** the neutrons are detected on average ⟨z⟩ ≈ 0.75 cm (6 Å) behind the start of the active volume.
   This explains less than 1 cm of the +5.3 cm distance offset found with water at 8 m and 2 m; the rest has to
-  come from where L2 is measured (e.g. to the dome window, followed by the ⁴He layer and the membrane). ⟨z⟩
+  come from where SD is measured (e.g. to the dome window, followed by the ⁴He layer and the membrane). ⟨z⟩
   changes with λ (0.88 cm at 4.7 Å, 0.42 cm at 12 Å), so water at two distances at another wavelength tells
   the constant part from the conversion depth.
 * **Wavelength:** the efficiency falls from about 0.93 at 6 Å by the window absorption at long λ and rises with
@@ -459,7 +480,7 @@ file** ({mod}`pysasfit.sasred.efficiency_log`). Its location is *Preferences →
 file*; left empty it is `efficiency_archive.h5` next to the preferences file, and the dialog shows that full path.
 
 Each map is one NeXus entry named after the date of its water measurement, e.g.
-`/2026-10-01_L2-8.0m_6.00A_run82280`, with
+`/2026-10-01_SD-8.0m_6.00A_run82280`, with
 
 * `efficiency`: the map, its errors, the filled, undefined and rejected pixels, and the row and column profiles
   (mean efficiency of every y and x wire);
@@ -474,9 +495,9 @@ the maps already in the archive.
 
 ```python
 from pysasfit.sasred import efficiency_log as log
-log.archive_efficiency(eff, comment="Vifor, 7 water runs")   # → '2026-10-01_L2-8.0m_6.00A_run82280'
+log.archive_efficiency(eff, comment="Vifor, 7 water runs")   # → '2026-10-01_SD-8.0m_6.00A_run82280'
 log.list_maps()                                              # summaries, oldest first
-eff_old = log.load_map("2026-09-30_L2-8.0m_6.00A_run82187")  # default: the newest map
+eff_old = log.load_map("2026-09-30_SD-8.0m_6.00A_run82187")  # default: the newest map
 log.history()                         # every map against the oldest of its distance, wavelength and tilt
 log.plot_history().savefig("efficiency_history.png")
 ```

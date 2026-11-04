@@ -14,7 +14,7 @@ is chosen from the file ({func}`pysasfit.sasred.io.raw.read_raw`). Instrument fi
 
 The run in the run table is the **central detector**: beam centre, masks, transmissions, grouping and the
 reduction table work on it as for SANS-I. The wide-angle panels travel along with the run. In the Reduction
-panel, **detector (SANS-LLB)** chooses what *Reduce selected* and the reduction table reduce: the central
+panel, **detector** chooses what *Reduce selected* and the reduction table reduce: the central
 detector, one panel, or all three (results `5262`, `5262 left`, `5262 bottom`; table rows `… No. 1 left`).
 
 A panel is reduced exactly like the central detector: counting error, dead time (τ = 3.5 µs, one rate per
@@ -22,7 +22,7 @@ bank), attenuator, monitor (`monitor2`, the preset monitor), transmission, backg
 absolute scale per pixel (water measured on the same panel, so efficiency and solid angle cancel). Its mask is
 the `sasred.llb.end_px` pixels at both tube ends and tubes without counts.
 
-**Masks.** Every bank has its own mask per instrument configuration (L1, L2, λ, beam stop; the panel name is part
+**Masks.** Every bank has its own mask per instrument configuration (coll, SD, λ, beam stop; the panel name is part
 of the key, e.g. "70 mm | left panel"). The **detector** selector in the detector panel chooses the bank that is
 shown and edited: central, left panel or bottom panel. All mask tools work on the panels as on the central
 detector (draw, mask/unmask, undo, *Suggest*, save/load); a new panel mask starts with the tube ends and dead

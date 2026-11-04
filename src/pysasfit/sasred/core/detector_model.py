@@ -83,19 +83,19 @@ def dome_sag(radius_m: float = 0.93, diameter_m: float = 1.30) -> float:
     return radius_m - np.sqrt(radius_m**2 - (diameter_m / 2) ** 2)
 
 
-def dome_crossing_angle(x_m, y_m, L2_m: float, radius_m: float = 0.93, apex_to_detector_m=None,
+def dome_crossing_angle(x_m, y_m, SD_m: float, radius_m: float = 0.93, apex_to_detector_m=None,
                         diameter_m: float = 1.30):
     """Angle γ [rad] between the neutron path (sample at the origin -> pixel (x, y) in the detection
-    plane at L2) and the normal of the spherical dome window where the path crosses it.
+    plane at SD) and the normal of the spherical dome window where the path crosses it.
 
     The dome is convex towards the sample, its centre on the beam axis; its apex lies
     ``apex_to_detector_m`` in front of the detection plane (default: the sag, i.e. the rim of the
     dome in the detection plane)."""
     a = dome_sag(radius_m, diameter_m) if apex_to_detector_m is None else apex_to_detector_m
     x, y = np.asarray(x_m, float), np.asarray(y_m, float)
-    d = np.sqrt(x * x + y * y + L2_m**2)
-    ux, uy, uz = x / d, y / d, L2_m / d
-    zc = L2_m - a + radius_m                      # centre of the sphere on the axis
+    d = np.sqrt(x * x + y * y + SD_m**2)
+    ux, uy, uz = x / d, y / d, SD_m / d
+    zc = SD_m - a + radius_m                      # centre of the sphere on the axis
     b = uz * zc
     disc = b * b - zc * zc + radius_m**2
     t = b - np.sqrt(np.maximum(disc, 0.0))         # first crossing (the cap facing the sample)
@@ -104,22 +104,22 @@ def dome_crossing_angle(x_m, y_m, L2_m: float, radius_m: float = 0.93, apex_to_d
     return np.arccos(np.clip(cosg, -1.0, 1.0))
 
 
-def dome_transmission(wavelength_A, x_m, y_m, L2_m, thickness_m: float = 0.007, radius_m: float = 0.93,
+def dome_transmission(wavelength_A, x_m, y_m, SD_m, thickness_m: float = 0.007, radius_m: float = 0.93,
                       apex_to_detector_m=None, al_inelastic_b: float = 0.1, relative: bool = True):
     """Transmission of the Al dome per pixel (path thickness / cos γ); with ``relative`` divided by
     its value on the axis, i.e. the part that varies over the detector."""
-    g = dome_crossing_angle(x_m, y_m, L2_m, radius_m, apex_to_detector_m)
+    g = dome_crossing_angle(x_m, y_m, SD_m, radius_m, apex_to_detector_m)
     T = al_transmission(wavelength_A, thickness_m, g, al_inelastic_b)
     return T / al_transmission(wavelength_A, thickness_m, 0.0, al_inelastic_b) if relative else T
 
 
-def window_transmission(wavelength_A, x_m, y_m, L2_m, dome_m: float = 0.007, membrane_m: float = 0.002,
+def window_transmission(wavelength_A, x_m, y_m, SD_m, dome_m: float = 0.007, membrane_m: float = 0.002,
                         radius_m: float = 0.93, apex_to_detector_m=None, al_inelastic_b: float = 0.1,
                         relative: bool = True):
     """Dome (curved, crossing angle γ) and flat Al membrane (incidence angle ψ on the detector plane)
     per pixel; with ``relative`` divided by the value on the axis."""
     x, y = np.asarray(x_m, float), np.asarray(y_m, float)
-    psi = np.arctan(np.hypot(x, y) / L2_m)
-    T = dome_transmission(wavelength_A, x, y, L2_m, dome_m, radius_m, apex_to_detector_m, al_inelastic_b, relative)
+    psi = np.arctan(np.hypot(x, y) / SD_m)
+    T = dome_transmission(wavelength_A, x, y, SD_m, dome_m, radius_m, apex_to_detector_m, al_inelastic_b, relative)
     M = al_transmission(wavelength_A, membrane_m, psi, al_inelastic_b)
     return T * (M / al_transmission(wavelength_A, membrane_m, 0.0, al_inelastic_b) if relative else M)

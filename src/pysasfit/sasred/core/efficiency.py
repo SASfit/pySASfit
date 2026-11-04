@@ -132,14 +132,14 @@ class Efficiency:
             p["description"] = description
 
     #: configuration of the water measurement written to ``instrument`` (meta key, group, name, unit)
-    _CONFIG = (("L2_m", "detector", "distance", "m"),
+    _CONFIG = (("SD_m", "detector", "distance", "m"),
                ("detector_tilt_deg", "detector", "tilt_angle", "deg"),
                ("pixel_size_m", "detector", "pixel_size", "m"),
                ("detector_offset_m", "detector", "offset", "m"),
                ("beam_center_px", "detector", "beam_center", "pixel"),
                ("wavelength_A", "monochromator", "wavelength", "angstrom"),
                ("dlam_over_lam_fwhm", "monochromator", "wavelength_spread", ""),
-               ("L1_m", "collimator", "length", "m"),
+               ("coll_m", "collimator", "length", "m"),
                ("attenuator", "attenuator", "selection", ""))
 
     def _write_instrument(self, entry):
@@ -185,6 +185,8 @@ class Efficiency:
         if "process/meta" in entry:
             raw = entry["process/meta"][()]
             meta = json.loads(raw.decode() if isinstance(raw, bytes) else raw)
+            from ..legacy import rename_keys
+            meta = rename_keys(meta)                    # maps written before coll / SD
         var = np.where(np.isfinite(s), s, 0.0) ** 2
         value = UArray.from_source(v, Source(f"flood:{name}", var.ravel(), "flood", False))
         return cls(value, ~(filled | undefined), filled, undefined, rejected, meta)

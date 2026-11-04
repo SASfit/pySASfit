@@ -10,7 +10,7 @@ from pysasfit.toolbox.image2d import Image2D
 def image(A=1.0, B=2.0, psi0=30.0, n=96, noise=0.0, seed=1, omega=None):
     im = Image2D(np.zeros((n, n)), np.full((n, n), 0.05), np.zeros((n, n), bool), "synthetic.h5", "test",
                  {"sample": "S", **({} if omega is None else {"hdf:sample/omega": omega})}, unit="1/cm/sr",
-                 centre_px=(47.5, 47.5), pixel_m=(0.0075, 0.0075), L2_m=4.0, wavelength_A=6.0)
+                 centre_px=(47.5, 47.5), pixel_m=(0.0075, 0.0075), SD_m=4.0, wavelength_A=6.0)
     psi = np.radians(im.psi_deg() - psi0)
     rng = np.random.default_rng(seed)
     im.I = A + B * np.sin(psi) ** 2 + noise * rng.normal(size=(n, n))
@@ -93,7 +93,7 @@ def test_gui_viewer_to_2d_to_1d(tmp_path):
     v.on_to_2d()
     assert w.tabs.currentWidget() is t and len(t.images) == 1
     eb = t.images[0]
-    assert eb.has_q and eb.L2_m > 8.0 and eb.centre_px == pytest.approx((61.7, 63.9), abs=0.4)
+    assert eb.has_q and eb.SD_m > 8.0 and eb.centre_px == pytest.approx((61.7, 63.9), abs=0.4)
     v.select_path(os.path.join(RAW, "sans2026n082130.hdf"), "/entry1/SANS/detector/counts")
     v.on_to_2d()
     im = t.images[-1]

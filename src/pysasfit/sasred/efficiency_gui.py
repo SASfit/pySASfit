@@ -168,7 +168,7 @@ class EfficiencyMixin:
             m = e.meta or {}
             lab.setText(f"map: {self.shown_efficiency_name or 'loaded'}")
             lab.setToolTip(f"{self.shown_efficiency_name}\nshape {e.shape}, water runs {m.get('water_runs', '?')}, "
-                           f"L2 {m.get('L2_m', '?')} m, λ {m.get('wavelength_A', '?')} Å")
+                           f"SD {m.get('SD_m', '?')} m, λ {m.get('wavelength_A', '?')} Å")
 
     def on_load_efficiency(self):
         p, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Efficiency map", getattr(self, "folder", "") or "",
@@ -346,6 +346,6 @@ class EfficiencyMixin:
         ax.set_ylabel("y [pixel]")
         std = np.nanmedian(np.where(e.measured, e.std(), np.nan)) if e.measured.any() else float("nan")
         ax.set_title(f"efficiency: {self.shown_efficiency_name}\nwater runs {m.get('water_runs', '?')}, "
-                     f"L2 {m.get('L2_m', float('nan')):.2f} m, λ {m.get('wavelength_A', float('nan')):.2f} Å; "
+                     f"SD {m.get('SD_m', float('nan')):.2f} m, λ {m.get('wavelength_A', float('nan')):.2f} Å; "
                      f"rms {np.nanstd(v[e.measured]) if e.measured.any() else float('nan'):.3f}, median σ {std:.3f}; "
                      "outlined: estimated (row × column)", fontsize="small")

@@ -134,7 +134,7 @@ def write_nxcansas_2d(path, reduced, title=None, units="nm"):
         ins.attrs.update({"NX_class": _s("NXinstrument"), "canSAS_class": _s("SASinstrument")})
         det = ins.create_group("sasdetector")
         det.attrs.update({"NX_class": _s("NXdetector"), "canSAS_class": _s("SASdetector")})
-        det["SDD"] = float(geo.L2_m)
+        det["SDD"] = float(geo.SD_m)
         det["SDD"].attrs["units"] = _s("m")
         bc = par.get("beam_center_px") or (np.nan, np.nan)
         det["beam_center_x"] = float(bc[0])

@@ -8,7 +8,7 @@ arrangement.
 ## A first reduction
 
 1. **Choose the raw-data folder**: *Browse…* in the Runs panel (or *File → Open raw-data folder…*). The table
-   lists every `sans<year>n<run>.hdf` with sample name, wavelength, collimation L1, L2, beam stop (type and
+   lists every `sans<year>n<run>.hdf` with sample name, wavelength, collimation coll, SD, beam stop (type and
    x, y position in mm), attenuator, monitor 1, counting time,
    total counts and whether the run was aborted (monitor preset not reached). Aborted runs are shown in red.
    **Runs without usable data** – measuring time 0, 0 counts on the detector (all banks) or the normalising
@@ -16,8 +16,8 @@ arrangement.
    *comment* (e.g. "skipped: measuring time 0 s, 0 counts, monitor2 0"). They are left out of the plan and the
    reduction table, never selected by *Add many samples*, cannot be ticked in the run list of a row, and a
    reduction that is given one anyway leaves it out and says so in the log. The filter field below the folder selects runs by sample name or run number.
-2. **Beam centre**: every geometry (collimation L1, detector distance L2 and wavelength) has its own beam
-   centre, because q and the solid angle of each pixel are computed from it, gravity moves the beam with L2 and
+2. **Beam centre**: every geometry (collimation coll, detector distance SD and wavelength) has its own beam
+   centre, because q and the solid angle of each pixel are computed from it, gravity moves the beam with SD and
    λ and the collimation changes the beam. When the folder
    is read, the centre of each geometry is taken from its direct-beam runs (beam stop out of the beam; median of
    their masked centres of gravity); a geometry without a direct-beam run borrows the centre of the same
@@ -57,16 +57,16 @@ switched off; transmissions come from `trans.txt` in the folder when present. Th
 scattering runs; a geometry with few runs or without water / empty cell is marked with **?** — often a geometry
 measured for tests. **Remove geometry** (or the × of its tab) takes it out of the reduction completely, also
 when the table is filled again; the raw files are not touched and **Restore removed** brings it back. With the
-Vifor data: L2 8 m (91 runs), 2 m (58 runs) and 3.9 m (1 run, marked ?).
+Vifor data: SD 8 m (91 runs), 2 m (58 runs) and 3.9 m (1 run, marked ?).
 
 **New geometry (by hand)** adds an empty tab for a table filled completely by hand; every cell of Information,
 Transmission, Thickness, Attenuator and Probability can be typed, *Copy to all samples below / above* copies
 the value of the selected cell. *Add many samples…* in a tab starts with the search conditions of that geometry
-(scattering runs, L2, λ and L1 within 1–2 %). **Save…** / **Load…** keep all tabs and the removed geometries in
+(scattering runs, SD, λ and coll within 1–2 %). **Save…** / **Load…** keep all tabs and the removed geometries in
 one JSON file next to the data.
 
 The button in the first column of a row opens its runs as a spreadsheet: *use* (summed or not), run, sample,
-kind (scattering / transmission), L2, start time, counting time, monitor, counts per monitor and a comment that
+kind (scattering / transmission), SD, start time, counting time, monitor, counts per monitor and a comment that
 says why a run is left out (outlier with its χ²/ndf against the others and its scale factor, aborted with the
 time or monitor reached, beam stop position not matching the image). Outliers are red, aborted runs orange.
 Runs are switched on or off with the check box, added by number (`82187, 82190-82195`), and *show other runs of
@@ -142,7 +142,7 @@ water.
 1. **Select runs**: a run range (*All available* resets it), optionally a pattern (starting with the first
    run, alternately use n runs and skip m), and conditions on header items checked in the list: text items
    are equal to the value or, with *Regular expressions*, match it as a whole (`EXP-.*`); numbers lie in
-   `from ≤ value ≤ to`. The list holds the named items (sample, L2_m, L1_m, wavelength_A, attenuator,
+   `from ≤ value ≤ to`. The list holds the named items (sample, SD_m, coll_m, wavelength_A, attenuator,
    sample_position_mm, thickness, …, kind = scattering / transmission) and every scalar entry of the raw
    files as *file: <path>*, with the value as stored (e.g. *file: SANS/Dornier-VS/lambda* in nm), so any
    sample environment written to the file (temperature, field, pressure, shear rate) can be used.
@@ -154,7 +154,7 @@ water.
    one sample row per group, with the transmission from `trans.txt` and the transmission runs of the same
    sample and wavelength.
 
-With the Vifor data, *sample* `EXP-.*`, λ 0.59–0.61 nm, attenuator 0, collimation 8 m and L2 1.99–2.01 m select
+With the Vifor data, *sample* `EXP-.*`, λ 0.59–0.61 nm, attenuator 0, collimation 8 m and SD 1.99–2.01 m select
 the same 52 runs as BerSANS; grouped by sample they give 30 samples, 31 with *sample_position_mm* ± 0.25
 (A_2 was measured at two changer positions).
 
@@ -163,7 +163,7 @@ the same 52 runs as BerSANS; grouped by sample they give 30 samples, 31 with *sa
 | field | meaning |
 |---|---|
 | x (axis 1), y (axis 0) | beam centre in pixels, from 0 |
-| beamstop guess | shape (square or disc) and half width / radius of the first guess of the beamstop in the mask of a new image; it follows the beam centre until the mask is edited; *Into mask* puts it into an edited mask |
+| beamstop | shape (square or disc) and half width / radius of the first guess of the beamstop in the mask of a new image; it follows the beam centre until the mask is edited; *Into mask* puts it into an edited mask |
 | number of bins, spacing | q bins between q min and q max, logarithmic (constant Δq/q) or linear; empty bins are dropped |
 | units | **nm, 1/nm** (default) or **Å, 1/Å** for wavelength and q, in the table, the fields, the plots and the saved files. Switching converts q min / q max |
 | q min, q max | limits of the binning; *auto* takes the q range of the unmasked pixels |
@@ -172,8 +172,20 @@ the same 52 runs as BerSANS; grouped by sample they give 30 samples, 31 with *sa
 | live I(q) of the selected run | the on-the-fly radial average described above |
 
 The start values of these fields (except the beam centre) are in **Settings → Preferences → SANS reduction**;
-the window itself remembers the last values, the folder, the units, the detector-panel choices, the mask and
-the panel layout (the last session). *Settings → Forget last session* in the launcher clears it.
+the window itself remembers the last values, the folder, the units, the detector-panel choices, the masks, the
+beam centres set by hand or fitted to a run, the **reduction tables** with every change made by hand (absolute
+scale, efficiency map, direct beam, switched-off rows and runs, transmissions and thicknesses typed in) and the
+panel layout (the last session). On first start the three columns get widths in proportion to the window (on a
+laptop of 1600 × 1000 about 340 | 790 | 470 pixels); panels with many controls scroll instead of widening the window,
+and rows of buttons wrap, so pySASred fits screens down to 1366 × 768. The session is written when the window or the launcher closes and every two
+minutes, so a launcher that is killed loses at most two minutes. The tables are restored only for the same
+raw-data folder. *Settings → Forget last session* in the launcher clears it.
+
+Reading the folder again (new runs) or correcting sample names refills the tables from the files, but keeps per
+geometry what was set by hand: the absolute-scale settings, and per row (corrections by role, samples by name)
+the runs switched off, transmissions typed in, and thickness, aperture, attenuator and notes; the log lists what
+was kept. Beam centres set by hand or fitted to a run are kept as well (*kept: set before* in the log); only the
+automatic direct-beam centres are determined again.
 
 ## The detector panel
 
@@ -234,8 +246,14 @@ run the counting statistics dominate; the monitor is a systematic scale common t
 ```
 
 **Log** lists the beam-centre determinations, every reduction with its q range and dead-time factor, the notes
-of each reduction (for example "deadtime:detector: uncertainty unknown, not propagated" or "Qdev: wavelength and
-in-bin pixel spread only; collimation term not yet included"), the mask suggestions and the saved files.
+of each reduction (for example "deadtime:detector: uncertainty unknown, not propagated" or "Qdev: wavelength,
+beam divergence … from the direct beam …"), the mask suggestions and the saved files. When a folder is opened the
+log lists the beam centre and the **beam profile** of every geometry. The profile line gives the beam widths σx, σy
+in mm, the divergence σθ (also as FWHM) in mrad, the fitted centre, the runs used and the χ² of the fit. A geometry
+without a direct-beam run gets the warning "no direct-beam measurement – beam divergence estimated from the
+collimation" with the estimated widths; its reductions use that estimate and appear in the panel *Missing input*.
+Variable names: **coll** is the collimation length and **SD** the sample–detector distance throughout pySASfit
+(files written before November 2026 with L1 / L2 are still read).
 
 ## In the launcher
 

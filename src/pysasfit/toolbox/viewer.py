@@ -662,7 +662,7 @@ class HDF5Viewer(QtWidgets.QWidget):
                 img.meta["sample"] = raw.sample_name
                 ps = raw.pixel_size_m
                 img.pixel_m = (ps, ps) if np.isscalar(ps) else tuple(ps)
-                img.L2_m = float(raw.L2_effective_m)
+                img.SD_m = float(raw.SD_effective_m)
                 img.wavelength_A = float(raw.wavelength_A)
         except Exception:  # noqa: BLE001  (not a SANS-I raw file)
             sz = hdf5.pixel_size(path, h5path)

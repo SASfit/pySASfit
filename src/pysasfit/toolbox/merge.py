@@ -12,7 +12,7 @@ Readers (:func:`read_curves`):
 * pySASred results in memory, without a file (:func:`curve_from_reduced`; in the GUI *From pySASred*)
 
 All q are handled in 1/nm. Every curve carries its header items (:attr:`Curve.meta`): the named
-items ``sample``, ``L2_m``, ``L1_m``, ``wavelength_A``, ``run`` and everything else the file holds
+items ``sample``, ``SD_m``, ``coll_m``, ``wavelength_A``, ``run`` and everything else the file holds
 (``hdf:<path>`` for pySASred, ``Sample/Temperature`` etc. for BerSANS).
 
 Merging (:func:`merge`) keeps the absolute scale of every geometry. By default (``method="all"``) every
@@ -53,6 +53,13 @@ class Curve:
     entry: str = ""                # NXcanSAS entry name
     I_unit: str = ""
 
+    def __post_init__(self):
+        from ..sasred.legacy import rename_keys
+        new = rename_keys(self.meta)                # files written before coll / SD (L1_m, L2_m)
+        if new != self.meta:                        # in place: readers keep filling the same dict
+            self.meta.clear()
+            self.meta.update(new)
+
     @property
     def sample(self) -> str:
         return str(self.meta.get("sample", "") or "")
@@ -61,17 +68,17 @@ class Curve:
     def geometry(self) -> str:
         """Geometry label from detector distance, wavelength and collimation."""
         m = self.meta
-        L2, lam, L1 = _num(m.get("L2_m")), _num(m.get("wavelength_A")), _num(m.get("L1_m"))
-        if L2 is None and lam is None:
+        SD, lam, coll = _num(m.get("SD_m")), _num(m.get("wavelength_A")), _num(m.get("coll_m"))
+        if SD is None and lam is None:
             ext = os.path.splitext(self.path)[1]
             return f"file {ext}" if ext else os.path.basename(self.path)
         s = []
-        if L2 is not None:
-            s.append(f"L2 {L2:.2f} m")
+        if SD is not None:
+            s.append(f"SD {SD:.2f} m")
         if lam is not None:
             s.append(f"λ {lam / 10:.3f} nm")
-        if L1 is not None:
-            s.append(f"L1 {L1:.1f} m")
+        if coll is not None:
+            s.append(f"coll {coll:.1f} m")
         bank = m.get("bank")
         if bank:                                   # SANS-LLB wide-angle panel: a geometry of its own
             d = _num(m.get("bank_distance_m"))
@@ -97,7 +104,7 @@ def _num(v) -> Optional[float]:
 
 def fields_of(curves: Sequence[Curve]) -> List[str]:
     """Header items found in the curves: named ones first, then the others alphabetically."""
-    named = ["sample", "L2_m", "wavelength_A", "L1_m", "run", "thickness_cm", "geometry", "file", "format"]
+    named = ["sample", "SD_m", "wavelength_A", "coll_m", "run", "thickness_cm", "geometry", "file", "format"]
     seen = set()
     for c in curves:
         seen.update(c.meta)
@@ -284,11 +291,11 @@ def _read_bersans(path, lines) -> Curve:
     m = meta
     meta["sample"] = m.get("Sample/SampleName", os.path.basename(path))
     if _num(m.get("Setup/SD")) is not None:
-        meta["L2_m"] = _num(m["Setup/SD"])
+        meta["SD_m"] = _num(m["Setup/SD"])
     if _num(m.get("Setup/Lambda")) is not None:
         meta["wavelength_A"] = 10.0 * _num(m["Setup/Lambda"])
     if _num(m.get("Setup/Collimation")) is not None:
-        meta["L1_m"] = _num(m["Setup/Collimation"])
+        meta["coll_m"] = _num(m["Setup/Collimation"])
     meta["run"] = re.sub(r"\D", "", os.path.basename(path).split(".")[0]) or None
     dq = a[:, 3] if n > 3 else np.zeros(len(a))
     return Curve(a[:, 0], a[:, 1], np.abs(a[:, 2]) if n > 2 else np.full(len(a), np.nan), dq,

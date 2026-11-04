@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
-C8 = "L2 8.0 m, λ 6.00 Å, L1 8.0 m"
-C2 = "L2 2.0 m, λ 6.00 Å, L1 8.0 m"
+C8 = "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
+C2 = "SD 2.0 m, λ 6.00 Å, coll 8.0 m"
 
 
 def test_scale_method_and_file_roundtrip(tmp_path):
@@ -187,7 +187,7 @@ def test_gui_make_efficiency_menu(setup):
     assert w.shown_efficiency_name == f"geometry:{C2}"
     # a run of the 3.9 m geometry (no water) shown: no map, the message names the geometries with water
     w.shown_efficiency = None
-    w.select_runs([e.run for e in w.entries if e.raw is not None and abs(e.raw.L2_m - 3.9) < 0.2][:1])
+    w.select_runs([e.run for e in w.entries if e.raw is not None and abs(e.raw.SD_m - 3.9) < 0.2][:1])
     w.log_view.clear()
     assert w.on_make_efficiency() is None and w.shown_efficiency is None
     assert "has no water" in w.log_view.toPlainText() and C2 in w.log_view.toPlainText()

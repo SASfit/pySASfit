@@ -19,7 +19,7 @@ agrees within its precision:
 
 A group spans at most the precision: 20.0, 20.3, 20.6, 20.9 °C with precision 0.5 give two
 groups, not one chain. The entries of {data}`~pysasfit.sasred.grouping.FIELDS` are known
-(sample, L2, L1, wavelength, attenuator, sample-changer position, thickness, detector offset and
+(sample, SD, coll, wavelength, attenuator, sample-changer position, thickness, detector offset and
 tilt, start time, ...); any other entry of the raw file, e.g. a sample environment, is added with
 {func}`~pysasfit.sasred.grouping.hdf_field`:
 
@@ -29,14 +29,14 @@ from pysasfit.sasred import grouping as gr
 
 runs = scan_folder(raw_folder)
 fields = {"temperature": gr.hdf_field("entry1/sample/temperature")}   # mean of a log
-groups = gr.group_runs(runs, {"sample": None, "L2_m": "1%", "wavelength_A": "2%",
+groups = gr.group_runs(runs, {"sample": None, "SD_m": "1%", "wavelength_A": "2%",
                               "attenuator": None, "temperature": 0.5},
                        fields=fields, min_runs=2)
 for g in groups:
     print(g.label(), g.run_numbers)
 ```
 
-The command line does the same: `python -m pysasfit.sasred.grouping RAW sample L2_m=1% attenuator`.
+The command line does the same: `python -m pysasfit.sasred.grouping RAW sample SD_m=1% attenuator`.
 
 ```{tip}
 Add `sample_position_mm` with a precision of about 0.5 mm. In the Vifor data of September 2026 it
@@ -104,7 +104,7 @@ The repeated runs of September 2026 (about 11 h apart) give, with 30 q bins:
 
 ## Which runs were used: the reduction plan
 
-{func}`~pysasfit.sasred.plan.build_plan` puts it all in one table per configuration (L2, λ, L1):
+{func}`~pysasfit.sasred.plan.build_plan` puts it all in one table per configuration (SD, λ, coll):
 the role of every group (sample, sample background, water, empty cell, empty beam, blocked beam
 (Cd)), its runs, the runs that are summed, the outliers and the check, plus the roles that are
 missing. Roles come from the sample names (`H2O`, `EC`, `EB`, `Cd`/`B4C`, ...; change them with

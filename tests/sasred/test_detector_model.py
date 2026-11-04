@@ -41,13 +41,13 @@ def test_dome_geometry():
     assert g2 == pytest.approx(dm.dome_crossing_angle(0.0, -0.48, 2.0))          # axial symmetry
     assert g2 > dm.dome_crossing_angle(0.48, 0.0, 8.0) > 0                        # convex towards the sample
     # analytic: γ = α + 2θ with sin α = h / R at the crossing point
-    x, L2 = 0.3, 2.0
-    tt = np.arctan(x / L2)
+    x, SD = 0.3, 2.0
+    tt = np.arctan(x / SD)
     a = dm.dome_sag()
-    zc = L2 - a + 0.93
+    zc = SD - a + 0.93
     t = zc * np.cos(tt) - np.sqrt((zc * np.cos(tt))**2 - zc**2 + 0.93**2)
     alpha = np.arcsin(t * np.sin(tt) / 0.93)
-    assert dm.dome_crossing_angle(x, 0.0, L2) == pytest.approx(alpha + tt, rel=1e-9)
+    assert dm.dome_crossing_angle(x, 0.0, SD) == pytest.approx(alpha + tt, rel=1e-9)
     T = dm.dome_transmission(6.0, np.array([0.0, 0.24, 0.48]), 0.0, 2.0)
     assert T[0] == pytest.approx(1.0) and np.all(np.diff(T) < 0) and 0.98 < T[2] < 0.995
 

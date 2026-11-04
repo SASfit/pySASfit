@@ -4,7 +4,7 @@ import os
 import pytest
 
 RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
-C8 = "L2 8.0 m, λ 6.00 Å, L1 8.0 m"
+C8 = "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
 
 
 def test_missing_inputs_of_a_table():

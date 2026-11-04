@@ -80,14 +80,14 @@ def test_reader_and_dispatch(llb):
     assert instrument_of(llb) == "sans_llb"
     r = read_raw(llb)
     assert r.instrument == "sans_llb" and r.run == 5262 and r.counts.shape == (128, 128)
-    assert r.L2_m == pytest.approx(4.0) and r.L1_m == pytest.approx(8.0) and r.wavelength_A == pytest.approx(5.0)
+    assert r.SD_m == pytest.approx(4.0) and r.coll_m == pytest.approx(8.0) and r.wavelength_A == pytest.approx(5.0)
     assert r.dlam_over_lam_fwhm == pytest.approx(0.116) and r.sample_thickness_cm == pytest.approx(0.2)
     assert r.preset_monitor == "monitor2" and not r.aborted and r.beamstop_type == "70 mm"
     assert set(r.panels) == {"left", "bottom"} and r.panels["left"].tube_axis == 0 and r.panels["bottom"].tube_axis == 1
     inst = load_instrument(r)
     assert inst["monitor"]["normaliser"] == "monitor2" and inst["detector"]["deadtime"]["tau_s"] == 3.5e-6
     b = read_raw(llb, bank="left")
-    assert b.bank == "left" and b.counts.shape == (136, 16) and b.L2_m == r.L2_m      # config key unchanged
+    assert b.bank == "left" and b.counts.shape == (136, 16) and b.SD_m == r.SD_m      # config key unchanged
 
 
 def test_panel_geometry_and_offsets(llb):
@@ -134,7 +134,7 @@ def test_row_reduction_banks_and_merge_label(tmp_path):
     paths = {5260: write_llb(tmp_path / "sans-llb2026n005260.hdf", "EC", seed=1, flat=0.2),
              5261: write_llb(tmp_path / "sans-llb2026n005261.hdf", "H2O", seed=2, flat=1.0),
              5262: write_llb(tmp_path / "sans-llb2026n005262.hdf", "S", seed=3, flat=1.0)}
-    t = ReductionTable(config="L2 4.0 m, λ 5.00 Å, L1 8.0 m")
+    t = ReductionTable(config="SD 4.0 m, λ 5.00 Å, coll 8.0 m")
     t.corrections["water"].runs = [RunChoice(5261)]
     t.corrections["water"].transmission = 0.5
     t.corrections["empty_cell"].runs = [RunChoice(5260)]

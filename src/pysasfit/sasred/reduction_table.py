@@ -333,10 +333,11 @@ class ReductionTable:
             x["trans_runs"] = [RunChoice(**c) for c in x.get("trans_runs", [])]
             known = RowSet.__dataclass_fields__
             return RowSet(**{k: v for k, v in x.items() if k in known})
-        return cls(d.get("config", ""), d.get("folder", ""),
+        from .legacy import rename_config
+        return cls(rename_config(d.get("config", "")), d.get("folder", ""),
                    {k: rowset(v) for k, v in d.get("corrections", {}).items()},
                    [rowset(v) for v in d.get("samples", [])], d.get("created", ""), d.get("source", "manual"),
-                   d.get("water_g"), d.get("scale", "auto") or "auto", d.get("efficiency", "") or "",
+                   d.get("water_g"), d.get("scale", "auto") or "auto", rename_config(d.get("efficiency", "") or ""),
                    d.get("direct_beam_radius_mm"), d.get("direct_beam_attenuator"),
                    bool(d.get("efficiency_mask_filled", False)), list(d.get("ignored") or []))
 
@@ -416,7 +417,7 @@ def transmission_from_runs(runs, raws: Dict[int, object], eb_runs: Optional[List
     for x in runs:
         s = raws.get(x)
         ebs = [raws[y] for y in eb_runs if y in raws and s is not None
-               and abs(raws[y].L2_m - s.L2_m) <= 0.01 * s.L2_m
+               and abs(raws[y].SD_m - s.SD_m) <= 0.01 * s.SD_m
                and abs(raws[y].wavelength_A - s.wavelength_A) <= 0.02 * s.wavelength_A]
         if not ebs:
             continue

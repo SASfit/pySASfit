@@ -2,7 +2,7 @@
 """Header items of a raw run, written into the reduced files so that later tools (pyTOOLbox,
 *Merge geometries*) can group curves by any of them (sample, temperature, field, pressure, ...).
 
-Named items (:data:`pysasfit.sasred.grouping.FIELDS`, e.g. ``L2_m``, ``wavelength_A``) and every
+Named items (:data:`pysasfit.sasred.grouping.FIELDS`, e.g. ``SD_m``, ``wavelength_A``) and every
 scalar entry of the raw file as ``hdf:<path>`` (values as stored); a numeric 1-D array (a log, e.g.
 a temperature during the run) gives its mean.
 """

@@ -99,8 +99,8 @@ def read_sans_llb(path, checksum: bool = True, distance_offset_m: Optional[float
         dlam, dlu = _read(g, S + "velocity_selector/wavelength_spread", False, missing)
         if dlam is not None and str(dlu).strip() == "%":
             dlam = float(dlam) / 100.0
-        L2, L2u = _read(g, S + "central_detector/distance")
-        L1, L1u = _read(g, S + "collimator/geometry/size")
+        SD, SDu = _read(g, S + "central_detector/distance")
+        coll, collu = _read(g, S + "collimator/geometry/size")
         pxs, pxu = _read(g, S + "central_detector/x_pixel_size")
         pys, pyu = _read(g, S + "central_detector/y_pixel_size")
         cx, cxu = _read(g, S + "central_detector/x", False, missing)
@@ -156,8 +156,8 @@ def read_sans_llb(path, checksum: bool = True, distance_offset_m: Optional[float
         counts=counts, n_frames=n_frames, counting_time_s=float(t), monitors=monitors,
         preset=float(preset), count_mode=str(mode), wavelength_A=float(lam) * lf,
         dlam_over_lam_fwhm=None if dlam is None else float(dlam),
-        L1_m=_length_m(L1, L1u, "collimator/geometry/size"),
-        L2_m=_length_m(L2, L2u, "central_detector/distance"),
+        coll_m=_length_m(coll, collu, "collimator/geometry/size"),
+        SD_m=_length_m(SD, SDu, "central_detector/distance"),
         pixel_size_m=(_length_m(pxs, pxu, "x_pixel_size"), _length_m(pys, pyu, "y_pixel_size")),
         detector_offset_m=(None if cx is None else _length_m(cx, cxu, "central_detector/x"), None),
         detector_tilt_deg=0.0, attenuator=str(att).strip(), beamstop_xy_mm=(_f(bsx), _f(bsy)),
@@ -168,7 +168,7 @@ def read_sans_llb(path, checksum: bool = True, distance_offset_m: Optional[float
         instrument="sans_llb", preset_monitor=mon_preset, panels=panels or None, central_pos_mm=cpos)
     off = _llb_offset("sasred.llb.central_dz_mm") / 1000.0 if distance_offset_m is None else float(distance_offset_m)
     if off:
-        run.L2_offset_m = off
+        run.SD_offset_m = off
     return run
 
 
@@ -191,7 +191,7 @@ def panel_offsets(name: str) -> Tuple[float, float, float]:
 
 
 def bank_run(raw: RawRun, name: str) -> RawRun:
-    """The run of one wide-angle panel: counts of the panel, everything else of the run. ``L2_m`` stays
+    """The run of one wide-angle panel: counts of the panel, everything else of the run. ``SD_m`` stays
     the distance of the central detector (configuration key of beam centre, mask and grouping); the
     geometry comes from :func:`panel_geometry`."""
     if name in ("", "central"):

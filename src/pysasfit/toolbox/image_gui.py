@@ -83,14 +83,14 @@ class ImageTool(QtWidgets.QWidget):
             return s
         self.cx, self.cy = spin(-1000, 2000, 3, 0.1), spin(-1000, 2000, 3, 0.1)
         self.pix = spin(0.01, 100, 3, 0.1, " mm")
-        self.L2 = spin(0.0, 100, 4, 0.1, " m")
+        self.SD = spin(0.0, 100, 4, 0.1, " m")
         self.lam = spin(0.0, 10, 4, 0.01, " nm")
         c = QtWidgets.QHBoxLayout()
         c.addWidget(self.cx)
         c.addWidget(self.cy)
         gl.addRow("beam centre x, y [px]:", c)
         gl.addRow("pixel size:", self.pix)
-        gl.addRow("detector distance:", self.L2)
+        gl.addRow("detector distance:", self.SD)
         gl.addRow("wavelength:", self.lam)
         ap = QtWidgets.QPushButton("Apply geometry")
         ap.setToolTip("Needed for BerSANS 2D files (no beam centre in the file); q and ψ follow from it")
@@ -235,7 +235,7 @@ class ImageTool(QtWidgets.QWidget):
             for w, v in ((self.cx, im.centre_px[0] if im.centre_px else 0.0),
                          (self.cy, im.centre_px[1] if im.centre_px else 0.0),
                          (self.pix, 1000 * im.pixel_m[0] if im.pixel_m else 7.5),
-                         (self.L2, im.L2_m or 0.0), (self.lam, (im.wavelength_A or 0.0) / 10)):
+                         (self.SD, im.SD_m or 0.0), (self.lam, (im.wavelength_A or 0.0) / 10)):
                 w.blockSignals(True)
                 w.setValue(float(v) if np.isfinite(v) else 0.0)
                 w.blockSignals(False)
@@ -245,10 +245,10 @@ class ImageTool(QtWidgets.QWidget):
         im = self.current()
         if im is None:
             return
-        if self.L2.value() <= 0 or self.lam.value() <= 0:
+        if self.SD.value() <= 0 or self.lam.value() <= 0:
             self._log("distance and wavelength must be > 0")
             return
-        im.set_geometry((self.cx.value(), self.cy.value()), self.pix.value() / 1000, self.L2.value(),
+        im.set_geometry((self.cx.value(), self.cy.value()), self.pix.value() / 1000, self.SD.value(),
                         10 * self.lam.value())
         self._refresh()
         self.replot()
@@ -279,7 +279,7 @@ class ImageTool(QtWidgets.QWidget):
             data = np.ma.masked_where(~valid, data)
         if view == "polar":
             from ..sasred.core.polar import polar_image
-            pol = polar_image(np.asarray(np.ma.filled(data, np.nan), float), im.centre_px, im.pixel_m, im.L2_m,
+            pol = polar_image(np.asarray(np.ma.filled(data, np.nan), float), im.centre_px, im.pixel_m, im.SD_m,
                               im.wavelength_A, invalid=(~valid if how != "shown" else None))
             qe = pol.q_edges * 10
             art = ax.imshow(pol.image, origin="lower", aspect="auto", norm=norm, cmap=cmap,
@@ -358,7 +358,7 @@ class ImageTool(QtWidgets.QWidget):
             return
         self.cx.setValue(float(x))
         self.cy.setValue(float(y))
-        if im.pixel_m is not None and im.L2_m and im.wavelength_A:
+        if im.pixel_m is not None and im.SD_m and im.wavelength_A:
             im.set_geometry((x, y))
         else:
             im.centre_px = (float(x), float(y))
@@ -383,7 +383,7 @@ class ImageTool(QtWidgets.QWidget):
             k = 4 * np.pi / (im.wavelength_A / 10.0)
             r = np.hypot(ev.xdata, ev.ydata)
             tth = 2 * np.arcsin(min(1.0, r / k))
-            d = im.L2_m * np.tan(tth)
+            d = im.SD_m * np.tan(tth)
             dx = d * ev.xdata / r if r else 0.0
             dy = d * ev.ydata / r if r else 0.0
             self._set_centre(im.centre_px[0] + dx / im.pixel_m[0], im.centre_px[1] + dy / im.pixel_m[1])

@@ -18,7 +18,7 @@ def vifor():
     from pysasfit.sasred.io.transmission import read_transmission_summary
     cat = scan_folder(RAW)
     raws = {e.run: e.raw for e in cat if e.raw}
-    t = rt.from_plan(pl.build_plan(cat), "L2 8.0 m, λ 6.00 Å, L1 8.0 m", raws,
+    t = rt.from_plan(pl.build_plan(cat), "SD 8.0 m, λ 6.00 Å, coll 8.0 m", raws,
                      read_transmission_summary(os.path.join(RAW, "trans.txt")))
     c = beam_centres(list(raws.values()))[(8.0, 6.0, 8.0)]
     return t, (c.x, c.y), (lambda n: read_sans_i(os.path.join(RAW, f"sans2026n{n:06d}.hdf"), checksum=False))
@@ -91,7 +91,7 @@ def test_gui_reduce_geometry(tmp_path):
     page.table.samples = page.table.samples[:3]
     page.refresh()
     tag = page.on_reduce(all_rows=True)
-    assert tag == "L2 8.0 m No. 3" and len(w.results) == 3
+    assert tag == "SD 8.0 m No. 3" and len(w.results) == 3
     r = w.results[tag]
     assert r.intensity.unit == "1/cm/sr" and r.parameters["runs"] == page.table.samples[2].used
     i = w.det_view.findData("reduced2d")

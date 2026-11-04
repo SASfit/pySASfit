@@ -51,6 +51,9 @@ Generated from the docstrings.
 .. automodule:: pysasfit.sasred.core.beamprofile
    :members:
 
+.. automodule:: pysasfit.sasred.legacy
+   :members:
+
 .. automodule:: pysasfit.sasred.core.monitors
    :members:
 

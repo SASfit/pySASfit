@@ -160,10 +160,10 @@ def test_archive_in_one_file(tmp_path):
         e_true[:, 40] *= gain                                            # a weaker x wire later on
         counts = rng.poisson(20000 * e_true).astype(float)
         e = efficiency_from_water(counts_uarray(counts, "counting:w"), valid,
-                                  meta=dict(measured_start=date, L2_m=8.0, wavelength_A=6.0, water_runs=[1],
+                                  meta=dict(measured_start=date, SD_m=8.0, wavelength_A=6.0, water_runs=[1],
                                             detector_tilt_deg=0.025, dlam_over_lam_fwhm=0.1))
         names.append(log.archive_efficiency(e, arch, comment=f"gain {gain}"))
-    assert names[0].startswith("2026-09-29_L2-8.0m_6.00A_run1")
+    assert names[0].startswith("2026-09-29_SD-8.0m_6.00A_run1")
     with h5py.File(arch) as f:
         assert len(f) == 3 and f.attrs["default"] == names[2]          # newest measurement
         assert f[names[0]].attrs["NX_class"] == "NXentry" and "efficiency" in f[names[0]]
@@ -174,7 +174,7 @@ def test_archive_in_one_file(tmp_path):
     maps = log.list_maps(arch)
     assert [r["measured"] for r in maps] == ["2026-03-02", "2026-09-29", "2026-10-20"]
     assert maps[2]["comment"] == "gain 0.9" and maps[0]["n_filled"] > 0
-    assert maps[0]["L2_m"] == 8.0 and maps[0]["wavelength_A"] == 6.0 and maps[0]["detector_tilt_deg"] == 0.025
+    assert maps[0]["SD_m"] == 8.0 and maps[0]["wavelength_A"] == 6.0 and maps[0]["detector_tilt_deg"] == 0.025
     newest = log.load_map(path=arch)
     assert newest.meta["entry"] == names[2]
     h = log.history(arch)
@@ -186,7 +186,7 @@ def test_archive_in_one_file(tmp_path):
     assert len(fig.axes) == 3
     # other configurations have their own reference
     e2m = efficiency_from_water(counts_uarray(rng.poisson(20000 * eps).astype(float), "counting:w"), valid,
-                                meta=dict(measured_start="2026-10-21 08:00:00", L2_m=2.0, wavelength_A=6.0))
+                                meta=dict(measured_start="2026-10-21 08:00:00", SD_m=2.0, wavelength_A=6.0))
     n2 = log.archive_efficiency(e2m, arch)
     h = {r["entry"]: r for r in log.history(arch)}
     assert h[n2]["reference"] == n2 and h[names[2]]["reference"] == names[1]

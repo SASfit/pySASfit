@@ -2,7 +2,7 @@
 """Archive of detector-efficiency maps in one HDF5 file, to follow the detector over time.
 
 Every archived map is one NeXus entry of the archive file, named after the date of its water
-measurement, e.g. ``/2026-10-02_L2-8.0m_6.00A_run82280`` with ``efficiency`` (NXdata: the map,
+measurement, e.g. ``/2026-10-02_SD-8.0m_6.00A_run82280`` with ``efficiency`` (NXdata: the map,
 its errors, the filled / undefined / rejected pixels, the row and column profiles of the wires),
 ``instrument`` (the configuration of the water measurement: detector distance and tilt, pixel size,
 beam centre, wavelength and its spread, collimation length, attenuator) and ``process`` (runs,
@@ -13,7 +13,7 @@ kept as attributes of each entry, so the archive can be listed without reading t
     from pysasfit.sasred.efficiency_log import archive_efficiency, list_maps, load_map, history, plot_history
     archive_efficiency(eff, comment="after HV change")   # archive file: Preferences, or path=...
     list_maps()                     # one dict per map, oldest measurement first
-    load_map("2026-10-02_L2-8.0m_6.00A_run82280")        # an Efficiency (default: the newest)
+    load_map("2026-10-02_SD-8.0m_6.00A_run82280")        # an Efficiency (default: the newest)
     history()                       # every map against the oldest one of its configuration (or reference=...)
     plot_history().savefig("efficiency_history.png")
 
@@ -35,7 +35,7 @@ from .core.efficiency import Efficiency
 
 __all__ = ["archive_path", "archive_efficiency", "list_maps", "load_map", "compare", "history", "plot_history"]
 
-_SUMMARY = ("measured", "archived", "instrument", "L2_m", "wavelength_A", "detector_tilt_deg", "water_runs",
+_SUMMARY = ("measured", "archived", "instrument", "SD_m", "wavelength_A", "detector_tilt_deg", "water_runs",
             "empty_cell_runs",
             "n_measured", "n_filled", "n_rejected", "n_undefined", "rms", "min", "max", "median_sigma", "comment")
 
@@ -66,17 +66,17 @@ def _stats(eff: Efficiency) -> Dict[str, float]:
 def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: str = "SANS-I",
                        comment: str = "") -> str:
     """Add ``eff`` to the archive file as a new entry named after the date of the water measurement
-    (``YYYY-MM-DD_L2-<L2>m_<λ>A_run<first water run>``, suffix _2, _3, ... if the name exists).
+    (``YYYY-MM-DD_SD-<SD>m_<λ>A_run<first water run>``, suffix _2, _3, ... if the name exists).
     Nothing already in the archive is changed. Returns the entry name."""
     import h5py
     path = archive_path(path)
     meta = eff.meta
     date = _date(meta)
-    L2 = float(meta.get("L2_m") or 0)
+    SD = float(meta.get("SD_m") or 0)
     lam = float(meta.get("wavelength_A") or 0)
     runs = meta.get("water_runs") or [meta.get("water_run")]
     first = runs[0] if runs and runs[0] is not None else "x"
-    base = re.sub(r"[^A-Za-z0-9_.-]", "_", f"{date}_L2-{L2:.1f}m_{lam:.2f}A_run{first}")
+    base = re.sub(r"[^A-Za-z0-9_.-]", "_", f"{date}_SD-{SD:.1f}m_{lam:.2f}A_run{first}")
     archived = datetime.now(timezone.utc).isoformat(timespec="seconds")
     eff.meta = dict(meta, instrument=instrument, archived=archived, comment=comment, measured=date)
     with h5py.File(path, "a") as f:
@@ -87,7 +87,7 @@ def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: 
         g = f.create_group(name)
         eff.write_entry(g, comment)
         tilt = meta.get("detector_tilt_deg")
-        summary = dict(measured=date, archived=archived, instrument=instrument, L2_m=L2, wavelength_A=lam,
+        summary = dict(measured=date, archived=archived, instrument=instrument, SD_m=SD, wavelength_A=lam,
                        detector_tilt_deg=float("nan") if tilt is None else float(tilt),
                        water_runs=" ".join(map(str, meta.get("water_runs") or [])),
                        empty_cell_runs=" ".join(map(str, meta.get("empty_cell_runs") or [])),
@@ -125,7 +125,8 @@ def list_maps(path: Optional[str] = None) -> List[dict]:
         for n in f:
             if "efficiency" not in f[n]:
                 continue
-            row = {k: _attr(v) for k, v in f[n].attrs.items() if k in _SUMMARY}
+            from .legacy import rename_key
+            row = {rename_key(k): _attr(v) for k, v in f[n].attrs.items() if rename_key(k) in _SUMMARY}
             row["entry"] = n
             out.append(row)
     return sorted(out, key=lambda r: (str(r.get("measured", "")), str(r.get("archived", ""))))
@@ -183,10 +184,10 @@ def _same_config(a: dict, b: dict) -> bool:
             return float(r.get(k))
         except (TypeError, ValueError):
             return float("nan")
-    L2a, L2b = f(a, "L2_m"), f(b, "L2_m")
+    SDa, SDb = f(a, "SD_m"), f(b, "SD_m")
     la, lb = f(a, "wavelength_A"), f(b, "wavelength_A")
     ta, tb = f(a, "detector_tilt_deg"), f(b, "detector_tilt_deg")
-    ok = abs(L2a - L2b) <= 0.01 * max(L2a, L2b) and abs(la - lb) <= 0.02 * max(la, lb)
+    ok = abs(SDa - SDb) <= 0.01 * max(SDa, SDb) and abs(la - lb) <= 0.02 * max(la, lb)
     return bool(ok and (np.isnan(ta) or np.isnan(tb) or abs(ta - tb) <= 0.05))
 
 
@@ -267,10 +268,10 @@ def main(argv=None):
     if not h:
         print("no efficiency maps in", path)
         return 0
-    print(f"{'entry':36} {'L2/m':>5} {'λ/Å':>5} {'tilt/°':>6} {'Δrms %':>7} {'noise %':>7} {'χ²':>5} "
+    print(f"{'entry':36} {'SD/m':>5} {'λ/Å':>5} {'tilt/°':>6} {'Δrms %':>7} {'noise %':>7} {'χ²':>5} "
           f"{'Δmean %':>8} {'n>4σ':>5}  rows / columns changed")
     for r in h:
-        print(f"{r['entry'][:36]:36} {float(r['L2_m']):5.1f} {float(r['wavelength_A']):5.2f} "
+        print(f"{r['entry'][:36]:36} {float(r['SD_m']):5.1f} {float(r['wavelength_A']):5.2f} "
               f"{float(r.get('detector_tilt_deg', float('nan'))):6.2f} {100 * r['rms_change']:7.3f} "
               f"{100 * r['expected_rms']:7.3f} {r['chi2']:5.2f} {100 * r['mean_change']:8.3f} {r['n_changed']:5d}  "
               f"{r['changed_rows']} / {r['changed_columns']}")

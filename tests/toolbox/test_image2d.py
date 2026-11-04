@@ -28,7 +28,7 @@ def test_bersans_2d_and_geometry(tmp_path):
     I = bersans2d(tmp_path / "D0000001.008")
     im = i2.read_images(tmp_path / "D0000001.008")[0]
     assert np.allclose(im.I, I, rtol=1e-6) and im.dI[0, 0] == pytest.approx(0.1)
-    assert im.sample == "S1" and im.L2_m == 8.0 and im.wavelength_A == pytest.approx(6.0) and not im.has_q
+    assert im.sample == "S1" and im.SD_m == 8.0 and im.wavelength_A == pytest.approx(6.0) and not im.has_q
     im.set_geometry((7.0, 8.0))
     assert im.has_q and im.q()[8, 7] == 0
     psi = im.psi_deg()
@@ -64,7 +64,7 @@ def test_pysasred_2d_memory_file_and_gui(tmp_path):
     p = write_nxcansas_2d(tmp_path / "x_2d.h5", r)
     f = i2.read_images(p)[0]
     assert np.allclose(f.I, m.I) and np.array_equal(f.mask, m.mask) and f.centre_px == pytest.approx(m.centre_px)
-    assert np.allclose(f.q(), m.q()) and f.sample == m.sample and f.meta.get("L2_m") == r.raw.L2_m
+    assert np.allclose(f.q(), m.q()) and f.sample == m.sample and f.meta.get("SD_m") == r.raw.SD_m
     # GUI: images from pySASred, from the merge tool, all views
     box = Box()
     t = box.images

@@ -50,7 +50,7 @@ def test_read_group_merge(folder):
     cs, bad = mg.read_folder(str(folder))
     assert not bad and len(cs) == 16 and cs[0].fmt == "bersans"
     c = cs[0]
-    assert c.meta["Sample/Temperature"] == 20.0 and c.geometry.startswith("L2 8.00 m, λ 0.600 nm")
+    assert c.meta["Sample/Temperature"] == 20.0 and c.geometry.startswith("SD 8.00 m, λ 0.600 nm")
     # sample letter only; temperature within ± 0.5 K: 20.0 and 20.2 together, 40 apart
     groups, rest = mg.group_curves(cs, r"EXP-1-(\w)_\d", {"Sample/Temperature": 0.5})
     assert not rest and [g.label for g in groups] == ["A, Temperature 20–20.2", "A, Temperature 40",
@@ -121,7 +121,7 @@ def test_pysasred_files(tmp_path):
     v = model(q * 10)
     I = UArray.from_source(v, Source("counting:42", (0.01 * v) ** 2, "counting", False), "1/cm/sr")
     raw = SimpleNamespace(run=42, sample_name="EXP-9-C_1", path=str(tmp_path / "none.hdf"), sha256="",
-                          wavelength_A=6.0, L2_m=8.0, L1_m=8.0, dlam_over_lam_fwhm=0.1, attenuator="0",
+                          wavelength_A=6.0, SD_m=8.0, coll_m=8.0, dlam_over_lam_fwhm=0.1, attenuator="0",
                           detector_offset_m=(0, 0), detector_tilt_deg=0.0, beamstop_xy_mm=(0, 0),
                           sample_position_mm=0.0, sample_thickness_cm=0.1, counting_time_s=10.0,
                           start_time="2026-09-30T01:00:00")
@@ -132,8 +132,8 @@ def test_pysasred_files(tmp_path):
     write_ascii_1d(tmp_path / "r.dat", red)
     for p in ("r.h5", "r.dat"):
         c = mg.read_curves(tmp_path / p)[0]
-        assert c.sample == "EXP-9-C_1" and c.meta["L2_m"] == 8.0 and c.meta["wavelength_A"] == 6.0
-        assert np.allclose(c.q, q * 10) and c.geometry == "L2 8.00 m, λ 0.600 nm, L1 8.0 m"
+        assert c.sample == "EXP-9-C_1" and c.meta["SD_m"] == 8.0 and c.meta["wavelength_A"] == 6.0
+        assert np.allclose(c.q, q * 10) and c.geometry == "SD 8.00 m, λ 0.600 nm, coll 8.0 m"
 
 
 @pytest.mark.skipif(not os.path.isfile(os.path.join(BERSANS, "D0007625.021")), reason="BerSANS files not available")
@@ -214,7 +214,7 @@ def test_from_sasred_in_memory():
     assert t.table.rowCount() == 2 and len(t.merged[0].overlaps) == 1
     assert abs(t.merged[0].overlaps[0].factor - 1) < 0.03
     t.table.selectRow(0)                                         # underlying curves, back to pySASred
-    assert t.sources.rowCount() == 2 and t.sources.item(0, 2).text().startswith("pySASred: L2 ")
+    assert t.sources.rowCount() == 2 and t.sources.item(0, 2).text().startswith("pySASred: SD ")
     t.sources.selectRow(1)
     t.on_show_source()
     pg = red.table_panel.page

@@ -39,7 +39,7 @@ def _fmt(v, f="{:.4g}"):
 class RunSetDialog(QtWidgets.QDialog):
     """Spreadsheet of the runs of one row: use (summed) or not, with the reason."""
 
-    COLS = ["use", "run", "sample", "kind", "L1 [m]", "L2 [m]", "start", "time [s]", "monitor", "counts/monitor", "comment"]
+    COLS = ["use", "run", "sample", "kind", "coll [m]", "SD [m]", "start", "time [s]", "monitor", "counts/monitor", "comment"]
 
     OTHER = "other run of this geometry"
 
@@ -126,8 +126,8 @@ class RunSetDialog(QtWidgets.QDialog):
         if r is not None:
             from .catalogue import is_transmission
             m = float(r.monitors.get("monitor1" if r.instrument == "sans_i" else r.preset_monitor, 0))
-            vals = [str(c.run), r.sample_name, "trans." if is_transmission(r) else "scatt.", f"{r.L1_m:.1f}",
-                    f"{r.L2_m:.2f}",
+            vals = [str(c.run), r.sample_name, "trans." if is_transmission(r) else "scatt.", f"{r.coll_m:.1f}",
+                    f"{r.SD_m:.2f}",
                     str(r.start_time)[:19], f"{r.counting_time_s:.0f}", f"{m:.4g}",
                     f"{float(r.counts.sum()) / m:.5g}" if m else ""]
         for j, v in enumerate(vals, start=1):
@@ -315,6 +315,19 @@ class _PopupCombo(QtWidgets.QComboBox):
         super().showPopup()
 
 
+def _flow_row():
+    """A row of buttons that wraps to a second line in a narrow panel (no minimum width)."""
+    from ..core.flowlayout import FlowLayout
+    w = QtWidgets.QWidget()
+    lay = FlowLayout(w)
+    lay.setContentsMargins(0, 0, 0, 0)
+    sp = w.sizePolicy()
+    sp.setHeightForWidth(True)
+    sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Ignored)
+    w.setSizePolicy(sp)
+    return w, lay
+
+
 class GeometryPage(QtWidgets.QWidget):
     """Correction matrix + sample table of one geometry (one tab of the reduction table panel)."""
 
@@ -332,7 +345,7 @@ class GeometryPage(QtWidgets.QWidget):
         self.corr.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         bl.addWidget(self.corr)
         top = QtWidgets.QHBoxLayout()
-        top.addWidget(box, 1)
+        top.addWidget(box, 3)                      # the correction table gets the larger share of the width
         wbox = QtWidgets.QGroupBox("Absolute scale")
         wl = QtWidgets.QFormLayout(wbox)
         self.scale_combo = QtWidgets.QComboBox()
@@ -389,14 +402,13 @@ class GeometryPage(QtWidgets.QWidget):
         wl.addRow("g(λ) used:", self.g_edit)
         wl.addRow("denominator D:", self.w_den)
         wl.addRow("water scaling:", self.w_scale)
-        top.addWidget(wbox)
+        top.addWidget(wbox, 2)
         lay.addLayout(top)
         box2 = QtWidgets.QGroupBox("Sample data")
         sl = QtWidgets.QVBoxLayout(box2)
         self.samp = self._make_table(COLS_SAMPLE, 0)
         self.samp.itemSelectionChanged.connect(lambda: self.panel.rows_selected.emit())
         sl.addWidget(self.samp, 1)
-        row = QtWidgets.QHBoxLayout()
         red = QtWidgets.QHBoxLayout()
         b = QtWidgets.QPushButton("Reduce all samples (2D → I(q))")
         b.setToolTip("Every sample row of this geometry: per pixel with the correction data, then the radial average")
@@ -406,15 +418,15 @@ class GeometryPage(QtWidgets.QWidget):
         red.addWidget(b)
         red.addWidget(b2)
         red.addStretch(1)
+        flow_w, flow = _flow_row()
         for text, fn in (("Add a sample", self.on_add_sample), ("Add many samples…", self.on_add_many),
                          ("Remove sample", self.on_remove_sample),
                          ("Copy to all samples below", lambda: self.on_copy("below")),
                          ("Copy to all samples above", lambda: self.on_copy("above"))):
             b = QtWidgets.QPushButton(text)
             b.clicked.connect(fn)
-            row.addWidget(b)
-        row.addStretch(1)
-        sl.addLayout(row)
+            flow.addWidget(b)
+        sl.addWidget(flow_w)
         lay.addWidget(box2, 1)
         self.problems = QtWidgets.QLabel()
         self.problems.setWordWrap(True)
@@ -841,14 +853,14 @@ class GeometryPage(QtWidgets.QWidget):
         self.panel.changed.emit()
 
     def presets(self):
-        """Search conditions of this geometry for *Add many samples* (scattering runs, L2, λ, L1)."""
+        """Search conditions of this geometry for *Add many samples* (scattering runs, SD, λ, coll)."""
         r = self.ref_raw
         if r is None:
             return [("kind", ("scattering",))]
         return [("kind", ("scattering",)),
-                ("L2_m", (round(0.99 * r.L2_m, 3), round(1.01 * r.L2_m, 3))),
+                ("SD_m", (round(0.99 * r.SD_m, 3), round(1.01 * r.SD_m, 3))),
                 ("wavelength_A", (round(0.98 * r.wavelength_A, 3), round(1.02 * r.wavelength_A, 3))),
-                ("L1_m", (round(0.99 * r.L1_m, 3), round(1.01 * r.L1_m, 3)))]
+                ("coll_m", (round(0.99 * r.coll_m, 3), round(1.01 * r.coll_m, 3)))]
 
 
 
@@ -871,7 +883,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
         self.show_efficiency = None                # set by the main window: (table) -> show its efficiency map
         self.excluded: List[str] = []              # geometries removed from the reduction
         lay = QtWidgets.QVBoxLayout(self)
-        top = QtWidgets.QHBoxLayout()
+        top_w, top = _flow_row()
         self.check = QtWidgets.QCheckBox("check repeated runs")
         self.check.setChecked(True)
         self.check.setToolTip("Compare repeated runs (equivalence check, outliers) when filling")
@@ -893,8 +905,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
         save.clicked.connect(self.on_save)
         for w in (self.check, fill, new, rem, self.restore, load, save):
             top.addWidget(w)
-        top.addStretch(1)
-        lay.addLayout(top)
+        lay.addWidget(top_w)
         self.tabs = QtWidgets.QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(lambda i: self.remove_geometry(i))
@@ -995,8 +1006,8 @@ class ReductionTableWidget(QtWidgets.QWidget):
         import numpy as np
 
         from .core.averaging import q_edges
-        lo = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(4 * r.pixel_size_m[0] / r.L2_m))
-        hi = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(60 * r.pixel_size_m[0] / r.L2_m))
+        lo = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(4 * r.pixel_size_m[0] / r.SD_m))
+        hi = 4 * np.pi / r.wavelength_A * np.sin(0.5 * np.arctan(60 * r.pixel_size_m[0] / r.SD_m))
         return q_edges(lo, hi, 30)
 
     def _trans_table(self):
@@ -1056,7 +1067,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
             ents = [e for e in self.plan.entries if e.config == cfg and e.kind == "scattering"]
             n = sum(len(e.runs) for e in ents)
             ref = raws.get(ents[0].runs[0]) if ents else None
-            short = cfg.replace(", L1", " · L1").replace(", λ", " · λ")
+            short = cfg.replace(", coll", " · coll").replace(", λ", " · λ")
             have = {e.role for e in ents}
             doubt = n < 4 or not {"water", "empty_cell"} <= have
             title = f"{short} ({n} run{'' if n == 1 else 's'})" + ("  ?" if doubt else "")
@@ -1096,7 +1107,8 @@ class ReductionTableWidget(QtWidgets.QWidget):
         self._clear_pages()
         if "geometries" not in d:                      # one table (first version)
             d = {"geometries": [d], "excluded": []}
-        self.excluded = list(d.get("excluded", []))
+        from .legacy import rename_config
+        self.excluded = [rename_config(x) for x in d.get("excluded", [])]
         raws = self.raws()
         for td in d["geometries"]:
             t = ReductionTable.from_dict(td)

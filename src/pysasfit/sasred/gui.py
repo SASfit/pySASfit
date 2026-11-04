@@ -53,7 +53,7 @@ __all__ = ["MainWindow", "main"]
 Area = QtCore.Qt.DockWidgetArea
 
 
-LAYOUT_VERSION = 2       # 2: detector and reduction table as tabs in the middle column
+LAYOUT_VERSION = 3       # 2: detector and reduction table as tabs in the middle column; 3: column widths
 
 
 def _session_path():
@@ -109,7 +109,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.results = {}            # run -> ReducedRun
         self.beam_centre = None      # BeamCentre of the last determination
         self.monitor_tests = {}      # monitor -> core.monitors.MonitorTest (before/after the selector)
-        self.centres = {}            # geometry (L2, λ) -> GeometryCentre: q and solid angle use it
+        self.centres = {}            # geometry (SD, λ) -> GeometryCentre: q and solid angle use it
         self.profiles = {}           # geometry -> BeamProfile of its direct beam: the resolution uses it
         self.masks = {}              # instrument configuration (catalogue.mask_key) -> edited uint32 mask
         self._mask_key = None        # configuration of the mask in the editor
@@ -208,8 +208,10 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         w = QtWidgets.QWidget()
         lay = QtWidgets.QVBoxLayout(w)
 
-        g = QtWidgets.QGroupBox("Beam centre (pixel indices from 0, as in GRASP and Python)")
+        g = QtWidgets.QGroupBox("Beam centre [pixel]")
+        g.setToolTip("Pixel indices count from 0, as in GRASP and Python")
         f = QtWidgets.QFormLayout(g)
+        f.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)
         self.xc = _dspin(-1000, 1000, 63.5, 3, 0.1)
         self.yc = _dspin(-1000, 1000, 63.5, 3, 0.1)
         f.addRow("x (axis 1)", self.xc)
@@ -225,6 +227,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
 
         g = QtWidgets.QGroupBox("Mask and q bins")
         f = QtWidgets.QFormLayout(g)
+        f.setRowWrapPolicy(QtWidgets.QFormLayout.RowWrapPolicy.WrapLongRows)     # narrow panel: field below its label
         # first guess of the beamstop: put into the mask of a new image, then adjusted with the mask tools
         self.bs_shape = QtWidgets.QComboBox()
         self.bs_shape.addItem("square", "square")
@@ -238,7 +241,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         row = QtWidgets.QHBoxLayout()
         for wdg in (self.bs_shape, self.bs_radius, bs_put):
             row.addWidget(wdg)
-        lab = QtWidgets.QLabel("beamstop guess")
+        row.setSpacing(3)
+        bs_put.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
+        lab = QtWidgets.QLabel("beamstop")
         lab.setToolTip("First guess of the beamstop shadow in the mask of a new image (the SANS-I beamstops are "
                        "square). Adjust it with the mask tools or use Suggest; until the mask is edited it "
                        "follows the beam centre and the size.")
@@ -271,7 +276,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                                    "table). The panels use the beam centre of the central detector and their "
                                    "offsets from Settings → Preferences → pySASred → SANS-LLB detector geometry; "
                                    "their mask is the tube ends and dead tubes. SANS-I: central only.")
-        f.addRow("detector (SANS-LLB)", self.bank_combo)
+        f.addRow("detector", self.bank_combo)
         self.norm = QtWidgets.QComboBox()
         self.norm.addItem("monitor 1", "monitor")
         self.norm.addItem("counting time", "time")
@@ -375,6 +380,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.det_view.setToolTip("polar: azimuth φ horizontally (0° = horizontal direction +x, counter-clockwise), "
                                  "q vertically; rings become horizontal lines, anisotropy shows as waves")
         self.det_view.currentIndexChanged.connect(lambda _i: self._draw_detector())
+        for cb in (self.det_view, self.bank_combo):        # as wide as a short item; the list shows them in full
+            cb.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            cb.setMinimumContentsLength(14)
         bar.addWidget(labelled("view", self.det_view))
         self.det_bank = QtWidgets.QComboBox()
         for t, d in (("central", ""), ("left panel", "left"), ("bottom panel", "bottom")):
@@ -421,7 +429,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.mask_cfg = QtWidgets.QLabel("")
         self.mask_cfg.setWordWrap(False)
         self.mask_cfg.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Fixed)
-        self.mask_cfg.setToolTip("Each instrument configuration (L1, L2, λ, beam stop type and position) has its own "
+        self.mask_cfg.setToolTip("Each instrument configuration (coll, SD, λ, beam stop type and position) has its own "
                                  "mask: selecting a run of another configuration switches the mask; reductions use "
                                  "the mask of their configuration (or the suggested one if none was edited)")
         self._add_dock("detector", "Detector", plot_panel(self.det_canvas, self,
@@ -473,7 +481,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.table_panel.show_efficiency = self.show_table_efficiency
         self.table_panel.rows_selected.connect(self._draw_iq)
         self.table_panel.tabs.currentChanged.connect(lambda _i: self._draw_iq())
-        self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea)
+        self._add_dock("table", "Reduction table", self.table_panel, Area.RightDockWidgetArea,
+                       scrollable=True)                    # no large minimum size: scrolls in a small window
         m = self.menuBar().addMenu("&Reduction")
         m.addAction("Reduction &table", self.show_table)
         m.addAction("&Fill table from runs", lambda: (self.show_table(), self.table_panel.on_fill()))
@@ -583,7 +592,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
 
     def mask_for(self, raw):
         """The mask for a run and where it comes from: the mask of its instrument configuration
-        (L1, L2, λ, beam stop type and position; :func:`catalogue.mask_key`) – the one in the editor
+        (coll, SD, λ, beam stop type and position; :func:`catalogue.mask_key`) – the one in the editor
         or a stored one – else the suggested mask of the run (border, beam stop shadow, hot pixels).
         A SANS-LLB wide-angle panel: tube ends and dead tubes."""
         from .catalogue import mask_key, mask_key_label
@@ -630,8 +639,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             ed._update_stats()
             self._mask_key = k
         n = len(set(self.masks) | ({k} if not ed.pristine else set()))
-        L1, L2, lam, bst, bx, by = k
-        self.mask_cfg.setText(f"mask: L1 {L1:g}, L2 {L2:g} m, {lam:g} Å, BS {bst or '?'} ({bx}, {by})"
+        coll, SD, lam, bst, bx, by = k
+        self.mask_cfg.setText(f"mask: coll {coll:g}, SD {SD:g} m, {lam:g} Å, BS {bst or '?'} ({bx}, {by})"
                               + (" · new" if ed.pristine else "") + (f" · {n} edited" if n else ""))
         self.mask_cfg.setToolTip(f"mask for {mask_key_label(k)}" + (" (not edited yet)" if ed.pristine else "")
                                  + f"\nmasks edited for {n} configuration{'s' if n != 1 else ''}")
@@ -646,7 +655,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         from .catalogue import mask_key_label
         self._commit_mask()
         with h5py.File(path, "w") as f:
-            f.attrs["description"] = "pySASred masks per instrument configuration (L1, L2, λ, beam stop)"
+            f.attrs["description"] = "pySASred masks per instrument configuration (coll, SD, λ, beam stop)"
             for i, (k, m) in enumerate(sorted(self.masks.items(), key=lambda kv: str(kv[0]))):
                 g = f.create_group(f"mask{i:03d}")
                 g.create_dataset("pixel_mask", data=np.asarray(m, np.uint32), compression="gzip")
@@ -743,12 +752,14 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                                        instrument=self.instrument_for(raw0),
                                        normalise_by=self.norm.currentData(), k0=table.water_g, efficiency=eff,
                                        beam_profile=prof)
-                    if prof is None:
+                    if prof is None or prof.estimated:
+                        txt = ("no direct-beam measurement of this geometry: no resolution (Qdev) – reduced without it"
+                               if prof is None else
+                               "no direct-beam measurement of this geometry: beam divergence estimated from the "
+                               f"collimation ({prof.notes[0] if prof.notes else ''})")
                         self._add_missing(table.config, dict(role="direct_beam", index=None, label="Direct beam",
-                                                             field="resolution",
-                                                             text="no direct-beam measurement of this geometry: no "
-                                                                  "resolution (Qdev) – reduced without it",
-                                                             severity="check"), missing_seen)
+                                                             field="resolution", text=txt, severity="check"),
+                                          missing_seen)
                     r2.notes.insert(0, how)
                     r1 = average(r2, self._edges(raw0, r2.mask), sector_deg=sector)
                 except Exception as exc:  # noqa: BLE001
@@ -1023,6 +1034,23 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.tabifyDockWidget(det, tab)
         det.raise_()
         self.hide_stray_tab_bars()
+        self._default_column_widths()
+
+    def _default_column_widths(self):
+        """Start widths of the three columns, in proportion to the window (a laptop of 1600 × 1000 gives
+        about 340 | 790 | 470 px): enough for the run list and the Reduction panel without scrolling
+        sideways, the rest for the detector image."""
+        W = max(self.width(), 900)
+        left = int(min(max(0.21 * W, 300), 420))
+        right = int(min(max(0.29 * W, 340), 620))
+        try:
+            self.resizeDocks([self.docks["runs"], self.docks["detector"], self.docks["iq"]],
+                             [left, max(W - left - right, 300), right], QtCore.Qt.Orientation.Horizontal)
+            H = max(self.height(), 600)
+            self.resizeDocks([self.docks["runs"], self.docks["reduction"]], [int(0.42 * H), int(0.58 * H)],
+                             QtCore.Qt.Orientation.Vertical)
+        except Exception:  # noqa: BLE001 -- a layout nicety
+            pass
 
     def reset_layout(self):
         """View → Reset layout: the start arrangement, with the detector and the reduction table as tabs."""
@@ -1046,14 +1074,29 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         except Exception as exc:  # noqa: BLE001 -- a bad run must not stop opening the folder
             self.profiles = {}
             self.log(f"beam profiles: {type(exc).__name__}: {exc}")
-        if not log:
-            return
-        for p in sorted(self.profiles.values(), key=lambda p: p.key):
-            self.log("beam profile " + p.describe())
+        if log:
+            for p in sorted(self.profiles.values(), key=lambda p: p.key):
+                self.log("beam profile " + p.describe())
         keys = sorted({config_key(e.raw) for e in self.entries if e.raw is not None and not e.skip})
         missing = [k for k in keys if k not in self.profiles]
+        from .core.beamprofile import collimation_profile
+        first = {}
+        for e in self.entries:
+            if e.raw is not None and not e.skip:
+                first.setdefault(config_key(e.raw), e.raw)
         for k in missing:
-            self.log(f"WARNING {_key_text(k)}: no direct-beam measurement – no resolution (Qdev) for this geometry")
+            try:
+                est = collimation_profile(first[k], self.instrument_for(first[k]))
+            except Exception:  # noqa: BLE001
+                est = None
+            if est is not None:
+                self.profiles[k] = est
+                if log:
+                    self.log(f"WARNING {_key_text(k)}: no direct-beam measurement – beam divergence estimated from "
+                             f"the collimation: " + est.describe())
+            elif log:
+                self.log(f"WARNING {_key_text(k)}: no direct-beam measurement and no collimation data – no "
+                         "resolution (Qdev) for this geometry")
 
     def profile_for(self, raw):
         """Direct-beam profile of the geometry of ``raw`` (None: none measured)."""
@@ -1075,7 +1118,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             return
         c = self.centres.get(config_key(raw))
         if c is None:
-            self.bc_label.setText(f"no beam centre for L2 {raw.L2_m:.1f} m, λ {raw.wavelength_A:.2f} Å yet: "
+            self.bc_label.setText(f"no beam centre for SD {raw.SD_m:.1f} m, λ {raw.wavelength_A:.2f} Å yet: "
                                   "determine it from a direct-beam run of this geometry or enter it")
             return
         self._centre_sync = True
@@ -1209,7 +1252,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                               f", {bc.iterations} iterations"
                               + (f", {100 * bc.edge_fraction:.0f} % of the disc off the detector"
                                  if bc.edge_fraction > 0 else "")
-                              + f"; kept for L1 {k[2]:g} m, L2 {k[0]:g} m, λ {k[1]:g} Å")
+                              + f"; kept for coll {k[2]:g} m, SD {k[0]:g} m, λ {k[1]:g} Å")
         self.log(f"beam centre from run {e.run}: x = {bc.x:.4f} ± {bc.sigma_x:.4f}, y = {bc.y:.4f} ± {bc.sigma_y:.4f}")
 
     # ------------------------------------------------------------------ reduction
@@ -1286,7 +1329,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         geos = sorted({config_key(e.raw) for e in sel})
         if len(geos) > 1:
             QtWidgets.QMessageBox.information(
-                self, "Reduce", "The selected runs belong to " + ", ".join(f"L2 {k[0]:g} m / λ {k[1]:g} Å" for k in geos)
+                self, "Reduce", "The selected runs belong to " + ", ".join(f"SD {k[0]:g} m / λ {k[1]:g} Å" for k in geos)
                 + ". Reduce one geometry at a time: the beam centre, the solid angle and the mask belong to "
                   "the geometry.")
             return
@@ -1518,7 +1561,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         xc, yc = self.xc.value(), self.yc.value()
         nonfinite = ~np.isfinite(c)
         c = np.nan_to_num(c)
-        pol = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A,
+        pol = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "SD_effective_m", raw.SD_m), raw.wavelength_A,
                           invalid=(self._mask(c.shape) != 0) | nonfinite)
         cmap = matplotlib.colormaps[self.det_cmap.currentText()].with_extremes(bad="0.85")
         qe = u.q_out(pol.q_edges)
@@ -1532,8 +1575,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             from .mask_editor import MASKED_CMAP
             masked = self._mask(c.shape) != 0
             if masked.any():
-                full = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m), raw.wavelength_A).image
-                inv = polar_image(masked.astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m),
+                full = polar_image(c, (xc, yc), raw.pixel_size_m, getattr(raw, "SD_effective_m", raw.SD_m), raw.wavelength_A).image
+                inv = polar_image(masked.astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "SD_effective_m", raw.SD_m),
                                   raw.wavelength_A).image
                 sel = np.isfinite(inv) & (np.nan_to_num(inv) > 0)
                 if sel.any():
@@ -1546,7 +1589,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if mode == "colours":                                # masked cells in the mask colours
             from matplotlib.colors import ListedColormap
             from .mask_editor import OVERLAY_COLOURS
-            bits = polar_image(self._mask(c.shape).astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "L2_effective_m", raw.L2_m),
+            bits = polar_image(self._mask(c.shape).astype(float), (xc, yc), raw.pixel_size_m, getattr(raw, "SD_effective_m", raw.SD_m),
                                raw.wavelength_A).image
             alpha = self.mask_editor.opacity.value() / 100
             for bit, col in OVERLAY_COLOURS:
@@ -1853,10 +1896,10 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         from .catalogue import GeometryCentre
         for item in s.get("centres", []) or []:      # before the folder: set_folder keeps them
             try:
-                if len(item) == 5:          # sessions before the centre depended on L1: not used
+                if len(item) == 5:          # sessions before the centre depended on coll: not used
                     continue
-                L2, lam, L1, x, y, src = item
-                k = (float(L2), float(lam), float(L1))
+                SD, lam, coll, x, y, src = item
+                k = (float(SD), float(lam), float(coll))
                 self.centres[k] = GeometryCentre(k, float(x), float(y), 0.0, 0.0, [], str(src))
             except (TypeError, ValueError):
                 pass

@@ -42,8 +42,8 @@ class RawRun:
     count_mode: str
     wavelength_A: float
     dlam_over_lam_fwhm: Optional[float]
-    L1_m: float
-    L2_m: float
+    coll_m: float
+    SD_m: float
     pixel_size_m: tuple
     detector_offset_m: tuple      # lateral detector translation (x, y) as stored
     detector_tilt_deg: float      # chi_position (to be confirmed as the tilt)
@@ -55,7 +55,7 @@ class RawRun:
     start_time: str
     end_time: Optional[str]
     missing_optional: List[str] = field(default_factory=list)
-    L2_offset_m: float = 0.0      # distance offset for the geometry (L2_m stays as recorded)
+    SD_offset_m: float = 0.0      # distance offset for the geometry (SD_m stays as recorded)
     beamstop_type: str = ""       # beam stop selector (size/type), SANS/beam_stop/out_flag
     instrument: str = "sans_i"    # instrument file (instruments/sinq/<instrument>.yaml)
     preset_monitor: str = "monitor1"   # monitor the preset refers to (monitor mode)
@@ -71,14 +71,14 @@ class RawRun:
     scan: str = ""                # a selector speed scan (λ differs between the frames): not reduced
 
     @property
-    def L2_recorded_m(self) -> float:
-        """Sample-detector distance as stored in the file (= L2_m)."""
-        return self.L2_m
+    def SD_recorded_m(self) -> float:
+        """Sample-detector distance as stored in the file (= SD_m)."""
+        return self.SD_m
 
     @property
-    def L2_effective_m(self) -> float:
+    def SD_effective_m(self) -> float:
         """Distance to the detection layer used for q and the solid angle: recorded + offset."""
-        return self.L2_m + self.L2_offset_m
+        return self.SD_m + self.SD_offset_m
 
     @property
     def empty_reason(self) -> str:
@@ -215,7 +215,7 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
     catalogue); a reduction always reads with the checksum.
 
     ``distance_offset_m`` is the offset of the detection layer from the recorded detector distance:
-    ``RawRun.L2_m`` stays as recorded (grouping, selection, labels), ``L2_effective_m`` = recorded +
+    ``RawRun.SD_m`` stays as recorded (grouping, selection, labels), ``SD_effective_m`` = recorded +
     offset is used for q and the solid angle; None takes it from the preferences
     (:func:`distance_offset_for`)."""
     path = str(path)
@@ -238,8 +238,8 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
             raise ValueError(f"wavelength unit '{lu}' unknown or missing")
         dlam, _ = _read(g, "SANS/monochromator/wavelength_spread", False, missing)
         tilt, _ = _read(g, "SANS/Dornier-VS/tilt", False, missing)
-        L2, L2u = _read(g, "SANS/detector/distance")
-        L1, L1u = _read(g, "SANS/collimator/geometry/size")
+        SD, SDu = _read(g, "SANS/detector/distance")
+        coll, collu = _read(g, "SANS/collimator/geometry/size")
         pxs, pxu = _read(g, "SANS/detector/x_pixel_size")
         pys, pyu = _read(g, "SANS/detector/y_pixel_size")
         dx, dxu = _read(g, "SANS/detector/x_null", False, missing)   # not a translation; kept raw
@@ -281,8 +281,8 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         preset=float(preset), count_mode=str(mode),
         wavelength_A=float(lam) * lf,
         dlam_over_lam_fwhm=None if dlam is None else float(dlam),
-        L1_m=_length_m(L1, L1u, "collimator/geometry/size"),
-        L2_m=_length_m(L2, L2u, "detector/distance"),
+        coll_m=_length_m(coll, collu, "collimator/geometry/size"),
+        SD_m=_length_m(SD, SDu, "detector/distance"),
         pixel_size_m=(_length_m(pxs, pxu, "x_pixel_size"), _length_m(pys, pyu, "y_pixel_size")),
         detector_offset_m=(None if dx is None else float(dx),
                            None if dy is None else _length_m(dy, dyu, "detector/y_position")),
@@ -296,5 +296,5 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
     _frames(run, t_frames, frame_monitors, rpm)
     off = distance_offset_for(run.start_time) if distance_offset_m is None else float(distance_offset_m)
     if off:
-        run.L2_offset_m = off
+        run.SD_offset_m = off
     return run

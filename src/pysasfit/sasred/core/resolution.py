@@ -10,7 +10,7 @@ Three contributions, added in quadrature:
   sigma_q^2 = k^2 cos^2(theta) (sigma_theta_x^2 cos^2 phi + sigma_theta_y^2 sin^2 phi), k = 2 pi/lambda,
   dq/d(2theta) = k cos theta;
 * **pixels**: in 1D the spread of the pixel q inside each bin (which contains the pixel size); in 2D the
-  pixel width, (k cos theta p/L2)^2/12 per detector axis.
+  pixel width, (k cos theta p/SD)^2/12 per detector axis.
 
 Without a direct-beam measurement of the geometry the resolution is not determined (the reduction goes
 on without it and says so).
@@ -81,15 +81,15 @@ def sigma_q_1d(binning, geo, dlam_over_lam_fwhm, shape, profile):
     return np.sqrt(v_lam + v_bin + v_geo), {"wavelength": v_lam, "bin": v_bin, "geometry": v_geo}
 
 
-def resolution_2d(geo, dlam_over_lam_fwhm, shape, profile, pixel_size_m, L2_m):
+def resolution_2d(geo, dlam_over_lam_fwhm, shape, profile, pixel_size_m, SD_m):
     """2D Gaussian resolution of every pixel: standard deviations along the detector axes (q_x, q_y) and
     along / across q (parallel = radial, perpendicular = azimuthal), and the q_x-q_y correlation."""
     s_l = sigma_lambda_rel(dlam_over_lam_fwhm, shape)
     gx, gy, cp, sp_ = _geometric_var(geo, profile)
     px, py = (pixel_size_m, pixel_size_m) if np.isscalar(pixel_size_m) else pixel_size_m
     k2c2 = (2 * np.pi / geo.wavelength_A * np.cos(0.5 * geo.two_theta)) ** 2
-    gx = gx + k2c2 * (float(px) / L2_m) ** 2 / 12.0
-    gy = gy + k2c2 * (float(py) / L2_m) ** 2 / 12.0
+    gx = gx + k2c2 * (float(px) / SD_m) ** 2 / 12.0
+    gy = gy + k2c2 * (float(py) / SD_m) ** 2 / 12.0
     w = (geo.q * s_l) ** 2
     sxx = gx + w * cp ** 2
     syy = gy + w * sp_ ** 2

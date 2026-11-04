@@ -87,7 +87,7 @@ def test_vifor_water_with_distance_offset():
     def run(n, off=0.053):
         return read_sans_i(os.path.join(RAW, f"sans2026n{n:06d}.hdf"), checksum=False, distance_offset_m=off)
     w2 = run(82203)
-    assert w2.L2_effective_m == pytest.approx(w2.L2_m + 0.053) and w2.L2_offset_m == 0.053
+    assert w2.SD_effective_m == pytest.approx(w2.SD_m + 0.053) and w2.SD_offset_m == 0.053
     r = wt.compare_water_runs([run(n) for n in (82280, 82282, 82284)], [run(n) for n in (82281, 82283)],
                               [w2, run(82251)], [run(82204), run(82252)], (61.73, 63.96),
                               (0.2399, 0.0008), (0.8835, 0.0019))

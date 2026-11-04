@@ -94,7 +94,7 @@ class TransmissionCurve:
         return float((1 - self.T_si) / self.T_si * self.alpha_sr[-1] / (4 * np.pi))
 
 
-def aperture_transmission(sample, empty, centre, pixel_size_m, L2_m, sample_var=None, empty_var=None,
+def aperture_transmission(sample, empty, centre, pixel_size_m, SD_m, sample_var=None, empty_var=None,
                           cd=None, cd_var=None, valid=None, radii_px: Optional[Sequence[float]] = None,
                           beam_fraction: float = 0.99, flat_background="auto",
                           n_rings: int = 12) -> TransmissionCurve:
@@ -159,7 +159,7 @@ def aperture_transmission(sample, empty, centre, pixel_size_m, L2_m, sample_var=
         T.append(t)
         sT.append(np.sqrt(var))
         rm = r_m[m].max() if m.any() else 0.0
-        alpha.append(solid_angle_of_cone(np.arctan(rm / L2_m)))
+        alpha.append(solid_angle_of_cone(np.arctan(rm / SD_m)))
     T, sT, alpha = np.array(T), np.array(sT), np.array(alpha)
     ib = int(np.argmin(np.abs(radii - beam_r)))
     # τ_UL / T_Si with the correlation of the two sums (inner disc + rest); background neglected here
@@ -212,8 +212,8 @@ def aperture_transmission_runs(sample, empty, centre, cd=None, instrument=None, 
     from ..catalogue import is_transmission
     from ..reduce import load_instrument, normalised_counts
     inst = instrument or load_instrument(sample)
-    if abs(sample.L2_m - empty.L2_m) > 0.01 * empty.L2_m:
-        raise ValueError(f"sample at L2 = {sample.L2_m:.2f} m, empty beam at {empty.L2_m:.2f} m")
+    if abs(sample.SD_m - empty.SD_m) > 0.01 * empty.SD_m:
+        raise ValueError(f"sample at SD = {sample.SD_m:.2f} m, empty beam at {empty.SD_m:.2f} m")
     if check_beamstop:
         inbeam = [r.run for r in (sample, empty, cd) if r is not None and not is_transmission(r)]
         if inbeam and cd is not None and inbeam == [cd.run]:
@@ -244,7 +244,7 @@ def aperture_transmission_runs(sample, empty, centre, cd=None, instrument=None, 
     if sample.attenuator != empty.attenuator:
         notes.append(f"attenuator {sample.attenuator} (sample) vs {empty.attenuator} (empty beam): their "
                      "factors enter T directly (uncertainty not known)")
-    t = aperture_transmission(s, e, centre, sample.pixel_size_m, getattr(sample, "L2_effective_m", sample.L2_m),
+    t = aperture_transmission(s, e, centre, sample.pixel_size_m, getattr(sample, "SD_effective_m", sample.SD_m),
                               vs, ve, c, vc, valid, **kw)
     t.notes = list(dict.fromkeys(notes + t.notes))
     return t

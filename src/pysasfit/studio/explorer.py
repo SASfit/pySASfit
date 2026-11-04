@@ -85,6 +85,16 @@ def _entries():
     return cat
 
 
+def _scrolled(widget):
+    """``widget`` in a frameless scroll area: its panel then has no large minimum size, so the window
+    fits a laptop screen; a panel made narrower than its content scrolls."""
+    sc = QtWidgets.QScrollArea()
+    sc.setWidget(widget)
+    sc.setWidgetResizable(True)
+    sc.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+    return sc
+
+
 # --------------------------------------------------------------------------- SASfit installation
 class InstallationDialog(QtWidgets.QDialog):
     """Choose the folder of a local SASfit installation (libsasfit and the plugin libraries)."""
@@ -233,8 +243,6 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
         # ---- left (a dock that can be detached): background, contributions (tabs)
         left = QtWidgets.QWidget()
-        self._left = left
-        left.setMinimumWidth(560)
         lv = QtWidgets.QVBoxLayout(left)
 
         inst = QtWidgets.QHBoxLayout()
@@ -312,7 +320,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
         lv.addWidget(self.tabs, 1)
         self.model_dock = QtWidgets.QDockWidget("Model", self)
         self.model_dock.setObjectName("model_dock")
-        self.model_dock.setWidget(left)
+        self._left = _scrolled(left)              # a small screen: the panel scrolls instead of a wide window
+        self.model_dock.setWidget(self._left)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.model_dock)
         self.resizeDocks([self.model_dock], [600], QtCore.Qt.Orientation.Horizontal)
 
@@ -336,7 +345,6 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.ax_res.grid(True, which="both", alpha=0.25)
         self.ax_res.set_visible(False)
 
-        bar = QtWidgets.QHBoxLayout()
         self.qmin = QtWidgets.QLineEdit(f"{qmin:g}")
         self.qmax = QtWidgets.QLineEdit(f"{qmax:g}")
         for e in (self.qmin, self.qmax):
@@ -359,15 +367,13 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.logx.toggled.connect(self._on_scales)
         self.logy.toggled.connect(self._on_scales)
         self.autoscale.toggled.connect(self._schedule)
-        for w in (
-            QtWidgets.QLabel("Q min:"), self.qmin, self.units, QtWidgets.QLabel("Q max:"), self.qmax,
-            QtWidgets.QLabel("points:"), self.npoints, self.logx, self.logy, self.autoscale,
-        ):  # fmt: skip
-            bar.addWidget(w)
-        bar.addStretch(1)
-        rv.addLayout(bar)
+        from ..core.flowlayout import flow_bar
+        rv.addWidget(flow_bar(                    # wraps to two rows in a narrow window
+            "Q min:", self.qmin, self.units, "Q max:", self.qmax,
+            "points:", self.npoints, self.logx, self.logy, self.autoscale,
+        ))  # fmt: skip
 
-        buttons = QtWidgets.QHBoxLayout()
+        button_list = []
         for text, slot, tip in (
             ("Hold", self._hold, "keep the current curve as a grey reference"),
             ("Clear held", self._clear_held, "remove the reference curves"),
@@ -378,9 +384,8 @@ class ModelExplorer(QtWidgets.QMainWindow):
             b = QtWidgets.QPushButton(text)
             b.setToolTip(tip)
             b.clicked.connect(slot)
-            buttons.addWidget(b)
-        buttons.addStretch(1)
-        rv.addLayout(buttons)
+            button_list.append(b)
+        rv.addWidget(flow_bar(*button_list))
         self.status = QtWidgets.QLabel("")
         self.status.setWordWrap(True)
         rv.addWidget(self.status)
@@ -389,7 +394,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
         self.fit_panel = FitPanel(self)
         self.fit_dock = QtWidgets.QDockWidget("Fit", self)
-        self.fit_dock.setWidget(self.fit_panel)
+        self.fit_dock.setWidget(_scrolled(self.fit_panel))
         self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.fit_dock)
         self._build_distribution_dock()
         view = self.menuBar().addMenu("&View")
@@ -737,6 +742,24 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self._schedule()
 
     # ------------------------------------------------------------------ plot
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not getattr(self, "_sized", False):
+            self._sized = True
+            QtCore.QTimer.singleShot(0, self._default_dock_sizes)
+
+    def _default_dock_sizes(self):
+        """Start sizes in proportion to the window, so that the I(q) plot keeps a useful size on a laptop
+        (1600 × 1000: model 560, plot ≈ 650, size distributions 390; the fit panel a third of the height)."""
+        W, H = max(self.width(), 900), max(self.height(), 600)
+        try:
+            self.resizeDocks([self.model_dock, self.dist_dock],
+                             [int(min(max(0.35 * W, 420), 640)), int(min(max(0.24 * W, 280), 460))],
+                             QtCore.Qt.Orientation.Horizontal)
+            self.resizeDocks([self.fit_dock], [int(min(max(0.32 * H, 220), 420))], QtCore.Qt.Orientation.Vertical)
+        except Exception:  # noqa: BLE001 -- a layout nicety
+            pass
+
     def _on_scales(self, *_):
         self.ax.set_xscale("log" if self.logx.isChecked() else "linear")
         if self.logy.isChecked():

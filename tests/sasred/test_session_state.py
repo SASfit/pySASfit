@@ -5,7 +5,7 @@ import os
 import pytest
 
 RAW = os.environ.get("PYSASRED_TEST_RAW", "/mnt/user-data/uploads/Sept2026/raw")
-C8 = "L2 8.0 m, λ 6.00 Å, L1 8.0 m"
+C8 = "SD 8.0 m, λ 6.00 Å, coll 8.0 m"
 K8 = (8.0, 6.0, 8.0)
 
 pytestmark = pytest.mark.skipif(not os.path.isdir(RAW), reason="Vifor raw data not available")

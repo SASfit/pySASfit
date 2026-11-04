@@ -22,13 +22,13 @@ class PolarImage:
     image: np.ndarray        # (n_r, n_phi)
     phi_edges_deg: np.ndarray
     r_edges_m: np.ndarray
-    q_edges: np.ndarray      # 1/Å, from r through 2θ = atan(r / L2)
+    q_edges: np.ndarray      # 1/Å, from r through 2θ = atan(r / SD)
 
     def q_of_r(self, r_m):
         return np.interp(r_m, self.r_edges_m, self.q_edges)
 
 
-def polar_image(values, beam_center_px, pixel_size_m, L2_m, wavelength_A, n_phi: int = 360,
+def polar_image(values, beam_center_px, pixel_size_m, SD_m, wavelength_A, n_phi: int = 360,
                 r_step_m: Optional[float] = None, invalid: Optional[np.ndarray] = None) -> PolarImage:
     """Resample ``values`` (ny, nx) onto a polar grid around the beam centre.
 
@@ -54,5 +54,5 @@ def polar_image(values, beam_center_px, pixel_size_m, L2_m, wavelength_A, n_phi:
     if invalid is not None:
         src[np.asarray(invalid, bool)] = np.nan
     out[inside] = src[iy[inside], ix[inside]]
-    q_edges = 4 * np.pi / wavelength_A * np.sin(0.5 * np.arctan(r_edges / L2_m))
+    q_edges = 4 * np.pi / wavelength_A * np.sin(0.5 * np.arctan(r_edges / SD_m))
     return PolarImage(out, phi_edges, r_edges, q_edges)

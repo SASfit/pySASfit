@@ -179,7 +179,7 @@ def sum_images(imgs: Sequence[Image2D], mean: bool = False) -> Image2D:
     names = ", ".join(im.sample or im.name for im in imgs[:4]) + (" …" if len(imgs) > 4 else "")
     out = Image2D(I, dI, mask, f"{'mean' if mean else 'sum'} of {len(imgs)}", "sum",
                   dict(im0.meta, sample=f"{'mean' if mean else 'sum'} of {len(imgs)}: {names}"),
-                  unit=im0.unit, centre_px=im0.centre_px, pixel_m=im0.pixel_m, L2_m=im0.L2_m,
+                  unit=im0.unit, centre_px=im0.centre_px, pixel_m=im0.pixel_m, SD_m=im0.SD_m,
                   wavelength_A=im0.wavelength_A, entry=str(id(imgs)))
     out._qxy = im0._qxy
     return out

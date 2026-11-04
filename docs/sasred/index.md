@@ -44,7 +44,7 @@ per steradian, I(q) in counts / monitor / sr.
 | scattering strength after Strunz et al. (2000): transmission over growing apertures (T_Si, τ_UL, lower limit of p_cS), p_cS from the curve, regime and advice, self-consistent p_cS | guided strong-scatterer step in the GUI; general formula with T_EB, (1 − p_cS), K0 |
 | BerSANS-like grouping of runs by metadata with precisions; equivalence check of repeated runs (outliers, scale and shape drift, e.g. sedimentation) before summing; reduction plan with roles, summed runs, outliers and missing runs per configuration | *Runs* panel in the GUI |
 | standard, suggested and drawn masks | pixel splitting in the averaging |
-| radial and sector average; resolution from the direct beam of each geometry (2D Gaussian fit → divergence) + wavelength + bin width, Qdev in 1D and a 2D Gaussian per pixel; without a direct beam no resolution, with a warning | – |
+| radial and sector average; resolution from the direct beam of each geometry (2D Gaussian fit → divergence) + wavelength + bin width, Qdev in 1D and a 2D Gaussian per pixel; without a direct beam the divergence is estimated from the collimation (guide and sample aperture), with a warning | – |
 | NXcanSAS and ASCII output with the full uncertainty information | live reduction during the measurement |
 
 Values whose uncertainty is not yet known (the dead time τ, the attenuator factors) are used but not

@@ -24,15 +24,15 @@ Taking them again after a new reduction replaces the curves of the same run or t
 
 | format | recognised by | q | header items |
 |---|---|---|---|
-| pySASred NXcanSAS (`.h5`) | HDF5, SASentry | from the `units` attribute (1/nm or 1/Å) | `SASprocess/metadata`: named items (`sample`, `L2_m`, `wavelength_A`, `L1_m`, `thickness_cm`, …) and every scalar entry of the raw file as `hdf:<path>` (a 1-D log gives its mean) |
+| pySASred NXcanSAS (`.h5`) | HDF5, SASentry | from the `units` attribute (1/nm or 1/Å) | `SASprocess/metadata`: named items (`sample`, `SD_m`, `wavelength_A`, `coll_m`, `thickness_cm`, …) and every scalar entry of the raw file as `hdf:<path>` (a 1-D log gives its mean) |
 | pySASred ASCII (`.dat`) | `# pySASred` | header `q [1/nm]` or `q [1/A]` | `# metadata_json = {…}` |
-| BerSANS 1D (`D0082130.080`, …) | `%File` … `Type=SANSDIso` | 1/nm | every `key=value` of `%Sample`, `%Setup`, `%History` as `Sample/Temperature`, `Setup/SD`, …; `SD`, `Lambda`, `Collimation` give `L2_m`, `wavelength_A`, `L1_m` |
+| BerSANS 1D (`D0082130.080`, …) | `%File` … `Type=SANSDIso` | 1/nm | every `key=value` of `%Sample`, `%Setup`, `%History` as `Sample/Temperature`, `Setup/SD`, …; `SD`, `Lambda`, `Collimation` give `SD_m`, `wavelength_A`, `coll_m` |
 | merged files written here | `# pyTOOLbox merge` / SASprocess `group_values` | | the group values |
 | plain columns q, I[, dI[, dq]] | | 1/nm unless the header mentions 1/Å | file name as sample |
 
 pySASred writes the header items into its NXcanSAS and ASCII files from now on (`pysasfit.sasred.io.metadata`).
 Files reduced earlier have the sample name, run and parameters only. The geometry of a curve, e.g.
-`L2 8.00 m, λ 0.600 nm, L1 8.0 m`, comes from the recorded distance, wavelength and collimation.
+`SD 8.00 m, λ 0.600 nm, coll 8.0 m`, comes from the recorded distance, wavelength and collimation.
 
 ## 2. Group
 
@@ -123,7 +123,7 @@ by the tool, for example to group merged curves of several beam times.
 from pysasfit.toolbox import merge as mg
 curves, problems = mg.read_folder("analysed")              # NXcanSAS, ASCII, BerSANS
 groups, rest = mg.group_curves(curves, r"EXP-005370-(\w)_(\d)", {"hdf:sample/temperature": 0.5})
-merged = mg.merge_groups(groups, cuts={"L2 2.00 m, λ 0.600 nm, L1 8.0 m": (0.32, None)})
+merged = mg.merge_groups(groups, cuts={"SD 2.00 m, λ 0.600 nm, coll 8.0 m": (0.32, None)})
 for m in merged:
     print(m.group.label, [o.text() for o in m.overlaps])
     mg.write_ascii(mg.file_stem(m) + ".dat", m)

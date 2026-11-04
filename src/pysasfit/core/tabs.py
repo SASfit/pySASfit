@@ -94,6 +94,7 @@ class DragOutTabBar(QtWidgets.QTabBar):
             self.initStyleOption(opt, i)
             segs = self._segments(i)
             if not segs:
+                p.setFont(self.font())          # not the (larger, bold) font of the previous wordmark
                 p.drawControl(QtWidgets.QStyle.ControlElement.CE_TabBarTab, opt)
                 continue
             text_rect = self.style().subElementRect(QtWidgets.QStyle.SubElement.SE_TabBarTabText, opt, self)

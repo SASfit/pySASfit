@@ -3,7 +3,7 @@
 
 1. **Select** the runs to work on: a run range, optionally a pattern (alternately use n runs and
    skip m), and conditions on any header item: text equal or matching a regular expression
-   (``EXP-.*``), a number in a range (``1.99 ≤ L2 ≤ 2.01``).
+   (``EXP-.*``), a number in a range (``1.99 ≤ SD ≤ 2.01``).
 2. **Group** the selected runs by header items, each with a ± tolerance (sample name exactly,
    temperature ± 1 K, field ± 0.01 T, pressure, shear rate, ...): every group becomes one sample row
    of the reduction table, its runs summed.
