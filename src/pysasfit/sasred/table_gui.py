@@ -254,7 +254,8 @@ class RunSetDialog(QtWidgets.QDialog):
 
 _TABLE_SETTINGS = ("water_g", "scale", "efficiency", "direct_beam_radius_mm", "direct_beam_attenuator",
                    "efficiency_mask_filled", "ignored")
-_ROW_VALUES = ("scaling", "aperture_cm2", "attenuator", "probability", "notes")
+_ROW_VALUES = ("scaling", "aperture_cm2", "attenuator", "probability", "notes", "series", "series_t0",
+               "series_bin", "series_dt_s")
 
 
 def carry_over(new, old) -> str:
@@ -344,8 +345,12 @@ class GeometryPage(QtWidgets.QWidget):
         self.corr = self._make_table(COLS_CORR, len(CORRECTIONS))
         self.corr.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         bl.addWidget(self.corr)
-        top = QtWidgets.QHBoxLayout()
-        top.addWidget(box, 3)                      # the correction table gets the larger share of the width
+        # the three parts as tabs with their labels on the left (each gets the whole page)
+        self.inner = QtWidgets.QTabWidget()             # labels rotated 90° counter-clockwise (read upwards)
+        self.inner.setTabPosition(QtWidgets.QTabWidget.TabPosition.West)
+        self.inner.setDocumentMode(True)
+        box.setTitle("")
+        self.inner.addTab(box, "Correction data")
         wbox = QtWidgets.QGroupBox("Absolute scale")
         wl = QtWidgets.QFormLayout(wbox)
         self.scale_combo = QtWidgets.QComboBox()
@@ -402,8 +407,13 @@ class GeometryPage(QtWidgets.QWidget):
         wl.addRow("g(λ) used:", self.g_edit)
         wl.addRow("denominator D:", self.w_den)
         wl.addRow("water scaling:", self.w_scale)
-        top.addWidget(wbox, 2)
-        lay.addLayout(top)
+        wbox.setTitle("")
+        wpage = QtWidgets.QWidget()                # the form at the top, not stretched over the page
+        wpl = QtWidgets.QVBoxLayout(wpage)
+        wpl.setContentsMargins(0, 0, 0, 0)
+        wpl.addWidget(wbox)
+        wpl.addStretch(1)
+        self.inner.addTab(wpage, "Absolute scale")
         box2 = QtWidgets.QGroupBox("Sample data")
         sl = QtWidgets.QVBoxLayout(box2)
         self.samp = self._make_table(COLS_SAMPLE, 0)
@@ -421,13 +431,18 @@ class GeometryPage(QtWidgets.QWidget):
         flow_w, flow = _flow_row()
         for text, fn in (("Add a sample", self.on_add_sample), ("Add many samples…", self.on_add_many),
                          ("Remove sample", self.on_remove_sample),
+                         ("Time series…", lambda _checked=False: self.on_series()),
                          ("Copy to all samples below", lambda: self.on_copy("below")),
                          ("Copy to all samples above", lambda: self.on_copy("above"))):
             b = QtWidgets.QPushButton(text)
             b.clicked.connect(fn)
             flow.addWidget(b)
         sl.addWidget(flow_w)
-        lay.addWidget(box2, 1)
+        box2.setTitle("")
+        self.inner.addTab(box2, "Sample data")
+        self.inner.setCurrentIndex(2)              # the samples first; the panel keeps the choice for all tabs
+        self.inner.currentChanged.connect(self._on_inner)
+        lay.addWidget(self.inner, 1)
         self.problems = QtWidgets.QLabel()
         self.problems.setWordWrap(True)
         lay.addWidget(self.problems)
@@ -518,7 +533,14 @@ class GeometryPage(QtWidgets.QWidget):
                 it.setToolTip(r.notes)
                 if r.notes.startswith("decision needed"):
                     it.setForeground(QtGui.QBrush(_RED))
-            if c == "Number" and r.runs and len(r.used) < len(r.runs):
+            if c == "Number" and getattr(r, "series", False):
+                it.setForeground(QtGui.QBrush(QtGui.QColor("#1f5fa8")))     # a time series: blue, bold
+                fnt = it.font()
+                fnt.setBold(True)
+                it.setFont(fnt)
+                it.setToolTip("time series: the ticked runs are reduced one by one (button Time series…)"
+                              + (f"; t₀ {r.series_t0}" if r.series_t0 else "; t₀ = start of the first run"))
+            elif c == "Number" and r.runs and len(r.used) < len(r.runs):
                 it.setForeground(QtGui.QBrush(_ORANGE))
             x = miss.get(c)
             if x is not None and x.severity == "info":
@@ -554,6 +576,9 @@ class GeometryPage(QtWidgets.QWidget):
             self.problems.setText("" if not p else "Still missing: " + "; ".join(p))
         finally:
             self._filling = False
+        if hasattr(self, "inner"):
+            self._mark_inner()
+
 
     def _update_water_box(self):
         from .absolute import water_denominator, water_g, water_scaling_factor
@@ -630,11 +655,35 @@ class GeometryPage(QtWidgets.QWidget):
                 pass
         self.db_att.setPlaceholderText(ph)
 
+    INNER = {"correction": 0, "scale": 1, "samples": 2}
+
+    def _on_inner(self, i):
+        self.panel.inner_index = i
+        self._mark_inner()
+
+    def _mark_inner(self):
+        """Left tabs with something missing: dark red text (as the geometry tabs)."""
+        miss = getattr(self, "_missing", []) or []
+        bad = {0: False, 1: False, 2: False}
+        for x in miss:
+            if x.severity == "info":
+                continue
+            if x.field in ("efficiency", "scale", "g", "attenuator_db", "radius"):
+                bad[1] = True
+            elif x.role == "sample":
+                bad[2] = True
+            else:
+                bad[0] = True
+        for i, b in bad.items():
+            self.inner.tabBar().setTabTextColor(i, QtGui.QColor("#b00020") if b else QtGui.QColor())
+
     def show_missing(self, role: str, index, field: str):
         """Select the cell of a missing input (or the efficiency map box)."""
         if field == "efficiency":
+            self.inner.setCurrentIndex(self.INNER["scale"])
             self.eff_combo.setFocus()
             return
+        self.inner.setCurrentIndex(self.INNER["samples"] if role == "sample" else self.INNER["correction"])
         col = FIELD_COLUMN.get(field)
         if role == "sample":
             t, i, cols = self.samp, index, COLS_SAMPLE
@@ -831,6 +880,112 @@ class GeometryPage(QtWidgets.QWidget):
         self.refresh()
         self.open_runs(self.samp, len(self.table.samples) - 1)
 
+    def on_series(self, row: Optional[RowSet] = None):
+        """Dialog: reduce the selected sample row as a time series (first and last run, time zero, runs or
+        seconds per point) instead of summing its runs."""
+        if row is None:
+            sel = self.selected_rows()
+            if not sel:
+                i = self.samp.currentRow()
+                sel = [self.table.samples[i]] if 0 <= i < len(self.table.samples) else []
+            if not sel:
+                QtWidgets.QMessageBox.information(self, "Time series", "Select a cell of the sample row first.")
+                return
+            row = sel[0]
+        raws = self.raws()
+        from .series import parse_time, run_times
+        runs = sorted(c.run for c in row.runs)
+        if not runs:
+            self._log(f"{row.label}: no runs")
+            return
+
+        def when(n):
+            r = raws.get(n)
+            try:
+                return run_times(r)[0].strftime("%Y-%m-%d %H:%M:%S") if r is not None else "?"
+            except Exception:  # noqa: BLE001
+                return "?"
+        d = QtWidgets.QDialog(self)
+        d.setWindowTitle(f"Time series: {row.label} ({row.info})")
+        f = QtWidgets.QFormLayout(d)
+        on = QtWidgets.QCheckBox("reduce the runs one by one as a time series (not summed)")
+        on.setChecked(bool(row.series))
+        f.addRow(on)
+        first, last = QtWidgets.QComboBox(), QtWidgets.QComboBox()
+        used = row.used or runs
+        for cb in (first, last):
+            for n in runs:
+                cb.addItem(f"{n}   {when(n)}", n)
+        first.setCurrentIndex(runs.index(min(used)))
+        last.setCurrentIndex(runs.index(max(used)))
+        f.addRow("first run", first)
+        f.addRow("last run", last)
+        t0 = QtWidgets.QLineEdit(row.series_t0 or "")
+        t0.setPlaceholderText(f"empty: start of the first run ({when(min(used))})")
+        t0.setToolTip("time zero of the series, e.g. the mixing or the temperature jump: YYYY-MM-DD hh:mm:ss")
+        f.addRow("time zero t₀", t0)
+        nb = QtWidgets.QSpinBox()
+        nb.setRange(1, 1000)
+        nb.setValue(int(row.series_bin or 1))
+        nb.setToolTip("consecutive runs summed per point (1: every run is a point)")
+        f.addRow("runs per point", nb)
+        dt = QtWidgets.QLineEdit("" if not row.series_dt_s else f"{row.series_dt_s:g}")
+        dt.setPlaceholderText("empty: by number of runs")
+        dt.setToolTip("instead: all runs whose middle lies in the same window of this many seconds form a point")
+        f.addRow("or time window [s]", dt)
+        info = QtWidgets.QLabel("")
+        info.setWordWrap(True)
+        info.setStyleSheet("color: grey")
+        f.addRow(info)
+        bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
+                                        | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        f.addRow(bb)
+
+        def check():
+            a, b = first.currentData(), last.currentData()
+            n = sum(1 for x in runs if a <= x <= b)
+            msg = f"{n} runs from {a} to {b}"
+            try:
+                parse_time(t0.text())
+                if dt.text().strip():
+                    float(dt.text())
+            except ValueError as exc:
+                info.setText(f"{msg} – {exc}")
+                bb.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+                return
+            bb.button(QtWidgets.QDialogButtonBox.StandardButton.Ok).setEnabled(b >= a)
+            info.setText(msg + ("" if b >= a else " – the last run is before the first"))
+        for w in (first, last):
+            w.currentIndexChanged.connect(lambda _i: check())
+        for w in (t0, dt):
+            w.textChanged.connect(lambda _t: check())
+        check()
+        bb.accepted.connect(d.accept)
+        bb.rejected.connect(d.reject)
+        if d.exec() != QtWidgets.QDialog.DialogCode.Accepted:
+            return
+        self.set_series(row, on.isChecked(), first.currentData(), last.currentData(), t0.text().strip(),
+                        nb.value(), float(dt.text()) if dt.text().strip() else None)
+
+    def set_series(self, row: RowSet, on: bool, first: int = None, last: int = None, t0: str = "",
+                   per_point: int = 1, window_s: Optional[float] = None):
+        """Make ``row`` a time series of its runs ``first`` … ``last`` (ticked; the others unticked) or a
+        summed row again (``on`` False: the ticks stay)."""
+        row.series = bool(on)
+        if on:
+            for c in row.runs:
+                if first is not None and last is not None:
+                    c.use = first <= c.run <= last
+            row.series_t0, row.series_bin, row.series_dt_s = t0, max(1, int(per_point)), window_s
+        self._log(f"{row.label} ({row.info}): " + (f"time series of runs {first}–{last}"
+                                                    + (f", t₀ {t0}" if t0 else "") +
+                                                    (f", windows of {window_s:g} s" if window_s else
+                                                     f", {per_point} run(s) per point")
+                                                    if on else "summed again"))
+        self.refresh()
+        self.changed.emit()
+        self.panel.changed.emit()
+
     def on_remove_sample(self):
         i = self.samp.currentRow()
         if 0 <= i < len(self.table.samples):
@@ -909,6 +1064,8 @@ class ReductionTableWidget(QtWidgets.QWidget):
         self.tabs = QtWidgets.QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(lambda i: self.remove_geometry(i))
+        self.inner_index = 2                       # left tab shown in every geometry (samples by default)
+        self.tabs.currentChanged.connect(self._sync_inner)
         lay.addWidget(self.tabs, 1)
         self.info = QtWidgets.QLabel()
         self.info.setWordWrap(True)
@@ -957,6 +1114,11 @@ class ReductionTableWidget(QtWidgets.QWidget):
         for q in self.pages():              # the efficiency-map lists offer the water of every geometry
             q._update_scale_box()
         return p
+
+    def _sync_inner(self, _i=None):
+        p = self.tabs.currentWidget()
+        if p is not None and hasattr(p, "inner") and p.inner.currentIndex() != self.inner_index:
+            p.inner.setCurrentIndex(self.inner_index)
 
     def _clear_pages(self):
         while self.tabs.count():

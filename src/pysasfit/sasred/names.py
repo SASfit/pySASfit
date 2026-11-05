@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Sample names and roles corrected by hand, per raw-data folder.
+"""Sample names and roles corrected by hand, and runs excluded by hand, per raw-data folder.
 
 Sample names in the raw files are sometimes wrong (two cells swapped, a remeasurement with a long
 explanatory name, ...). The roles of the reduction (water, empty cell, ...) and the grouping follow the
@@ -11,6 +11,10 @@ file (raw-data folders are often read-only) and are applied whenever a run of th
 (:func:`apply`): ``raw.sample_name`` becomes the new name, the name in the file stays in
 ``raw.sample_name_in_file``, and ``raw.role`` (if set) overrides the role from the name
 (:func:`pysasfit.sasred.plan.role_of`).
+
+A run can also be **excluded** (sample preparation failed, phase separation during the measurement, …):
+``raw.excluded`` holds the reason, the run is skipped like an empty run (never selected, not reduced)
+and stays excluded when the folder is read again.
 """
 from __future__ import annotations
 
@@ -28,7 +32,8 @@ ROLE_CHOICES = {"": "from the sample name", "sample": "sample", "water": "water 
 
 
 class Corrections(dict):
-    """{run: {"name": new sample name or None, "role": role or None, "note": text}} of one folder."""
+    """{run: {"name": new sample name or None, "role": role or None, "note": text,
+    "exclude": reason or None}} of one folder."""
 
     def __init__(self, folder: str = "", data=None):
         super().__init__()
@@ -39,11 +44,33 @@ class Corrections(dict):
     def set(self, runs: Iterable[int], name: Optional[str] = None, role: Optional[str] = None, note: str = ""):
         """New name (None or "" keeps the name of the file) and role (None or "" from the name)."""
         for r in runs:
-            d = {"name": name or None, "role": role or None, "note": note}
-            if d["name"] is None and d["role"] is None:
-                self.pop(int(r), None)
-            else:
-                self[int(r)] = d
+            old = self.get(int(r), {})
+            d = {"name": name or None, "role": role or None, "note": note, "exclude": old.get("exclude")}
+            self._store(int(r), d)
+
+    def _store(self, r: int, d: dict):
+        if d.get("name") is None and d.get("role") is None and not d.get("exclude"):
+            self.pop(r, None)
+        else:
+            self[r] = d
+
+    def exclude(self, runs: Iterable[int], reason: str = ""):
+        """Exclude runs from every reduction (``reason``: why, shown in the run list and the log)."""
+        for r in runs:
+            d = dict(self.get(int(r), {"name": None, "role": None, "note": ""}))
+            d["exclude"] = (reason or "").strip() or "no reason given"
+            self._store(int(r), d)
+
+    def include(self, runs: Iterable[int]):
+        """Take back the exclusion (name and role corrections stay)."""
+        for r in runs:
+            if int(r) in self:
+                d = dict(self[int(r)])
+                d["exclude"] = None
+                self._store(int(r), d)
+
+    def excluded(self) -> Dict[int, str]:
+        return {r: d["exclude"] for r, d in self.items() if d.get("exclude")}
 
     def reset(self, runs: Iterable[int]):
         for r in runs:
@@ -58,6 +85,8 @@ class Corrections(dict):
                 parts.append(f"name '{d['name']}'")
             if d.get("role"):
                 parts.append(f"role {d['role']}")
+            if d.get("exclude"):
+                parts.append(f"EXCLUDED: {d['exclude']}")
             lines.append(f"run {r}: " + ", ".join(parts) + (f" ({d['note']})" if d.get("note") else ""))
         return "\n".join(lines)
 
@@ -102,4 +131,5 @@ def apply(raw, corrections: Optional[Dict[int, dict]]):
     d = (corrections or {}).get(int(raw.run))
     raw.sample_name = (d or {}).get("name") or raw.sample_name_in_file
     raw.role = (d or {}).get("role") or ""
+    raw.excluded = (d or {}).get("exclude") or ""
     return raw

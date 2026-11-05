@@ -211,7 +211,15 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                       "untouched; the corrections are kept for this folder and used by the grouping and the "
                       "reduction table. Also with the right mouse button in the run table.")
         nb.clicked.connect(self.on_names)
-        lay.addWidget(nb)
+        xb = QtWidgets.QPushButton("Exclude…")
+        xb.setToolTip("Exclude the selected runs from every reduction (sample preparation failed, phase "
+                      "separation during the measurement, …) with a reason. Kept for this folder, also after "
+                      "Rescan; the runs stay in the list, struck through. Right mouse button: Include runs again.")
+        xb.clicked.connect(self.on_exclude)
+        row = QtWidgets.QHBoxLayout()
+        row.addWidget(nb, 1)
+        row.addWidget(xb)
+        lay.addLayout(row)
         self._add_dock("runs", "Runs", w, Area.LeftDockWidgetArea)
 
     def _build_reduction(self):
@@ -520,6 +528,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         m = QtWidgets.QMenu(self)
         m.addAction("Sample names and roles…", self.on_names)
         m.addAction("Reset name and role to the file", lambda: self.set_names([e.run for e in self.selected_entries()]))
+        m.addSeparator()
+        m.addAction("Exclude runs… (kept for this folder)", self.on_exclude)
+        m.addAction("Include runs again", lambda: self.include_runs([e.run for e in self.selected_entries()]))
         m.exec(self.table.viewport().mapToGlobal(pos))
 
     def on_names(self):
@@ -581,10 +592,56 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if keep_name:
             self.name_corrections.set(keep_name, None, role or None, note)
         p = nm.save(self.name_corrections)
-        for e in self.entries:
-            nm.apply(e.raw, self.name_corrections)
+        self._apply_corrections()
         what = (f"name '{name}'" if name else "name from the file") + (f", role {role}" if role else ", role from the name")
         self.log(f"runs {', '.join(map(str, runs))}: {what} (kept in {p})")
+        self._after_corrections("reduction table filled again with the corrected names and roles")
+
+    def _apply_corrections(self):
+        """Names, roles and exclusions of the folder onto the runs; the run list's skip reasons follow."""
+        from . import names as nm
+        for e in self.entries:
+            if e.raw is not None:
+                nm.apply(e.raw, self.name_corrections)
+                e.skip = e.raw.empty_reason
+
+    def exclude_runs(self, runs, reason: str = ""):
+        """Exclude runs from every reduction (kept for the folder, also after Rescan); they are greyed and
+        struck through in the run list with the reason, never selected for a table and not reduced."""
+        from . import names as nm
+        if not self.folder or not runs:
+            return
+        if self.name_corrections is None:
+            self.name_corrections = nm.load(self.folder)
+        self.name_corrections.exclude(runs, reason)
+        p = nm.save(self.name_corrections)
+        self._apply_corrections()
+        self.log(f"runs {', '.join(map(str, runs))} excluded: {reason or 'no reason given'} (kept in {p})")
+        self._after_corrections("reduction table filled again without the excluded runs")
+
+    def include_runs(self, runs):
+        """Take back the exclusion of runs."""
+        from . import names as nm
+        if not self.folder or not runs or self.name_corrections is None:
+            return
+        self.name_corrections.include(runs)
+        p = nm.save(self.name_corrections)
+        self._apply_corrections()
+        self.log(f"runs {', '.join(map(str, runs))} included again (kept in {p})")
+        self._after_corrections("reduction table filled again with the runs included")
+
+    def on_exclude(self):
+        sel = [e.run for e in self.selected_entries() if e.raw is not None]
+        if not sel:
+            QtWidgets.QMessageBox.information(self, "Exclude runs", "Select runs in the run table first.")
+            return
+        reason, ok = QtWidgets.QInputDialog.getText(
+            self, "Exclude runs", f"Exclude run(s) {', '.join(map(str, sel[:12]))}{' …' if len(sel) > 12 else ''} "
+            "from every reduction.\nReason (e.g. sample preparation failed, phase separation during the run):")
+        if ok:
+            self.exclude_runs(sel, reason.strip())
+
+    def _after_corrections(self, msg):
         sel = [e.run for e in self.selected_entries()]
         self._fill_table()
         self.select_runs(sel)
@@ -592,7 +649,33 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self._find_profiles(log=False)
         if prefs.get("sasred.table.autofill"):
             self.table_panel.on_fill()
-            self.log("reduction table filled again with the corrected names and roles")
+            self.log(msg)
+        self.check_all_geometries(log=False)
+
+    def _series_rows(self, table, row):
+        """[(row to reduce, table row, series parameters or None)]: a summed row as it is; a time-series row as
+        one row per point (its runs summed, the time in the parameters)."""
+        if not getattr(row, "series", False):
+            return [(row, row, None)]
+        import copy
+        from .reduction_table import RunChoice
+        from .series import series_points
+        raws = {e.run: e.raw for e in self.entries if e.raw is not None}
+        try:
+            mon = (self.instrument_for(raws[row.used[0]]).get("monitor") or {}).get("normaliser", "monitor1")
+        except Exception:  # noqa: BLE001
+            mon = "monitor1"
+        pts = series_points(row, raws, self.norm.currentData(), mon)
+        name = f"{table.config} {row.label} ({row.info})"
+        self.log(f"{row.label} ({row.info}): time series of {len(pts)} points from {len(row.used)} runs")
+        out = []
+        for p in pts:
+            sub = copy.copy(row)
+            sub.runs = [RunChoice(n, True) for n in p.runs]
+            sub.series = False
+            sub.label = f"{row.label} t={p.time_s:.0f}s"
+            out.append((sub, row, p.parameters(name)))
+        return out
 
     def banks_for(self, raw):
         """Detector banks to reduce for a run: [""] (the area detector) for SANS-I; for SANS-LLB the
@@ -754,10 +837,11 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                     banks = self.banks_for(read_bank("")(row.used[0])) or [""]
                 except Exception:  # noqa: BLE001
                     pass
-            jobs += [(row, b) for b in banks]
+            for sub, orig, spar in self._series_rows(table, row):
+                jobs += [(sub, b, orig, spar) for b in banks]
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
         try:
-            for row, bank in jobs:
+            for row, bank, orig, spar in jobs:
                 read = read_bank(bank)
                 tag = f"{table.config.split(',')[0]} {row.label}" + (f" {bank}" if bank else "")
                 try:
@@ -785,15 +869,20 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                     r1 = average(r2, self._edges(raw0, r2.mask), sector_deg=sector)
                 except Exception as exc:  # noqa: BLE001
                     self.log(f"{tag} ({row.info}): FAILED – {type(exc).__name__}: {exc}")
-                    for x in table.missing_inputs([row]):
+                    for x in table.missing_inputs([orig]):
                         self._add_missing(table.config, x.__dict__, missing_seen)
-                    self._add_missing(table.config, dict(role="sample", index=table.samples.index(row)
-                                                         if row in table.samples else None,
+                    self._add_missing(table.config, dict(role="sample", index=table.samples.index(orig)
+                                                         if orig in table.samples else None,
                                                          label=f"{row.label} ({row.info})", field="reduction",
                                                          text=f"not reduced: {exc}", severity="error"), missing_seen)
                     continue
                 for x in r2.parameters.get("missing") or []:
                     self._add_missing(table.config, x, missing_seen)
+                if spar:                                   # a point of a time series: its time travels along
+                    r1.parameters.update(spar)
+                    r2.parameters.update(spar)
+                    r1.notes.insert(0, f"time series {spar['series']}: point {spar['series_index'] + 1}, "
+                                       f"t = {spar['time_s']:.1f} s after {spar['series_t0']} (runs {spar['series_runs']})")
                 self.results[tag] = r1
                 self._last_keys.append(tag)
                 done = tag
@@ -1014,10 +1103,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             QtWidgets.QApplication.restoreOverrideCursor()
         from . import names as nm
         self.name_corrections = nm.load(folder)
-        for e in self.entries:
-            nm.apply(e.raw, self.name_corrections)
+        self._apply_corrections()
         if self.name_corrections:
-            self.log(f"sample names / roles corrected by hand ({nm.store_path(folder)}):")
+            self.log(f"sample names / roles corrected and runs excluded by hand ({nm.store_path(folder)}):")
             for ln in self.name_corrections.describe().splitlines():
                 self.log("    " + ln)
         self._fill_table()
@@ -1793,10 +1881,19 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         f = self.iq_offset.value() if hasattr(self, "iq_offset") else 1.0
         show_dI = self.iq_err_I.isChecked() if hasattr(self, "iq_err_I") else True
         show_dq = self.iq_err_q.isChecked() if hasattr(self, "iq_err_q") else True
+        # points of one time series: coloured by their time (colour bar), the legend gives way to it
+        times = [r.parameters.get("time_s") for _, r in shown_items]
+        series = (len(shown_items) > 1 and all(t is not None for t in times)
+                  and len({r.parameters.get("series") for _, r in shown_items}) == 1)
+        if series:
+            import matplotlib as mpl
+            norm = mpl.colors.Normalize(min(times), max(times) if max(times) > min(times) else min(times) + 1)
+            cmap = mpl.colormaps["viridis"]
         for k, (key, r) in enumerate(shown_items):
             lab = r.parameters.get("label") or key
+            col = {"color": cmap(norm(r.parameters["time_s"]))} if series else {}
             ax.errorbar(u.q_out(r.q), r.I * f ** k, yerr=r.idev() * f ** k if show_dI else None,
-                        xerr=_qerr(r, u) if show_dq else None, fmt="o", ms=3,
+                        xerr=_qerr(r, u) if show_dq else None, fmt="o", ms=3, **col,
                         capsize=0, lw=0.8,
                         label=f"{lab} {r.parameters.get('sample', r.raw.sample_name)}" + (f" ×{f ** k:g}" if k and f != 1 else ""))
         p = self.preview
@@ -1810,7 +1907,12 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             if all(np.all(r.I > 0) for r in shown):
                 ax.set_yscale("log")
             _log_q_ticks(ax)
-            if len(shown) <= 12:
+            if series:
+                sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+                fig.colorbar(sm, ax=ax, label="t [s]", fraction=0.06, pad=0.02, aspect=30)
+                ax.set_title(f"time series, {len(shown_items)} points; t₀ = "
+                             f"{shown_items[0][1].parameters.get('series_t0', '')}", fontsize="small")
+            elif len(shown) <= 12:
                 ax.legend(fontsize="small")
             else:                                  # a legend of many curves would squeeze the axes away
                 ax.set_title(f"{len(shown)} curves – select runs or table rows to see fewer (with legend)",

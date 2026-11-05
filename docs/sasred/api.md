@@ -87,6 +87,9 @@ Generated from the docstrings.
 ## Reduction table
 
 ```{eval-rst}
+.. automodule:: pysasfit.sasred.series
+   :members:
+
 .. automodule:: pysasfit.sasred.reduction_table
    :members:
 ```

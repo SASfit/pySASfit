@@ -23,7 +23,7 @@ def write_ascii_1d(path, reduced, units="nm"):
     head += [f"note: {n}" for n in r.notes]
     head.append(f"wavelength = {u.lam(r.raw.wavelength_A):.5g} {u.length}")
     from .metadata import metadata_json
-    head.append(f"metadata_json = {metadata_json(r.raw)}")
+    head.append(f"metadata_json = {metadata_json(r.raw, getattr(r, 'parameters', None))}")
     qu = "1/A" if u.key == "A" else u.q
     qs = r.q_sigma
     if qs is None:

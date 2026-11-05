@@ -77,7 +77,7 @@ def write_nxcansas_1d(path, reduced, title=None, i_unit="arbitrary", units="nm")
         p["parameters"] = _s(json.dumps(reduced.parameters, default=str))
         p["notes"] = _s("\n".join(reduced.notes))
         from .metadata import metadata_json
-        p["metadata"] = _s(metadata_json(reduced.raw))          # header items of the (first) raw run
+        p["metadata"] = _s(metadata_json(reduced.raw, getattr(reduced, 'parameters', None)))          # header items of the (first) raw run
         sm = e.create_group("sassample")
         sm.attrs.update({"NX_class": _s("NXsample"), "canSAS_class": _s("SASsample")})
         sm["name"] = _s(reduced.raw.sample_name)
@@ -157,5 +157,5 @@ def write_nxcansas_2d(path, reduced, title=None, units="nm"):
         p["raw_file"] = _s(raw.path)
         p["parameters"] = _s(json.dumps(par, default=str))
         p["notes"] = _s("\n".join(getattr(r, "notes", []) or []))
-        p["metadata"] = _s(metadata_json(raw))
+        p["metadata"] = _s(metadata_json(raw, par))
     return str(path)

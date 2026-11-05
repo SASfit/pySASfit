@@ -55,7 +55,7 @@ def selector_test(raws, proton: str = "integrated_beam", min_runs: int = 2,
     in between, or with fewer than two settings, *undetermined*."""
     groups: Dict[tuple, list] = {}       # setting -> list of monitor dicts (runs, or frames of a scan)
     for r in raws:
-        if r is None:
+        if r is None or getattr(r, "excluded", ""):
             continue
         fr = getattr(r, "frames", None) or {}
         if getattr(r, "scan", "") and "wavelength_A" in fr:          # selector speed scan: every frame

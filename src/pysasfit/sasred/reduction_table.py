@@ -76,6 +76,10 @@ class RowSet:
     attenuator: float = 1.0                    # A(S) of BerSANS (≥ 1)
     probability: float = 0.0                   # p_cS
     notes: str = ""
+    series: bool = False                       # sample row reduced as a time series (series.py), not summed
+    series_t0: str = ""                        # time zero (date and time); empty: start of the first run
+    series_bin: int = 1                        # runs summed per point
+    series_dt_s: Optional[float] = None        # instead: time window per point [s]
 
     @property
     def used(self) -> List[int]:
@@ -84,7 +88,12 @@ class RowSet:
     @property
     def number(self) -> str:
         n, u = len(self.runs), len(self.used)
-        return f"{u}" if u == n else f"{u} of {n}"
+        s = f"{u}" if u == n else f"{u} of {n}"
+        if self.series:
+            per = (f", Δt {self.series_dt_s:g} s" if self.series_dt_s else
+                   f", {self.series_bin} per point" if (self.series_bin or 1) > 1 else "")
+            s = f"series: {s}{per}"
+        return s
 
     def runs_text(self) -> str:
         from .plan import _runs

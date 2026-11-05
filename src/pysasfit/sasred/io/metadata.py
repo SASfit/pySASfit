@@ -64,5 +64,11 @@ def run_metadata(raw, max_log: int = 100000) -> Dict[str, object]:
     return out
 
 
-def metadata_json(raw) -> str:
-    return json.dumps(run_metadata(raw), default=str)
+def metadata_json(raw, parameters=None) -> str:
+    """Header items of the run as JSON; with the result ``parameters`` also the time of a time-series point
+    (``time_s``, ``series`` …, see :mod:`pysasfit.sasred.series`), so that curves can be ordered by it."""
+    m = run_metadata(raw)
+    if parameters:
+        from ..series import SERIES_KEYS
+        m.update({k: parameters[k] for k in SERIES_KEYS if k in parameters})
+    return json.dumps(m, default=str)

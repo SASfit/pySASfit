@@ -121,3 +121,50 @@ def test_complete_check_of_all_geometries(win):
     n = w.missing_view.topLevelItemCount()
     w.reduce_table_rows(t2, t2.samples[:1])
     assert w.missing_view.topLevelItemCount() >= n
+
+
+def test_runs_excluded_by_hand_stay_excluded(win, tmp_path):
+    """Runs excluded with a reason are skipped (list, tables, reduction) and stay so after a rescan;
+    including them again restores them."""
+    from pysasfit.sasred import names as nm
+    w = win()
+    w.set_folder(RAW)
+    t8 = next(p.table for p in w.table_panel.pages() if p.table.config.startswith("SD 8.0"))
+    run = t8.samples[0].runs[0].run
+    w.exclude_runs([run], "phase separation during the run")
+    e = next(e for e in w.entries if e.run == run)
+    assert e.raw.excluded == "phase separation during the run" and "excluded by hand" in e.skip
+    assert "excluded by hand: phase separation" in e.comment()
+    t8 = next(p.table for p in w.table_panel.pages() if p.table.config.startswith("SD 8.0"))
+    assert run not in {c.run for r in t8.samples for c in r.runs}
+    assert nm.load(RAW).excluded() == {run: "phase separation during the run"}
+    w.set_folder(RAW)                                   # rescan: still excluded
+    e = next(e for e in w.entries if e.run == run)
+    assert e.skip.startswith("excluded by hand")
+    w.set_names([run], "renamed", "", "")               # a name correction keeps the exclusion
+    assert nm.load(RAW)[run]["exclude"] and nm.load(RAW)[run]["name"] == "renamed"
+    w.set_names([run], "", "", "")
+    w.include_runs([run])
+    assert run not in nm.load(RAW)
+    e = next(e for e in w.entries if e.run == run)
+    assert not e.skip and not e.raw.excluded
+    t8 = next(p.table for p in w.table_panel.pages() if p.table.config.startswith("SD 8.0"))
+    assert run in {c.run for r in t8.samples for c in r.runs}
+
+
+def test_geometry_page_has_left_tabs(win):
+    """Correction data, absolute scale and samples are tabs on the left; the choice is the same in every
+    geometry, and a missing input opens its tab."""
+    w = win()
+    w.set_folder(RAW)
+    pages = w.table_panel.pages()
+    p0 = pages[0]
+    assert [p0.inner.tabText(i) for i in range(3)] == ["Correction data", "Absolute scale", "Sample data"]
+    assert p0.inner.tabPosition() == p0.inner.TabPosition.West
+    p0.inner.setCurrentIndex(0)
+    w.table_panel.tabs.setCurrentWidget(pages[1])
+    assert pages[1].inner.currentIndex() == 0
+    pages[1].show_missing("sample", 0, "transmission")
+    assert pages[1].inner.currentIndex() == 2
+    pages[1].show_missing("direct_beam", None, "efficiency")
+    assert pages[1].inner.currentIndex() == 1

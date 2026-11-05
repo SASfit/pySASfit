@@ -69,6 +69,7 @@ class RawRun:
     dlam_source: str = ""         # where dlam_over_lam_fwhm comes from ("selector tilt …", "file header", …)
     frames: Optional[dict] = None  # multi-frame runs: per-frame counting_time_s, monitors, rotation_speed, wavelength_A
     scan: str = ""                # a selector speed scan (λ differs between the frames): not reduced
+    excluded: str = ""            # excluded by hand (names.py, kept per folder): the reason; not reduced
 
     @property
     def SD_recorded_m(self) -> float:
@@ -85,6 +86,8 @@ class RawRun:
         """Why the run holds no usable data, or "": measuring time 0, no counts on the detector (all banks) or the
         normalising monitor (instrument file) at 0. Such runs are skipped by the reduction."""
         why = []
+        if getattr(self, "excluded", ""):
+            why.append(f"excluded by hand: {self.excluded}")
         if getattr(self, "scan", ""):
             why.append(self.scan + " – λ differs between the frames")
         if not (float(self.counting_time_s or 0.0) > 0):

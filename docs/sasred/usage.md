@@ -60,6 +60,11 @@ measured for tests. **Remove geometry** (or the × of its tab) takes it out of t
 when the table is filled again; the raw files are not touched and **Restore removed** brings it back. With the
 Vifor data: SD 8 m (91 runs), 2 m (58 runs) and 3.9 m (1 run, marked ?).
 
+Each geometry tab has three tabs of its own **on the left** (labels read upwards): *Correction data* (Cd, water, water background,
+sample background, direct beam), *Absolute scale* (method, efficiency map, direct beam, g(λ)) and *Sample data*
+(the sample rows), so each gets the whole page. The left tab chosen is kept when switching geometries; a left tab
+with something missing has a dark red label, and a double-click in *Missing input* opens the right one.
+
 **New geometry (by hand)** adds an empty tab for a table filled completely by hand; every cell of Information,
 Transmission, Thickness, Attenuator and Probability can be typed, *Copy to all samples below / above* copies
 the value of the selected cell. *Add many samples…* in a tab starts with the search conditions of that geometry
@@ -112,7 +117,7 @@ and not counted. Double-click a line to jump to its cell in the reduction table.
 
 ### Absolute scale: water or direct beam + efficiency map
 
-The box **Absolute scale** of every geometry tab chooses the method: *automatic* (the direct beam as soon as an
+The left tab **Absolute scale** of every geometry tab chooses the method: *automatic* (the direct beam as soon as an
 efficiency map is chosen – the water of the geometry is then not used and its rows are grey –, else water when
 the Water row has runs, else relative), *water*, *direct beam + efficiency map* or
 *relative*; *used* says which one applies. For a long distance without water:
@@ -140,6 +145,30 @@ not changed; the corrections are kept for the folder (`sasred_names/` next to th
 every time the folder is opened (listed in the log), shown in blue italics in the run table (tooltip: the name in
 the file), and the reduction table is filled again. *Reset name and role to the file* undoes it for the selected
 runs.
+
+**Time series of one sample.** To follow a sample in time (kinetics, gelation, a temperature jump), measure
+many short runs and reduce them one by one instead of summed: select a cell of the sample row and click **Time
+series…** (below the sample table). Choose
+- the **first** and **last run** of the series (the runs in between are ticked, the others not; excluded runs are
+  left out anyway);
+- **time zero t₀**, e.g. the moment of mixing (`YYYY-MM-DD hh:mm:ss`); empty: the start of the first run;
+- **runs per point** (consecutive runs summed per point, 1 = every run) or a **time window** in seconds.
+
+The *Number* column then shows "series: n" in bold blue. A reduction gives one result per point, named
+"SD 8.0 m No. 3 t=540s", reduced with the same corrections as a summed row (transmission and thickness of the
+row). The time of a point is the monitor-weighted middle of its runs relative to t₀; it is written into the
+output files with the start and end of the point (`time_s`, `time_start`, `time_end`, `series`, `series_t0`,
+`series_index`), so pyTOOLbox can order the curves by `time_s` (e.g. its *series* plot). I(q) shows the points of
+one series coloured by time with a colour bar. Untick *reduce … as a time series* to sum the runs again.
+Runs with many frames (time scans in one file) will give the points in the same way later.
+
+**Excluding runs.** Runs that must not be used — the sample preparation failed, the sample phase-separated during
+the measurement, … — are excluded with **Exclude…** (next to *Sample names and roles…*, or the right mouse button):
+select them, give the reason. They stay in the run list, grey and struck through, with "skipped: excluded by
+hand: <reason>" in the *comment* column, and are treated like runs without data: never put into a reduction-table
+row, cannot be ticked, not reduced, not used for beam profiles or the monitor test. The exclusion is kept for the
+folder together with the name corrections (`sasred_names/`), so it survives **Rescan** and the next start, and is
+listed in the log when the folder is opened. *Include runs again* (right mouse button) takes it back.
 
 Example (SANS-LLB, Maren 2026-08): at 4 m the runs named "H2O" (5252, 5256, 5261, transmission 5276) are D2O →
 name `D2O`, role sample; the real water 5278–5280 ("real H2O, the other position is D2O …") → name `H2O`, role
