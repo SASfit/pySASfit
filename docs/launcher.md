@@ -9,11 +9,12 @@
 | **py**SLD**profile** | radial SLD profiles ({doc}`sldprofile/index`) | `pysasfit-sldprofile` |
 | **py**INV**ersion** | size distributions and p(r) ({doc}`inversion/index`) | `pysasfit-inversion` |
 | **py**OZ**solver** | Ornstein–Zernike structure factors ({doc}`oz/index`) | `pysasfit-oz` |
+| **py**SCA**tter** | scattering patterns of particles and ordered structures, fits to 1D / 2D data ({doc}`scatter/index`) | `pysasfit-scatter` |
 | **py**TOOL**box** | small helpful tools: HDF5 viewer and metadata lister ({doc}`toolbox/index`) | `pysasfit-toolbox` |
 
 Each tab shows the tool's menu icon (one colour per tool, also used for the tool's window and task-bar entry) and
 its name as in the logos: grey *py*, the bold core in the tool's colour (red pySASred, blue pySASstudio, magenta
-pySLDprofile, green pyINVersion, violet pyOZsolver, orange pyTOOLbox) and the word ending in the grey of *py*
+pySLDprofile, green pyINVersion, violet pyOZsolver, sienna pySCAtter, orange pyTOOLbox) and the word ending in the grey of *py*
 (lighter colours on a dark system theme). Hovering a tab tells what the tool does. A tool that cannot be loaded (for
 example a missing optional dependency) gets a tab with the error message instead of stopping the launcher.
 
@@ -28,9 +29,8 @@ The tools' own menu bars are hidden in the launcher; the launcher's menus act on
   launcher does not provide itself (for example *Save project as…* of pySASstudio, *Open raw-data folder…* and
   *Save NXcanSAS…* of pySASred, *Open HDF5 files…* of pyTOOLbox). Their keyboard shortcuts work as in the
   stand-alone window.
-* **View**: the panels of the tool in front (show / hide, panel border, *Arrange panels*, *Dock all panels*,
-  *Reset layout*), or the
-  tool's own View entries (pySASstudio), the detach / attach entries described below, and under **Tools** one
+* **View**: the tool's own View entries (*Sliders* of pySASstudio), the panels of the tool in front (show / hide,
+  panel border, *Arrange panels*, *Dock all panels*, *Reset layout*), the detach / attach entries described below, and under **Tools** one
   entry per tool with its icon: it brings the tool to the front, also when it is detached (**Alt+1** … **Alt+6**
   in the order of the tabs).
 * **Settings**: *Preferences…* (opens on the page of the tool in front), *Forget last session (all tools)*, and

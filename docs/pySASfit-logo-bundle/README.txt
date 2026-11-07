@@ -8,6 +8,7 @@ Tools (working names as agreed in the design chat)
   pyINVersion   Fredholm inversion, size distributions   (wordmark: py + INV + ersion)
   pySLDprofile  SLD distributions
   pySASstudio   model fitting, single and later multiple data sets
+  pySCAtter     scattering patterns of particles and lattices (glyph: diffraction spots; tile sienna #A0522D)
   pySASmorph    bicontinuous structures from clipped random waves (two phases + interface layer; multi-phase planned)
   pyTOOLbox     small helpful tools
 
@@ -68,6 +69,7 @@ Menu and toolbar icons (menu-icons/)
     pyINVersion   green #2E8B57  size-distribution histogram
     pySLDprofile  magenta #C23A93 stepped SLD profile
     pySASstudio   blue #2F6FED   data points with fit curve
+    pySCAtter     sienna #A0522D hexagonal diffraction spots around a gold centre
     pySASmorph    marine #0E2740 two bicontinuous phases (marine, amber) + white interface layer
     pyTOOLbox     orange #D9730D open box with small tools
   Files per tool: <tool>-menu.svg, png/ (16, 20, 24, 32, 40, 48, 64, 128, 256 px), <tool>-menu.ico,

@@ -1061,17 +1061,24 @@ class OZfixpointOperator:
     #why PY/HNC/RY/HMSA/... all become multicomponent for free once the
     #potential arrays carry their pair indices.
     def fixPointOperatorForGammaMulticomponent(self, Gflat):
+      # Speed (2026-11-07): the transforms act on the p(p+1)/2 unique pairs only (the matrices are symmetric;
+      # identical numbers, 1.5x fewer DSTs for p = 3), and the p x p systems at every q are solved by
+      # pysasfit.core.accel.batched_solve (compiled kernel with Numba, else np.linalg.solve).  Solvers that
+      # difference the operator for Jacobian-vector products (Newton-Krylov) set compiledLinearAlgebra = False:
+      # the kernel agrees with LAPACK only to rounding, and finite differences amplify that difference.
+      from ..core.accel import batched_solve
+      if not getattr(self, 'compiledLinearAlgebra', True):
+          batched_solve = np.linalg.solve      # noqa: F811
       p = self.numberOfComponents
       Gm = self.unpackPairs(Gflat)
       c_new = self.update_c(Gm)
-      c_hat = self.hankelTransform(c_new, self.Delta_r)
+      c_hat = self.unpackPairs(self.hankelTransform(c_new[np.triu_indices(p)], self.Delta_r).reshape(-1))
       C = np.moveaxis(c_hat, -1, 0)
-      R = np.diag(self.componentDensities)
-      M = np.eye(p)[np.newaxis, :, :] - C @ R
-      H = np.linalg.solve(M, C)
+      M = np.eye(p)[np.newaxis, :, :] - C * np.asarray(self.componentDensities, float)[np.newaxis, np.newaxis, :]
+      H = batched_solve(M, C)
       G_hat = np.moveaxis(H - C, 0, -1)
-      G_new = self.inverseHankelTransform(G_hat, self.Delta_r)
-      return (self.packPairs(G_new), c_new)
+      G_new = self.inverseHankelTransform(G_hat[np.triu_indices(p)], self.Delta_r)
+      return (G_new.reshape(-1), c_new)
 
     #Split x=[c,h] in c and h component (helper functions for second fixpoint operator)
     #******************************************************************************************************

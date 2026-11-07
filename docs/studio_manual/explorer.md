@@ -10,23 +10,27 @@ pysasfit-explorer --project my.sasstudio                       # a saved session
 From a script: `explore(...)`, see {doc}`scripting`.
 
 In `pysasfit-gui` the explorer is the **pySASstudio** tab (the second); its own menus (*Save project as…*,
-*SASfit installation…*, *Integration…*, the dock entries of *View*, *Sliders*) appear in the launcher's File,
+*SASfit installation…*, *Integration…*, the panel entries of *View*, *Sliders*) appear in the launcher's File,
 Settings and View menus, and the tab can be detached into its own window ({doc}`../launcher`).
 
 ## Windows
 
-The plot is the central widget. Around it are three docks that you can move, hide and detach:
+The window consists of four **panels**, as in pySASred and pySASmorph:
 
-| dock | content | open |
+| panel | content | open |
 |---|---|---|
 | **Model** | the contributions as tabs, background, parameters | *View → Model* |
+| **I(q)** | the plot with the q range, scales and the Hold / Export / Copy Python buttons | *View → I(q)* |
 | **Fit** | data, fit selection, constraints, priors, optimiser, result | *View → Fit* |
 | **Size distributions** | N(x)·x<sup>p</sup> of the distributions of the model | *View → Size distributions* |
 
-All three are shown at the start; the *View* menu hides and shows them again.
-
-To put a dock into a window of its own, use *View → detach '…' as a separate window*. A detached window does not
-stay on top of the main window, and closing the main window closes it.
+At the start the model is on the left, the plot and the size distributions side by side, and the fit panel below
+both. Every panel can be moved by its title bar, stacked onto another panel as a tab or put beside it, detached into
+a window of its own (first button in its title bar; the window does not stay on top of the main window, closing it
+docks the panel again, closing the main window closes it) and hidden (cross; *View* shows it again). *View →
+Arrange panels*, *Dock all panels* and *Reset layout* sort them; the title bar of the panel in use is coloured
+(Preferences → Appearance). The arrangement is kept for the next start (`studio_layout.json` next to the
+preferences; *Settings → Forget last session* of the launcher removes it); the model itself is kept in project files.
 
 ## The model dock
 

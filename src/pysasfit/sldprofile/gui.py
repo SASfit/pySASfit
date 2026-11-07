@@ -381,6 +381,16 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         self.sp_hi = _dspin(1.5, 1.0, 5.0, 2, 0.05)
         self.sp_nc = _ispin(15, 3, 80)
         self.sp_nf = _ispin(15, 3, 80)
+        # parallel processes of the r_max scan = preference sldprofile.opt.n_workers (kept in sync both ways)
+        self.sp_workers = _ispin(int(prefs.get("sldprofile.opt.n_workers") or 0), 0, 256)
+        self.sp_workers.setSpecialValueText("serial")
+        self.sp_workers.setToolTip(
+            "Worker processes for the r_max scan (0 = serial). Each process needs a few seconds to start, so this "
+            "pays off for long scans (many r_max points, large N, smearing) on a machine with several cores; for "
+            "fits of a few seconds serial is faster. The result is the same.\n"
+            "Same setting as Settings → Preferences → SLD profile → parallel processes for the r_max scan.")
+        self._workers_pref = self.sp_workers.value()
+        self.sp_workers.valueChanged.connect(self._on_workers_changed)
         for w in (self.ck_auto, self.ck_fix):
             w.toggled.connect(self._update_enabled)
         row = QtWidgets.QHBoxLayout()
@@ -392,6 +402,7 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         f.addRow("scan from (× r_max)", self.sp_lo)
         f.addRow("scan to (× r_max)", self.sp_hi)
         f.addRow("points coarse / fine", self._pair(self.sp_nc, self.sp_nf))
+        f.addRow("parallel processes", self.sp_workers)
         cl.addWidget(g)
 
         row = QtWidgets.QHBoxLayout()
@@ -613,6 +624,24 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         return w
 
     # ------------------------------------------------------------------ state
+    def _on_workers_changed(self, v):
+        """Spin box -> preference (and the preferences file), so the dialog shows the same value."""
+        self._workers_pref = int(v)
+        try:
+            prefs.set_value("sldprofile.opt.n_workers", int(v))
+            prefs.save()
+        except Exception:  # noqa: BLE001 -- the fit uses the spin box value anyway
+            pass
+
+    def _sync_workers_from_prefs(self):
+        """Preference changed in the dialog since the spin box last wrote it -> adopt it."""
+        v = int(prefs.get("sldprofile.opt.n_workers") or 0)
+        if v != self._workers_pref:
+            self._workers_pref = v
+            self.sp_workers.blockSignals(True)
+            self.sp_workers.setValue(v)
+            self.sp_workers.blockSignals(False)
+
     def _update_enabled(self, *args):
         maxent = self.cb_reg.currentText() == "maxent"
         self.cb_prior.setEnabled(maxent)
@@ -639,7 +668,7 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
             w.setEnabled(self.ck_oz.isChecked())
         self.sp_rmax.setEnabled(not self.ck_auto.isChecked())
         fix = self.ck_fix.isChecked()
-        for w in (self.sp_lo, self.sp_hi, self.sp_nc, self.sp_nf):
+        for w in (self.sp_lo, self.sp_hi, self.sp_nc, self.sp_nf, self.sp_workers):
             w.setEnabled(not fix)
         running = self.worker is not None
         self.btn_run.setEnabled(not running and self.data is not None)
@@ -802,6 +831,8 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         bg_template = self._background()  # snapshot of the widget settings
         bgf = lambda: copy.deepcopy(bg_template)  # noqa: E731
         options = prefs.values("sldprofile.opt")   # Settings -> Preferences, read now
+        self._sync_workers_from_prefs()
+        options["n_workers"] = int(self.sp_workers.value())
         # module-level numerics: quadrature of the shells / p(r), background start values
         from . import geometry as _geo
         from ..core import background as _bg

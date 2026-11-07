@@ -103,6 +103,7 @@ def main():
     win.mc_uncertainty_check.setChecked(True)
     win.n_boot_spin.setValue(10)
     win._on_solve()
+    win.wait_for_bootstrap()          # the Monte-Carlo estimate runs in a background thread
     note = win._last_result.diagnostics["lambda_selection"]
     assert "log knots" in note and "integrated on" in note and "2nd derivative" in note, note
     assert win.ax_dist.get_ylabel() == "p(r)", win.ax_dist.get_ylabel()
@@ -169,7 +170,8 @@ def main():
     from PySide6.QtCore import QEvent
     from PySide6.QtWidgets import QWidget
     win.show()
-    app.processEvents()
+    for _ in range(5):                 # the panels settle in a few layout passes
+        app.processEvents()
     ip = win.info_panel
     app.sendEvent(win.r_max_spin, QEvent(QEvent.Enter))
     assert ip.label.text().startswith("<b>r max</b>") and "Current data" in ip.label.text()
@@ -195,14 +197,25 @@ def main():
         "tooltips should be gone"
     # info panel height: auto-fit to the longest text, draggable smaller
     assert abs(ip.height() - ip.maximumHeight()) <= 2, (ip.height(), ip.maximumHeight())
-    total = sum(win.left_splitter.sizes())
-    win.left_splitter.setSizes([total - 100, 100])
-    win._on_info_splitter_moved(0, 1)
+    # the info panel is a dock (2026-11-07): drag its border smaller (resizeDocks stands in
+    # for the mouse), the auto-fit then keeps the user's height
+    from PySide6.QtCore import Qt
+    d = win.docks["info"]
+    win.resizeDocks([d], [d.height() - 120], Qt.Vertical)
     app.processEvents()
-    assert win._info_user_sized and ip.height() == 100
+    win._on_info_splitter_moved()
+    small = ip.height()
+    assert win._info_user_sized and small < ip.maximumHeight()
     win._refresh_help_sizes()          # new texts must not undo the user's choice
-    app.processEvents()
-    assert ip.height() == 100
+    for _ in range(3):
+        app.processEvents()
+    assert ip.height() == small
+    # the panels: dockable, detachable, listed in the View menu
+    assert set(win.docks) == {"data", "background", "inversion", "info", "iq", "dist"}
+    w = win.detach("dist")
+    assert win.canvas_dist.window() is w
+    win.dock_panel("dist")
+    assert win.canvas_dist.window() is win
     print(f"info panel: {ip.width()}x{ip.height()} px, fits all {len(win._all_help_keys())} texts")
 
     # --- file without dI (2026-10-10): error model, Poisson/KL statistics,

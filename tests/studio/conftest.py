@@ -82,3 +82,13 @@ def studio_lib(mock_lib, isolated_settings):
     yield library.get_library()
     paths.set_lib_dir(None)
     library._LIB = old
+
+
+@pytest.fixture(autouse=True)
+def _layout_file_in_tmp(tmp_path, monkeypatch):
+    """The explorer keeps its panel layout on close: never in the user's preferences folder during tests."""
+    try:
+        from pysasfit.studio.explorer import ModelExplorer
+    except Exception:  # noqa: BLE001 -- no PySide6
+        return
+    monkeypatch.setattr(ModelExplorer, "_layout_path", staticmethod(lambda: str(tmp_path / "studio_layout.json")))

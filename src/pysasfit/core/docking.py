@@ -24,7 +24,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 import json
 
 __all__ = ["DockMixin", "PanelWindow", "plot_panel", "PANEL_BORDERS", "DEFAULT_PANEL_BORDER", "adapt_fonts",
-           "keep_fonts_adapted", "ACTIVE_PANEL_COLOUR"]
+           "keep_fonts_adapted", "ACTIVE_PANEL_COLOUR", "DEFAULT_TITLE_COLOUR", "title_colours"]
 
 #: border drawn around the content of every detachable panel (View → Panel border):
 #: name -> (menu label, QFrame shape, QFrame shadow, line width, mid-line width)
@@ -39,6 +39,64 @@ DEFAULT_PANEL_BORDER = "raised"
 
 #: colour of the frame around the active panel (the one last clicked or holding the keyboard focus)
 ACTIVE_PANEL_COLOUR = "#c8246e"
+
+
+#: title bars of the docked panels, coloured as window title bars under Windows (Windows 10/11 accent blue)
+DEFAULT_TITLE_COLOUR = "#0078d7"
+TITLE_MODES = ("pale", "all", "active", "off")
+
+
+def _title_settings():
+    """(mode, colour) of the panel title bars from the preferences (defaults without settings)."""
+    mode, col = "pale", DEFAULT_TITLE_COLOUR
+    try:
+        from . import settings as prefs
+        mode = prefs.get("appearance.panel_title.mode") or mode
+        col = prefs.get("appearance.panel_title.colour") or col
+    except Exception:                      # no preferences module / unknown key: defaults
+        pass
+    if not QtGui.QColor(str(col)).isValid():
+        col = DEFAULT_TITLE_COLOUR
+    return (mode if mode in TITLE_MODES else "pale"), str(col)
+
+
+def title_colours(active, mode=None, colour=None):
+    """(background, text) of a panel title bar, or None for the system look.
+
+    mode 'pale': active panel in the colour, the others in a pale tint of it (default);
+    'all': every panel in the colour; 'active': only the active panel coloured; 'off': system look."""
+    m, c = _title_settings()
+    mode, colour = mode or m, colour or c
+    if mode == "off" or (mode == "active" and not active):
+        return None
+    bg = QtGui.QColor(colour)
+    if mode == "pale" and not active:
+        w = 0.22                                       # 22 % of the colour on white
+        bg = QtGui.QColor(round(255 - w * (255 - bg.red())), round(255 - w * (255 - bg.green())),
+                          round(255 - w * (255 - bg.blue())))
+    lum = 0.2126 * bg.redF() + 0.7152 * bg.greenF() + 0.0722 * bg.blueF()
+    return bg.name(), ("#ffffff" if lum < 0.55 else "#1a1a1a")
+
+
+def _glyph_icon(kind, colour, size=14):
+    """Flat window-button glyph ('restore' = two squares, 'close' = ×) in the text colour of the bar."""
+    pm = QtGui.QPixmap(size, size)
+    pm.fill(QtCore.Qt.GlobalColor.transparent)
+    p = QtGui.QPainter(pm)
+    p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+    pen = QtGui.QPen(QtGui.QColor(colour), 1.3)
+    p.setPen(pen)
+    a, b = 3.0, size - 3.0
+    if kind == "close":
+        p.drawLine(QtCore.QPointF(a, a), QtCore.QPointF(b, b))
+        p.drawLine(QtCore.QPointF(a, b), QtCore.QPointF(b, a))
+    else:
+        o = 2.5
+        p.drawRect(QtCore.QRectF(a, a + o, b - a - o, b - a - o))
+        p.drawPolyline([QtCore.QPointF(a + o, a + o), QtCore.QPointF(a + o, a), QtCore.QPointF(b, a),
+                        QtCore.QPointF(b, b - o), QtCore.QPointF(b - o, b - o)])
+    p.end()
+    return QtGui.QIcon(pm)
 
 
 #: icon size (pixels) of the matplotlib toolbars above the plots
@@ -195,6 +253,37 @@ class _TitleBar(QtWidgets.QWidget):
         c.clicked.connect(lambda _checked=False: dock.close())
         lay.addWidget(c)
         self.detach_button, self.close_button = b, c
+        self.setObjectName("panelTitleBar")
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.colours = None
+        self.set_active(False)
+
+    def set_active(self, active):
+        """Colour of the bar (preferences: appearance.panel_title.*); the system look when switched off."""
+        cols = title_colours(active)
+        if cols == self.colours:
+            return
+        self.colours = cols
+        if cols is None:
+            self.setStyleSheet("")
+            st = self.style()
+            self.detach_button.setIcon(st.standardIcon(QtWidgets.QStyle.StandardPixmap.SP_TitleBarNormalButton))
+            self.close_button.setIcon(st.standardIcon(QtWidgets.QStyle.StandardPixmap.SP_TitleBarCloseButton))
+            return
+        bg, fg = cols
+        hover = "rgba(255,255,255,70)" if fg == "#ffffff" else "rgba(0,0,0,40)"
+        self.setStyleSheet(
+            f"QWidget#panelTitleBar {{ background-color: {bg}; }}"
+            f"QWidget#panelTitleBar QLabel {{ color: {fg}; background: transparent; }}"
+            f"QWidget#panelTitleBar QToolButton {{ border: none; background: transparent; padding: 1px 4px; }}"
+            f"QWidget#panelTitleBar QToolButton:hover {{ background: {hover}; }}"
+            f"QWidget#panelTitleBar QToolButton#closeButton:hover {{ background: #e81123; }}")
+        self.detach_button.setIcon(_glyph_icon("restore", fg))
+        self.close_button.setIcon(_glyph_icon("close", fg))
+        self.close_button.setObjectName("closeButton")
+        f = self.label.font()
+        f.setBold(active)
+        self.label.setFont(f)
 
     def mouseDoubleClickEvent(self, event):
         self._on_detach()
@@ -297,6 +386,22 @@ class DockMixin:
         if app is not None:
             self._active_filter = _ActivePanelFilter(self)      # own object: the window's eventFilter stays its own
             app.installEventFilter(self._active_filter)
+        try:                                                    # new title-bar colours after Preferences → Save
+            import weakref
+            from .settings_dialog import on_saved
+            ref = weakref.ref(self)
+            on_saved(lambda: ref() is not None and ref().refresh_title_bars())
+        except Exception:
+            pass
+
+    def refresh_title_bars(self):
+        """Colour every panel title bar again (after a change of the preferences)."""
+        act = getattr(self, "_active_panel", None)
+        for n, d in getattr(self, "docks", {}).items():
+            tb = d.titleBarWidget()
+            if isinstance(tb, _TitleBar):
+                tb.colours = None                                # force: the settings may have changed
+                tb.set_active(n == act)
 
     # ---------------------------------------------------------------- borders
     @staticmethod
@@ -345,6 +450,11 @@ class DockMixin:
         f = frames.get(name)
         if f is None:
             return
+        docks = getattr(self, "docks", {})
+        for n in (getattr(self, "_active_panel", None), name):
+            tb = docks[n].titleBarWidget() if n in docks else None
+            if isinstance(tb, _TitleBar):
+                tb.set_active(n == name)
         self._active_panel = name
         f.setStyleSheet(f"QFrame#{f.objectName()} {{ border: 2px solid {ACTIVE_PANEL_COLOUR}; }}")
 

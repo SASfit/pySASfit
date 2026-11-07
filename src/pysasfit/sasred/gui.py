@@ -478,8 +478,16 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         for cb in (self.iq_err_I, self.iq_err_q):
             cb.setChecked(True)
             cb.toggled.connect(lambda _on: self._draw_iq())
+        self.iq_xscale, self.iq_yscale = QtWidgets.QComboBox(), QtWidgets.QComboBox()
+        for cb, axis in ((self.iq_xscale, "q"), (self.iq_yscale, "I")):
+            cb.addItem("log", "log")
+            cb.addItem("lin", "linear")
+            cb.setToolTip(f"{axis} axis scale; kept when other runs or rows are shown (also a change made with the "
+                          f"plot toolbar or the keys k / l is kept). Log I: points with I ≤ 0 are not drawn.")
+            cb.currentIndexChanged.connect(lambda _i: self._draw_iq())
         from ..core.flowlayout import flow_bar
-        iq_bar.addWidget(flow_bar(labelled("show", self.iq_show), self.iq_offset, self.iq_err_I, self.iq_err_q), 1)
+        iq_bar.addWidget(flow_bar(labelled("show", self.iq_show), self.iq_offset, labelled("q", self.iq_xscale),
+                                  labelled("I", self.iq_yscale), self.iq_err_I, self.iq_err_q), 1)
         self._last_keys = []
         self._add_dock("iq", "I(q)", plot_panel(self.iq_canvas, self, bars=(iq_bar,)), Area.RightDockWidgetArea)
         self.budget_canvas = _canvas()
@@ -1872,7 +1880,26 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 keys = [k for k in self._last_keys if k in self.results]
         return [(k, self.results[k]) for k in dict.fromkeys(keys)]
 
+    def _iq_scales(self):
+        """(x, y) scale of the I(q) plot. A scale changed on the plot itself (toolbar figure options, keys k / l)
+        is taken over into the selectors first, so that redrawing for other curves keeps it."""
+        if not hasattr(self, "iq_xscale"):
+            return "log", "log"
+        axes = getattr(self, "_iq_ax", None)
+        drawn = getattr(self, "_iq_drawn_scales", None)
+        if axes is not None and drawn is not None and axes.figure is self.iq_canvas.figure:
+            for cb, now, was in ((self.iq_xscale, axes.get_xscale(), drawn[0]),
+                                 (self.iq_yscale, axes.get_yscale(), drawn[1])):
+                if now != was and now in ("log", "linear"):
+                    i = cb.findData(now)
+                    if i >= 0 and i != cb.currentIndex():
+                        cb.blockSignals(True)
+                        cb.setCurrentIndex(i)
+                        cb.blockSignals(False)
+        return self.iq_xscale.currentData(), self.iq_yscale.currentData()
+
     def _draw_iq(self):
+        xscale, yscale = self._iq_scales()
         fig = self.iq_canvas.figure
         fig.clear()
         ax = fig.add_subplot(111)
@@ -1903,10 +1930,11 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                         elinewidth=0.6, label=f"live: {p.run} {p.raw.sample_name}")
         shown = [r for _, r in shown_items] + ([p] if p is not None else [])
         if shown:
-            ax.set_xscale("log")
-            if all(np.all(r.I > 0) for r in shown):
-                ax.set_yscale("log")
-            _log_q_ticks(ax)
+            ax.set_xscale(xscale)
+            if yscale == "log":
+                ax.set_yscale("log", nonpositive="mask")       # I ≤ 0 (after subtraction) not drawn, scale kept
+            if xscale == "log":
+                _log_q_ticks(ax)
             if series:
                 sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
                 fig.colorbar(sm, ax=ax, label="t [s]", fraction=0.06, pad=0.02, aspect=30)
@@ -1921,6 +1949,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         elif self.results:
             ax.set_title("select reduced runs or table rows ('show' above the plot)", fontsize="small")
         ax.set_xlabel(f"q [{u.q}]")
+        self._iq_ax, self._iq_drawn_scales = ax, (ax.get_xscale(), ax.get_yscale())   # as drawn (empty: linear)
         self.iq_canvas.draw_idle()
 
     def _draw_budget(self):
@@ -2031,6 +2060,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "iq_error_bars_I": self.iq_err_I.isChecked(), "iq_error_bars_q": self.iq_err_q.isChecked(),
+                "iq_xscale": self._iq_scales()[0], "iq_yscale": self._iq_scales()[1],
                 "centres": [[c.key[0], c.key[1], c.key[2], c.x, c.y, c.source] for c in self.centres.values()
                             if self._user_centre(c)],
                 "tables": dict(self.table_panel.to_dict(), folder=self.folder),
@@ -2135,6 +2165,10 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         for key, cb in (("iq_error_bars_I", self.iq_err_I), ("iq_error_bars_q", self.iq_err_q)):
             if key in s:
                 cb.setChecked(bool(s[key]))
+        for key, cb in (("iq_xscale", self.iq_xscale), ("iq_yscale", self.iq_yscale)):
+            i = cb.findData(s.get(key))
+            if i >= 0:
+                cb.setCurrentIndex(i)
         i = self.iq_show.findData(s.get("iq_show"))
         if i >= 0:
             self.iq_show.setCurrentIndex(i)

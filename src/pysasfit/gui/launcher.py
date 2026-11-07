@@ -40,12 +40,13 @@ TOOLS = [
     ("pyINVersion", "pysasfit.inversion.gui.app", "MainWindow"),
     ("pyOZsolver", "pysasfit.oz.gui.main_window", "OZWidget"),
     ("pySASmorph", "pysasfit.morph.gui", "MainWindow"),
+    ("pySCAtter", "pysasfit.scatter.gui", "MainWindow"),
     ("pyTOOLbox", "pysasfit.toolbox.gui", "MainWindow"),
 ]
 
 # tab title -> preferences page
 _TOOL_KEYS = {"pySLDprofile": "sldprofile", "pyINVersion": "inversion", "pyOZsolver": "oz",
-             "pySASred": "sasred", "pyTOOLbox": "toolbox"}
+             "pySASred": "sasred", "pyTOOLbox": "toolbox", "pySCAtter": "scatter"}
 
 # tab title -> logo bundle name (pysasfit.resources)
 # (the tab titles are the tool names of the logo bundle; other titles may name their logo here)
@@ -59,6 +60,8 @@ _TOOL_INFO = {
     "pyINVersion": "size distributions and p(r) by inversion",
     "pyOZsolver": "Ornstein-Zernike structure factors",
     "pySASmorph": "representative 3D two-phase morphologies from SAS data (SAXSMorph method)",
+    "pySCAtter": "scattering patterns of particles, lattices and orientation distributions (hypergeometric "
+                 "algorithms after Wagener & Förster), fits to 1D and 2D data",
     "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data (masks, averages, sums), 1D data arithmetic",
 }
 
@@ -233,6 +236,8 @@ class Launcher(QtWidgets.QMainWindow):
             a = m.addAction("(no detachable panels in this tool)")
             a.setEnabled(False)
             return
+        for a in getattr(w, "extra_view_actions", ()):   # the tool's own View entries (model explorer: sliders)
+            m.addAction(a)
         for a in w.view_actions.values():
             m.addAction(a)
         m.addSeparator()

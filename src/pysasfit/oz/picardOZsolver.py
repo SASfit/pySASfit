@@ -27,6 +27,44 @@ class PicardOZsolver(OZsolver):
       #First run constructor of super class
       OZsolver.__init__(self, port, **kwargs)
 
+    #EARLY STOP (2026-11-07). Two checks end an iteration that cannot give a
+    #solution, instead of running into the iteration limit:
+    #
+    #  * UNPHYSICAL: every PHYS_CHECK_EVERY steps after PHYS_WARMUP steps the
+    #    pair correlation g = 1 + Gamma + c of the current iterate is formed
+    #    (one closure evaluation, no transform); when min g < PHYS_GMIN at two
+    #    consecutive checks the closure has no physical solution here. Seen for
+    #    PY, MSA, SMSA, Verlet, DH, CG on the strongly charged polydisperse
+    #    Yukawa test state (Z = 200): g reached -700 ... -2500 while the
+    #    residual still fell slowly; MDIIS fails there as well.
+    #  * STALLED: the residual decay rate over the last STALL_WINDOW steps,
+    #    extrapolated, needs more than STALL_FACTOR times the remaining
+    #    iterations to reach the convergence criterion (checked twice in a row).
+    #    Such a run would end at the limit unconverged anyway.
+    #
+    #A converged iteration is unaffected (the checks only ever stop a run that
+    #has not converged); EARLY_STOP = False restores the former behaviour.
+    #The reason is kept in self.stopReason and reported by ozLib.solve().
+    #Preferences: oz.solvers.picard_early_stop, oz.solvers.picard_gmin.
+    EARLY_STOP = True
+    PHYS_GMIN = -0.5
+    PHYS_CHECK_EVERY = 50
+    PHYS_WARMUP = 200
+    STALL_WINDOW = 200
+    STALL_FACTOR = 3.0
+
+    def _minRDF(self, x):
+        """min g(r) = min(1 + Gamma + c) of iterate x (all partials for a mixture); NaN if not available."""
+        try:
+            if not getattr(self, 'doUseGammaFixPointOperator', True):
+                return float('nan')
+            G = self.unpackPairs(x) if self.isMulticomponent() else x
+            g = G + self.update_c(G) + 1.0
+            g = g[np.isfinite(g)]
+            return float(g.min()) if g.size else float('nan')
+        except Exception:
+            return float('nan')
+
     #define the specific iteration schema for this class    
     def picardIteration(self):
       #MANN / KRASNOSELSKII ITERATION.
@@ -77,6 +115,10 @@ class PicardOZsolver(OZsolver):
       #a = 1, and the iteration runs up to ceil(N/a) steps. a = 1 gives N.
       self.iterationLimit = self.mannIterationLimit(self.numberOfIterations, alpha)
       self.iterations = 0
+      self.stopReason = None
+      early = bool(getattr(self, 'EARLY_STOP', True))
+      nBad = nStall = 0
+      logRes = []
       #Start iteration
       x = self.x_0
       #Converged if relative progress is less than self.convergenceCriterion
@@ -115,11 +157,34 @@ class PicardOZsolver(OZsolver):
               print(self._name(alpha), "converged after", i, "steps")
               self.iterations = i
               break
+          if early:
+              if not np.isfinite(relativeProgress):
+                  self.stopReason = "the iteration diverged (non-finite residual)"
+                  break
+              logRes.append(np.log(max(relativeProgress, 1e-300)))
+              if i >= self.PHYS_WARMUP and i % self.PHYS_CHECK_EVERY == 0:
+                  gmin = self._minRDF(x)
+                  nBad = nBad + 1 if gmin < self.PHYS_GMIN else 0
+                  if nBad >= 2:
+                      self.stopReason = (f"unphysical iterate: min g(r) = {gmin:.3g} < {self.PHYS_GMIN:g} "
+                                         f"at two checks; the closure has no physical solution here")
+                      break
+                  W = self.STALL_WINDOW
+                  if len(logRes) > W:
+                      slope = (logRes[-1] - logRes[-1 - W]) / W          # ln residual per step
+                      need = (np.log(self.convergenceCriterion) - logRes[-1]) / slope if slope < 0 else np.inf
+                      nStall = nStall + 1 if need > self.STALL_FACTOR * (self.iterationLimit - i) else 0
+                      if nStall >= 2:
+                          self.stopReason = (f"stalled: at the current decay rate the residual would need about "
+                                             f"{need:.3g} more steps (limit {self.iterationLimit})")
+                          break
           i += 1
           
       #endwhile
       if not self.converged:
           self.iterations = i
+      if self.stopReason:
+          print(self._name(alpha), f"stopped after {i} steps:", self.stopReason)
       if i == self.iterationLimit:
           print(self._name(alpha), "did not converge after", self.iterationLimit, "steps"
                 + ("" if alpha == 1.0 else f" (limit {self.numberOfIterations}/a)"))

@@ -9,6 +9,9 @@ from .oZsolver import OZsolver
 #This class inherits all that is needed to run the 
 #iteration and to communicate with clients from OZsolver
 class ScipyNewtonKrylovOZsolver(OZsolver):
+    # Jacobian-vector products by finite differences of the operator: keep LAPACK (np.linalg.solve) for the
+    # per-q linear systems, so that results do not depend on rounding differences of the compiled kernel.
+    compiledLinearAlgebra = False
     def __init__(self, port, **kwargs):
       #member variable (iteration counter, incremented in call back function of optimizer)
       self.iterationStep = 0     

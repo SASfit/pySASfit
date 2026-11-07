@@ -880,6 +880,7 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
     result.iterationLimit = getattr(solverInstance, "iterationLimit",
                                     getattr(solverInstance, "numberOfIterations", None))
     result.iterations = getattr(solverInstance, "iterations", None)
+    result.stopReason = getattr(solverInstance, "stopReason", None)
     #INDEPENDENT RESIDUAL CHECK. The solver's own flag is a claim; the
     #residual of the returned solution is evidence. T is applied once more to
     #the returned fixpoint and the result is NOT converged when
@@ -904,8 +905,10 @@ def solve(potential, phi, potentialArgs=(), closure="Percus-Yevick", closurePara
                    f"||T(x)-x||/||x|| = {result.residual:.3g} > residualTolerance = "
                    f"{residualTolerance:g}; the result is not a solution.")
         else:
+            reason = getattr(solverInstance, "stopReason", None)
             msg = (f"{solver} did not converge"
-                   + (f" within {result.iterationLimit} iterations" if result.iterationLimit else "")
+                   + (f" (stopped early after {result.iterations} iterations: {reason})" if reason else
+                      f" within {result.iterationLimit} iterations" if result.iterationLimit else "")
                    + (f" (relative progress {prog:.2e})" if prog is not None and np.isfinite(prog) else "")
                    + (f", residual ||T(x)-x||/||x|| = {result.residual:.3g}"
                       if result.residual is not None else "")

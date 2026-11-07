@@ -35,6 +35,14 @@ DEFAULT = (
 )
 
 HELP: dict[str, str] = {
+    "panel_buttons": (
+        "<b>Panel buttons</b><br>"
+        "Every panel (Data, Background, Inversion, Info, I(q), Distribution) can be moved by dragging "
+        "its title bar, stacked onto another panel as a tab, or put side by side. "
+        "The first button detaches the panel into its own window (closing that window docks it "
+        "again); the cross hides it -- View brings it back. View → Arrange panels / Reset layout "
+        "sorts them; the arrangement is kept with the last session."
+    ),
     # ---------------------------------------------------------------- data
     "load": (
         "<b>Load data file</b><br>ASCII file with columns q, I(q) and optionally "

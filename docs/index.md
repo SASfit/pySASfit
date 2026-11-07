@@ -122,6 +122,20 @@ Representative 3D two-phase structures from SAXS/SANS data (clipped Gaussian ran
 method): γ(r), g(r), voxel structure, its scattering, S/V and connectivity; VTK/HDF5/TIFF export, 3D view.
 :::
 
+:::{grid-item-card} pySCAtter: scattering patterns
+:link: scatter/index
+:link-type: doc
+
+```{image} pySASfit-logo-bundle/menu-icons/pySCAtter/pySCAtter-menu.svg
+:alt: pySCAtter
+:height: 40px
+:class: card-icon
+```
+
+1D and 2D patterns of particles (spheres to superballs, core/shell, chains), lattices (lamellae to gyroid) and
+orientation distributions with the hypergeometric algorithms of Wagener & Förster; fits to pySASred 1D and 2D data.
+:::
+
 :::{grid-item-card} The launcher
 :link: launcher
 :link-type: doc
@@ -173,6 +187,7 @@ pySLDprofile <sldprofile/index>
 pyINVersion <inversion/index>
 pyOZsolver <oz/index>
 pySASmorph <morph/index>
+pySCAtter <scatter/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 API <api/index>

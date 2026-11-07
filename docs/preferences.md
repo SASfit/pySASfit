@@ -116,6 +116,7 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
   At an r_max whose best ln evidence is this far below the best of the r_max already done, no restarts from the other starting profiles are tried (they only help near the evidence maximum). 0 = always.
 
 - **parallel processes for the r_max scan** — `sldprofile.opt.n_workers` · factory: **0** · range: 0 … 256  
+- **r_max scan: start each α path from the neighbouring r_max** — `sldprofile.opt.warm_start` · factory: **off** · range: on/off  
   Number of processes for the r_max scan (0 or 1: serial). The r_max nearest to the centre is done first, the others in parallel. Only worthwhile with several free cores and slow fits (large N): process start-up, copying the fitter and the loss of the running best evidence cost time; on a 2-core test machine the parallel scan was slower than the serial one. Falls back to serial when the fit cannot be copied to other processes (e.g. a max-ent prior or background given as a lambda).
 
 #### Grids and scans
@@ -338,6 +339,7 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
   Error model 'local cubic fits': number of neighbours on each side of a point used in the polynomial fit of ln I vs ln q. The scatter about the fit gives the error estimate; wider windows give smoother but possibly biased estimates where I(q) bends sharply.
 
 - **bootstrap random seed (−1 = different every run)** — `inversion.gui.bootstrap_seed` · factory: **-1** · range: -1 … 2.14748e+09  
+- **bootstrap: parallel worker processes (1 = serial, 0 = automatic)** — `inversion.gui.bootstrap_workers` · factory: **1** · range: 0 … 64  
   Seed of the Monte-Carlo (bootstrap) error estimate. −1 = different every run; a fixed value makes the error bands reproducible.
 
 ### Ornstein–Zernike
@@ -348,6 +350,8 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
   Default iteration limit of the accelerated OZ solvers (Anderson, MDIIS, KINSOL, Biggs–Andrews), used wherever a tab does not set its own limit.
 
 - **default max. iterations (Picard; Mann: ÷ a)** — `oz.solvers.max_iterations_picard` · factory: **5000** · range: 10 … 1e+07  
+- **Picard / Mann: stop unphysical or stalled runs early** — `oz.solvers.picard_early_stop` · factory: **on** · range: on/off  
+- **Picard / Mann: unphysical when min g(r) <** — `oz.solvers.picard_gmin` · factory: **-0.5** · range: -1e+06 … 0  
   Iteration limit N of the Picard / Mann solver for a = 1 (plain Picard), used wherever a tab does not set its own limit, in particular always in the OZ solver tab. With damping a < 1 the solver runs up to ceil(N/a) iterations, because each damped step covers only a fraction a of the way (5000 at a = 0.2 gives 25000). Picard converges linearly and slowly near the spinodal, hence the higher limit than for the accelerated solvers. Example: hard spheres PY at φ = 0.53 need about 4200/a iterations (a ≤ 0.6), so N ≈ 4500 or more is needed there; the factory value 5000 (raised from 3000) covers this, also for the damped Picard / Mann verifier.
 
 - **convergence criterion (relative progress)** — `oz.solvers.convergence` · factory: **1e-12** · range: 1e-16 … 0.001  
@@ -536,6 +540,49 @@ click into its field. The texts are kept in `src/pysasfit/core/settings_help.py`
 - **efficiency archive file** — `sasred.efficiency.archive` · factory: **efficiency_archive.h5 next to the preferences file** (the dialog shows the full path) · file, with a browse button  
   HDF5 file in which the detector-efficiency maps are archived, one entry per map named after the date of its water measurement, to follow the detector over time. Empty: efficiency_archive.h5 next to the pySASfit preferences file.
 
+#### SANS-LLB detector geometry
+
+- **central detector: offset of the detection layer [mm]** — `sasred.llb.central_dz_mm` · factory: **0** · range: -500 … 500  
+  SANS-LLB: offset of the detection layer of the central detector from the recorded distance (central_detector/distance), used for q and the solid angle. The SANS-I offset (Detector distance) does not apply to SANS-LLB.
+
+- **left panel: offset dx along posx [mm]** — `sasred.llb.left.dx_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB left wide-angle panel: correction of the pixel positions written by NICOS (left_data/posx, posy; the same nominal geometry as GRASP's SINQ_SANS_LLB.ini). Pixel position = (posx + dx, posy + dy) at the distance left_detector/distance + dz; the beam position in that frame comes from the beam centre on the central detector. posx runs across the 16 tubes (away from the beam), posy along the tubes. Determine dx, dy, dz with a standard that puts rings on the panels (AgBe in the 4 m setting: 2.15, 3.23, 4.30 1/nm). Maren's data 2026-08 suggest that along the tubes the beam lies near posy ≈ +84 mm (dy ≈ -85 mm), to confirm.
+
+- **left panel: offset dy along posy (along the tubes) [mm]** — `sasred.llb.left.dy_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB left panel: offset along posy (along the tubes) [mm]; see dx.
+
+- **left panel: offset dz along the beam [mm]** — `sasred.llb.left.dz_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB left panel: offset of the detection plane along the beam from left_detector/distance [mm]; see dx.
+
+- **bottom panel: offset dx along posx (along the tubes) [mm]** — `sasred.llb.bottom.dx_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB bottom wide-angle panel: offset along posx (along the tubes) [mm]; pixel position = (posx + dx, posy + dy) at bottom_detector/distance + dz. See the left panel.
+
+- **bottom panel: offset dy along posy [mm]** — `sasred.llb.bottom.dy_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB bottom panel: offset along posy (across the tubes, away from the beam) [mm].
+
+- **bottom panel: offset dz along the beam [mm]** — `sasred.llb.bottom.dz_mm` · factory: **0** · range: -1000 … 1000  
+  SANS-LLB bottom panel: offset of the detection plane along the beam [mm].
+
+- **pixels masked at both ends of every tube** — `sasred.llb.end_px` · factory: **10** · range: 0 … 60  
+  SANS-LLB wide-angle panels: pixels masked at both ends of every tube (the position response of the tubes falls off there); tubes without counts are masked as well.
+
+#### Resolution
+
+- **dλ/λ (FWHM) when the raw file has none** — `sasred.resolution.dlam_default` · factory: **0.1** · range: 0 … 1  
+  Relative wavelength spread (FWHM) used for the resolution Qdev when the raw file gives none: on SANS-I dλ/λ comes from the selector tilt and its calibration table, else from the header (monochromator/wavelength_spread); only when both are missing is this value used, and the notes say so. 0 switches the resolution off for such runs.
+
+- **source aperture (guide cross-section) x [mm]** — `sasred.resolution.source_aperture_x_mm` · factory: **50** · range: 0.1 … 500  
+  When a geometry has no direct-beam run, the beam divergence is estimated from the collimation: the source aperture (on SANS-I the neutron-guide cross-section, 50 × 50 mm²) at the collimation length coll before the sample aperture, detector SD behind it: σ_spot² = (a₁ SD/coll)²/12 + (a₂ (coll+SD)/coll)²/12 per axis. These preferences override the instrument file.
+
+- **source aperture (guide cross-section) y [mm]** — `sasred.resolution.source_aperture_y_mm` · factory: **50** · range: 0.1 … 500  
+  Vertical size of the source aperture (neutron-guide cross-section, 50 mm on SANS-I) for the divergence estimate from the collimation when a geometry has no direct-beam run.
+
+- **sample aperture x [mm]** — `sasred.resolution.sample_aperture_x_mm` · factory: **8** · range: 0.1 … 200  
+  Sample aperture used for the divergence estimate (typical SANS-I value 8 × 14 mm², x × y); the aperture actually used is not recorded in the raw file.
+
+- **sample aperture y [mm]** — `sasred.resolution.sample_aperture_y_mm` · factory: **14** · range: 0.1 … 200  
+  Vertical size of the sample aperture (typically 14 mm on SANS-I) for the divergence estimate from the collimation when a geometry has no direct-beam run.
+
 ### pyTOOLbox
 
 Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
@@ -552,6 +599,29 @@ Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
 
 - **digits after the decimal point of floating-point values** — `toolbox.lister.float_digits` · factory: **3** · range: 0 … 15  
   Floating-point values in the metadata listing are rounded to this many digits after the decimal point (as shown, copied and exported).
+
+### pySCAtter
+
+#### Calculation and fit (pySCAtter)
+
+- **I(q) follows every parameter change** — `scatter.calc.auto_1d` · factory: **on** · on/off  
+  Start value of the 'I(q) follows' box of pySCAtter: the 1D curve (and the model at the loaded data) is recalculated 0.35 s after every parameter change. The 2D pattern follows only when '2D follows' is ticked, because oriented anisometric particles take seconds.
+
+- **fit: largest number of model evaluations** — `scatter.fit.max_nfev` · factory: **200** · range: 5 … 100000  
+  Largest number of model evaluations of a pySCAtter fit (Trust Region Reflective least squares; each fitted parameter costs one evaluation per iteration for the Jacobian).
+
+- **2D fit: use every n-th pixel (start value)** — `scatter.fit.every_px` · factory: **2** · range: 1 … 32  
+  2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all pixels; the χ² and the errors refer to the pixels used.
+
+### Appearance
+
+#### Title bars of the panels (label … hide cross)
+
+- **coloured title bars** — `appearance.panel_title.mode` · factory: **pale** · pale, all, active, off  
+  Title bars of the docked panels coloured like window title bars under Windows. 'active panel in the colour, others pale': the panel last clicked has the full colour and white text, the others a light tint of it. Takes effect when the preferences are saved.
+
+- **colour (#rrggbb or name)** — `appearance.panel_title.colour` · factory: **#0078d7** · text  
+  Colour of the panel title bars: #rrggbb (e.g. #0078d7 Windows 10/11 blue, #2b579a Word blue, #1e3a5f dark blue) or a colour name (steelblue). The text turns white on dark colours, dark on light ones. An invalid value falls back to #0078d7.
 
 ### Shared numerics
 

@@ -15,6 +15,8 @@ def apply_solver_settings():
     from .picardOZsolver import PicardOZsolver
     OZsolver.DEFAULT_MAX_ITERATIONS = int(v["max_iterations"])
     PicardOZsolver.DEFAULT_MAX_ITERATIONS = int(v["max_iterations_picard"])
+    PicardOZsolver.EARLY_STOP = bool(v.get("picard_early_stop", True))
+    PicardOZsolver.PHYS_GMIN = float(v.get("picard_gmin", -0.5))
     OZsolver.CONVERGENCE_CRITERION = float(v["convergence"])
     for mod, cls, attr, key in (("sundials4pyKinsolFPOZsolver", "Sundials4pyKinsolFPOZsolver", "MAA", "kinsol_maa"),
                                 ("biggsAndrewsOZsolver", "BiggsAndrewsOZsolver", "MAA", "biggs_maa"),

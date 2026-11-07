@@ -37,6 +37,7 @@ import numpy as np
 
 from .base import SolverResult, chi2_r, g_test
 from . import acceleration
+from . import _compiled
 
 
 
@@ -113,6 +114,28 @@ def solve(
     x = x0.copy() if x0 is not None else np.full(n, X0_LEVEL)
 
     S = _smoothing_matrix(n, smoothing_h) if smoothing_h is not None else None
+    # Speed (2026-11-07): the column sums of A and 1/db are fixed during the iteration; em_step recomputed them
+    # every step, and the per-step diagnostics used np.mean / np.diff / np.linalg.norm (call overhead dominates
+    # for these small vectors).  Same formulas, evaluated with dot products.
+    col_sums = A.sum(axis=0)
+    col_sums = np.where(col_sums == 0, np.finfo(float).eps, col_sums)
+    AT = np.ascontiguousarray(A.T)
+    inv_db = 1.0 / np.asarray(db, float)
+    m_inv = 1.0 / b.size
+    eps = np.finfo(float).eps
+
+    def fast_em_step(x_in):
+        Ax = A @ x_in
+        Ax[Ax == 0] = eps
+        return x_in * ((AT @ (b / Ax)) / col_sums)
+
+    def chi2_fast(fb):
+        r = (fb - b) * inv_db
+        return float(r @ r) * m_inv
+
+    def rough(v):
+        d = v[1:] - v[:-1]
+        return float(d @ d)
 
     chi2_history = []
     roughness_history = []
@@ -123,20 +146,25 @@ def solve(
         if S is not None and double_smoothing:
             x_safe = np.where(x_local <= 0, np.finfo(float).eps, x_local)
             x_local = np.exp(S @ np.log(x_safe))
-        x_local = em_step(x_local, A, b)
+        x_local = fast_em_step(x_local)
         if S is not None:
             x_local = S @ x_local
         return x_local
 
-    if accelerate:
+    if accelerate and _compiled.HAVE_NUMBA:
+        # the whole accelerated loop compiled (see _compiled.py); same steps, agrees to rounding
+        x, n_iter, converged, g_norm_history, chi2_history, roughness_history, _ = _compiled.accelerated_loop(
+            0, A, b, db, x, max_iterations, tol, kin_set_maa, 0.0,
+            smoothing_h=smoothing_h, double_smoothing=double_smoothing)
+    elif accelerate:
         x_prev_box = [x.copy()]
 
         def record(x_new: np.ndarray) -> None:
-            g_norm_history.append(float(np.linalg.norm(x_new - x_prev_box[0])))
+            d = x_new - x_prev_box[0]
+            g_norm_history.append(float(np.sqrt(d @ d)))
             x_prev_box[0] = x_new.copy()
-            fitted_b_local = A @ x_new
-            chi2_history.append(chi2_r(b, fitted_b_local, db))
-            roughness_history.append(float(np.sum(np.diff(x_new) ** 2)))
+            chi2_history.append(chi2_fast(A @ x_new))
+            roughness_history.append(rough(x_new))
 
         result = acceleration.biggs_andrews(
             one_step, x, max_iterations=max_iterations, tol=tol,

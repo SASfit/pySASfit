@@ -70,6 +70,7 @@ from .param_row import ParameterRow, clear_layout, slider_range  # noqa: E402,F4
 from .model import ModelFunction  # noqa: E402
 from . import multidata  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
+from ..core.docking import DockMixin  # noqa: E402
 
 __all__ = ["ModelExplorer", "ParameterRow", "explore", "main"]
 
@@ -188,7 +189,10 @@ class InstallationDialog(QtWidgets.QDialog):
 
 
 # --------------------------------------------------------------------------- main window
-class ModelExplorer(QtWidgets.QMainWindow):
+class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
+    """Panels (2026-11-07, as pySASred / pySASmorph): Model, I(q), Fit and Size distributions; each can be
+    moved, stacked as tabs, detached into its own window (button in its title bar) and hidden (View menu)."""
+
     def __init__(self, ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), parent=None):
         super().__init__(parent)
         self.setWindowTitle("pySASfit model explorer")
@@ -318,12 +322,10 @@ class ModelExplorer(QtWidgets.QMainWindow):
         bar.addStretch(1)
         lv.addLayout(bar)
         lv.addWidget(self.tabs, 1)
-        self.model_dock = QtWidgets.QDockWidget("Model", self)
-        self.model_dock.setObjectName("model_dock")
-        self._left = _scrolled(left)              # a small screen: the panel scrolls instead of a wide window
-        self.model_dock.setWidget(self._left)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.model_dock)
-        self.resizeDocks([self.model_dock], [600], QtCore.Qt.Orientation.Horizontal)
+        self._left = left                         # frozen while a fit runs
+        # a small screen: the panel scrolls instead of a wide window
+        self.model_dock = self._add_dock("model", "Model", left, QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
+                                         scrollable=True)
 
         # ---- right: plot and controls
         right = QtWidgets.QWidget()
@@ -389,65 +391,30 @@ class ModelExplorer(QtWidgets.QMainWindow):
         self.status = QtWidgets.QLabel("")
         self.status.setWordWrap(True)
         rv.addWidget(self.status)
-        self.setCentralWidget(right)
+        rv.setContentsMargins(2, 2, 2, 2)
+        self.plot_dock = self._add_dock("plot", "I(q)", right, QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self._on_scales()
 
         self.fit_panel = FitPanel(self)
-        self.fit_dock = QtWidgets.QDockWidget("Fit", self)
-        self.fit_dock.setWidget(_scrolled(self.fit_panel))
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.fit_dock)
+        self.fit_dock = self._add_dock("fit", "Fit", self.fit_panel, QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
+                                       scrollable=True)
         self._build_distribution_dock()
+        H, V = QtCore.Qt.Orientation.Horizontal, QtCore.Qt.Orientation.Vertical
+        self.splitDockWidget(self.model_dock, self.plot_dock, H)
+        self.splitDockWidget(self.plot_dock, self.fit_dock, V)      # first: the fit panel spans plot and distributions
+        self.splitDockWidget(self.plot_dock, self.dist_dock, H)
         view = self.menuBar().addMenu("&View")
-        self._detached = []
-        for dock, area in (
-            (self.model_dock, QtCore.Qt.DockWidgetArea.LeftDockWidgetArea),
-            (self.dist_dock, QtCore.Qt.DockWidgetArea.RightDockWidgetArea),
-            (self.fit_dock, QtCore.Qt.DockWidgetArea.BottomDockWidgetArea),
-        ):
-            view.addAction(dock.toggleViewAction())
-            act = view.addAction(f"    detach '{dock.windowTitle()}' as a separate window")
-            act.setCheckable(True)
-            act.setToolTip(
-                "an independent window that can go behind the main window (the float button of a dock keeps it on top)"
-            )
-            act.toggled.connect(lambda on, d=dock, a=area: self._set_detached(d, a, on))
-        view.addSeparator()
         act = view.addAction("&Sliders")
         self.sliders_action = act
         act.setCheckable(True)
         act.setToolTip("show a slider next to every parameter field")
         act.toggled.connect(self._set_sliders)
+        view.addSeparator()
+        self.extra_view_actions = [act]           # also in the View menu of the pySASfit launcher
+        self._finish_docks()                      # panel entries, border, arrangement in the View menu
+        self.hide_stray_tab_bars()
 
-    # ------------------------------------------------- docks, size distributions
-    def _set_detached(self, dock, area, on):
-        """Make ``dock`` an independent top-level window (no owner: it can go behind the main window) or dock it again."""
-        if on:
-            size = dock.size()
-            self.removeDockWidget(dock)
-            dock.setFloating(False)
-            dock.setParent(None)
-            dock.setWindowFlags(QtCore.Qt.WindowType.Window)
-            dock.setTitleBarWidget(QtWidgets.QWidget())  # the window frame has the title
-            dock.resize(max(size.width(), 520), max(size.height(), 320))
-            dock.show()
-            self._detached.append(dock)
-        else:
-            if dock in self._detached:
-                self._detached.remove(dock)
-            dock.setTitleBarWidget(None)
-            dock.setWindowFlags(QtCore.Qt.WindowType.Widget)
-            self.addDockWidget(area, dock)
-            dock.show()
-
-    def close_detached(self):
-        """Close the panels detached as separate windows (also called by the pySASfit launcher)."""
-        for dock in list(self._detached):
-            dock.close()
-
-    def closeEvent(self, event):
-        self.close_detached()
-        super().closeEvent(event)
-
+    # ------------------------------------------------- size distributions
     def _build_distribution_dock(self):
         """Dock with a plot of the size distribution N(x) of every contribution that has one."""
         w = QtWidgets.QWidget()
@@ -478,10 +445,7 @@ class ModelExplorer(QtWidgets.QMainWindow):
             row.addWidget(b)
         row.addStretch(1)
         v.addLayout(row)
-        self.dist_dock = QtWidgets.QDockWidget("Size distributions", self)
-        self.dist_dock.setObjectName("dist_dock")
-        self.dist_dock.setWidget(w)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.dist_dock)
+        self.dist_dock = self._add_dock("dist", "Size distributions", w, QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.dist_dock.visibilityChanged.connect(lambda _v: self._schedule())
 
     @staticmethod
@@ -747,6 +711,48 @@ class ModelExplorer(QtWidgets.QMainWindow):
         if not getattr(self, "_sized", False):
             self._sized = True
             QtCore.QTimer.singleShot(0, self._default_dock_sizes)
+
+    # ------------------------------------------------------------------ panel layout of the last session
+    @staticmethod
+    def _layout_path():
+        from ..core import settings as prefs
+        return os.path.join(os.path.dirname(prefs.settings_path()), "studio_layout.json")
+
+    def save_session(self):
+        """Keep the panel arrangement (moved, stacked, detached, hidden panels) for the next start."""
+        try:
+            import json
+            p = self._layout_path()
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump({"dock_state": self.dock_state()}, fh)
+        except (OSError, TypeError, ValueError):
+            pass
+
+    def restore_session(self):
+        """Panel arrangement of the last session (the model itself is kept in project files)."""
+        try:
+            import json
+            with open(self._layout_path(), encoding="utf-8") as fh:
+                st = json.load(fh).get("dock_state")
+        except (OSError, ValueError, AttributeError):
+            return False
+        self._sized = True                    # no default sizes over the restored arrangement
+        return self.restore_dock_state(st)
+
+    def forget_session(self):
+        try:
+            os.remove(self._layout_path())
+        except OSError:
+            pass
+
+    def shutdown(self):
+        """Called by the pySASfit launcher when it closes."""
+        self.save_session()
+
+    def closeEvent(self, event):
+        self.save_session()
+        super().closeEvent(event)
 
     def _default_dock_sizes(self):
         """Start sizes in proportion to the window, so that the I(q) plot keeps a useful size on a laptop
@@ -1412,11 +1418,12 @@ class ModelExplorer(QtWidgets.QMainWindow):
 
 
 # --------------------------------------------------------------------------- entry points
-def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), project=None):
+def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), project=None, restore_layout=False):
     """Open the explorer; blocks until it is closed unless a Qt event loop is already running.
 
     ``extra``: more contributions of the mixture, each ``(form factor, size distribution, structure factor)``.
     ``project``: a ``.sasstudio`` file to open (File > Open project).
+    ``restore_layout``: arrange the panels as in the last session (the stand-alone program does).
     """
     app = QtWidgets.QApplication.instance()
     own = app is None
@@ -1425,6 +1432,8 @@ def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), pro
     win = ModelExplorer(ff, sd=sd, sq=sq, qmin=qmin, qmax=qmax, extra=extra)
     if project:
         win.open_project(project)
+    if restore_layout:
+        win.restore_session()
     win.show()
     if own:
         app.exec()
@@ -1451,7 +1460,7 @@ def main(argv=None):
     for spec in a.add:
         parts = [s.strip() or None for s in spec.split(",")][:3]
         extra.append(tuple(parts + [None] * (3 - len(parts))))
-    explore(a.model, sd=a.sd, sq=a.sq, qmin=a.qmin, qmax=a.qmax, extra=extra, project=a.project)
+    explore(a.model, sd=a.sd, sq=a.sq, qmin=a.qmin, qmax=a.qmax, extra=extra, project=a.project, restore_layout=True)
     return 0
 
 

@@ -64,18 +64,24 @@ for j in range(128):
         f.write("\n")
 f.close()
 
-def rad_avg_pyFAI(detx, bcx, bcy, wl=6.e-10, npt=100):
+def rad_avg_pyFAI(image, detx, bcx, bcy, wl=6.e-10, npt=100):
     from pyFAI import load
     from pyFAI import azimuthalIntegrator
-    ai = AzimuthalIntegrator(
+    ai = pyfai.AzimuthalIntegrator()
+    ai.setFit2D(
         dist=detx,              # Detector distance in meters
-        poni1=0.05,            # Beam center Y in meters
-        poni2=0.05,            # Beam center X in meters
+        poni1=bcx,            # Beam center Y in meters
+        poni2=bcy,            # Beam center X in meters
         pixel1=7.5e-3,           # Pixel size Y in meters
         pixel2=7.5e-3,           # Pixel size X in meters
         wavelength=wl    # Wavelength in meters
     )
 
-    q, I, err = ai.radial_average(npt=npt, unit='q_nm^-1', method='csr', mask=None, polarization_factor=1.0)
-    mask = (q < qmin) | (q > qmax)
-    return q[~mask], I[~mask], err[~mask]
+    q, I, err = ai.integrate1d(
+        image,
+        npt=image.shape[0],
+        unit="2_theta",  # or "q_nm^-1", "q_A^-1", etc.
+        return_stddev=True,      # This returns the standard deviation (error bar)
+        error_model="poisson"    # or "azimuthal", "poisson", "counting", etc.
+        )
+    return q, I, err

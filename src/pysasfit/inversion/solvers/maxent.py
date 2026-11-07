@@ -53,6 +53,7 @@ import numpy as np
 from .base import SolverResult, chi2_r, g_test
 from .em import em_step
 from . import acceleration
+from . import _compiled
 
 
 def entropy(x: np.ndarray, m: np.ndarray) -> float:
@@ -79,7 +80,7 @@ def _prior_smoothing_matrix(n: int, sigma2: float) -> np.ndarray:
 
 
 def _run_loop(one_step, x0, max_iterations, tol, accelerate, kin_set_maa,
-              A, b, db, diagnostics_extra_fn):
+              A, b, db, diagnostics_extra_fn, compiled=None):
     """Shared driver for both solve_* functions below: plain Picard or
     Biggs-Andrews-accelerated, with gNorm-based stopping either way
     (matching em.py's convention) and the same chi2_r/roughness/entropy
@@ -93,6 +94,13 @@ def _run_loop(one_step, x0, max_iterations, tol, accelerate, kin_set_maa,
         roughness_history.append(float(np.sum(np.diff(x_new) ** 2)))
         entropy_history.append(diagnostics_extra_fn(x_new))
 
+    if accelerate and compiled is not None and _compiled.HAVE_NUMBA:
+        # the whole accelerated loop compiled (see _compiled.py); same steps, agrees to rounding
+        x, n_iter, converged, g_norm_history, chi2_history, roughness_history, entropy_history = \
+            _compiled.accelerated_loop(compiled["mode"], A, b, db, x0, max_iterations, tol, kin_set_maa,
+                                       np.finfo(float).eps, prior=compiled.get("prior"), Pi=compiled.get("Pi"),
+                                       lam=compiled["lam"])
+        return x, n_iter, converged, chi2_history, roughness_history, entropy_history, g_norm_history
     if accelerate:
         x_prev_box = [x0.copy()]
 
@@ -167,6 +175,7 @@ def solve_constant_prior(
     x, n_iter, converged, chi2_history, roughness_history, entropy_history, g_norm_history = _run_loop(
         one_step, x0, max_iterations, tol, accelerate, kin_set_maa,
         A, b, db, diagnostics_extra_fn=lambda xv: entropy(xv, m),
+        compiled=dict(mode=1, prior=np.asarray(m, float), lam=lam),
     )
 
     fitted_b = A @ x
@@ -235,6 +244,7 @@ def solve_adaptive_prior(
     x, n_iter, converged, chi2_history, roughness_history, entropy_history, g_norm_history = _run_loop(
         one_step, x0, max_iterations, tol, accelerate, kin_set_maa,
         A, b, db, diagnostics_extra_fn=current_entropy,
+        compiled=dict(mode=2, Pi=Pi, lam=lam),
     )
 
     fitted_b = A @ x

@@ -69,6 +69,9 @@ _RESTARTABLE_LINEAR_SOLVERS = {'SUNLinSol_SPGMR': core.SUNLinSol_SPGMRSetMaxRest
                                 'SUNLinSol_SPFGMR': core.SUNLinSol_SPFGMRSetMaxRestarts}
 
 class Sundials4pyKinsolOZsolver(OZsolver):
+    # Jacobian-vector products by finite differences of the operator: keep LAPACK (np.linalg.solve) for the
+    # per-q linear systems, so that results do not depend on rounding differences of the compiled kernel.
+    compiledLinearAlgebra = False
     def __init__(self, port, **kwargs):
       OZsolver.__init__(self, port, **kwargs)
       #GMRES by default -- matches this class's own original,

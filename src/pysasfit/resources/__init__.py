@@ -25,7 +25,7 @@ import os
 __all__ = ["TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "ALIASES", "tool_icon", "tile_icon", "logo_path",
            "icon_path", "menu_icon_path", "wordmark"]
 
-TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox")
+TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter")
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -37,6 +37,7 @@ WORDMARKS = {
     "pySASstudio": ("py", "SAS", "studio"),
     "pyTOOLbox": ("py", "TOOL", "box"),
     "pySASmorph": ("py", "SAS", "morph"),
+    "pySCAtter": ("py", "SCA", "tter"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -54,6 +55,7 @@ TOOL_COLOURS = {
     "pySASstudio": ("#2F6FED", "#78A1F3"),
     "pyTOOLbox": ("#D9730D", "#E6A462"),
     "pySASmorph": ("#0F7C80", "#5FB0B3"),      # teal; no logo files yet (not in TOOLS)
+    "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
 }
 
 #: old tool names -> current ones

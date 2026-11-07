@@ -83,6 +83,8 @@ register(T, TT, "Result and error bands", [
       "0 = always restart", lo=0.0, hi=1e6),
     S("sldprofile.opt.n_workers", 0, "parallel processes for the r_max scan",
       "0 or 1 = serial", kind="int", lo=0, hi=256),
+    S("sldprofile.opt.warm_start", False, "r_max scan: start each α path from the neighbouring r_max",
+      "", kind="bool"),
 ])
 register(T, TT, "Grids and scans", [
     S("sldprofile.adaptive.smoothing", 2.0, "adaptive grid: pilot over-smoothing (e-folds in α)", "",
@@ -202,6 +204,8 @@ register(T, TT, "Grid, errors, bootstrap", [
     S("inversion.gui.poly_half_width", 2, "error model 'poly': half width (points)", "", kind="int", lo=1, hi=50),
     S("inversion.gui.bootstrap_seed", -1, "bootstrap random seed (−1 = different every run)", "",
       kind="int", lo=-1, hi=2**31 - 1),
+    S("inversion.gui.bootstrap_workers", 1, "bootstrap: parallel worker processes (1 = serial, 0 = automatic)",
+      "", kind="int", lo=0, hi=64),
 ])
 
 # ---------------------------------------------------------------------------
@@ -213,6 +217,9 @@ register(T, TT, "OZ solvers (all tabs)", [
       "Used where a tab does not set its own limit.", kind="int", lo=10, hi=10_000_000),
     S("oz.solvers.max_iterations_picard", 5000, "default max. iterations (Picard; Mann: ÷ a)", "", kind="int",
       lo=10, hi=10_000_000),
+    S("oz.solvers.picard_early_stop", True, "Picard / Mann: stop unphysical or stalled runs early", "",
+      kind="bool"),
+    S("oz.solvers.picard_gmin", -0.5, "Picard / Mann: unphysical when min g(r) <", "", lo=-1e6, hi=0.0),
     S("oz.solvers.convergence", 1e-12, "convergence criterion (relative progress)", "",
       lo=1e-16, hi=1e-3, log=True),
     S("oz.solvers.kinsol_maa", 5, "SUNDIALS KIN_FP: Anderson depth", "", kind="int", lo=0, hi=100),
@@ -371,6 +378,27 @@ register(T, TT, "Metadata lister", [
       kind="int", lo=1, hi=100000),
     S("toolbox.lister.float_digits", 3, "digits after the decimal point of floating-point values",
       "", kind="int", lo=0, hi=15),
+])
+
+# ---------------------------------------------------------------------------
+# pySCAtter
+# ---------------------------------------------------------------------------
+T, TT = "scatter", "pySCAtter"
+register(T, TT, "Calculation and fit (pySCAtter)", [
+    S("scatter.calc.auto_1d", True, "I(q) follows every parameter change", "", kind="bool"),
+    S("scatter.fit.max_nfev", 200, "fit: largest number of model evaluations", "", kind="int", lo=5, hi=100000),
+    S("scatter.fit.every_px", 2, "2D fit: use every n-th pixel (start value)", "", kind="int", lo=1, hi=32),
+])
+
+# ---------------------------------------------------------------------------
+# Appearance of the windows (all tools)
+# ---------------------------------------------------------------------------
+T, TT = "appearance", "Appearance"
+register(T, TT, "Title bars of the panels (label … hide cross)", [
+    S("appearance.panel_title.mode", "pale", "coloured title bars", "", kind="choice",
+      choices=[("pale", "active panel in the colour, others pale"), ("all", "every panel in the colour"),
+               ("active", "only the active panel"), ("off", "system look (not coloured)")]),
+    S("appearance.panel_title.colour", "#0078d7", "colour (#rrggbb or name)", "", kind="str"),
 ])
 
 # ---------------------------------------------------------------------------

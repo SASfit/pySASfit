@@ -227,6 +227,12 @@ class ProfileResult:
         return fig
 
 
+
+def _dposv(a, b):
+    """(c, x, info) of LAPACK dposv for a symmetric positive definite a (float64)."""
+    from scipy.linalg import lapack
+    return lapack.dposv(np.asarray(a, np.float64), np.asarray(b, np.float64))
+
 def _best_alpha_job(blob, r_max, ref_logev):
     """Worker of the parallel r_max scan (module level, so it can be pickled)."""
     import pickle
@@ -304,7 +310,7 @@ class DensityProfileFit:
         max_iter=300, tol=1e-10, lm_lambda0=1e-3,
         ridge=1e-6, keep_weight=1e-6, n_out=300, r_out_factor=1.05, guinier_qrg=1.3,
         truncated_min=0.25, extend_fraction=0.5, fine_sd=4.0, fine_steps=1.5,
-        fine_support=1e-6, abandon_margin=50.0, abandon_plateau=0.02, n_workers=0,
+        fine_support=1e-6, abandon_margin=50.0, abandon_plateau=0.02, n_workers=0, warm_start=False,
     )
 
     def __init__(
@@ -655,13 +661,13 @@ class DensityProfileFit:
             gs = g / dH
             improved = False
             for _ in range(40):
-                try:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        dx = -linalg.solve(Hs + lam * np.eye(nx), gs, assume_a="pos", check_finite=False) / dH
-                except linalg.LinAlgError:
+                # LAPACK dposv directly (Cholesky solve, what linalg.solve(assume_a="pos") calls): the same
+                # numbers without the ~0.1 ms of argument checking per call (thousands of calls per fit)
+                _c, sol, info = _dposv(Hs + lam * np.eye(nx), gs)
+                if info != 0:
                     lam *= 10
                     continue
+                dx = -sol / dH
                 if logvar:
                     dz = np.clip(dx[:n], -2.0, 2.0)
                     xt = x.copy()
@@ -756,6 +762,12 @@ class DensityProfileFit:
             c = self.homogeneous_scale(r_max, c) * c
             cands.append(np.r_[c, self.bg.z0()])
         x = None
+        # WARM START (option warm_start): the first alpha of this path starts from the first-alpha solution
+        # (profile and background) of the nearest r_max already done, instead of the cold candidates; the
+        # cold candidates are still tried when that start leaves chi2 > retry_chi2 * M.
+        warm = self._warm_start_for(r_max) if o.get("warm_start") else None
+        if warm is not None:
+            x = warm
         sols = []
         best = -np.inf
         M = self.q.size
@@ -785,7 +797,19 @@ class DensityProfileFit:
                 self._report(f"  alpha path at r_max {r_max:.5g} ended: chi2/M = {s.chi2 / M:.3g} "
                              f"no longer improves, ln Ev {s.log_evidence - best:.3g} below its maximum")
                 break
+        if sols:
+            self.__dict__.setdefault("_warm_paths", {})[float(r_max)] = np.array(sols[0].x, float)
         return sols
+
+    def _warm_start_for(self, r_max):
+        """First-alpha solution of the nearest r_max done so far (within 30 %), or None."""
+        wp = self.__dict__.get("_warm_paths") or {}
+        if not wp:
+            return None
+        rm = min(wp, key=lambda v: abs(v - r_max))
+        if abs(rm - r_max) > 0.3 * r_max or wp[rm].size != self.n + self.bg.n_free:
+            return None
+        return wp[rm].copy()
 
     def best_alpha(self, r_max, path=None, ref_logev=None):
         """Maximum-evidence alpha at fixed r_max (path + bounded refinement)."""
@@ -850,6 +874,7 @@ class DensityProfileFit:
         order of ``r_max_values``.
         """
         r_max_values = np.asarray(r_max_values, float)
+        self.__dict__.pop("_warm_paths", None)        # warm starts only within one scan
         c = float(np.median(r_max_values)) if center is None else float(center)
         order = np.argsort(np.abs(r_max_values - c), kind="stable")
         done = {}
@@ -903,9 +928,18 @@ class DensityProfileFit:
         if blob is None:
             self._report(f"parallel r_max scan not possible ({type(err).__name__}); running serially", verbose)
             return False
-        ex = ProcessPoolExecutor(max_workers=workers)
+        import multiprocessing as mp
+        from ..core.accel import single_thread_blas_env
+        # one BLAS thread per worker process (N workers x N OpenBLAS threads exhaust memory on Windows);
+        # 'spawn' also on Linux: forking a process that runs Qt threads is unsafe
+        with single_thread_blas_env():
+            ex = ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn"))
+            try:
+                futs = {ex.submit(_best_alpha_job, blob, float(r_max_values[k]), ref_logev): k for k in ks}
+            except Exception:
+                ex.shutdown(wait=False, cancel_futures=True)
+                raise
         try:
-            futs = {ex.submit(_best_alpha_job, blob, float(r_max_values[k]), ref_logev): k for k in ks}
             for f in as_completed(futs):
                 record(futs[f], *f.result())       # progress hook may raise (Stop button)
         finally:

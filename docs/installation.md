@@ -7,6 +7,7 @@ pip install -e ".[gui,oz]"      # + optional OZ dependencies (sundials4py, mpmat
 pip install -e ".[gui,fit,export]"  # + studio: optional optimisers (nlopt, bumps, iminuit, cma, DFO-LS), Excel export
 pip install -e ".[gui,sasred]"  # + pySASred: SANS reduction (h5py, pyyaml)
 pip install -e ".[gui,toolbox]"  # + pyTOOLbox: HDF5 viewer and metadata lister (h5py, openpyxl)
+pip install -e ".[gui,scatter]"  # + pySCAtter: mpmath for the excluded-volume chain (h5py for 2D NXcanSAS data)
 pip install -e .                # library only (numpy, scipy)
 pip install -e ".[docs]"        # Sphinx, MyST and the theme, to build this documentation
 ```

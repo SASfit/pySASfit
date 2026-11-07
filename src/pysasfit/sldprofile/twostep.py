@@ -203,8 +203,30 @@ def _bayes_ift(A, b, sigma, C, opt=None):
     _, ldC = np.linalg.slogdet(C)
     a0 = np.trace(B) / np.trace(C)
 
+    # Speed (2026-11-07): one generalised eigen-decomposition B v = lam C v (V^T C V = 1, V^T B V = diag lam)
+    # turns every alpha into O(n) work: H = B + alpha C = V^-T (lam + alpha) V^-1, so
+    #   x = V z, z = (V^T g)/(lam + alpha);  x^T C x = |z|^2;  chi^2 = y.y - 2 (V^T g).z + sum lam z^2;
+    #   logdet H = logdet C + sum log(lam + alpha);  H^-1 = V diag(1/(lam + alpha)) V^T.
+    # The former path (a Cholesky factorisation per alpha) is kept as fallback if C is not positive definite.
+    try:
+        lam, V = linalg.eigh(B, C)
+        Vg = V.T @ g
+        yy = float(y @ y)
+    except (linalg.LinAlgError, ValueError):
+        lam = None
+
     def at(la):
         al = np.exp(la)
+        if lam is not None:
+            d = lam + al
+            if np.any(d <= 0):
+                return None
+            z = Vg / d
+            chi2 = max(yy - 2.0 * float(Vg @ z) + float(lam @ (z * z)), 0.0)
+            S = 0.5 * float(z @ z)
+            ldH = ldC + float(np.sum(np.log(d)))
+            lz = -al * S - 0.5 * chi2 - 0.5 * ldH + 0.5 * (n * la + ldC)
+            return lz, V @ z, d, chi2, al
         H = B + al * C
         try:
             cH = linalg.cho_factor(H)
@@ -230,8 +252,14 @@ def _bayes_ift(A, b, sigma, C, opt=None):
     if best is None or best[0] < lz[i]:
         best = vals[i]
     lzb, x, cH, chi2, al = best
-    cov = linalg.cho_solve(cH, np.eye(n))
-    n_good = float(n - al * np.trace(C @ cov))
+    if lam is not None:
+        cov = (V / cH[None, :]) @ V.T                      # cH holds lam + alpha here
+        n_good = float(n - al * np.sum(1.0 / cH))
+        res = W @ x - y                                     # chi^2 recomputed directly for the result
+        chi2 = float(res @ res)
+    else:
+        cov = linalg.cho_solve(cH, np.eye(n))
+        n_good = float(n - al * np.trace(C @ cov))
     return _IFTSolution(x, cov, float(lzb), chi2, n_good, al)
 
 
@@ -501,7 +529,7 @@ class DeconvolutionFit(DensityProfileFit):
 
     def p_model(self, rho, r_max):
         """Unwhitened p(r) on the data grid."""
-        return np.einsum("jkl,k,l->j", self._V(r_max), rho, rho)
+        return (self._V(r_max) @ rho) @ rho          # = einsum("jkl,k,l->j"), as BLAS matrix products
 
     def model(self, rho, r_max, z=None, with_background=True):
         pm = self.p_model(rho, r_max)
@@ -510,8 +538,8 @@ class DeconvolutionFit(DensityProfileFit):
     def _model_jac(self, x, r_max):
         rho = x[: self.n]
         V = self._V(r_max)
-        Vr = np.einsum("jkl,l->jk", V, rho)
-        pm = np.einsum("jk,k->j", Vr, rho)
+        Vr = V @ rho                                  # = einsum("jkl,l->jk"); einsum without optimize loops
+        pm = Vr @ rho
         J = 2.0 * Vr
         if self._Linv is not None:
             return self._Linv @ pm, self._Linv @ J

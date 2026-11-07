@@ -243,19 +243,34 @@ class Multicomponent(unittest.TestCase):
 
         'Produces structure' means g_max > 1, which is what distinguishes a
         real solution from the trivial S(q) = 1 that a mis-set potential gives.
+        Since 2026-11-07 they must also CONVERGE: the former check (finite g,
+        g_max > 1.001) was passed by unconverged iterates with g(r) of
+        -700 ... -2500 (see test_unphysical_closures_are_flagged).
         """
-        working = ["doPYclosure", "doHNCclosure", "doRYclosure", "doHMSAclosure",
-                   "doVerletClosure", "doBPGGclosure", "doBBclosure",
-                   "doKHclosure", "doDHclosure", "doCGclosure", "doSMSAclosure",
-                   "doMSAclosure", "doMMSAclosure"]
+        working = ["doHNCclosure", "doRYclosure", "doHMSAclosure", "doBPGGclosure", "doBBclosure",
+                   "doKHclosure", "doMMSAclosure"]
         needs_param = {"doRYclosure": 0.5, "doHMSAclosure": 0.5,
                        "doBPGGclosure": 1.0, "doBBclosure": 1.0}
         for closure in working:
             with self.subTest(closure=closure):
                 s = _yukawa_solver(closure, needs_param.get(closure))
                 g = np.asarray(s.getRDF())
+                self.assertTrue(s.converged)
                 self.assertTrue(np.all(np.isfinite(g)))
                 self.assertGreater(float(g.max()), 1.001)
+
+    def test_unphysical_closures_are_flagged(self):
+        """At this strongly charged state (Z = 200) PY, Verlet, DH, CG, SMSA and
+        MSA have no physical solution (g reaches -700 ... -2500, MDIIS fails as
+        well). The Picard iteration must say so and stop early instead of
+        running all 4000 iterations into an unconverged iterate."""
+        for closure in ["doPYclosure", "doVerletClosure", "doDHclosure", "doCGclosure",
+                        "doSMSAclosure", "doMSAclosure"]:
+            with self.subTest(closure=closure):
+                s = _yukawa_solver(closure, None)
+                self.assertFalse(s.converged)
+                self.assertTrue(s.stopReason)
+                self.assertLess(s.iterations, 1000)
 
     def test_hmsa_equals_ry_without_attractive_tail(self):
         """A screened Coulomb between like charges is purely repulsive, so the

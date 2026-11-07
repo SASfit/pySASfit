@@ -53,9 +53,7 @@ def ex(app):
     w.after_fit()  # the rows follow the vectors
     w.show()
     yield w
-    for dock in list(getattr(w, "_detached", [])):
-        dock.close()
-        dock.deleteLater()
+    w.dock_all()
     w.close()
     w.deleteLater()
     QtWidgets.QApplication.processEvents()
@@ -187,45 +185,45 @@ def test_an_old_project_without_the_power_law_still_loads(ex, tmp_path):
     assert ex.bgalpha_row.value == 4.0
 
 
-# ------------------------------------------------------------------ docks
-def test_the_three_docks_exist(ex):
+# ------------------------------------------------------------------ docks (panels as in pySASred, 2026-11-07)
+def test_the_four_panels_exist(ex):
     assert ex.model_dock.windowTitle() == "Model" and ex.fit_dock.windowTitle() == "Fit"
-    assert ex.dist_dock.windowTitle() == "Size distributions"
-    assert ex.model_dock.widget() is ex._left
+    assert ex.dist_dock.windowTitle() == "Size distributions" and ex.plot_dock.windowTitle() == "I(q)"
+    assert set(ex.docks) == {"model", "plot", "fit", "dist"}
+    assert ex.model_dock.widget().isAncestorOf(ex._left) and ex.plot_dock.widget().isAncestorOf(ex.canvas)
+    assert ex.centralWidget() is None
 
 
-def test_the_view_menu_has_a_detach_entry_per_dock(ex):
+def test_the_view_menu_lists_the_panels_and_the_sliders(ex):
     view = [m for m in ex.menuBar().findChildren(QtWidgets.QMenu) if m.title().replace("&", "") == "View"][0]
-    texts = [a.text().strip() for a in view.actions()]
-    for title in ("Model", "Fit", "Size distributions"):
-        assert f"detach '{title}' as a separate window" in texts
+    texts = [a.text().replace("&", "").strip() for a in view.actions()]
+    for title in ("Model", "I(q)", "Fit", "Size distributions", "Sliders"):
+        assert title in texts
+    assert ex.sliders_action in ex.extra_view_actions
 
 
-@pytest.mark.parametrize("name", ["model_dock", "fit_dock", "dist_dock"])
-def test_detached_dock_is_a_window_without_an_owner_and_can_be_docked_again(ex, name):
-    dock = getattr(ex, name)
-    area = ex.dockWidgetArea(dock)
-    ex._set_detached(dock, area, True)
+@pytest.mark.parametrize("name", ["model", "plot", "fit", "dist"])
+def test_a_detached_panel_is_an_own_window_and_can_be_docked_again(ex, name):
+    w = ex.detach(name)
     QtWidgets.QApplication.processEvents()
-    assert dock.parent() is None and dock.isWindow() and dock in ex._detached
-    ex._set_detached(dock, area, False)
+    assert w.isWindow() and w.parent() is None and name in ex.detached and ex.docks[name].isHidden()
+    ex.dock_panel(name)
     QtWidgets.QApplication.processEvents()
-    assert dock.parent() is ex and not dock.isWindow() and dock not in ex._detached
-    assert ex.dockWidgetArea(dock) == area
+    assert name not in ex.detached and not ex.docks[name].isHidden()
 
 
-def test_closing_the_main_window_closes_detached_docks(ex):
-    dock = ex.fit_dock
-    ex._set_detached(dock, QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, True)
-    assert dock.isVisible()
+def test_closing_the_main_window_closes_detached_panels(ex):
+    w = ex.detach("fit")
+    assert w.isVisible()
     ex.close()
-    assert not dock.isVisible()
+    assert not w.isVisible()
 
 
-def test_a_detached_fit_dock_still_works(ex):
-    ex._set_detached(ex.fit_dock, QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, True)
-    assert ex.fit_panel.isVisible() or ex.fit_dock.isVisible()
+def test_a_detached_fit_panel_still_works(ex):
+    ex.detach("fit")
+    assert ex.fit_panel.isVisible()
     ex.fit_panel.refresh_table()  # the panel is alive and still talks to the explorer
+    ex.dock_panel("fit")
 
 
 # ------------------------------------------------------------------ size distributions
@@ -264,3 +262,14 @@ def test_the_plot_range_function_gives_a_usable_range(ex):
     c = ex.models()[0].contrib
     lo, hi = ex._sd_range(c)
     assert 0 < lo < hi and np.isfinite([lo, hi]).all()
+
+
+def test_the_panel_layout_is_kept_for_the_next_start(ex):
+    ex.detach("dist")
+    ex.save_session()
+    ex.dock_all()
+    assert "dist" not in ex.detached
+    assert ex.restore_session() is not None and "dist" in ex.detached
+    ex.dock_all()
+    ex.forget_session()
+    assert ex.restore_session() is False

@@ -87,6 +87,11 @@ HELP = {
         "maximum, plus one coarse step on each side (no limit on a side where the weight reaches the end of "
         "the coarse grid). Without it, a broad coarse posterior sends the fine scan to r_max values that "
         "cannot fit the data and only cost time (star example, N = 80: 58 s → 8 s). 0 switches the limit off.",
+    "sldprofile.opt.warm_start":
+        "Warm start of the r_max scan: the first α of each path starts from the first-α solution (profile and "
+        "background) of the nearest r_max already done, instead of the cold start profiles; the cold starts are "
+        "still tried when χ² stays above the retry limit. Same results on the example data, 0–15 % faster "
+        "(sometimes slightly slower), so off by default.",
     "sldprofile.opt.abandon_plateau":
         "An α path also ends when the data are not fitted (χ² above the stop value) but χ² has changed by "
         "less than this fraction over the last three α steps while ln evidence has already dropped by the stop "
@@ -335,11 +340,26 @@ HELP = {
     "inversion.gui.bootstrap_seed":
         "Seed of the Monte-Carlo (bootstrap) error estimate. −1 = different every run; a fixed value makes "
         "the error bands reproducible.",
+    "inversion.gui.bootstrap_workers":
+        "Worker processes for the Monte-Carlo re-solves. 1 = serial (default), 0 = automatic (number of CPU "
+        "cores, at most 8), n = n processes. Each worker runs single-threaded BLAS; the replicates are the "
+        "same for any setting. Worker processes start in a few seconds, so this pays off for slow solvers "
+        "(EM, MaxEnt) and many replicates.",
 
     # =================================================================== Ornstein-Zernike
     "oz.solvers.max_iterations":
         "Default iteration limit of the accelerated OZ solvers (Anderson, MDIIS, KINSOL, Biggs–Andrews), "
         "used wherever a tab does not set its own limit.",
+    "oz.solvers.picard_early_stop":
+        "Ends a Picard / Mann iteration that cannot give a solution instead of running to the iteration "
+        "limit: (1) every 50 steps after 200 the pair correlation g = 1 + Γ + c of the current iterate is "
+        "checked; g below the limit at two checks means the closure has no physical solution here (e.g. PY or "
+        "MSA for strongly charged Yukawa systems); (2) when the residual decay over the last 200 steps would "
+        "need more than 3x the remaining iterations. Converged runs are not affected; the reason is reported "
+        "with the not-converged warning.",
+    "oz.solvers.picard_gmin":
+        "Limit of the physicality check of the Picard / Mann iteration: an iterate with g(r) below this value "
+        "at two consecutive checks stops the run.",
     "oz.solvers.max_iterations_picard":
         "Iteration limit N of the Picard / Mann solver for a = 1 (plain Picard), used wherever a tab does "
         "not set its own limit, in particular always in the OZ solver tab. With damping a < 1 the solver "
@@ -642,6 +662,26 @@ HELP = {
         "Suggest also isolated hot pixels: more than 5 x the median of their 5 x 5 neighbourhood and 10 "
         "Poisson standard deviations above it. Next to the beamstop they usually mean beam leaking past "
         "its edge.",
+    # =================================================================== pySCAtter
+    "scatter.calc.auto_1d":
+        "Start value of the 'I(q) follows' box of pySCAtter: the 1D curve (and the model at the loaded data) is "
+        "recalculated 0.35 s after every parameter change. The 2D pattern follows only when '2D follows' is "
+        "ticked, because oriented anisometric particles take seconds.",
+    "scatter.fit.max_nfev":
+        "Largest number of model evaluations of a pySCAtter fit (Trust Region Reflective least squares; each "
+        "fitted parameter costs one evaluation per iteration for the Jacobian).",
+    "scatter.fit.every_px":
+        "2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all "
+        "pixels; the χ² and the errors refer to the pixels used.",
+    # =================================================================== appearance
+    "appearance.panel_title.mode":
+        "Title bars of the docked panels coloured like window title bars under Windows. 'active panel in "
+        "the colour, others pale': the panel last clicked has the full colour and white text, the others a "
+        "light tint of it. Takes effect when the preferences are saved.",
+    "appearance.panel_title.colour":
+        "Colour of the panel title bars: #rrggbb (e.g. #0078d7 Windows 10/11 blue, #2b579a Word blue, "
+        "#1e3a5f dark blue) or a colour name (steelblue). The text turns white on dark colours, dark on "
+        "light ones. An invalid value falls back to #0078d7.",
     # =================================================================== pyTOOLbox
     "toolbox.viewer.max_points":
         "Largest number of elements the HDF5 viewer reads for a plot or matrix view. Larger slices are "

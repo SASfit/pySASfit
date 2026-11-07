@@ -35,25 +35,30 @@ compatibility rules.
 Layout
 ------
 
-The window has a control column on the left and two plots on the right:
-:math:`I(q)` with error bars, background and fit (log–log) at the top, with
-the normalised residuals :math:`(I - I_\mathrm{fit})/\sigma` of the fit in a
-small panel below it (shared q axis, as in the SLD-profile tool), the
-recovered distribution with its uncertainty band and a dotted zero line at
-the bottom.
+The window consists of six **panels** (as in pySASred and pySASmorph): *Data*,
+*Background* and *Inversion* (the controls), *Info*, *I(q)* and *Distribution*.
+At the start the controls form the left column -- *Data* on top, *Background* and
+*Inversion* as two tabs below it (Inversion in front) -- with the **Info** panel at
+the bottom; on the right are :math:`I(q)` with error bars, background and fit
+(log–log), with the normalised residuals :math:`(I - I_\mathrm{fit})/\sigma` of the fit
+in a small panel below it (shared q axis, as in the SLD-profile tool), and the
+recovered distribution with its uncertainty band and a dotted zero line.
 
-The control column contains three groups (*Data*, *Background*,
-*Inversion*) in a scroll area and, below it, the **info panel**. The
-border between them is a splitter: drag it to change the height of the
-info panel, like the border between the two plots.
+Every panel can be moved by its title bar, stacked onto another panel as a tab or
+put beside it, detached into its own window (first button in the title bar;
+closing that window docks the panel again) and hidden (cross; *View* shows it
+again). *View → Arrange panels*, *Dock all panels* and *Reset layout* sort them;
+the title bar of the panel in use is coloured (Preferences → Appearance). The
+arrangement is kept with the last session and in project files. Drag the border
+above the info panel to change its height.
 
 Info panel
     All explanations and all detailed results are shown in this single
     panel instead of in tooltips or long text blocks. It always shows the
     text of the control under the mouse pointer (the control or its label);
     with an open drop-down list it explains the highlighted entry (e.g. each
-    solver or kernel). Moving away shows a short default text. Until the
-    splitter is dragged, the panel is kept just large enough for the
+    solver or kernel). Moving away shows a short default text. Until its
+    border is dragged, the panel is kept just large enough for the
     longest text at the current width, so the layout does not jump while
     the mouse moves; it never grows beyond that height, and if it is made
     smaller its text scrolls. Dragging it back to full height re-enables

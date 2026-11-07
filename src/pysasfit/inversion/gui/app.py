@@ -6,10 +6,11 @@ library, so the library stays usable headless/scriptable/testable on its
 own (see tests/test_gui_smoke.py, which drives this same MainWindow class
 programmatically with QT_QPA_PLATFORM=offscreen).
 
-Layout: a left control panel (file loading, background section, kernel/
-solver/grid selection) and a right panel with two stacked matplotlib
-canvases -- I(q) (data + background + fit) on top, the recovered
-distribution on the bottom.
+Layout (2026-11-07, as pySASred / pySASmorph): dockable panels -- Data, Background,
+Inversion, Info (explanation of the control under the mouse and the details of the last
+load / background fit / solve), I(q) (data + background + fit, residuals) and Distribution.
+Every panel can be moved, stacked as tabs, detached into its own window and hidden
+(View menu); the arrangement is kept with the last session and in project files.
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QGroupBox, QSplitter, QMessageBox, QStatusBar, QScrollArea,
     QFrame, QSizePolicy,
 )
-from PySide6.QtCore import Qt, QEvent, QTimer
+from PySide6.QtCore import Qt, QEvent, QTimer, QThread, Signal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
@@ -42,10 +43,30 @@ from pysasfit.inversion.kernels import (
     build_size_distribution_kernel, build_kernel_on_nodes, make_r_grid, quadrature_points,
 )
 from pysasfit.inversion.solver_registry import SOLVER_REGISTRY, SplineOptions, run_solver
-from pysasfit.inversion.uncertainty import bootstrap_uncertainty
+from pysasfit.inversion.uncertainty import bootstrap_uncertainty, replicate_solver
 from pysasfit.inversion.goodness_of_fit import estimate_errors, fit_statistics
 from pysasfit.inversion import solver_registry as _solver_registry
 from pysasfit.core import settings as prefs
+
+
+class _BootstrapThread(QThread):
+    """Runs fn(progress, should_abort) in a thread; signals progress(done, total), done(result), failed(text)."""
+    progress = Signal(int, int)
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, fn, parent=None):
+        super().__init__(parent)
+        self.fn = fn
+        self.abort = False
+
+    def run(self):
+        try:
+            res = self.fn(lambda k, n: self.progress.emit(int(k), int(n)), lambda: self.abort)
+        except Exception as exc:  # noqa: BLE001
+            self.failed.emit(f"{type(exc).__name__}: {exc}")
+            return
+        self.done.emit(res)
 
 try:
     from pysasfit.inversion.gui import help_texts
@@ -70,8 +91,8 @@ class InfoPanel(QFrame):
     one text -- the one of the control under the mouse, or the details of
     the last load / background fit / solve.
 
-    It sits in a vertical splitter below the controls, so its height can be
-    dragged. `required_height()` is the height of the longest registered
+    It is a panel of its own (by default below the controls), so its height
+    can be dragged. `required_height()` is the height of the longest registered
     text at the current width: the panel never gets taller than that
     (maximum height) and, as long as the user has not dragged the splitter,
     it is kept at exactly that height. If it is made smaller, the text
@@ -140,17 +161,22 @@ class InfoPanel(QFrame):
             if self._on_required_changed is not None:
                 self._on_required_changed(req)
 
+    #: called with the new height after every height change (set by the main window)
+    on_height_changed = None
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if self.width() != self._width:
             self._update_height()
+        if event.oldSize().height() != event.size().height() and self.on_height_changed is not None:
+            self.on_height_changed(event.size().height())
 
 
 from pysasfit.core.project_gui import ProjectMixin  # noqa: E402
-from pysasfit.core.docking import adapt_fonts, keep_fonts_adapted, small_toolbar  # noqa: E402
+from pysasfit.core.docking import DockMixin, adapt_fonts, keep_fonts_adapted, small_toolbar  # noqa: E402
 
 
-class MainWindow(ProjectMixin, QMainWindow):
+class MainWindow(ProjectMixin, DockMixin, QMainWindow):
     _project_tool = "inversion"
 
     def __init__(self):
@@ -158,21 +184,16 @@ class MainWindow(ProjectMixin, QMainWindow):
         self.setWindowTitle("pyINVersion – size distributions and p(r)")
         from pysasfit.core.settings_dialog import add_preferences_menu
         add_preferences_menu(self, "inversion")
-        self.resize(1200, 800)
+        self.resize(1250, 860)
 
         self.data: SASData | None = None
         self.bg_result: BackgroundFitResult | None = None
         self.fixed_bg_value: float | None = None
         self.sigma: np.ndarray | None = None   # uncertainties actually used
 
-        splitter = QSplitter(Qt.Horizontal)
-        # The control panel keeps growing (kernel/solver/uncertainty options,
-        # hint labels, ...) and was clipping at normal window heights --
-        # wrap it in a scroll area so everything stays reachable instead of
-        # being cut off at the bottom.
-        # Help: one info panel below the controls shows the explanation of
-        # the control under the mouse (help_texts.HELP); registered via
-        # self._help(widget, key) while the controls are built.
+        # Help: one info panel (its own dock) shows the explanation of the control under the
+        # mouse (help_texts.HELP); registered via self._help(widget, key) while the
+        # controls are built.
         self._help_keys: dict = {}
         self._help_dynamic: dict[str, str] = {
             "data_info": help_texts.NO_DATA,
@@ -180,30 +201,48 @@ class MainWindow(ProjectMixin, QMainWindow):
             "result": help_texts.NO_RESULT,
         }
         self._info_user_sized = False
+        self._info_fitting = False
         self.info_panel = InfoPanel(on_required_changed=self._fit_info_panel)
-        control_scroll = QScrollArea()
-        control_scroll.setWidgetResizable(True)
-        control_panel = self._build_control_panel()
-        # long drop-down entries must not widen the panel (no horizontal
-        # scrolling); the full entry text is shown when the list opens
-        for combo in control_panel.findChildren(QComboBox):
-            combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
-            combo.setMinimumContentsLength(14)
-        control_scroll.setWidget(control_panel)
-        control_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # controls and info panel in a vertical splitter: the info panel's
-        # height can be dragged like the plots (Joachim, 2026-10-10)
-        self.left_splitter = QSplitter(Qt.Vertical)
-        self.left_splitter.addWidget(control_scroll)
-        self.left_splitter.addWidget(self.info_panel)
-        self.left_splitter.setStretchFactor(0, 1)
-        self.left_splitter.setStretchFactor(1, 0)
-        self.left_splitter.setChildrenCollapsible(False)
-        self.left_splitter.splitterMoved.connect(self._on_info_splitter_moved)
-        splitter.addWidget(self.left_splitter)
-        splitter.addWidget(self._build_plot_panel())
-        splitter.setStretchFactor(1, 1)
-        self.setCentralWidget(splitter)
+        self.info_panel.on_height_changed = self._on_info_resized
+        self._build_control_panel()
+        iq_panel, dist_panel = self._build_plot_panel()
+        docks = (("data", "Data", self.data_group, Qt.LeftDockWidgetArea, True),
+                 ("background", "Background: backgr + c\u00b7q^(-\u03b1)", self.bg_group, Qt.LeftDockWidgetArea, True),
+                 ("inversion", "Inversion", self.solve_group, Qt.LeftDockWidgetArea, True),
+                 ("info", "Info", self.info_panel, Qt.LeftDockWidgetArea, False),
+                 ("iq", "I(q)", iq_panel, Qt.RightDockWidgetArea, False),
+                 ("dist", "Distribution", dist_panel, Qt.RightDockWidgetArea, False))
+        for name, title, w, area, scroll in docks:
+            if scroll:
+                w.setTitle("")              # the panel title replaces the group title
+                w.setFlat(True)
+                # long drop-down entries must not widen the panel (no horizontal
+                # scrolling); the full entry text is shown when the list opens
+                for combo in w.findChildren(QComboBox):
+                    combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+                    combo.setMinimumContentsLength(14)
+            d = self._add_dock(name, title, w, area, scrollable=scroll)
+            if scroll:
+                d.widget().findChild(QScrollArea).setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        V, H = Qt.Vertical, Qt.Horizontal
+        self.splitDockWidget(self.docks["data"], self.docks["iq"], H)
+        self.splitDockWidget(self.docks["data"], self.docks["background"], V)
+        self.splitDockWidget(self.docks["background"], self.docks["info"], V)
+        self.tabifyDockWidget(self.docks["background"], self.docks["inversion"])
+        self.docks["inversion"].raise_()
+        self.splitDockWidget(self.docks["iq"], self.docks["dist"], V)
+        self._finish_docks()
+        self.hide_stray_tab_bars()
+        # this window explains its controls in the info panel, not in tooltips: the panel
+        # buttons (detach, hide) too
+        for d in self.docks.values():
+            tb = d.titleBarWidget()
+            for b in (getattr(tb, "detach_button", None), getattr(tb, "close_button", None)):
+                if b is not None:
+                    b.setToolTip("")
+                    self._help(b, "panel_buttons")
+        self.resizeDocks([self.docks["data"], self.docks["iq"]], [430, 770], H)
+        self._start_layout = self.saveState()
 
         self.status = QStatusBar()
         self.setStatusBar(self.status)
@@ -260,26 +299,51 @@ class MainWindow(ProjectMixin, QMainWindow):
 
     # ---------------------------------------------------------------- help
 
-    def _on_info_splitter_moved(self, pos: int, index: int) -> None:
-        """The user dragged the splitter: keep the chosen height from now on
+    def _on_info_splitter_moved(self, *_args) -> None:
+        """The user dragged the panel border: keep the chosen height from now on
         (dragging it to the full required height re-enables auto-fit)."""
-        self._info_user_sized = self.info_panel.height() < self.info_panel.maximumHeight()
+        self._info_user_sized = self.info_panel.height() < self.info_panel.maximumHeight() - 2
+
+    def _on_info_resized(self, _h: int) -> None:
+        """Height of the info panel changed: by the user (dragging the border to the panel
+        above) unless it is the auto-fit itself."""
+        from PySide6.QtWidgets import QApplication as _App
+        # only a drag of the panel border (mouse button held) is the user's choice; layout
+        # passes (showing the window, other panels) are not
+        if not self._info_fitting and self.info_panel.isVisible() and _App.mouseButtons() & Qt.LeftButton:
+            self._on_info_splitter_moved()
 
     def _fit_info_panel(self, required: int) -> None:
         """Give the info panel its required height unless the user has
-        chosen a height by dragging the splitter."""
-        # deferred: the splitter may be in the middle of its own layout pass
+        chosen a height by dragging the panel border."""
+        # deferred: the dock layout may be in the middle of its own layout pass
         QTimer.singleShot(0, self._apply_info_fit)
 
     def _apply_info_fit(self) -> None:
-        if self._info_user_sized or not hasattr(self, "left_splitter"):
+        if self._info_user_sized or not getattr(self, "docks", None):
+            return
+        d = self.docks["info"]
+        if d.isHidden() or d.isFloating() or "info" in self.detached:
             return
         required = self.info_panel.maximumHeight()
-        total = sum(self.left_splitter.sizes())
-        if total <= 0:
-            return
-        h = min(required, max(total - 120, 40))
-        self.left_splitter.setSizes([total - h, h])
+        extra = d.height() - self.info_panel.height()          # title bar and frame of the panel
+        target = required + max(extra, 0)
+        # the other visible panels of the same column give up the height (Qt's resizeDocks with
+        # one panel only takes part of it from the neighbours)
+        col = [o for o in self.docks.values() if o is not d and o.isVisible() and not o.isFloating()
+               and self.dockWidgetArea(o) == self.dockWidgetArea(d)
+               and abs(o.geometry().x() - d.geometry().x()) < 4]
+        rest = sum(o.height() for o in col)
+        free = rest + d.height() - target
+        self._info_fitting = True
+        try:
+            if col and free > 0:
+                sizes = [max(int(o.height() * free / max(rest, 1)), 1) for o in col]
+                self.resizeDocks(col + [d], sizes + [target], Qt.Vertical)
+            else:
+                self.resizeDocks([d], [target], Qt.Vertical)
+        finally:
+            QTimer.singleShot(0, lambda: setattr(self, "_info_fitting", False))
 
     def _help(self, widget, key, form: QFormLayout | None = None) -> None:
         """Show help text `key` (str, or callable returning a key) while the
@@ -368,12 +432,11 @@ class MainWindow(ProjectMixin, QMainWindow):
 
     # ------------------------------------------------------------------ UI
 
-    def _build_control_panel(self) -> QWidget:
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
+    def _build_control_panel(self) -> None:
+        """The three control groups (Data, Background, Inversion); each becomes a panel."""
 
         # --- file loading ---
-        file_group = QGroupBox("Data")
+        file_group = self.data_group = QGroupBox("Data")
         file_layout = QVBoxLayout(file_group)
         self.load_button = QPushButton("Load data file...")
         self.load_button.clicked.connect(self._on_load_file)
@@ -438,13 +501,12 @@ class MainWindow(ProjectMixin, QMainWindow):
         self.error_window_spin.setVisible(False)
         self.error_rel_label.setVisible(False)
         self.error_rel_spin.setVisible(False)
-        layout.addWidget(file_group)
         self._help(self.load_button, "load")
         self._help(self.data_info_label, "data_info")
         self._help(self.data_path_label, "data_info")
 
         # --- background ---
-        bg_group = QGroupBox("Background: backgr + c\u00b7q^(-\u03b1)")
+        bg_group = self.bg_group = QGroupBox("Background: backgr + c\u00b7q^(-\u03b1)")
         bg_form = QFormLayout(bg_group)
 
         self.bg_qmin = QDoubleSpinBox()
@@ -482,10 +544,9 @@ class MainWindow(ProjectMixin, QMainWindow):
         bg_form.addRow("Fixed value:", self.fixed_bg_spin)
         self._help(self.fixed_bg_spin, "fixed_bg", bg_form)
 
-        layout.addWidget(bg_group)
 
         # --- kernel / grid / solver ---
-        solve_group = QGroupBox("Inversion")
+        solve_group = self.solve_group = QGroupBox("Inversion")
         solve_form = QFormLayout(solve_group)
 
         self.kernel_combo = QComboBox()
@@ -642,13 +703,12 @@ class MainWindow(ProjectMixin, QMainWindow):
         solve_form.addRow(self.solve_result_label)
         self._help(self.solve_result_label, "result")
 
-        layout.addWidget(solve_group)
-        layout.addStretch(1)
-        return panel
 
-    def _build_plot_panel(self) -> QWidget:
+    def _build_plot_panel(self):
+        """The I(q) and the distribution panels."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
+        layout.setContentsMargins(2, 2, 2, 2)
 
         # Each figure gets the matplotlib navigation toolbar (home, back,
         # forward, pan, zoom, subplot layout, axes/curve editing, save), as
@@ -664,6 +724,9 @@ class MainWindow(ProjectMixin, QMainWindow):
         self.toolbar_iq = small_toolbar(NavigationToolbar2QT(self.canvas_iq, panel))
         layout.addWidget(self.toolbar_iq)
         layout.addWidget(self.canvas_iq)
+        iq_panel, panel = panel, QWidget()
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(2, 2, 2, 2)
 
         self.fig_dist = Figure(figsize=(5, 4), layout="constrained")
         self.canvas_dist = FigureCanvasQTAgg(self.fig_dist)
@@ -672,8 +735,7 @@ class MainWindow(ProjectMixin, QMainWindow):
         self.toolbar_dist = small_toolbar(NavigationToolbar2QT(self.canvas_dist, panel))
         layout.addWidget(self.toolbar_dist)
         layout.addWidget(self.canvas_dist)
-
-        return panel
+        return iq_panel, panel
 
     # ------------------------------------------------------------ actions
 
@@ -900,6 +962,7 @@ class MainWindow(ProjectMixin, QMainWindow):
         return np.zeros_like(q, dtype=float)
 
     def _on_solve(self):
+        self._stop_bootstrap()                 # a new solve stops a running Monte-Carlo estimate
         if self.data is None:
             return
         try:
@@ -1012,38 +1075,81 @@ class MainWindow(ProjectMixin, QMainWindow):
         self._update_result_info()
         self.status.showMessage(f"Solved: chi2_r={chi2_final:.4g}")
 
-        if self.mc_uncertainty_check.isChecked():
-            n_boot = self.n_boot_spin.value()
-            self.status.showMessage(
-                f"Running Monte Carlo uncertainty estimate ({n_boot} re-solves, "
-                "this can take a while)..."
-            )
-            QApplication.processEvents()
-            try:
-                def solve_fn(b_rep):
-                    return run_solver(solver_key, A, b_rep, self.sigma, spline=spline, **solver_kwargs)
-                seed = prefs.get("inversion.gui.bootstrap_seed")
-                boot = bootstrap_uncertainty(
-                    solve_fn, I_sub, self.sigma, n_boot=n_boot,
-                    center=result.fitted_b,
-                    rng=None if seed < 0 else np.random.default_rng(seed),
-                )
-                self._last_boot = boot
-                self._update_result_info()
-                self.status.showMessage(
-                    f"Solved: chi2_r={chi2_final:.4g}  (bootstrap: {boot.n_boot} ok, "
-                    f"{boot.n_failed} failed)"
-                )
-            except Exception as exc:
-                QMessageBox.warning(
-                    self, "Bootstrap uncertainty failed",
-                    f"Single solve above still succeeded and is shown; the Monte "
-                    f"Carlo uncertainty estimate itself failed:\n{exc}"
-                )
-
         self._plot_iq()
         self._plot_distribution()
         self._autosave()
+        if self.mc_uncertainty_check.isChecked():
+            self._start_bootstrap(solver_key, A, I_sub, spline, solver_kwargs, result, chi2_final)
+
+    def _start_bootstrap(self, solver_key, A, I_sub, spline, solver_kwargs, result, chi2_final):
+        """Monte-Carlo re-solves in a background thread: the window stays usable, the status line shows the
+        progress, a new Solve (or closing the window) stops a running estimate."""
+        self._stop_bootstrap()
+        n_boot = self.n_boot_spin.value()
+        seed = prefs.get("inversion.gui.bootstrap_seed")
+        nw = int(prefs.get("inversion.gui.bootstrap_workers") or 0)
+        # picklable, so that the re-solves can also run in parallel worker processes
+        solve_fn = replicate_solver(solver_key, A, self.sigma, spline=spline, **solver_kwargs)
+        sigma = np.array(self.sigma)
+        job = _BootstrapThread(lambda progress, abort: bootstrap_uncertainty(
+            solve_fn, I_sub, sigma, n_boot=n_boot, center=result.fitted_b,
+            rng=None if seed < 0 else np.random.default_rng(seed),
+            workers=None if nw == 0 else nw, progress=progress, should_abort=abort), self)
+        self._boot_job = job
+        self._boot_for = result
+
+        def on_progress(k, n):
+            if self._boot_job is job:
+                self.status.showMessage(f"Solved: chi2_r={chi2_final:.4g}  ·  Monte Carlo uncertainty {k}/{n} "
+                                        "(running in the background; Solve again to stop)")
+
+        def on_done(boot):
+            if self._boot_job is not job or getattr(self, "_last_result", None) is not result:
+                return                                   # superseded by a newer solve
+            self._boot_job = None
+            self._last_boot = boot
+            self._update_result_info()
+            self._plot_distribution()
+            self._autosave()
+            self.status.showMessage(f"Solved: chi2_r={chi2_final:.4g}  (bootstrap: {boot.n_boot} ok, "
+                                    f"{boot.n_failed} failed)")
+
+        def on_failed(msg):
+            if self._boot_job is not job:
+                return
+            self._boot_job = None
+            QMessageBox.warning(self, "Bootstrap uncertainty failed",
+                                "Single solve above still succeeded and is shown; the Monte Carlo "
+                                f"uncertainty estimate itself failed:\n{msg}")
+
+        job.progress.connect(on_progress)
+        job.done.connect(on_done)
+        job.failed.connect(on_failed)
+        on_progress(0, n_boot)
+        job.start()
+
+    def wait_for_bootstrap(self, timeout=600.0):
+        """Process events until a running Monte-Carlo estimate has finished (scripts and tests)."""
+        t0 = time.perf_counter()
+        while getattr(self, "_boot_job", None) is not None and time.perf_counter() - t0 < timeout:
+            QApplication.processEvents()
+            time.sleep(0.01)
+
+    def shutdown(self):
+        """Called by the launcher on exit: stop a running Monte-Carlo estimate."""
+        self._stop_bootstrap(wait=True)
+
+    def closeEvent(self, event):
+        self._stop_bootstrap(wait=True)
+        super().closeEvent(event)
+
+    def _stop_bootstrap(self, wait=False):
+        job = getattr(self, "_boot_job", None)
+        self._boot_job = None
+        if job is not None and job.isRunning():
+            job.abort = True
+            if wait:
+                job.wait(30000)
 
     # -------------------------------------------------- info panel details
 

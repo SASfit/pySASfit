@@ -109,7 +109,10 @@ class PowerLaw(BackgroundTerm):
 
     def grad(self, q, th):
         v = q ** (-th[1])
-        return np.c_[v, -th[0] * v * np.log(q)]
+        out = np.empty((v.size, 2))              # (np.c_ costs more than the arithmetic here)
+        out[:, 0] = v
+        out[:, 1] = -th[0] * v * np.log(q)
+        return out
 
     def guess(self, q, I):
         n = self.values[1] if self.values[1] is not None else 4.0
@@ -131,7 +134,10 @@ class OrnsteinZernike(BackgroundTerm):
 
     def grad(self, q, th):
         d = 1.0 + (q * th[1]) ** 2
-        return np.c_[1.0 / d, -th[0] * 2.0 * q**2 * th[1] / d**2]
+        out = np.empty((d.size, 2))
+        out[:, 0] = 1.0 / d
+        out[:, 1] = -th[0] * 2.0 * q**2 * th[1] / d**2
+        return out
 
     def guess(self, q, I):
         return [START_DEFAULTS["oz_level"] * float(np.max(I)), 1.0 / np.median(q)]
@@ -187,6 +193,24 @@ class Background:
         self._flat_cache = (key, out)
         return out
 
+    def _struct(self):
+        """Index arrays derived from _flat (cached with it): free indices, which free ones are positive, term
+        slices, and whether every term is a Constant (the common flat background: value/jac without the loop)."""
+        flat = self._flat()
+        c = getattr(self, "_struct_cache", None)
+        if c is not None and c[0] is flat:
+            return c[1]
+        _, v, fr, pos, _ = flat
+        slices, i = [], 0
+        for t in self.terms:
+            k = len(t.names)
+            slices.append((t, i, i + k))
+            i += k
+        st = dict(v=v, fr_idx=np.flatnonzero(fr), pfree=pos[fr], any_pos=bool(pos[fr].any()),
+                  slices=slices, all_const=bool(self.terms) and all(type(t) is Constant for t in self.terms))
+        self._struct_cache = (flat, st)
+        return st
+
     def _flat_build(self):
         names, vals, free, pos, owner = [], [], [], [], []
         for it, t in enumerate(self.terms):
@@ -220,45 +244,50 @@ class Background:
 
     def theta(self, z):
         """Full parameter vector for packed free parameters z."""
-        _, v, fr, pos, _ = self._flat()
-        th = v.copy()
-        zf = np.asarray(z, float).copy()
-        p = pos[fr]
-        zf[p] = np.exp(np.clip(zf[p], -700, 700))
-        th[fr] = zf
+        st = self._struct()
+        th = st["v"].copy()
+        zf = np.asarray(z, float)
+        if st["any_pos"]:
+            zf = zf.copy()
+            p = st["pfree"]
+            zf[p] = np.exp(np.clip(zf[p], -700, 700))
+        th[st["fr_idx"]] = zf
         return th
 
     # -------------------------------------------------------------- evaluation
     def value(self, q, z=None):
         z = self.z0() if z is None else z
         th = self.theta(z)
-        out = np.zeros_like(np.asarray(q, float))
-        i = 0
-        for t in self.terms:
-            k = len(t.names)
-            out = out + t.f(q, th[i : i + k])
-            i += k
+        st = self._struct()
+        q = np.asarray(q, float)
+        if st["all_const"]:                       # flat background: same sum as the loop below
+            c = 0.0
+            for x in th:
+                c = c + x
+            return np.full(q.shape, c)
+        out = np.zeros_like(q)
+        for t, i, j in st["slices"]:
+            out = out + t.f(q, th[i:j])
         return out
 
     def jac(self, q, z=None):
         """d B / d z (len(q) x n_free)."""
+        st = self._struct()
+        if st["all_const"]:                       # d c / d c = 1 for every free constant
+            return np.ones((np.asarray(q).size, st["fr_idx"].size))
         z = self.z0() if z is None else z
         th = self.theta(z)
         _, _, fr, pos, _ = self._flat()
-        cols = []
-        i = 0
-        for t in self.terms:
-            k = len(t.names)
-            if fr[i : i + k].any():
-                g = t.grad(q, th[i : i + k])
-                for j in range(k):
+        out = np.empty((np.asarray(q).size, st["fr_idx"].size))
+        c = 0
+        for t, i, k1 in st["slices"]:
+            if fr[i:k1].any():
+                g = t.grad(q, th[i:k1])
+                for j in range(k1 - i):
                     if fr[i + j]:
-                        col = g[:, j]
-                        if pos[i + j]:
-                            col = col * th[i + j]  # d/dz = theta d/dtheta
-                        cols.append(col)
-            i += k
-        return np.array(cols).T if cols else np.zeros((np.asarray(q).size, 0))
+                        out[:, c] = g[:, j] * th[i + j] if pos[i + j] else g[:, j]   # d/dz = theta d/dtheta
+                        c += 1
+        return out
 
     def constant(self, z=None):
         """Sum of the Constant terms (the 'flat background')."""
