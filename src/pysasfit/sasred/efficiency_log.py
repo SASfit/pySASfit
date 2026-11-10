@@ -35,7 +35,7 @@ from .core.efficiency import Efficiency
 
 __all__ = ["archive_path", "archive_efficiency", "list_maps", "load_map", "compare", "history", "plot_history"]
 
-_SUMMARY = ("measured", "archived", "instrument", "SD_m", "wavelength_A", "detector_tilt_deg", "water_runs",
+_SUMMARY = ("measured", "archived", "instrument", "bank", "detector_distance_m", "SD_m", "wavelength_A", "detector_tilt_deg", "water_runs",
             "empty_cell_runs",
             "n_measured", "n_filled", "n_rejected", "n_undefined", "rms", "min", "max", "median_sigma", "comment")
 
@@ -63,7 +63,7 @@ def _stats(eff: Efficiency) -> Dict[str, float]:
     return dict(rms=float(np.std(v)), min=float(np.min(v)), max=float(np.max(v)), median_sigma=float(np.median(s)))
 
 
-def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: str = "SANS-I",
+def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: Optional[str] = None,
                        comment: str = "") -> str:
     """Add ``eff`` to the archive file as a new entry named after the date of the water measurement
     (``YYYY-MM-DD_SD-<SD>m_<λ>A_run<first water run>``, suffix _2, _3, ... if the name exists).
@@ -71,12 +71,15 @@ def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: 
     import h5py
     path = archive_path(path)
     meta = eff.meta
+    instrument = instrument or {"sans_llb": "SANS-LLB", "sans_i": "SANS-I"}.get(
+        str(meta.get("instrument", "")), str(meta.get("instrument", "")) or "SANS-I")
+    bank = str(meta.get("bank", "") or "")
     date = _date(meta)
     SD = float(meta.get("SD_m") or 0)
     lam = float(meta.get("wavelength_A") or 0)
     runs = meta.get("water_runs") or [meta.get("water_run")]
     first = runs[0] if runs and runs[0] is not None else "x"
-    base = re.sub(r"[^A-Za-z0-9_.-]", "_", f"{date}_SD-{SD:.1f}m_{lam:.2f}A_run{first}")
+    base = re.sub(r"[^A-Za-z0-9_.-]", "_", f"{date}_SD-{SD:.1f}m_{lam:.2f}A_run{first}" + (f"_{bank}" if bank else ""))
     archived = datetime.now(timezone.utc).isoformat(timespec="seconds")
     eff.meta = dict(meta, instrument=instrument, archived=archived, comment=comment, measured=date)
     with h5py.File(path, "a") as f:
@@ -87,7 +90,8 @@ def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: 
         g = f.create_group(name)
         eff.write_entry(g, comment)
         tilt = meta.get("detector_tilt_deg")
-        summary = dict(measured=date, archived=archived, instrument=instrument, SD_m=SD, wavelength_A=lam,
+        summary = dict(measured=date, archived=archived, instrument=instrument, bank=bank,
+                       detector_distance_m=float(meta.get("detector_distance_m") or SD), SD_m=SD, wavelength_A=lam,
                        detector_tilt_deg=float("nan") if tilt is None else float(tilt),
                        water_runs=" ".join(map(str, meta.get("water_runs") or [])),
                        empty_cell_runs=" ".join(map(str, meta.get("empty_cell_runs") or [])),
@@ -96,7 +100,7 @@ def archive_efficiency(eff: Efficiency, path: Optional[str] = None, instrument: 
                        comment=comment, **_stats(eff))
         for key, v in summary.items():
             g.attrs[key] = v
-        g.attrs["title"] = f"detector efficiency {instrument} measured {date}"
+        g.attrs["title"] = f"detector efficiency {instrument}{' ' + bank + ' detector' if bank else ''} measured {date}"
         # the newest measurement is the default entry
         newest = max((n for n in f if "measured" in f[n].attrs),
                      key=lambda n: (str(f[n].attrs["measured"]), str(f[n].attrs.get("archived", ""))))
@@ -187,6 +191,8 @@ def _same_config(a: dict, b: dict) -> bool:
     SDa, SDb = f(a, "SD_m"), f(b, "SD_m")
     la, lb = f(a, "wavelength_A"), f(b, "wavelength_A")
     ta, tb = f(a, "detector_tilt_deg"), f(b, "detector_tilt_deg")
+    if str(a.get("bank", "") or "") != str(b.get("bank", "") or ""):        # SANS-LLB: other detector bank
+        return False
     ok = abs(SDa - SDb) <= 0.01 * max(SDa, SDb) and abs(la - lb) <= 0.02 * max(la, lb)
     return bool(ok and (np.isnan(ta) or np.isnan(tb) or abs(ta - tb) <= 0.05))
 
@@ -209,7 +215,8 @@ def history(path: Optional[str] = None, reference: Optional[str] = None, n_sigma
 
     out = []
     for r in rows:
-        ref_name = reference or next(x["entry"] for x in rows if _same_config(x, r))
+        same_bank = [x for x in rows if x["entry"] == reference and str(x.get("bank", "") or "") == str(r.get("bank", "") or "")]
+        ref_name = same_bank[0]["entry"] if same_bank else next(x["entry"] for x in rows if _same_config(x, r))
         c = compare(get(ref_name), get(r["entry"]), n_sigma)
         out.append(dict(r, reference=ref_name, rms_change=c["rms_change"], mean_change=c["mean_change"],
                         expected_rms=c["expected_rms"], chi2=c["chi2"],

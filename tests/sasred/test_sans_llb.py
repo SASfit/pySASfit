@@ -296,6 +296,21 @@ def test_gui_detector_axes_angle_and_q(tmp_path, monkeypatch):
                 w._draw_detector()
                 lab = w.det_canvas.figure.axes[0].get_xlabel()
                 assert ("q_x" in lab) == (axes == "q") and ("2θ" in lab) == (axes == "angle")
+        w.det_view.setCurrentIndex(w.det_view.findData("llb_all"))
+        labels = lambda: [a.get_ylabel() for a in w.det_canvas.figure.axes]   # noqa: E731
+        w.det_sep.setChecked(True)
+        w.det_cmap_panels.setCurrentIndex(w.det_cmap_panels.findText("inferno"))
+        w._draw_detector()
+        assert "central: counts / sr" in labels() and "panels: counts / sr" in labels()
+        assert {qm.get_cmap().name for qm in w.det_canvas.figure.axes[0].collections if qm.get_array() is not None
+                and qm.norm is not None and qm.get_cmap().name in ("inferno", "viridis")} == {"inferno", "viridis"}
+        w.live.setChecked(True)
+        w.update_preview()                                  # live I(q) of all three banks in this view
+        assert w.preview is not None and sorted(p.parameters["bank"] for p in w.preview_banks) == ["bottom", "left"]
+        assert sum("live" in t.get_text() for t in w.iq_canvas.figure.axes[0].get_legend().get_texts()) == 3
+        w.det_sep.setChecked(False)
+        w._draw_detector()
+        assert "counts / sr" in labels() and "central: counts / sr" not in labels()
         w.det_view.setCurrentIndex(w.det_view.findData("cartesian"))
         w.det_bank.setCurrentIndex(w.det_bank.findData("left"))
         w._draw_detector()

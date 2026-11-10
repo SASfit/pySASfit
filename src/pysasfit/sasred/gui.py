@@ -133,6 +133,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self._mask_key = None        # configuration of the mask in the editor
         self._centre_sync = False
         self.preview = None          # on-the-fly radial average of the selected run (not kept)
+        self.preview_banks = []      # SANS-LLB, view "all detectors": the live averages of the other banks
         self.unit = prefs.get("sasred.units")      # "nm" or "A": display and output units
         self._preview_timer = QtCore.QTimer(self)
         self._preview_timer.setSingleShot(True)
@@ -409,7 +410,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.det_view.addItem("efficiency map", "efficiency")
         self.det_view.setToolTip("polar: azimuth φ horizontally (0° = horizontal direction +x, counter-clockwise), "
                                  "q vertically; rings become horizontal lines, anisotropy shows as waves")
-        self.det_view.currentIndexChanged.connect(lambda _i: self._draw_detector())
+        self.det_view.currentIndexChanged.connect(lambda _i: (self._draw_detector(), self._schedule_preview()))
         for cb in (self.det_view, self.bank_combo):        # as wide as a short item; the list shows them in full
             cb.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             cb.setMinimumContentsLength(14)
@@ -425,12 +426,25 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             "central detector and the panels sit at their true places. Masks are edited in pixels.")
         self.det_axes.currentIndexChanged.connect(lambda _i: self._draw_detector())
         bar.addWidget(labelled("axes", self.det_axes))
+        self.det_sep = QtWidgets.QCheckBox("own scale for the panels")
+        self.det_sep.setChecked(True)
+        self.det_sep.setToolTip("SANS-LLB: all detectors: the central detector and the two wide-angle panels get "
+                                "separate colour ranges (each with its own colour bar), so that both are readable")
+        self.det_sep.toggled.connect(lambda _on: self._draw_detector())
+        bar.addWidget(self.det_sep)
+        self.det_cmap_panels = QtWidgets.QComboBox()
+        self.det_cmap_panels.addItem("as central", "")
+        self.det_cmap_panels.addItems(["inferno", "magma", "viridis", "cividis", "turbo", "jet", "gray"])
+        self.det_cmap_panels.setToolTip("SANS-LLB: all detectors: colour map of the left and bottom panels")
+        self.det_cmap_panels.currentIndexChanged.connect(lambda _i: self._draw_detector())
+        bar.addWidget(labelled("panel colours", self.det_cmap_panels))
         self.det_bank = QtWidgets.QComboBox()
         for t, d in (("central", ""), ("left panel", "left"), ("bottom panel", "bottom")):
             self.det_bank.addItem(t, d)
         self.det_bank.setToolTip("SANS-LLB: detector shown and masked (each panel has its own mask per configuration; "
                                  "a new panel mask starts with the tube ends and dead tubes)")
-        self.det_bank.currentIndexChanged.connect(lambda _i: (self._draw_detector(), self._schedule_preview()))
+        self.det_bank.currentIndexChanged.connect(
+            lambda _i: (self.sync_shown_efficiency(), self._draw_detector(), self._schedule_preview()))
         bar.addWidget(labelled("detector", self.det_bank))
         self.det_eff = QtWidgets.QCheckBox("÷ efficiency")
         self.det_eff.setToolTip("Divide the raw image by the efficiency map shown (button 'efficiency map'); pixels "
@@ -1551,18 +1565,40 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         I(q) without being kept (uses the header already read, no checksum)."""
         from .reduce import reduce_run_1d
         self.preview = None
+        self.preview_banks = []
         sel = [e for e in self.selected_entries() if e.raw is not None] if self.live.isChecked() else []
         if sel:
             raw = self.displayed_raw()
+            sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
             try:
                 self._sync_mask_config(raw)
                 mask = self._mask(raw.counts.shape)
-                sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
                 self.preview = reduce_run_1d(raw, self.centre_for(raw), self._edges(raw, mask),
                                              mask=mask, normalise_by=self.norm.currentData(), sector_deg=sector,
                                              beam_profile=self.profile_for(raw))
+                if self.preview is not None and getattr(raw, "bank", ""):
+                    self.preview.parameters["bank"] = raw.bank
             except Exception as exc:  # noqa: BLE001 -- e.g. beam centre outside, empty q range
                 self.statusBar().showMessage(f"live I(q) of run {raw.run}: {exc}", 8000)
+            # view "SANS-LLB: all detectors": the other banks too, each with its own mask and q range
+            full = sel[0].raw
+            if (self.det_view.currentData() == "llb_all" and getattr(full, "instrument", "") == "sans_llb"
+                    and getattr(full, "panels", None)):
+                from .io.sans_llb import bank_run
+                shown = getattr(raw, "bank", "") or ""
+                for b in ["", *full.panels]:
+                    if b == shown:
+                        continue
+                    r = bank_run(full, b) if b else full
+                    try:
+                        m = self.mask_for(r)[0]
+                        p = reduce_run_1d(r, self.centre_for(r), self._edges(r, m), mask=m,
+                                          normalise_by=self.norm.currentData(), sector_deg=sector,
+                                          beam_profile=self.profile_for(r))
+                        p.parameters["bank"] = b or "central"
+                        self.preview_banks.append(p)
+                    except Exception as exc:  # noqa: BLE001
+                        self.statusBar().showMessage(f"live I(q) of run {full.run} {b or 'central'}: {exc}", 8000)
         self._draw_iq()
 
     # ------------------------------------------------------------------ beam centre
@@ -2087,21 +2123,36 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             dens = r.counts.astype(float) / g.d_omega if single is None else np.asarray(single[0], float)
             m = np.asarray(self.mask_for(r)[0], np.uint32)
             parts.append((b, ang_x, ang_y, Xe, Ye, dens, m, to_angles))
+        sep = single is None and self.det_sep.isChecked()
+
+        def group(name):                                   # colour group of a bank
+            return ("central" if name == "central" else "panels") if sep else "all"
+        norms = {}
         if single is None:
-            good = [d[(m == 0) & (d > 0)] for *_, d, m, _t in parts]
-            allv = np.concatenate(good) if good else np.array([])
-            if allv.size == 0:
-                allv = np.concatenate([d[d > 0] for *_, d, m, _t in parts]) if parts else np.array([1.0])
-            norm = LogNorm(vmin=max(np.percentile(allv, 1), 1e-12), vmax=np.percentile(allv, 99.9))
+            for gname in dict.fromkeys(group(p[0]) for p in parts):
+                sub = [p for p in parts if group(p[0]) == gname]
+                good = [d[(m == 0) & (d > 0)] for *_, d, m, _t in sub]
+                allv = np.concatenate(good) if good else np.array([])
+                if allv.size == 0:
+                    allv = np.concatenate([d[d > 0] for *_, d, m, _t in sub]) if sub else np.array([])
+                if allv.size == 0:
+                    allv = np.array([1.0])
+                norms[gname] = LogNorm(vmin=max(np.percentile(allv, 1), 1e-12),
+                                       vmax=max(np.percentile(allv, 99.9), np.percentile(allv, 1) * 1.0001, 1e-12))
         else:
-            norm = single[3]
-        cmap = self.det_cmap.currentText()
+            norms["all"] = single[3]
+        cmap_c = self.det_cmap.currentText()
+        cmap_p = self.det_cmap_panels.currentText() if self.det_cmap_panels.currentData() != "" else cmap_c
+        ims = {}
         im = None
         for name, ax_, ay_, Xe, Ye, d, m, to_angles in parts:
             masked = m != 0
             hide = ~np.isfinite(d) | ((d <= 0) if single is None else False)
             show = np.ma.masked_where(hide | (masked & (mode != "colours")), d)
-            im = ax.pcolormesh(Xe, Ye, show, norm=norm, cmap=cmap, shading="flat")
+            gname = group(name)
+            im = ax.pcolormesh(Xe, Ye, show, norm=norms[gname], shading="flat",
+                               cmap=cmap_p if name not in ("central", "") and single is None else cmap_c)
+            ims.setdefault(gname, im)
             if masked.any():
                 if mode == "colours":
                     qm = ax.pcolormesh(Xe, Ye, np.zeros(d.shape), shading="flat", zorder=3)
@@ -2139,8 +2190,9 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if single is None:
             ax.set_title(f"run {raw.run}: {raw.sample_name} – all detectors, counts/sr ({n_m} px masked)",
                          fontsize="medium")
-            if im is not None:
-                fig.colorbar(im, ax=ax, label="counts / sr")
+            for gname, im_ in reversed(list(ims.items())):     # the last bar is next to the axes
+                fig.colorbar(im_, ax=ax, pad=0.02, fraction=0.05,
+                             label="counts / sr" if gname == "all" else f"{gname}: counts / sr")
         else:
             bank = f" – {raw.bank} panel" if getattr(raw, "bank", "") else ""
             ax.set_title(f"run {raw.run}: {raw.sample_name}{bank}{single[2]}", fontsize="medium")
@@ -2270,11 +2322,15 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                         capsize=0, lw=0.8,
                         label=f"{lab} {r.parameters.get('sample', r.raw.sample_name)}" + (f" ×{f ** k:g}" if k and f != 1 else ""))
         p = self.preview
-        if p is not None:
-            ax.errorbar(u.q_out(p.q), p.I, yerr=p.idev() if show_dI else None, xerr=_qerr(p, u) if show_dq else None,
-                        fmt="--", color="0.15", lw=1.0, capsize=0,
-                        elinewidth=0.6, label=f"live: {p.run} {p.raw.sample_name}")
-        shown = [r for _, r in shown_items] + ([p] if p is not None else [])
+        lives = ([p] if p is not None else []) + list(getattr(self, "preview_banks", []))
+        live_cols = {"central": "0.15", "left": "tab:red", "bottom": "tab:blue"}
+        for lp in lives:
+            bank = lp.parameters.get("bank", "")
+            tag = f" ({bank or 'central'})" if len(lives) > 1 or bank else ""
+            ax.errorbar(u.q_out(lp.q), lp.I, yerr=lp.idev() if show_dI else None,
+                        xerr=_qerr(lp, u) if show_dq else None, fmt="--", color=live_cols.get(bank or "central", "0.15"),
+                        lw=1.0, capsize=0, elinewidth=0.6, label=f"live: {lp.run} {lp.raw.sample_name}{tag}")
+        shown = [r for _, r in shown_items] + lives
         if shown:
             ax.set_xscale(xscale)
             if yscale == "log":
@@ -2403,7 +2459,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "detector_scale": self.det_scale.currentData(), "detector_cmap": self.det_cmap.currentText(),
                 "detector_view": self.det_view.currentData(), "bank": self.bank_combo.currentData(),
                 "detector_bank": self.det_bank.currentData(),
-                "detector_axes": self.det_axes.currentData(), "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
+                "detector_axes": self.det_axes.currentData(), "detector_panel_scale": self.det_sep.isChecked(),
+                "detector_panel_cmap": self.det_cmap_panels.currentText(), "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "iq_error_bars_I": self.iq_err_I.isChecked(), "iq_error_bars_q": self.iq_err_q.isChecked(),
                 "iq_xscale": self._iq_scales()[0], "iq_yscale": self._iq_scales()[1],
@@ -2508,6 +2565,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             self.mask_tools_button.setChecked(bool(s["mask_tools"]))
         self.det_eff.setChecked(bool(s.get("detector_efficiency", False)))
         self.det_axes.setCurrentIndex(max(0, self.det_axes.findData(s.get("detector_axes", "pixels"))))
+        self.det_sep.setChecked(bool(s.get("detector_panel_scale", True)))
+        self.det_cmap_panels.setCurrentIndex(max(0, self.det_cmap_panels.findText(s.get("detector_panel_cmap", "as central"))))
         self.det_domega.setChecked(bool(s.get("detector_solid_angle", False)))
         for key, cb in (("iq_error_bars_I", self.iq_err_I), ("iq_error_bars_q", self.iq_err_q)):
             if key in s:

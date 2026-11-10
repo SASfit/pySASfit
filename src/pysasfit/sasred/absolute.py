@@ -52,12 +52,26 @@ __all__ = ["Reduced2D", "reduce_row_2d", "average", "reduce_row", "water_g", "wa
            "water_scaling_factor", "load_efficiency", "direct_beam_flux", "direct_beam_attenuator", "DirectBeam"]
 
 
-def load_efficiency(spec: str):
-    """Efficiency map from ``"file.h5"`` (a map of :meth:`Efficiency.save`, or the newest map of an
-    efficiency archive) or ``"file.h5::entry"`` (one map of an archive)."""
+def load_efficiency(spec: str, bank: str = ""):
+    """Efficiency map from ``"file.h5"`` (a map of :meth:`Efficiency.save`, the maps of all banks of
+    :meth:`Efficiency.save_banks`, or the newest map of an efficiency archive) or ``"file.h5::entry"``
+    (one map of an archive). ``bank``: the detector bank it is for (SANS-LLB "left", "bottom"; "" central):
+    the entry ``entry_<bank>`` of a file with all banks; a map of another bank is refused."""
+    import h5py
     from .core.efficiency import Efficiency
     path, _, entry = str(spec).partition("::")
-    return Efficiency.load(path.strip(), entry.strip() or None)
+    path, entry = path.strip(), entry.strip() or None
+    if entry is None and bank:
+        with h5py.File(path, "r") as f:
+            if f"entry_{bank}" in f:
+                entry = f"entry_{bank}"
+    eff = Efficiency.load(path, entry)
+    has = (eff.meta or {}).get("bank")
+    if has is not None and str(has) != str(bank or ""):
+        raise ValueError(f"efficiency map {spec}: made for the {has or 'central'} detector, not for the "
+                         f"{bank or 'central'} detector (save the maps of all banks: make the map from the water of "
+                         "a geometry and 'Save the shown map…')")
+    return eff
 
 
 @dataclass

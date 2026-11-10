@@ -347,6 +347,8 @@ def efficiency_from_runs(water, empty_cell, beam_center_px, t_water, t_empty=Non
                 measured_start=min(str(r.start_time) for r in waters),
                 measured_end=max(str(r.end_time or r.start_time) for r in waters),
                 normalise_by=normalise_by, sample_name=water.sample_name, notes=list(dict.fromkeys(notes)),
+                instrument=str(getattr(water, "instrument", "") or ""), bank=str(getattr(water, "bank", "") or ""),
+                detector_distance_m=float(geo.SD_m), shape=list(np.shape(water.counts)),
                 method="water, empty-cell and transmission corrected, divided by the solid angle, mean 1 over "
                        "the valid pixels; masked pixels = row mean x column mean / mean (x and y wire)")
     eff = efficiency_from_water(I, valid, meta, reject_sigma=reject_sigma,

@@ -191,6 +191,40 @@ class Efficiency:
         value = UArray.from_source(v, Source(f"flood:{name}", var.ravel(), "flood", False))
         return cls(value, ~(filled | undefined), filled, undefined, rejected, meta)
 
+    @property
+    def bank(self) -> str:
+        """Detector bank of the map ("" = the main / central detector; SANS-LLB: "left", "bottom")."""
+        return str((self.meta or {}).get("bank", "") or "")
+
+    @staticmethod
+    def save_banks(path, maps: dict, description: str = "") -> str:
+        """HDF5 file with the maps of several detector banks (``maps``: bank -> map; "" = central):
+        ``/entry`` the central detector, ``/entry_<bank>`` the others; each entry has the attribute ``bank``."""
+        import h5py
+        path = str(path)
+        with h5py.File(path, "w") as f:
+            f.attrs["default"] = "entry" if "" in maps else f"entry_{next(iter(maps))}"
+            for bank, eff in maps.items():
+                eff.meta = dict(eff.meta or {}, bank=bank)
+                g = f.create_group("entry" if not bank else f"entry_{bank}")
+                g.attrs["bank"] = bank
+                eff.write_entry(g, description + (f" ({bank})" if bank else ""))
+        return path
+
+    @classmethod
+    def load_banks(cls, path) -> dict:
+        """All maps of a file: bank -> map (a file of :meth:`save`: its one map under its own bank)."""
+        import h5py
+        path = str(path)
+        with h5py.File(path, "r") as f:
+            names = [n for n in f if isinstance(f[n], h5py.Group) and "efficiency" in f[n]
+                     and (n == "entry" or n.startswith("entry_"))]
+        out = {}
+        for n in names:
+            e = cls.load(path, entry=n)
+            out[e.bank if n == "entry" or "bank" in (e.meta or {}) else n[len("entry_"):]] = e
+        return out
+
     @classmethod
     def load(cls, path, entry: Optional[str] = None, name: Optional[str] = None) -> "Efficiency":
         """Map from a file of :meth:`save` or from an entry of an efficiency archive
@@ -204,6 +238,9 @@ class Efficiency:
                 raise KeyError(f"{path}: no efficiency map '{entry}'")
             stem = os.path.splitext(os.path.basename(path))[0]
             eff = cls.read_entry(f[entry], name or (stem if entry == "entry" else f"{stem}/{entry}"))
+            b = f[entry].attrs.get("bank")
+            if b is not None:
+                eff.meta.setdefault("bank", b.decode() if isinstance(b, bytes) else str(b))
         eff.meta = dict(eff.meta, file=path, entry=entry)
         return eff
 
@@ -298,4 +335,5 @@ def efficiency_from_water(I_water: UArray, valid, meta: Optional[dict] = None, r
         valid &= ~new
     m = dict(meta or {})
     m["n_rejected"] = int(rejected.sum())
+    m["water_mean"] = float(np.asarray(mean.value).ravel()[0])      # water / ΔΩ over the valid pixels (before mean 1)
     return Efficiency(filled_value, valid.copy(), filled, undefined, rejected, m)

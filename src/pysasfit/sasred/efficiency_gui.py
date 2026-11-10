@@ -25,8 +25,9 @@ class EfficiencyMixin:
     ``det_view``, ``_draw_detector`` and ``norm`` of the main window."""
 
     _eff_cache: Dict[tuple, object]
-    shown_efficiency = None                 # the map of the detector panel
+    shown_efficiency = None                 # the map of the detector panel (of the bank shown)
     shown_efficiency_name = ""
+    shown_efficiencies: Dict[str, object] = {}   # SANS-LLB: the maps of all banks ("" central, "left", "bottom")
 
     # ------------------------------------------------------------------ reading runs
     def run_reader(self, bank: str = "", cache: Optional[dict] = None):
@@ -88,6 +89,22 @@ class EfficiencyMixin:
                                    (ec.transmission, ec.transmission_sigma) if ec_runs else None,
                                    mask=mask, blocked=[read(n) for n in cd_runs] or None,
                                    normalise_by=self.norm.currentData())
+        if bank:
+            # SANS-LLB panel: relative to the central detector, not to its own mean, so that the different
+            # efficiency of the 3He tubes against the central detector is kept (water / ΔΩ is the same on all
+            # detectors, up to its angular dependence, which is not corrected)
+            try:
+                central = self.efficiency_from_table(table, "")
+                rel = float(eff.meta["water_mean"]) / float(central.meta["water_mean"])
+            except Exception as exc:  # noqa: BLE001
+                rel = None
+                eff.meta["notes"] = list(eff.meta.get("notes", [])) + [
+                    f"not related to the central detector ({type(exc).__name__}: {exc}): mean 1 on its own"]
+            if rel is not None and np.isfinite(rel) and rel > 0:
+                eff.value = eff.value * rel
+                eff.meta["relative_to_central"] = rel
+                eff.meta["method"] = (str(eff.meta.get("method", "")) + f"; × {rel:.4f} = water/ΔΩ of this panel "
+                                      "over that of the central detector (efficiency relative to the central detector)")
         eff.meta["file"] = f"water of {table.config}" + (f" ({bank})" if bank else "")
         eff.meta["mask"] = how
         eff.meta["corrections"] = (
@@ -118,15 +135,39 @@ class EfficiencyMixin:
             spec = path + ("::" + spec.partition("::")[2] if "::" in spec else "")
         if not os.path.isfile(path):
             raise FileNotFoundError(f"efficiency map file {path} not found")
-        key = ("file", spec, os.path.getmtime(path))
+        key = ("file", spec, bank, os.path.getmtime(path))
         if not hasattr(self, "_eff_cache"):
             self._eff_cache = {}
         if key not in self._eff_cache:
-            self._eff_cache[key] = load_efficiency(spec)
+            self._eff_cache[key] = load_efficiency(spec, bank)
         return self._eff_cache[key]
 
-    def show_efficiency(self, eff, name: str = ""):
-        """Put a map into the detector panel and switch to the view "efficiency map"."""
+    def _shown_bank(self) -> str:
+        return self.det_bank.currentData() if hasattr(self, "det_bank") else ""
+
+    def _llb_banks(self, table) -> list:
+        """["", "left", "bottom"] when the water of ``table`` is a SANS-LLB run with panels, else [""]."""
+        w = table.corrections["water"]
+        try:
+            r = self.run_reader("")(w.used[0]) if w.used else None
+        except Exception:  # noqa: BLE001
+            r = None
+        if r is not None and getattr(r, "instrument", "") == "sans_llb" and getattr(r, "panels", None):
+            return ["", *r.panels]
+        return [""]
+
+    def sync_shown_efficiency(self):
+        """The detector shown changed: show the map of that bank when the maps of all banks are known."""
+        maps = self.shown_efficiencies or {}
+        b = self._shown_bank()
+        if b in maps:
+            self.shown_efficiency = maps[b]
+            self._update_eff_label()
+
+    def show_efficiency(self, eff, name: str = "", maps: Optional[dict] = None):
+        """Put a map into the detector panel and switch to the view "efficiency map"; ``maps``: the maps of all
+        banks (SANS-LLB), ``eff`` the one of the bank shown."""
+        self.shown_efficiencies = dict(maps) if maps else {getattr(eff, "bank", ""): eff}
         self.shown_efficiency = eff
         self.shown_efficiency_name = name or str((eff.meta or {}).get("file", ""))
         self._update_eff_label()
@@ -142,8 +183,16 @@ class EfficiencyMixin:
     def show_table_efficiency(self, table):
         """Button "Show" of the reduction table: the map chosen there in the detector panel."""
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        maps = {}
         try:
-            eff = self.efficiency_for(table)
+            for b in self._llb_banks(table):
+                try:
+                    maps[b] = self.efficiency_for(table, b)
+                except Exception as exc:  # noqa: BLE001 -- a file without that bank: the others still shown
+                    if not b:
+                        raise
+                    self.log(f"efficiency map of {table.config}, {b} detector: {type(exc).__name__}: {exc}")
+            eff = maps.get(self._shown_bank(), maps.get(""))
         except Exception as exc:  # noqa: BLE001
             QtWidgets.QApplication.restoreOverrideCursor()
             self._eff_problem(f"map for {table.config} ({table.efficiency}): {type(exc).__name__}: {exc}")
@@ -153,7 +202,7 @@ class EfficiencyMixin:
             self._eff_problem(f"{table.config}: no efficiency map chosen – choose 'water of …' or 'file…' in "
                               "Absolute scale → efficiency map")
             return None
-        self.show_efficiency(eff, table.efficiency)
+        self.show_efficiency(eff, table.efficiency, maps={b: e for b, e in maps.items() if e is not None})
         return eff
 
     def _update_eff_label(self):
@@ -175,13 +224,19 @@ class EfficiencyMixin:
                                                      "HDF5 (*.h5 *.hdf5 *.nxs)")
         if not p:
             return
-        from .absolute import load_efficiency
+        from .core.efficiency import Efficiency
         try:
-            eff = load_efficiency(p)
+            maps = Efficiency.load_banks(p)
+            if not maps:
+                from .absolute import load_efficiency
+                maps = {"": load_efficiency(p)}
         except Exception as exc:  # noqa: BLE001
             QtWidgets.QMessageBox.critical(self, "Efficiency map", f"{type(exc).__name__}: {exc}")
             return
-        self.show_efficiency(eff, p)
+        b = self._shown_bank()
+        self.show_efficiency(maps.get(b, next(iter(maps.values()))), p, maps=maps)
+        if len(maps) > 1:
+            self.log(f"efficiency maps loaded from {p}: " + ", ".join(k or "central" for k in maps))
 
     def _eff_problem(self, text):
         """A failed efficiency action: log and a message box (not only the log)."""
@@ -228,19 +283,30 @@ class EfficiencyMixin:
                               "reduction table (or let it be computed from its transmission runs).")
             return None
         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        maps = {}
         try:
             eff = self.efficiency_from_table(table, bank or "")
+            maps[bank or ""] = eff
+            for b in self._llb_banks(table):                # SANS-LLB: the maps of the other banks too
+                if b != (bank or ""):
+                    try:
+                        maps[b] = self.efficiency_from_table(table, b)
+                    except Exception as exc:  # noqa: BLE001
+                        self.log(f"efficiency map of {table.config}, {b or 'central'} detector: "
+                                 f"{type(exc).__name__}: {exc}")
         except Exception as exc:  # noqa: BLE001
             self._eff_problem(f"{table.config}: {type(exc).__name__}: {exc}")
             return None
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
-        m = eff.meta
-        self.log(f"efficiency map from the water of {table.config}{' (' + bank + ')' if bank else ''}: water runs "
-                 f"{m.get('water_runs')}, {m.get('n_filled', 0)} pixels estimated, {m.get('n_rejected', 0)} rejected "
-                 f"at the beam stop edge, {m.get('n_undefined', 0)} undefined")
-        self.log("    " + str(m.get("corrections", "")))
-        self.show_efficiency(eff, f"{GEOMETRY_PREFIX}{table.config}")
+        for b, e in maps.items():
+            m = e.meta
+            self.log(f"efficiency map from the water of {table.config}{' (' + b + ')' if b else ''}: water runs "
+                     f"{m.get('water_runs')}, {m.get('n_filled', 0)} pixels estimated, {m.get('n_rejected', 0)} "
+                     f"rejected at the beam stop edge, {m.get('n_undefined', 0)} undefined; rms "
+                     f"{float(np.std(np.asarray(e.value.value)[e.measured])) if e.measured.any() else float('nan'):.3f}")
+        self.log("    " + str(eff.meta.get("corrections", "")))
+        self.show_efficiency(eff, f"{GEOMETRY_PREFIX}{table.config}", maps=maps)
         self.statusBar().showMessage(f"efficiency map made from the water of {table.config}: shown in the detector "
                                      "panel; choose it for a geometry in the reduction table (Absolute scale)", 15000)
         return eff
@@ -283,8 +349,14 @@ class EfficiencyMixin:
                                                      "HDF5 (*.h5)")
         if not p:
             return
-        e.save(p, description=self.shown_efficiency_name)
-        self.log(f"efficiency map saved to {p}")
+        maps = self.shown_efficiencies or {}
+        if len(maps) > 1:
+            from .core.efficiency import Efficiency
+            Efficiency.save_banks(p, maps, description=self.shown_efficiency_name)
+            self.log(f"efficiency maps saved to {p}: " + ", ".join(b or "central" for b in maps))
+        else:
+            e.save(p, description=self.shown_efficiency_name)
+            self.log(f"efficiency map saved to {p}")
 
     def on_archive_efficiency(self):
         e = self.shown_efficiency
@@ -292,12 +364,13 @@ class EfficiencyMixin:
             self.log("no efficiency map shown")
             return
         from .efficiency_log import archive_efficiency, archive_path
-        try:
-            name = archive_efficiency(e)
-        except Exception as exc:  # noqa: BLE001
-            self.log(f"archive: {type(exc).__name__}: {exc}")
-            return
-        self.log(f"efficiency map archived as {name} in {archive_path()}")
+        for b, m in ((self.shown_efficiencies or {}).items() if len(self.shown_efficiencies or {}) > 1 else [("", e)]):
+            try:
+                name = archive_efficiency(m)
+            except Exception as exc:  # noqa: BLE001
+                self.log(f"archive{' ' + b if b else ''}: {type(exc).__name__}: {exc}")
+                continue
+            self.log(f"efficiency map{' (' + b + ')' if b else ''} archived as {name} in {archive_path()}")
 
     # ------------------------------------------------------------------ display
     def display_image(self, raw, c):
@@ -334,9 +407,16 @@ class EfficiencyMixin:
         v[e.undefined] = np.nan
         ok = np.isfinite(v)
         lo, hi = (np.nanpercentile(v[ok], [1, 99]) if ok.any() else (0.9, 1.1))
-        lo, hi = min(lo, 0.999), max(hi, 1.001)
+        c0 = float(np.nanmean(v[e.measured])) if e.measured.any() else 1.0   # 1, or a panel's level vs central
+        lo, hi = min(lo, 0.999 * c0), max(hi, 1.001 * c0)
         cmap = matplotlib.colormaps["RdBu_r"].with_extremes(bad="0.8")
-        im = ax.imshow(v, origin="lower", cmap=cmap, norm=TwoSlopeNorm(1.0, lo, hi), interpolation="nearest")
+        px = (e.meta or {}).get("pixel_size_m") or [1.0, 1.0]
+        try:
+            aspect = float(px[1]) / float(px[0])               # true pixel aspect (SANS-LLB panels: 13.4 x 5 mm)
+        except (TypeError, ValueError, ZeroDivisionError, IndexError):
+            aspect = 1.0
+        im = ax.imshow(v, origin="lower", cmap=cmap, norm=TwoSlopeNorm(c0, lo, hi), interpolation="nearest",
+                       aspect=aspect)
         from ..toolbox.viewer import image_colorbar
         image_colorbar(fig, ax, im, "relative efficiency")
         if e.filled.any():
@@ -345,7 +425,8 @@ class EfficiencyMixin:
         ax.set_xlabel("x [pixel]")
         ax.set_ylabel("y [pixel]")
         std = np.nanmedian(np.where(e.measured, e.std(), np.nan)) if e.measured.any() else float("nan")
-        ax.set_title(f"efficiency: {self.shown_efficiency_name}\nwater runs {m.get('water_runs', '?')}, "
+        bk = f" – {m.get('bank')} detector at {float(m.get('detector_distance_m', float('nan'))):.3f} m" if m.get("bank") else ""
+        ax.set_title(f"efficiency: {self.shown_efficiency_name}{bk}\nwater runs {m.get('water_runs', '?')}, "
                      f"SD {m.get('SD_m', float('nan')):.2f} m, λ {m.get('wavelength_A', float('nan')):.2f} Å; "
                      f"rms {np.nanstd(v[e.measured]) if e.measured.any() else float('nan'):.3f}, median σ {std:.3f}; "
                      "outlined: estimated (row × column)", fontsize="small")

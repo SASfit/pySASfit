@@ -40,6 +40,16 @@ central detector (x against posx, y with posy; on the left panel row 0 is at the
 masks of all banks and configurations in one file. The live I(q) follows the bank shown. The reduction uses the
 edited mask of each bank (else the default panel mask) – also in the reduction table.
 
+**Efficiency maps.** Every bank has its own map, made from the water measured on it (*efficiency map → Make
+from the water of …* makes the maps of all three banks at once; the detector selector shows the map of its
+bank). The central map has mean 1; a panel map is relative to the central detector: its own row × column
+shape times the ratio of water / ΔΩ on the panel to that on the central detector (`relative_to_central` in its
+metadata), so that the different efficiency of the 3He tubes is kept. Tube ends (masked) stay undefined.
+*Save the shown map…* writes the maps of all banks into one file (`/entry` central, `/entry_left`,
+`/entry_bottom`); chosen as the map of a geometry in the reduction table, every bank takes its own entry, and a
+file with the map of one bank only is refused for another bank. *Archive* adds one entry per bank (name ending
+in `_left`, `_bottom`); the history compares maps only with maps of the same bank.
+
 **Semi-transparent beam stop.** Some SANS-LLB beam stops let a small, fixed fraction of the direct beam through.
 The beam behind it can then measure the transmission of the sample during the scattering run itself. The mask
 editor has a second layer for it, the **transmission region** (see [Masks](masks.md#transmission-region)): pixels
@@ -52,7 +62,11 @@ for the configurations where it is.
 The detector view **SANS-LLB: all detectors** shows the three banks together (counts per steradian), with the
 current beam centre and panel offsets, every pixel at its scattering angle 2θ·(cos φ, sin φ) or, with
 **axes → q_x, q_y**, at its scattering vector |q|·(cos φ, sin φ): rings are circles at their 2θ or q on all
-three detectors, which is a direct check of the offsets.
+three detectors, which is a direct check of the offsets. With **own scale for the panels** (default) the central
+detector and the two panels have separate colour ranges, each with its colour bar; **panel colours** gives the
+panels their own colour map. In this view the live I(q) shows the radial (or sector) average of
+every bank as its own curve (central black, left red, bottom blue), each with its own mask and q range; in the
+other views only the bank chosen under **detector**.
 
 ## Geometry and its corrections
 
@@ -96,5 +110,6 @@ not corrected yet.
 * The beam stop at y = −7 mm let part of the direct beam pass at 4 m (and below it at 17 m): mask those pixels.
 * The runs named "H2O" are D2O; the real H2O runs are 5278–5280.
 * Run 5279 holds no data (measuring time 0, 0 counts, monitor 0): it is skipped and marked in the run list.
-* The absolute scale from the direct beam + efficiency map works for the central detector only; the wide-angle
-  panels still need water (their efficiency relative to the central detector is not known).
+* The absolute scale from the direct beam + efficiency map: the panel maps from water are relative to the central
+  detector (see *Efficiency maps* above), but the angular dependence of the water (inelastic scattering,
+  self-absorption at 2θ up to ≈ 30°) is in them; water as the absolute standard of the panels avoids it.
