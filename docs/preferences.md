@@ -2,7 +2,7 @@
 
 All tools share one preferences dialog: **Settings → Preferences…** in the launcher (`pysasfit-gui`, it opens on
 the page of the tool in front) and in each stand-alone window (`pysasfit-sldprofile`, `pysasfit-inversion`,
-`pysasfit-oz`, `pysasfit-sasred`, `pysasfit-toolbox`). It holds the numerical settings that are not on the tools' main panels.
+`pysasfit-oz`, `pysasfit-sasred`, `pysasfit-toolbox`, `pysasfit-atsas`). It holds the numerical settings that are not on the tools' main panels.
 
 * **Save** writes them to the preferences file, and they are the defaults at every later start:
   `%APPDATA%\pySASfit\settings.json` (Windows), `~/.config/pysasfit/settings.json` (Linux/macOS), or the file named by the
@@ -612,6 +612,22 @@ Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
 
 - **2D fit: use every n-th pixel (start value)** — `scatter.fit.every_px` · factory: **2** · range: 1 … 32  
   2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all pixels; the χ² and the errors refer to the pixels used.
+
+### pyATsas
+
+#### ATSAS installation and runs
+
+- **ATSAS installation folder** — `atsas.dir` · factory: **found automatically** (the dialog shows the folder found) · text  
+  Folder of the ATSAS installation (the one with bin/ and atsas.lic), e.g. C:\Program Files\ATSAS-4.1.4 or ~/ATSAS-4.1.4. Empty: pyATsas looks for it itself -- environment variables PYATSAS_DIR and ATSAS (on Windows also the ATSAS value the installer writes to the registry), autorg on the PATH, then the newest ATSAS-x.y.z folder in the usual places (Program Files, the home folder, /opt, /Applications). Set it to use another of several installed versions.
+
+- **folder for the ATSAS runs** — `atsas.workdir` · factory: **atsas_runs next to the preferences file** (the dialog shows the full path) · text  
+  Every ATSAS run of the pyATsas panel gets its own sub-folder here (date, time, program, curve), with the input file and everything the program writes (.out, .fit, bead models, logs), so results can be opened later in PRIMUS or a molecular viewer. Empty: atsas_runs next to the pySASfit preferences file.
+
+- **time limit of one program run (s)** — `atsas.timeout` · factory: **600** · range: 10 … 86400  
+  A program run that takes longer is stopped and reported as failed. DAMMIF in slow mode and large CRYSOL fits may need more than the factory value.
+
+- **DAMMIF: independent runs (start value)** — `atsas.dammif.nruns` · factory: **10** · range: 1 … 200  
+  Start value of the number of independent DAMMIF runs. Several runs (10 or more) are needed to judge the uniqueness of a bead model (DAMAVER / DAMCLUST); they run in parallel on all but one core.
 
 ### Appearance
 

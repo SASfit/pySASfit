@@ -142,6 +142,14 @@ method): γ(r), g(r), voxel structure, its scattering, S/V and connectivity; VTK
 orientation distributions with the hypergeometric algorithms of Wagener & Förster; fits to pySASred 1D and 2D data.
 :::
 
+:::{grid-item-card} pyATsas: the ATSAS programs
+:link: atsas/index
+:link-type: doc
+
+AUTORG, DATGNOM, GNOM, CRYSOL and DAMMIF of an ATSAS installation (installed separately, own licence) on
+pySASfit curves, with plots and a results table; starts PRIMUS, CHROMIXS, PEAK with the selected curve.
+:::
+
 :::{grid-item-card} The launcher
 :link: launcher
 :link-type: doc
@@ -194,6 +202,7 @@ pyINVersion <inversion/index>
 pyOZsolver <oz/index>
 pySASmorph <morph/index>
 pySCAtter <scatter/index>
+pyATsas <atsas/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 Copy Python code <python_code>

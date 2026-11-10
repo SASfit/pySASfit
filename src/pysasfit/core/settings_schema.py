@@ -392,6 +392,28 @@ register(T, TT, "Calculation and fit (pySCAtter)", [
 ])
 
 # ---------------------------------------------------------------------------
+# pyATsas (ATSAS programs)
+# ---------------------------------------------------------------------------
+def _atsas_found():
+    try:
+        from ..atsas.core import atsas_root
+        return f"{atsas_root()} (found automatically)"
+    except Exception:  # noqa: BLE001
+        return "not found automatically"
+
+
+T, TT = "atsas", "pyATsas"
+register(T, TT, "ATSAS installation and runs", [
+    S("atsas.dir", "", "ATSAS installation folder",
+      "Empty: found automatically.", kind="str", placeholder=_atsas_found),
+    S("atsas.workdir", "", "folder for the ATSAS runs",
+      "Empty: atsas_runs next to the preferences file.", kind="str",
+      placeholder=lambda: _next_to_preferences("atsas_runs")),
+    S("atsas.timeout", 600, "time limit of one program run (s)", "", kind="int", lo=10, hi=86400),
+    S("atsas.dammif.nruns", 10, "DAMMIF: independent runs (start value)", "", kind="int", lo=1, hi=200),
+])
+
+# ---------------------------------------------------------------------------
 # Appearance of the windows (all tools)
 # ---------------------------------------------------------------------------
 T, TT = "appearance", "Appearance"

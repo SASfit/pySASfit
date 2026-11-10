@@ -673,6 +673,23 @@ HELP = {
     "scatter.fit.every_px":
         "2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all "
         "pixels; the χ² and the errors refer to the pixels used.",
+    # =================================================================== pyATsas
+    "atsas.dir":
+        "Folder of the ATSAS installation (the one with bin/ and atsas.lic), e.g. C:\\Program Files\\ATSAS-4.1.4 "
+        "or ~/ATSAS-4.1.4. Empty: pyATsas looks for it itself -- environment variables PYATSAS_DIR and ATSAS (on "
+        "Windows also the ATSAS value the installer writes to the registry), autorg on the PATH, then the newest "
+        "ATSAS-x.y.z folder in the usual places (Program Files, the home folder, /opt, /Applications). Set it to use "
+        "another of several installed versions.",
+    "atsas.workdir":
+        "Every ATSAS run of the pyATsas panel gets its own sub-folder here (date, time, program, curve), with the "
+        "input file and everything the program writes (.out, .fit, bead models, logs), so results can be opened "
+        "later in PRIMUS or a molecular viewer. Empty: atsas_runs next to the pySASfit preferences file.",
+    "atsas.timeout":
+        "A program run that takes longer is stopped and reported as failed. DAMMIF in slow mode and large "
+        "CRYSOL fits may need more than the factory value.",
+    "atsas.dammif.nruns":
+        "Start value of the number of independent DAMMIF runs. Several runs (10 or more) are needed to judge "
+        "the uniqueness of a bead model (DAMAVER / DAMCLUST); they run in parallel on all but one core.",
     # =================================================================== appearance
     "appearance.panel_title.mode":
         "Title bars of the docked panels coloured like window title bars under Windows. 'active panel in "

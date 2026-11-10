@@ -14,4 +14,5 @@ studio <../studio_api>
 pySASred <../sasred/api>
 pyTOOLbox <../toolbox/api>
 pySCAtter <../scatter/api>
+pyATsas <../atsas/api>
 ```

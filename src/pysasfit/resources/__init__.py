@@ -16,17 +16,24 @@ nothing breaks.
 Tools: ``pySASfit`` (the suite, launcher), ``pySLDprofile``, ``pyINVersion``, ``pyOZsolver``, ``pySASstudio``
 (model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``. The former names pyInversion and pySASbox are accepted
 (:data:`ALIASES`).
+
+``pyATsas`` (the ATSAS panel) has no logo in the bundle: its icon is the original ATSAS icon, read at run time
+from the user's ATSAS installation (``share/icons/hicolor/<n>x<n>/apps/atsas.png``, see
+:func:`pysasfit.atsas.core.icon_files`); pySASfit does not ship a copy. Without ATSAS a plain placeholder is drawn.
 """
 
 from __future__ import annotations
 
 import os
 
-__all__ = ["TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "ALIASES", "tool_icon", "tile_icon", "logo_path",
+__all__ = ["TOOLS", "EXTERNAL_TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "ALIASES", "tool_icon", "tile_icon", "logo_path",
            "icon_path", "menu_icon_path", "wordmark"]
 
 TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter",
          "pySASmorph")
+
+#: tools whose icon comes from an external program's installation, not from the logo bundle
+EXTERNAL_TOOLS = ("pyATsas",)
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -39,6 +46,7 @@ WORDMARKS = {
     "pyTOOLbox": ("py", "TOOL", "box"),
     "pySASmorph": ("py", "SAS", "morph"),
     "pySCAtter": ("py", "SCA", "tter"),
+    "pyATsas": ("py", "AT", "sas"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -57,6 +65,7 @@ TOOL_COLOURS = {
     "pyTOOLbox": ("#D9730D", "#E6A462"),
     "pySASmorph": ("#0E2740", "#FFFFFF"),      # marine: tile #0E2740, navy/white wordmark core as in its logo
     "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
+    "pyATsas": ("#0B6666", "#5FA8A8"),         # teal of the ATSAS icon tile
 }
 
 #: old tool names -> current ones
@@ -105,12 +114,65 @@ def logo_path(tool, variant="light", fmt="svg"):
 def tool_icon(tool):
     """``QIcon`` of ``tool`` for windows, the task bar, tabs and menus: the menu icon, else the tile
     (:func:`tile_icon`); empty if the files are missing."""
+    if ALIASES.get(tool, tool) in EXTERNAL_TOOLS:
+        return external_icon(tool)
     path = menu_icon_path(tool)
     if path is None:
         return tile_icon(tool)
     from PySide6 import QtGui
 
     return QtGui.QIcon(path)          # svg: sharp at every size
+
+
+_EXTERNAL_CACHE = {}
+
+
+def external_icon(tool, atsas_dir=None):
+    """``QIcon`` of a tool in :data:`EXTERNAL_TOOLS`: pyATsas -> the ATSAS icon of the installation (all sizes
+    it provides), else a plain placeholder (teal square with a p(r) curve)."""
+    from PySide6 import QtCore, QtGui
+
+    key = (tool, str(atsas_dir or ""))
+    if key in _EXTERNAL_CACHE:
+        return _EXTERNAL_CACHE[key]
+    icon = QtGui.QIcon()
+    try:
+        from ..atsas.core import icon_files
+        for size, path in icon_files("atsas", atsas_dir):
+            icon.addFile(str(path), QtCore.QSize(size, size))
+    except Exception:  # noqa: BLE001 -- no ATSAS: placeholder
+        pass
+    if icon.isNull():
+        icon = _placeholder_icon(TOOL_COLOURS.get(tool, COLOURS["core"])[0])
+    _EXTERNAL_CACHE[key] = icon
+    return icon
+
+
+def _placeholder_icon(colour):
+    from PySide6 import QtCore, QtGui
+
+    icon = QtGui.QIcon()
+    for s in (16, 24, 32, 48, 64, 128):
+        pm = QtGui.QPixmap(s, s)
+        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        p = QtGui.QPainter(pm)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setBrush(QtGui.QColor(colour))
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
+        p.drawRoundedRect(QtCore.QRectF(0, 0, s, s), s * 0.15, s * 0.15)
+        pen = QtGui.QPen(QtGui.QColor("white"), max(1.2, s / 16))
+        p.setPen(pen)
+        path = QtGui.QPainterPath()
+        n = 24
+        for i in range(n + 1):                       # p(r) of a sphere: a skewed bell
+            x = i / n
+            y = 12 * x * x * (1 - 1.5 * x + 0.5 * x ** 3)
+            px, py = s * (0.15 + 0.7 * x), s * (0.82 - 0.62 * min(y / 1.6, 1))
+            path.moveTo(px, py) if i == 0 else path.lineTo(px, py)
+        p.drawPath(path)
+        p.end()
+        icon.addPixmap(pm)
+    return icon
 
 
 def tile_icon(tool):
