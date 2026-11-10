@@ -292,8 +292,9 @@ class OZSolverTab(QtWidgets.QWidget):
         self.interruptBtn = qtkit.button("interrupt", self._onInterrupt, enabled=False)
         put("", qtkit.hbox(self.calcBtn, self.interruptBtn, qtkit.button("clear all", self._onClear),
                            qtkit.button("delete last", self._onDeleteLast)), span=True)
-        put("", qtkit.hbox(qtkit.button("Save...", self._onSaveAll), qtkit.button("Load...", self._onLoadAll)),
-            span=True)
+        from ...core import pycode
+        put("", qtkit.hbox(qtkit.button("Save...", self._onSaveAll), qtkit.button("Load...", self._onLoadAll),
+                           pycode.button(self.python_code, self)), span=True)
 
         g.addWidget(QtWidgets.QLabel("Export selected/last run:"), row, 0, 1, 2)
         row += 1
@@ -570,16 +571,14 @@ class OZSolverTab(QtWidgets.QWidget):
             showerror("save failed", str(e))
 
     # ------------------------------------------------------------------
-    def _onCalculate(self):
-        if self.worker is not None and self.worker.is_alive():
-            showinfo("busy", "a calculation is already running")
-            return
+    def _solveArguments(self):
+        """Keyword arguments of ozLib.solve() from the controls and the preferences (also the script of "Copy
+        Python code"); a bad entry raises ValueError with the message for the user."""
         try:
             phi = float(self.phiVar.get())
             potArgs = [float(v.get()) for v in self.potParamVars]
         except ValueError:
-            showerror("input error", "potential parameters and phi must be numbers")
-            return
+            raise ValueError("potential parameters and phi must be numbers") from None
 
         # "auto" keeps ozLib.solve()'s default grid (4095 points, 100 per
         # sigma); an integer n means gridsize = 2**n - 1 (clamped).
@@ -611,8 +610,7 @@ class OZSolverTab(QtWidgets.QWidget):
             try:
                 closureParam = float(self.closureParamVar.get())
             except ValueError:
-                showerror("input error", "closure parameter must be a number")
-                return
+                raise ValueError("closure parameter must be a number") from None
         # The second closure scalar is read even with the consistency search
         # on: the search determines alpha, not a.
         if self.closureParam2Var is not None:
@@ -620,8 +618,7 @@ class OZSolverTab(QtWidgets.QWidget):
                 closureParam2 = float(self.closureParam2Var.get())
             except ValueError:
                 extra = ozLib.secondClosureParam(closureName)
-                showerror("input error", f"closure parameter '{extra[0]}' must be a number")
-                return
+                raise ValueError(f"closure parameter '{extra[0]}' must be a number") from None
 
         solverName = resolveSolverName(self.solverVar.get())
         mannAlpha = None
@@ -629,19 +626,60 @@ class OZSolverTab(QtWidgets.QWidget):
             try:
                 mannAlpha = self._mannAlpha()
             except ValueError:
-                showerror("input error", "damping a must be a number with 0 < a ≤ 1")
-                return
+                raise ValueError("damping a must be a number with 0 < a ≤ 1") from None
         # Deflation on an unphysical root (S(Q) < 0) with THE SAME solver.
         try:
             deflateAttempts = int(self.deflateVar.get())
         except ValueError:
             deflateAttempts = 0
-        verifyResult = bool(self.verifyVar.get())
-        verifyTol = prefs.get("oz.solve.verify_tolerance")
-        verifyMannAlpha = prefs.get("oz.solve.verify_mann_alpha")
-        residualTol = prefs.get("oz.solve.residual_tolerance")
         tt = prefs.get("oz.solve.transform_type")
-        transformType = None if tt == "auto" else int(tt)
+        return dict(potential=potentialName, phi=phi, potentialArgs=potArgs,
+                    closure=closureName, closureParam=closureParam,
+                    closureParam2=closureParam2, findConsistentParameter=findConsistent,
+                    solver=solverName, maxIterations=None,
+                    deflateOnUnphysical=deflateAttempts, verify=bool(self.verifyVar.get()),
+                    verifyTolerance=prefs.get("oz.solve.verify_tolerance"),
+                    transformType=None if tt == "auto" else int(tt),
+                    mannAlpha=mannAlpha, verifyMannAlpha=prefs.get("oz.solve.verify_mann_alpha"),
+                    residualTolerance=prefs.get("oz.solve.residual_tolerance"), **gridKwargs)
+
+    def python_code(self):
+        """Script: the same ozLib.solve() call as "calculate", with the solver preferences ("Copy Python code")."""
+        from ...core.pycode import Script, call, prefs_lines
+
+        kw = self._solveArguments()
+        kw.pop("maxIterations", None)
+        sc = Script("pyOZsolver", f"{kw['potential']}, {kw['closure']}, phi = {kw['phi']:g}")
+        sc.comment("solver defaults from Settings -> Preferences (iteration limits, convergence, Anderson depths, ...)")
+        sc.add(*prefs_lines("oz.solvers", "oz.consistency", "numerics.deflation", "numerics.msa", "numerics.rmsa",
+                            apply="apply_solver_settings()"))
+        sc.imp("from pysasfit.oz import ozLib", "from pysasfit.oz.preferences import apply_solver_settings")
+        sc.comment("the Ornstein-Zernike solve")
+        sc.add("try:", "    " + call("result = ozLib.solve", indent=4, **kw),
+               "except ozLib.VerificationUnavailable as exc:   # no independent verifier converged",
+               "    print(exc)",
+               "    result = exc.result                         # the unverified result, as the GUI shows it",
+               "print('converged:', result.converged, ' physical:', getattr(result, 'physical', True),",
+               "      ' residual:', getattr(result, 'residual', None))")
+        sc.add_plot("fig, axes = plt.subplots(1, 3, figsize=(13, 4))",
+                    "axes[0].plot(result.q, result.Sq)",
+                    "axes[0].set_xlabel('Q sigma')", "axes[0].set_ylabel('S(Q)')",
+                    "axes[1].plot(result.r, result.gr)", "axes[1].set_xlabel('r / sigma')", "axes[1].set_ylabel('g(r)')",
+                    "axes[2].plot(result.r, result.cr)", "axes[2].set_xlabel('r / sigma')", "axes[2].set_ylabel('c(r)')",
+                    "for ax in axes:", "    ax.set_xscale('symlog', linthresh=1.0)", "fig.tight_layout()")
+        return sc.text()
+
+    def _onCalculate(self):
+        if self.worker is not None and self.worker.is_alive():
+            showinfo("busy", "a calculation is already running")
+            return
+        try:
+            kw = self._solveArguments()
+        except ValueError as exc:
+            showerror("input error", str(exc))
+            return
+        potentialName, closureName, phi = kw["potential"], kw["closure"], kw["phi"]
+        solverName, mannAlpha = kw["solver"], kw["mannAlpha"]
         autoLabel = f"{len(self.runs)+1}: {potentialName}, {closureName}, phi={phi:.3g}"
         if mannAlpha is not None and mannAlpha < 1.0:
             autoLabel += f", Mann a={mannAlpha:g}"
@@ -660,15 +698,7 @@ class OZSolverTab(QtWidgets.QWidget):
 
                 unverified = None
                 try:
-                    result = ozLib.solve(potential=potentialName, phi=phi, potentialArgs=potArgs,
-                                         closure=closureName, closureParam=closureParam,
-                                         closureParam2=closureParam2, findConsistentParameter=findConsistent,
-                                         solver=solverName, maxIterations=None,
-                                         deflateOnUnphysical=deflateAttempts, verify=verifyResult,
-                                         verifyTolerance=verifyTol, transformType=transformType,
-                                         mannAlpha=mannAlpha, verifyMannAlpha=verifyMannAlpha,
-                                         residualTolerance=residualTol,
-                                         onSolverCreated=captureSolverInstance, **gridKwargs)
+                    result = ozLib.solve(onSolverCreated=captureSolverInstance, **kw)
                 except ozLib.VerificationUnavailable as exc:
                     # No independent verifier converged: show the result, marked
                     # as unverified, instead of discarding it.

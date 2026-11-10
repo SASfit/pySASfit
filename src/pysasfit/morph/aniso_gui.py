@@ -82,6 +82,8 @@ class AnisoWindow(QtWidgets.QMainWindow):
         m.addSeparator()
         m.addAction("Export &components and maps…", self.on_export_curves)
         m.addAction("Export voxel &matrix…", self.on_export_matrix)
+        from ..core import pycode
+        pycode.install(self, self.python_code, menu=m)
         self.resize(1400, 850)
 
     # ------------------------------------------------------------------ form
@@ -204,6 +206,8 @@ class AnisoWindow(QtWidgets.QMainWindow):
         self.b_rec.clicked.connect(lambda: self.run(True))
         bb.addWidget(self.b_corr)
         bb.addWidget(self.b_rec)
+        from ..core import pycode
+        bb.addWidget(pycode.button(self.python_code, w))
         lay.addLayout(bb)
         self.progress = QtWidgets.QLabel("")
         lay.addWidget(self.progress)
@@ -253,6 +257,7 @@ class AnisoWindow(QtWidgets.QMainWindow):
         except Exception as e:  # noqa: BLE001
             QtWidgets.QMessageBox.critical(self, "Open 2D data", f"{type(e).__name__}: {e}")
             return
+        self.data_path = os.path.abspath(path)
         d = self.data
         unit = "1/nm" if d.q_unit == "nm" else "1/Å"
         self.file_label.setText(f"{os.path.basename(path)}: {d.I.size} pixels, q = {d.q.min():.4g} … {d.q.max():.4g} {unit}")
@@ -299,6 +304,35 @@ class AnisoWindow(QtWidgets.QMainWindow):
         if full:
             self.view3d.set_result(res, "nm" if self.data.q_unit == "nm" else "Å")
         return res
+
+    def python_code(self):
+        """Script: the 2D data, the parameters of the form and Correlations or (after one) Reconstruct
+        ("Copy Python code")."""
+        import dataclasses
+
+        from ..core.pycode import Script, call, nondefault, path_lit
+
+        p = self.params()
+        full = self.result is not None and getattr(self.result, "matrix", None) is not None
+        sc = Script("pySASmorph", "anisotropic 2D data (texture)")
+        sc.imp("import numpy as np",
+               "from pysasfit.morph.anisotropic import AnisoParameters, correlations_aniso, load_2d, reconstruct_aniso")
+        sc.comment("2D data")
+        sc.add(f"data = load_2d({path_lit(getattr(self, 'data_path', None) if self.data is not None else None)})")
+        sc.comment("parameters of the form")
+        sc.add(call("params = AnisoParameters", **nondefault(dataclasses.asdict(p), dataclasses.asdict(AnisoParameters()))))
+        sc.comment("reconstruction: field, cut, voxel scattering, statistics" if full else
+                   "components, correlation functions and the level-cut model")
+        sc.add("res = reconstruct_aniso(data, params)" if full else "res = correlations_aniso(data, params)",
+               "print('axis', res.axis_deg, ' mode', res.mode)")
+        sc.add_plot("fig, ax = plt.subplots()",
+                    "if res.matrix is not None:",
+                    "    n = res.matrix.shape[0]",
+                    "    ax.imshow(res.matrix[:, :, n // 2].T, origin='lower')",
+                    "    ax.set_title('structure, slice z = L/2')",
+                    "else:",
+                    "    ax.text(0.5, 0.5, 'correlations only: see res', ha='center')")
+        return sc.text()
 
     def on_export_curves(self):
         res = self.result

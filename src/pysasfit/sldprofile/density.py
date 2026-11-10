@@ -246,7 +246,7 @@ class DensityProfileFit:
 
     Parameters
     ----------
-    q, I, sigma : data (sigma > 0)
+    q, I, sigma : the measured curve as arrays of equal length (sigma > 0)
     geometry : ``'sphere'``, ``'cylinder'`` (infinitely long, I per length)
         or ``'lamella'`` (infinite, symmetric about the mid-plane)
     n : number of density points / shells (paper: 80)

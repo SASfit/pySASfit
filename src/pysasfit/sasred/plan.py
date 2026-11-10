@@ -192,7 +192,16 @@ def _join(a: Optional[str], b: str) -> str:
 
 
 def _config(r) -> str:
-    return f"SD {r.SD_m:.1f} m, λ {r.wavelength_A:.2f} Å, coll {r.coll_m:.1f} m"
+    s = f"SD {r.SD_m:.1f} m, λ {r.wavelength_A:.2f} Å, coll {r.coll_m:.1f} m"
+    p = getattr(r, "panel_SD_m", None)
+    return s + (f", panels {p:.2f} m" if p is not None else "")
+
+
+def config_base(cfg: str) -> str:
+    """A configuration text without the distance of the SANS-LLB wide-angle panels (as written before
+    2026-11-10): tables and exclusions saved then still find their configuration."""
+    import re as _re
+    return _re.sub(r", panels [-0-9.]+ m$", "", cfg or "")
 
 
 def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dict] = None,
@@ -230,7 +239,7 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
             g = geo.get(_config_key(r))
             if g is not None:
                 geometry_notes.setdefault(_config(r), g.describe())
-    match = match or {"sample": None, "SD_m": "1%", "wavelength_A": "2%", "coll_m": "1%",
+    match = match or {"sample": None, "SD_m": "1%", "panel_SD_m": "1%", "wavelength_A": "2%", "coll_m": "1%",
                       "attenuator": None, "sample_position_mm": 0.5}
     raws = [getattr(r, "raw", r) for r in runs]
     raws = [r for r in raws if r is not None]

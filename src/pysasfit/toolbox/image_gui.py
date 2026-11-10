@@ -604,7 +604,75 @@ class ImageTool(QtWidgets.QWidget):
         b.clicked.connect(self.on_average)
         g.addWidget(self.show_region, len(rows), 0)
         g.addWidget(b, len(rows), 1, 1, 3)
+        from ..core import pycode
+        g.addWidget(pycode.button(self.python_code, w), len(rows), 4)
         return w
+
+    def python_code(self):
+        """Script: read the selected images (the one shown), their geometry and mask as set here, and the
+        analysis of the Averages tab ("Copy Python code")."""
+        import base64
+        import zlib
+
+        from ..core.pycode import Code, Script, call, lit, path_lit
+
+        sel = self.selected_images() or ([self.current()] if self.current() else [])
+        if not sel:
+            raise ValueError("No image: add 2D data first.")
+        k = self.avg_kind.currentData()
+        sc = Script("pyTOOLbox", f"2D data: {self.avg_kind.currentText()}")
+        sc.imp("import base64", "import zlib", "import numpy as np", "from pysasfit.toolbox import analysis2d as an",
+               "from pysasfit.toolbox import image2d as i2")
+        sc.add("",
+               "def unpack_mask(text, shape):",
+               "    \"\"\"The mask as set in the GUI (True = not valid): packed bits, zlib, base64.\"\"\"",
+               "    bits = np.unpackbits(np.frombuffer(zlib.decompress(base64.b64decode(text)), np.uint8))",
+               "    return bits[:int(np.prod(shape))].reshape(shape).astype(bool)",
+               "",
+               "results = []")
+        for im in sel:
+            sc.comment(im.name)
+            if not os.path.isfile(im.path):
+                sc.comment(f"{im.name} is not a file (pySASred result in memory): save it as 2D NXcanSAS first; "
+                           "left out")
+                continue
+            sc.add(f"im = next(x for x in i2.read_images({path_lit(im.path)}) if x.name == {im.name!r})")
+            if None not in (im.centre_px, im.pixel_m, im.SD_m, im.wavelength_A):
+                sc.add(call("im.set_geometry", tuple(im.centre_px), tuple(im.pixel_m), im.SD_m, im.wavelength_A))
+            blob = base64.b64encode(zlib.compress(np.packbits(np.asarray(im.mask, bool).ravel()).tobytes(), 9)).decode()
+            sc.add("im.mask = unpack_mask(")
+            for i in range(0, len(blob), 100):
+                sc.add(f"    {blob[i:i + 100]!r}")
+            sc.add(f"    , {tuple(im.mask.shape)})")
+            if k in ("radial", "sector", "sin2"):
+                lo, hi = self.qmin.value(), self.qmax.value()
+                if lo <= 0 or hi <= 0:
+                    sc.add("q = im.q()[im.valid() & (im.q() > 0)]")
+                lo_c = lit(lo) if lo > 0 else "float(q.min())"
+                hi_c = lit(hi) if hi > 0 else "float(q.max()) * (1 + 1e-9)"
+                sc.add(f"edges = an.q_edges({lo_c}, {hi_c}, {self.nbins.value()}, {self.spacing.currentData()!r})")
+            if k == "radial":
+                sc.add("results.append(an.radial_average(im, edges))")
+            elif k == "sector":
+                sc.add(call("results.append(an.radial_average", Code("im"), Code("edges"),
+                            sector=(self.psi0.value(), self.dpsi.value(), self.both.isChecked())) + ")")
+            elif k == "azimuthal":
+                sc.add(call("results.append(an.azimuthal_average", Code("im"), self.q1.value(), self.q2.value(),
+                            self.npsi.value()) + ")")
+            elif k == "box":
+                sc.add(call("results.append(an.box_profile", Code("im"), self.box_angle.value(), self.box_len.value(),
+                            self.box_w.value(), self.nbins.value()) + ")")
+            else:
+                sc.add(f"A, B, chi = an.sin2_decomposition(im, edges, psi0={lit(self.psi0.value())})",
+                       "results += [A, B]")
+        sc.add("for d in results:", "    print(d.name, len(d.x), 'points')")
+        sc.add_plot("fig, ax = plt.subplots()", "for d in results:",
+                    "    ax.errorbar(d.x, d.y, d.dy, fmt='.-', ms=3, label=d.name)",
+                    "ax.set_xlabel(f'{results[0].xlabel} [{results[0].xunit}]' if results else 'x')",
+                    "ax.legend(fontsize=7)")
+        if k in ("radial", "sector", "sin2"):
+            sc.add_plot("ax.set_xscale('log')", "ax.set_yscale('log')")
+        return sc.text()
 
     def _edges(self, im):
         lo, hi = self.qmin.value(), self.qmax.value()

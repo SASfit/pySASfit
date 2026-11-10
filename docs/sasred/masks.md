@@ -40,6 +40,40 @@ if none was edited for that configuration, the suggested mask of the run; the no
 masks of all configurations…* / *Load masks of configurations…* write and read all of them in one HDF5 file
 (one group per configuration with `pixel_mask`, the key and a label); the last session keeps them too.
 
+## Transmission region
+
+A semi-transparent beam stop lets part of the direct beam through. The mask tools have a second layer for it:
+**edit: transmission region (use)**. Its pixels are the opposite of masked pixels: they define where the
+transmitted beam is counted and leave the scattering untouched (a pixel can be masked for the scattering and
+belong to the region at the same time, which is the usual case behind the beam stop). The region is drawn in
+translucent green with a green outline above the mask.
+
+| control (region layer) | action |
+|---|---|
+| + / − tools | add pixels to the region / take them out |
+| **Suggest** | an ellipse around the beam centre: 3 σ of the direct-beam profile of the configuration (at least 1.5 px), or the brush radius + 2 px without a profile |
+| **Reset** | clears the region (the mask is kept) |
+| undo / redo | as for the mask (one history for both layers) |
+
+Like the mask, the region belongs to an instrument configuration (including the beam stop and its position):
+configurations without a semi-transparent beam stop simply have none. *Save masks of all configurations…* writes
+it as `transmission_region` next to `pixel_mask`, and the session keeps it.
+
+**Checking it.** *Reduction → Transmission through the semi-transparent beam stop…* lists for every row of the
+reduction table shown:
+
+* I_bs: the counts of its scattering runs in the region, corrected for dead time and attenuator, per monitor
+  (or per second, as the normalisation of the Reduction panel), runs summed;
+* T_bs = I_bs / I_bs(reference), with a reference row (the empty beam with the beam stop in, or the empty
+  cell: T_bs is then relative to the cell), with its statistical σ;
+* T: the transmission of the table (from the transmission runs, beam stop out), divided by the reference's
+  transmission, so that both refer to the same reference;
+* T_bs / T and z = (T_bs − T) / σ (red beyond 3).
+
+Scattered neutrons landing in the region are counted too, which makes T_bs too high for strong scatterers; this
+table shows how large that is. *Copy* and *Save CSV…* export it; the log keeps a copy. The table is not changed
+({mod}`pysasfit.sasred.core.beamstop_transmission` does the calculation for scripts).
+
 ## Suggested mask
 
 **Suggest** (detector panel) proposes the mask for the image shown, with the current beam centre:

@@ -22,11 +22,14 @@ def _pearson_gamma(fwhm, m):
 
 
 def gamma_peak(x, delta, nu):
-    """Generalised 1D peak shape of Foerster et al., J. Phys. Chem. B 109, 1347 (2005), eq. 27,
-    L(x) = 2/(pi delta) prod_n [1 + gamma_nu^2/(n+nu/2)^2 * 4x^2/(pi^2 delta^2)]^-1
-         = 2/(pi delta) |Gamma(nu/2 + i z)|^2 / Gamma(nu/2)^2,  z = gamma_nu 2x/(pi delta),
-    gamma_nu = sqrt(pi) Gamma((nu+1)/2)/Gamma(nu/2).  nu -> 0: Lorentzian (delta = FWHM);
-    nu -> inf: Gaussian exp(-4x^2/(pi delta^2)) (sigma = sqrt(pi/8) delta).  Normalised to 1."""
+    """Generalised 1D peak shape of Foerster et al., J. Phys. Chem. B 109, 1347 (2005), eq. 27::
+
+        L(x) = 2/(pi delta) prod_n [1 + gamma_nu^2/(n+nu/2)^2 * 4x^2/(pi^2 delta^2)]^-1
+             = 2/(pi delta) |Gamma(nu/2 + i z)|^2 / Gamma(nu/2)^2,  z = gamma_nu 2x/(pi delta),
+        gamma_nu = sqrt(pi) Gamma((nu+1)/2)/Gamma(nu/2)
+
+    nu -> 0: Lorentzian (delta = FWHM); nu -> inf: Gaussian exp(-4x^2/(pi delta^2)) (sigma = sqrt(pi/8) delta).
+    Normalised to 1."""
     x = np.asarray(x, float)
     a = 0.5 * nu
     g = np.sqrt(np.pi) * np.exp(gammaln(0.5 * (nu + 1)) - gammaln(a))
@@ -147,15 +150,28 @@ _DIM = {"lamellae": 1, "hexcyl": 2, "squarecyl": 2, "centered_rect": 2}
 class Crystal(Lattice):
     """Lattice of a named type.
 
-    kind : sc, bcc, fcc, hcp, bct, fd3m, orthorhombic, centered_rect, hexcyl, squarecyl, lamellae,
-           gyroid (Ia3d), obdd (Pn3m), plumbers (Im3m)
-    a, b, c, alpha, beta, gamma : conventional cell (lengths, angles in degrees); defaults: b=a,
-           c=a (hcp: c = 1.633 a), hexcyl gamma=120.
-    Rot  : 3x3 rotation of the lattice into the lab frame (see `zone_axis_rotation`).
-    width: peak width (std dev of the Gaussian of equal FWHM), peak: 'gaussian'|'lorentzian'|'pearson'|'voigt'.
-    dw   : Debye-Waller sigma (length).  hmax: maximum |h|,|k|,|l|.
-    para : paracrystal coefficient: reflection g gets the width ``width + para |g|^2`` (0: all the same).
-    For dim<3 the non-periodic direction is the cell c-axis (rods) or the a-axis normal (lamellae).
+    Parameters
+    ----------
+    kind : str
+        sc, bcc, fcc, hcp, bct, fd3m, orthorhombic, centered_rect, hexcyl, squarecyl, lamellae,
+        gyroid (Ia3d), obdd (Pn3m), plumbers (Im3m).
+    a, b, c, alpha, beta, gamma : float
+        Conventional cell (lengths, angles in degrees); defaults: b = a, c = a (hcp: c = 1.633 a),
+        gamma = 120 for hcp and hexcyl.
+    Rot : ndarray, optional
+        3x3 rotation of the lattice into the lab frame (see `zone_axis_rotation`).
+    width : float
+        Peak width (std dev of the Gaussian of equal FWHM).
+    peak : str
+        'gaussian', 'lorentzian', 'pearson', 'voigt' (or 'gamma').
+    dw : float
+        Debye-Waller sigma (length).
+    hmax : int
+        Maximum |h|, |k|, |l|.
+    para : float
+        Paracrystal coefficient: reflection g gets the width ``width + para |g|^2`` (0: all the same).
+
+    For dim < 3 the non-periodic direction is the cell c-axis (rods) or the a-axis normal (lamellae).
     """
 
     def __init__(self, kind, a, b=None, c=None, alpha=90., beta=90., gamma=None, Rot=None, width=0.002,
@@ -348,5 +364,5 @@ def zone_axis_rotation(M, uvw, to=(1, 0, 0), psi=0.0):
 
 
 def make_lattice(kind, a, **kw):
-    """Alias of Crystal(kind, a, **kw)."""
+    """Alias of ``Crystal(kind, a, **kw)``."""
     return Crystal(kind, a, **kw)

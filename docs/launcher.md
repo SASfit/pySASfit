@@ -27,8 +27,9 @@ The tools' own menu bars are hidden in the launcher; the launcher's menus act on
 
 * **File**: *Open project… / Save project…* of the tool in front, followed by the tool's own file entries the
   launcher does not provide itself (for example *Save project as…* of pySASstudio, *Open raw-data folder…* and
-  *Save NXcanSAS…* of pySASred, *Open HDF5 files…* of pyTOOLbox). Their keyboard shortcuts work as in the
-  stand-alone window.
+  *Save NXcanSAS…* of pySASred, *Open HDF5 files…* of pyTOOLbox), and *Copy Python code* (**Ctrl+Shift+C**): a
+  script that repeats the calculation of the tool in front ([Copy Python code](python_code.md)). Their keyboard
+  shortcuts work as in the stand-alone window.
 * **View**: the tool's own View entries (*Sliders* of pySASstudio), the panels of the tool in front (show / hide,
   panel border, *Arrange panels*, *Dock all panels*, *Reset layout*), the detach / attach entries described below, and under **Tools** one
   entry per tool with its icon: it brings the tool to the front, also when it is detached (**Alt+1** … **Alt+6**

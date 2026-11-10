@@ -12,6 +12,12 @@ Tool bar below the colour-scale row of the detector plot:
 * **Undo / Redo** (Ctrl+Z / Ctrl+Y), **Reset** (border only), **Load… / Save…**
   (``.h5`` with the reason bits, ``.npy``, or a 0/1 ``.txt`` matrix), **show** (overlay).
 
+* **edit** – which of the two layers the tools draw on: the **mask** (pixels left out of the
+  scattering) or the **transmission region** (pixels used, not left out: the direct beam behind a
+  semi-transparent beam stop, whose counts give the transmission; see
+  :mod:`pysasfit.sasred.core.beamstop_transmission`). The region is kept per instrument configuration
+  like the mask and drawn as a green outline; *Suggest* proposes it around the beam centre.
+
 Editing works in the cartesian view; the polar view shows the masked pixels in grey.
 The mask is used at once by the live I(q), the reduction and the polar view, and is
 kept with the last session.
@@ -87,6 +93,7 @@ class MaskEditor(QtCore.QObject):
         super().__init__(win)
         self.win = win
         self.mask = None                 # uint32, detector shape (None until an image is shown)
+        self.region = None               # bool, detector shape: pixels of the transmitted beam (None: none)
         self._undo, self._redo = [], []
         self._selector = None
         self._cids = []
@@ -103,11 +110,19 @@ class MaskEditor(QtCore.QObject):
         sp.setHeightForWidth(True)
         sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Ignored)
         w.setSizePolicy(sp)
-        lay.addWidget(QtWidgets.QLabel("mask"))
+        self.layer = QtWidgets.QComboBox()
+        self.layer.addItem("mask (leave out)", "mask")
+        self.layer.addItem("transmission region (use)", "region")
+        self.layer.setToolTip("what the tools edit: the mask (pixels left out of the scattering) or the transmission "
+                              "region (pixels whose counts give the beam transmitted through a semi-transparent beam "
+                              "stop; nothing is left out)")
+        self.layer.currentIndexChanged.connect(self._layer_changed)
+        lay.addWidget(self.layer)
         b = QtWidgets.QPushButton("Suggest")
-        b.setToolTip("border + beamstop shadow (sudden drop around the beam centre) + hot pixels of the image "
-                     "shown; your own (user) pixels are kept")
-        b.clicked.connect(self.suggest)
+        b.setToolTip("mask: border + beamstop shadow (sudden drop around the beam centre) + hot pixels of the image "
+                     "shown; your own (user) pixels are kept. Transmission region: the direct beam around the beam "
+                     "centre (3 σ of the direct-beam profile, or the brush radius + 2 px)")
+        b.clicked.connect(lambda: self.suggest_region() if self.editing_region else self.suggest())
         lay.addWidget(b)
         self.tool = QtWidgets.QComboBox()
         for key, label in TOOLS:
@@ -165,6 +180,50 @@ class MaskEditor(QtCore.QObject):
 
     # ------------------------------------------------------------------ state
     @property
+    def editing_region(self) -> bool:
+        return self.layer.currentData() == "region"
+
+    def _layer_changed(self, _i=None):
+        self._update_stats()
+        self.attach()
+        if self.editing_region and self.region is None:
+            self.win.statusBar().showMessage("transmission region: draw it with + (or Suggest); it does not mask "
+                                             "anything", 8000)
+
+    def set_region(self, r, record=True, message=None):
+        """Set the transmission region (bool image or None); undoable."""
+        r = None if r is None else np.asarray(r, bool).copy()
+        if record and self.mask is not None:
+            self._push_undo()
+        self.region = r if (r is not None and r.any()) else None
+        self._update_stats()
+        if message:
+            self.win.log(message)
+        self.refresh()
+        self.changed.emit()
+
+    def suggest_region(self):
+        """Transmission region around the beam centre: an ellipse of 3 σ of the direct-beam profile of the
+        configuration shown (at least 1.5 px), or a disc of the brush radius + 2 px without one."""
+        raw = self.win.displayed_raw()
+        if raw is None:
+            QtWidgets.QMessageBox.information(self.win, "Transmission region", "Select a run in the run table first.")
+            return
+        shape = raw.counts.shape
+        self.ensure(shape)
+        x, y = self.win.xc.value(), self.win.yc.value()
+        prof = self.win.profile_for(raw) if hasattr(self.win, "profile_for") else None
+        if prof is not None and np.isfinite(prof.sigma_x_px) and np.isfinite(prof.sigma_y_px):
+            ax, ay = max(3 * prof.sigma_x_px, 1.5), max(3 * prof.sigma_y_px, 1.5)
+            how = f"3 σ of the direct-beam profile ({ax:.1f} × {ay:.1f} px)"
+        else:
+            ax = ay = self.brush.value() + 2.0
+            how = f"disc of {ax:g} px (no direct-beam profile of this configuration)"
+        sel = mk.pixels_in_ellipse(shape, x - ax, x + ax, y - ay, y + ay)
+        self.set_region(sel, message=f"transmission region suggested around the beam centre ({x:.2f}, {y:.2f}): "
+                                     f"{how}, {int(np.count_nonzero(sel))} px")
+
+    @property
     def mode(self):
         """How masked pixels are drawn: colours, scale (own grey scale) or hidden."""
         return self.display.currentData()
@@ -192,6 +251,8 @@ class MaskEditor(QtCore.QObject):
         shape = tuple(shape)
         if self.mask is None or self.mask.shape != shape:
             self.mask = self.start_mask(shape)
+            if self.region is not None and self.region.shape != shape:
+                self.region = None
             self.pristine = True
             self._undo.clear()
             self._redo.clear()
@@ -217,12 +278,21 @@ class MaskEditor(QtCore.QObject):
         n = int(np.count_nonzero(m & mk.BEAMSTOP))
         self.set_mask(m, message=f"beamstop first guess put into the mask ({n} px)")
 
+    def _snapshot(self):
+        return (self.mask.copy(), None if self.region is None else self.region.copy())
+
+    def _restore(self, snap):
+        self.mask, self.region = snap
+
+    def _push_undo(self):
+        self._undo.append(self._snapshot())
+        del self._undo[:-UNDO_DEPTH]
+        self._redo.clear()
+
     def set_mask(self, m, record=True, message=None, pristine=False):
         m = np.asarray(m, np.uint32).copy()
         if record and self.mask is not None and self.mask.shape == m.shape:
-            self._undo.append(self.mask.copy())
-            del self._undo[:-UNDO_DEPTH]
-            self._redo.clear()
+            self._push_undo()
         self.mask = m
         self.pristine = pristine
         self._update_stats()
@@ -237,20 +307,22 @@ class MaskEditor(QtCore.QObject):
             return
         s = mk.summary(self.mask)
         parts = [f"{k} {v}" for k, v in s.items() if k != "total" and v]
-        self.stats.setText(f"{s['total']} px masked")
-        self.stats.setToolTip(", ".join(parts) if parts else "nothing masked")
+        nr = 0 if self.region is None else int(np.count_nonzero(self.region))
+        self.stats.setText(f"{s['total']} px masked" + (f", transmission region {nr} px" if nr else ""))
+        self.stats.setToolTip((", ".join(parts) if parts else "nothing masked")
+                              + (f"\ntransmission region: {nr} px (used, not masked)" if nr else ""))
 
     def undo(self):
         self.pristine = False
         if self._undo:
-            self._redo.append(self.mask.copy())
-            self.mask = self._undo.pop()
+            self._redo.append(self._snapshot())
+            self._restore(self._undo.pop())
             self._after_history("undo")
 
     def redo(self):
         if self._redo:
-            self._undo.append(self.mask.copy())
-            self.mask = self._redo.pop()
+            self._undo.append(self._snapshot())
+            self._restore(self._redo.pop())
             self._after_history("redo")
 
     def _after_history(self, what):
@@ -260,6 +332,10 @@ class MaskEditor(QtCore.QObject):
         self.win.statusBar().showMessage(f"mask: {what}", 3000)
 
     def reset(self):
+        if self.editing_region:
+            if self.region is not None:
+                self.set_region(None, message="transmission region cleared")
+            return
         if self.mask is not None:
             self.set_mask(self.start_mask(self.mask.shape), pristine=True,
                           message="mask reset to the standard border and the first-guess beamstop")
@@ -368,6 +444,27 @@ class MaskEditor(QtCore.QObject):
         self._draw_outline()
         self.attach()
 
+    def _draw_region(self):
+        """The transmission region: translucent green with a green outline (above the mask)."""
+        from matplotlib.collections import LineCollection
+        for a in getattr(self, "_region_artists", []):
+            try:
+                a.remove()
+            except (ValueError, AttributeError):
+                pass
+        self._region_artists = []
+        r = self.region
+        if r is None or getattr(self, "_ax", None) is None or self.mask is None or r.shape != self.mask.shape:
+            return
+        rgba = np.zeros(r.shape + (4,))
+        rgba[r] = (0.0, 0.85, 0.2, 0.35)
+        self._region_artists.append(self._ax.imshow(rgba, origin="lower", interpolation="nearest",
+                                                    aspect=self._ax.get_aspect(), zorder=5))
+        segs = outline_segments(r)
+        for col, lw in (("black", 2.6), ("#00d936", 1.4)):
+            lc = LineCollection(segs, colors=col, linewidths=lw, zorder=6)
+            self._region_artists.append(self._ax.add_collection(lc, autolim=False))
+
     def _draw_outline(self):
         """Boundary of the masked area: white line on a black one, visible on any colour."""
         for c in self._outline:
@@ -379,12 +476,14 @@ class MaskEditor(QtCore.QObject):
         from matplotlib.collections import LineCollection
         m = self.win.full_mask(self.mask.shape) != 0
         if not m.any() or m.all():
+            self._draw_region()
             return
         segs = outline_segments(m)
         for col, lw in (("black", 2.6), ("white", 1.1)):
             lc = LineCollection(segs, colors=col, linewidths=lw, zorder=4, capstyle="projecting",
                                 joinstyle="miter")
             self._outline.append(self._ax.add_collection(lc, autolim=False))
+        self._draw_region()
 
     def refresh(self):
         """Update the overlay (or redraw) after the mask changed."""
@@ -442,7 +541,8 @@ class MaskEditor(QtCore.QObject):
             return
         add = key.startswith("+")
         kind = key[1:]
-        props = dict(edgecolor="orange" if add else "cyan", facecolor="none", linewidth=1.5)
+        props = dict(edgecolor=("#00d936" if self.editing_region else "orange") if add else "cyan",
+                     facecolor="none", linewidth=1.5)
         if kind in ("rect", "ellipse"):
             cls = RectangleSelector if kind == "rect" else EllipseSelector
 
@@ -477,10 +577,9 @@ class MaskEditor(QtCore.QObject):
             if e.button != 1:
                 return
             self._painting = True
-            self.pristine = False
-            self._undo.append(self.mask.copy())
-            del self._undo[:-UNDO_DEPTH]
-            self._redo.clear()
+            if not self.editing_region:
+                self.pristine = False
+            self._push_undo()
         if not self._painting:
             return
         sel = mk.pixels_in_disc(self.mask.shape, e.xdata, e.ydata, self.brush.value() + 0.5)
@@ -494,14 +593,25 @@ class MaskEditor(QtCore.QObject):
             self.changed.emit()
 
     def _set_pixels(self, sel, add):
+        if self.editing_region:
+            r = np.zeros(self.mask.shape, bool) if self.region is None else self.region
+            r[sel] = add
+            self.region = r if r.any() else None
+            return
         if add:
             self.mask[sel] |= mk.USER
         else:
             self.mask[sel] = 0
 
     def apply(self, sel, add):
-        """Add (user bit) or remove (all bits) the pixels ``sel``; undoable."""
+        """Add (user bit) or remove (all bits) the pixels ``sel``; on the transmission-region layer add them
+        to it or take them out of it. Undoable."""
         if not np.any(sel):
+            return
+        if self.editing_region:
+            r = np.zeros(self.mask.shape, bool) if self.region is None else self.region.copy()
+            r[sel] = add
+            self.set_region(r)
             return
         m = self.mask.copy()
         if add:

@@ -236,6 +236,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             act = menu.addAction(text)
             act.setShortcut(key)
             act.triggered.connect(slot)
+        from ..core import pycode
+        pycode.install(self, self.python_code, status=lambda m: self._status(m))
         menu = self.menuBar().addMenu("&Settings")
         act = menu.addAction("SASfit &installation…")
         act.setShortcut("Ctrl+L")
@@ -977,7 +979,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             self.bg_row.set_value(bg["background"], emit=False)
             self.bgA_row.set_value(bg["bg_A"], emit=False)
             self.bgalpha_row.set_value(bg["bg_alpha"], emit=False)
-        d = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name)), "bg": dict(bg or first),
+        d = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name)), "bg": dict(bg or first), "path": str(name),
              "artist": None, "line": None, "res": None}  # fmt: skip
         self.datasets.append(d)
         for j in range(len(self.datasets)):  # colours and legend labels depend on the number of data sets
@@ -1395,9 +1397,105 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         return "\n".join(lines)
 
     def _copy_python(self):
-        if self.has_model():
-            QtWidgets.QApplication.clipboard().setText(self._python_snippet())
-            self._status("Python code copied to the clipboard")
+        from ..core.pycode import copy_to_clipboard
+
+        copy_to_clipboard(self.python_code, self, self._status)
+
+    def python_code(self):
+        """Script: the contributions, the curve of the plot (q grid, P*S / P / S) and, with data sets, their files,
+        the model of every data set and the fit as set up in the Fit panel ("Copy Python code")."""
+        from ..core.pycode import Code, Script, call, lit, path_lit
+
+        if not self.has_model():
+            raise ValueError("No model yet: choose a form factor first.")
+        ms = self.models()
+        names = [f"c{i + 1}" for i in range(len(ms))]
+        sc = Script("pySASstudio", "SASfit model" + (" and fit" if self.datasets else ""))
+        sc.imp("import numpy as np")
+        body = self._python_snippet().split("\n")
+        # the imports of the snippet go to the top, the model line is rebuilt below
+        while body and (body[0].startswith(("from ", "import ")) or not body[0].strip()):
+            sc.imp(body.pop(0)) if body[0].strip() else body.pop(0)
+        body = [ln for ln in body if not ln.startswith(("model = ModelFunction(", "I = model(q)"))]
+        from .functions import _PYTHON_FUNCTIONS
+
+        pyf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None and f.name in _PYTHON_FUNCTIONS})
+        if pyf:
+            sc.comment(f"{', '.join(pyf)}: Python function(s) of this session; register them first with "
+                       "pysasfit.studio.register_python_function (or put the plugin file in a python plugin folder)")
+        sc.comment("the contributions (form factor, size distribution, structure factor)")
+        sc.add(*body)
+        while sc.body and not sc.body[-1].strip():
+            sc.body.pop()
+        # the curve of the plot
+        lo, hi = float(self.qmin.text()), float(self.qmax.text())
+        n = self.npoints.value()
+        sc.comment(f"the curve of the plot (q in {self.units.currentText()})")
+        sc.add(f"q = np.{'geomspace' if self.logx.isChecked() else 'linspace'}({lit(lo)}, {lit(hi)}, {n})")
+        bg = self.background_of(None)
+        mkw = dict(scales=[p.scale_row.value for p in ms], background=bg["background"])
+        if bg["bg_A"]:
+            mkw.update(bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"])
+        sc.add(call("model = ModelFunction", Code("[" + ", ".join(names) + "]"), **mkw))
+        mode = self.mode_combo.currentData()
+        if mode == "S":
+            p = self.current_panel()
+            i = ms.index(p) if p in ms else 0
+            sc.add(f"I = np.asarray({names[i]}.sq.evaluate_p(q, {names[i]}.sq_p), float)   # structure factor S(q) of {names[i]}")
+            ylabel = "S(q)"
+        elif mode == "P":
+            sc.add("",
+                   "def without_structure_factor(c, q):",
+                   "    sq, c.sq = c.sq, None",
+                   "    try:",
+                   "        return c.intensity(q)",
+                   "    finally:",
+                   "        c.sq = sq",
+                   "",
+                   "# P(q): the contributions without their structure factors",
+                   "I = sum(s * without_structure_factor(c, q) for s, c in zip(model.scales, model.contributions))",
+                   f"I = I + {lit(bg['background'])}" + (f" + {lit(bg['bg_A'])} * q ** -{lit(bg['bg_alpha'])}"
+                                                          if bg["bg_A"] else ""))
+            ylabel = "P(q)"
+        else:
+            sc.add("I = model(q)")
+            ylabel = "I(q)"
+        plot = ["fig, ax = plt.subplots()", f"ax.plot(q, I, label={ylabel!r})"]
+        if self.datasets:
+            sc.imp("from pysasfit.core.io import load_data")
+            sc.comment("the data sets and the model of each (its contributions and background)")
+            dnames = []
+            for k, d in enumerate(self.datasets):
+                v = f"d{k + 1}"
+                dnames.append(v)
+                if d.get("path") and os.path.isfile(d["path"]):
+                    qs = d.get("q_scale", 1.0)
+                    sc.add(f"q{k + 1}, I{k + 1}, s{k + 1}, *_ = load_data({path_lit(d['path'])}"
+                           + (f", q_scale={lit(qs)})" if qs != 1.0 else ")"))
+                    sc.add(f"ok = np.isfinite(q{k + 1}) & np.isfinite(I{k + 1}) & (q{k + 1} > 0)",
+                           f"q{k + 1}, I{k + 1}, s{k + 1} = q{k + 1}[ok], I{k + 1}[ok], s{k + 1}[ok]")
+                else:
+                    sc.add(f"# {d['name']}: no file (from a project); the values as stored",
+                           f"q{k + 1} = {lit(d['q'])}", f"I{k + 1} = {lit(d['I'])}", f"s{k + 1} = {lit(d['sigma'])}")
+                bgk = self.background_of(k)
+                kw = dict(scales=[p.scale_row.value for p in ms], background=bgk["background"])
+                if bgk["bg_A"]:
+                    kw.update(bg_A=bgk["bg_A"], bg_alpha=bgk["bg_alpha"])
+                active = [p.applies_to(k, len(self.datasets)) for p in ms]
+                if not all(active):
+                    kw["active"] = active
+                sc.add(call(f"model{k + 1} = ModelFunction", Code("[" + ", ".join(names) + "]"), **kw))
+                plot.append(f"ax.errorbar(q{k + 1}, I{k + 1}, s{k + 1}, fmt='o', ms=3, label={d['name']!r})")
+            self.fit_panel.python_fit_code(sc, len(self.datasets))
+            for k in range(len(self.datasets)):
+                plot.append(f"ax.plot(q{k + 1}, model{k + 1}(q{k + 1}), '-', label='model {k + 1}')")
+        if self.logx.isChecked():
+            plot.append("ax.set_xscale('log')")
+        if self.logy.isChecked():
+            plot.append("ax.set_yscale('log')")
+        plot += [f"ax.set_xlabel('q ({self.units.currentText()})')", f"ax.set_ylabel({ylabel!r})", "ax.legend()"]
+        sc.add_plot(*plot)
+        return sc.text()
 
     def _export(self):
         if self._last is None or not self.has_model():

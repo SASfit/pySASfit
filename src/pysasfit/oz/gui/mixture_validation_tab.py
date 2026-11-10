@@ -496,6 +496,7 @@ class MixtureValidationTab(QtWidgets.QWidget):
         outerLay.addWidget(qtkit.scroll_area(outer), 3)
 
         # ---- footer: buttons, status, summary ----
+        from ...core import pycode
         self.computeBtn = qtkit.button("Compare", self._onCompare)
         #Save/load for this tab is self-contained -- see _onSave. The file
         #keeps the settings and the computed curves, which is the whole
@@ -504,7 +505,8 @@ class MixtureValidationTab(QtWidgets.QWidget):
             self.computeBtn,
             qtkit.button("Clear", self._onClear),
             qtkit.button("Save...", self._onSave),
-            qtkit.button("Load...", self._onLoad)))
+            qtkit.button("Load...", self._onLoad),
+            pycode.button(self.python_code, self)))
 
         self.statusVar = qtkit.StringVar(
             value="ready" + ("" if _ms is not None else
@@ -769,6 +771,76 @@ class MixtureValidationTab(QtWidgets.QWidget):
             self.statusVar.set(
                 f"loaded {path}; replot failed "
                 f"({type(exc).__name__}: {exc})")
+
+    def python_code(self):
+        """Script: the comparison of Compare -- analytic Gazzillo (neutral = PY) and mixscatter Vrij PY
+        references and the numerical solver on two grids ("Copy Python code")."""
+        from ...core import settings as prefs
+        from ...core.pycode import Code, Script, call, lit, prefs_lines
+
+        p = self._readInputs()
+        cls = p.get("solverClass")
+        sc = Script("pyOZsolver", f"mixture validation, {p['closure']}, phi = {p['phi']:g}")
+        sc.imp("import numpy as np", "from pysasfit.oz import gazzillo_msa as GZ",
+               "from pysasfit.oz import mixscatter_bridge",
+               "from pysasfit.oz.mixscatter_bridge import OZLiquidStructure",
+               "from pysasfit.oz.polydisperse_nodes import sizeClasses",
+               "from pysasfit.oz.preferences import apply_solver_settings")
+        if cls is not None:
+            sc.imp(f"from {cls.__module__} import {cls.__name__}")
+        sc.comment("solver defaults from Settings -> Preferences")
+        sc.add(*prefs_lines("oz.solvers", "oz.consistency", "numerics.deflation", "numerics.msa", "numerics.rmsa",
+                            apply="apply_solver_settings()"),
+               f"mixscatter_bridge.ACCEPT_RESIDUAL = {lit(prefs.get('oz.mixture.accept_residual'))}")
+        sc.comment("size classes of the Schulz distribution (diameters sigma, number fractions x)")
+        sc.add(f"Q = np.logspace(np.log10({lit(p['Qmin'])}), np.log10({lit(p['Qmax'])}), {p['nQ']})",
+               f"phi = {lit(p['phi'])}",
+               f"sigma, x = sizeClasses('Schulz', {lit(p['srel'])}, {p['nbins']}, {lit(2.0 * p['meanRadius'])})",
+               "",
+               "def measurable(S_number_weighted):",
+               "    \"\"\"Measurable S_M(Q) from the number-weighted partials (sphere amplitudes as weights).\"\"\"",
+               "    SAL = S_number_weighted / np.sqrt(np.outer(x, x))[:, :, None]",
+               "    F = (np.pi / 6.0) * sigma**3 * GZ._j1_over_x(0.5 * Q[:, None] * sigma[None, :])",
+               "    w = F / np.sqrt(np.sum(x[None, :] * F**2, axis=1))[:, None]",
+               "    sx = np.sqrt(x)",
+               "    return np.einsum('a,b,qa,qb,abq->q', sx, sx, w, w, SAL)",
+               "",
+               "curves = {}")
+        sc.comment("analytic references: Gazzillo MSA for neutral spheres (= PY) and mixscatter's Vrij PY")
+        sc.add("rhoT = phi / ((np.pi / 6.0) * float(np.sum(x * sigma**3)))",
+               "curves['Gazzillo MSA (neutral = PY)'] = GZ.measurableStructureFactor(Q, sigma, np.zeros_like(sigma), "
+               "rhoT * x, None, 0.0)",
+               "try:",
+               "    import mixscatter",
+               "    py = mixscatter.PercusYevick(Q, mixscatter.Mixture(radius=sigma / 2.0, number_fraction=x),",
+               "                                 volume_fraction_total=phi)",
+               "    curves['mixscatter (Vrij PY)'] = measurable(np.asarray(py.number_weighted_partial_structure_factor, float))",
+               "except ImportError:",
+               "    pass")
+        coarseN = (1 << p["gridK"]) - 1
+        fineN = (coarseN + 1) * p["refine"] - 1
+        sc.comment("the numerical solver on a coarse and a refined grid (same r_max: N and points per sigma scale "
+                   "together)")
+        sc.add("",
+               "class Mix:            # what OZLiquidStructure needs of a mixture",
+               "    radius = sigma / 2.0",
+               "    number_fraction = x",
+               "",
+               f"for tag, pps, gridN in (('numerical (coarse)', {p['pps']}, {coarseN}), "
+               f"('numerical (fine)', {p['refine'] * p['pps']}, {fineN})):",
+               "    " + call("oz = OZLiquidStructure", Code("Q"), Code("Mix()"), indent=4, volume_fraction_total=Code("phi"),
+                             closure=p["closure"], pointsPerSigma=Code("pps"), gridN=Code("gridN"),
+                             solverClass=Code(cls.__name__ if cls is not None else "None"),
+                             mannAlpha=p.get("mannAlpha"), maxIterations=p.get("maxIter", 60000),
+                             deflateOnUnphysical=p.get("deflate", 0)),
+               "    curves[tag] = measurable(oz.number_weighted_partial_structure_factor)",
+               "    print(tag, 'residual', getattr(oz, 'residual', None))",
+               "ref = curves['Gazzillo MSA (neutral = PY)']",
+               "for tag in ('numerical (coarse)', 'numerical (fine)'):",
+               "    print(f'{tag}: max |S - S_Gazzillo| = {np.max(np.abs(curves[tag] - ref)):.3g}')")
+        sc.add_plot("fig, ax = plt.subplots()", "for tag, S in curves.items():", "    ax.plot(Q, S, label=tag)",
+                    "ax.set_xscale('log')", "ax.set_xlabel('Q')", "ax.set_ylabel('S_M(Q)')", "ax.legend()")
+        return sc.text()
 
     def _onCompare(self):
         if self.worker is not None and self.worker.is_alive():

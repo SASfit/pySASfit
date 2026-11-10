@@ -20,6 +20,7 @@ NOT part of this build (they have their own builds):
   * oz/notes/            -- internal working notes from the pyOZgui development
 """
 import os
+import re
 import sys
 
 # Build from a checkout without installing: the package is in ../src.
@@ -250,7 +251,44 @@ class _CardFallback(_Directive):
         return [card]
 
 
+# ---------------------------------------------------------------------------
+# Formulas in plain text. Many docstrings write |q|^2, |G| or |x|+|y| as ordinary text; reStructuredText reads
+# |name| as a substitution reference and warns ("Undefined substitution referenced"). Every | is therefore
+# escaped when autodoc inserts a docstring -- except in literal blocks (after "::"), directive bodies, inline
+# literals and roles in backticks, and at the start of line blocks and table rows ("| ", "+-").
+_INLINE_LITERAL = re.compile(r"(``.+?``|`[^`\n]+`)")
+
+
+def _escape_pipes(lines):
+    out, literal_indent = [], None
+    for line in lines:
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if literal_indent is not None:
+            if not stripped or indent > literal_indent:
+                out.append(line)
+                continue
+            literal_indent = None
+        if stripped.startswith("..") and stripped.endswith("::"):      # directive: its body stays as it is
+            literal_indent = indent
+            out.append(line)
+            continue
+        if stripped.endswith("::"):
+            literal_indent = indent
+        if "|" not in line or stripped.startswith(("| ", "+-", "+=")) or stripped == "|":
+            out.append(line)
+            continue
+        parts = _INLINE_LITERAL.split(line)
+        out.append("".join(p if i % 2 else re.sub(r"(?<!\\)\|", r"\\|", p) for i, p in enumerate(parts)))
+    return out
+
+
+def _process_docstring(app, what, name, obj, options, lines):
+    lines[:] = _escape_pipes(lines)
+
+
 def setup(app):
+    app.connect("autodoc-process-docstring", _process_docstring)
     if not _HAVE_SPHINX_DESIGN:
         app.add_directive("grid", _GridFallback)
         app.add_directive("grid-item-card", _CardFallback)

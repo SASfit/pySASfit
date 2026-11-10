@@ -69,8 +69,18 @@ class MainWindow(QtWidgets.QMainWindow):
         m.addSeparator()
         m.addAction("Add &reduced curves (merge)…", lambda: (self.tabs.show_page(self.merger),
                                                              self.merger.on_add_files()))
+        from ..core import pycode
+        pycode.install(self, self.python_code, menu=m)
         add_preferences_menu(self, "toolbox")
         self.resize(1400, 900)
+
+    def python_code(self):
+        """Script of the tool in front (merge, 2D data, 1D data, HDF5 viewer) ("Copy Python code")."""
+        w = self.tabs.currentWidget()
+        fn = getattr(w, "python_code", None)
+        if fn is None:
+            raise ValueError(f"The tab '{self.tabs.tabText(self.tabs.currentIndex())}' has no Python code.")
+        return fn()
 
     def show_data1d(self, ds):
         self.data1d.add_data(ds)

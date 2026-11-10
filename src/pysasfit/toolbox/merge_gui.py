@@ -191,6 +191,8 @@ class MergeTool(QtWidgets.QWidget):
         b.clicked.connect(self.on_merge)
         p2.addWidget(ob, 1)
         p2.addWidget(b)
+        from ..core import pycode
+        p2.addWidget(pycode.button(self.python_code, self))
         self.steps.addTab(page2, "2 · Group and merge")
 
         rb = QtWidgets.QWidget()
@@ -628,6 +630,45 @@ class MergeTool(QtWidgets.QWidget):
         if self.merged:
             t.selectRow(0)
         self.replot()
+
+    def python_code(self):
+        """Script: read the curve files, group them (sample expression, header items) and merge them with the cuts,
+        method and scaling of the panel ("Copy Python code")."""
+        from ..core.pycode import Code, Script, call, lit
+
+        if not self.curves:
+            raise ValueError("No curves yet: add reduced curves first.")
+        fields = self.grouping()
+        cuts, drop = self.cut_settings()
+        sc = Script("pyTOOLbox", "merge of the detector distances (geometries)")
+        sc.imp("import numpy as np", "from pysasfit.toolbox import merge as mg")
+        files = list(dict.fromkeys(c.path for c in self.curves if os.path.isfile(c.path)))
+        memory = [c for c in self.curves if not os.path.isfile(c.path)]
+        sc.comment("the reduced curves (NXcanSAS, pySASred ASCII, BerSANS, columns)")
+        sc.add("curves = []", "for path in " + lit(files, 4) + ":", "    curves += mg.read_curves(path)")
+        if memory:
+            sc.comment(f"{len(memory)} curves taken from pySASred in memory (not saved as files): their values")
+            for c in memory:
+                sc.add(call("curves.append(mg.Curve", c.q, c.I, c.dI, c.dq, c.path, c.fmt, meta=dict(c.meta),
+                            entry=c.entry, I_unit=c.I_unit) + ")")
+        sc.comment("groups: same sample (regular expression) and header items within their tolerance")
+        sc.add(call("groups, rest = mg.group_curves", Code("curves"), self.regex.text().strip() or None, fields),
+               "if rest:", "    print(len(rest), 'curves do not match the sample expression')")
+        sc.comment("merge: q cuts and dropped points per geometry, method, scaling")
+        sc.add(call("merged = mg.merge_groups", Code("groups"), cuts=cuts, drop=drop, method=self.method.currentData(),
+                    scale_to=self.scale.currentData(), common=self.scale_common.isChecked()),
+               "for m in merged:",
+               "    worst = max(m.overlaps, key=lambda o: abs(o.factor - 1), default=None)",
+               "    print(m.group.label, len(m.group.curves), 'curves',",
+               "          '' if worst is None else f'overlap mismatch {100 * (worst.factor - 1):+.1f} %')",
+               "# save: mg.write_nxcansas('merged.h5', merged) or mg.write_ascii(mg.file_stem(m) + '.dat', m)")
+        sc.add_plot("fig, ax = plt.subplots()",
+                    "for m in merged:",
+                    "    if len(m.q):",
+                    "        ax.errorbar(m.q, m.I, m.dI, fmt='-', lw=1, label=m.group.label)",
+                    "ax.set_xscale('log')", "ax.set_yscale('log')", "ax.set_xlabel('q [1/nm]')", "ax.set_ylabel('I')",
+                    "ax.legend(fontsize=7)")
+        return sc.text()
 
     # ------------------------------------------------------------------ plot
     def selected(self) -> List[mg.Merged]:

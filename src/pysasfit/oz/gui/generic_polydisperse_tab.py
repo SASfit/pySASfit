@@ -2401,6 +2401,176 @@ class GenericPolydisperseTab(PolydisperseTabControls, QtWidgets.QWidget):
         p["settings"] = s
         return p
 
+    def python_code(self):
+        """Script: the Compute calculation (form factor, polydisperse OZ solve, scale, background, power law,
+        resolution) and, with loaded data and ticked parameters, the Fit ("Copy Python code")."""
+        from ...core.pycode import Code, Script, call, lit, path_lit, prefs_lines
+
+        p = self._readInputs()
+        sc = Script("pyOZsolver", f"polydisperse {p['potential']}, {p['closure']}, {p['distribution']}")
+        sc.imp("import numpy as np", "from pysasfit.oz.generic_polydisperse_sas import GenericPolydisperseSAS",
+               "from pysasfit.oz.preferences import apply_solver_settings")
+        sc.comment("solver defaults from Settings -> Preferences")
+        sc.add(*prefs_lines("oz.solvers", "oz.consistency", "numerics.deflation", "numerics.msa", "numerics.rmsa",
+                            apply="apply_solver_settings()"))
+        cls = p["solverClass"]
+        if cls is not None:
+            sc.imp(f"from {cls.__module__} import {cls.__name__}")
+        solver = Code(cls.__name__ if cls is not None else "None")
+        st = p["settings"]
+        grid = dict(gridN=st["gridN"], pointsPerSigma=st["pointsPerSigma"], maxIterations=st["maxIterations"],
+                    transformType=st["transformType"])
+        sc.comment("form factor (polydisperse in the core)")
+        if p["ff"] == "Core-shell":
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import CoreShellFixedShell")
+            sc.add(call("ff = CoreShellFixedShell", rho_core=p["rhoCore"], rho_shell=p["rhoShell"],
+                        thickness=p["shell"]))
+        else:
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import Sphere")
+            sc.add("ff = Sphere()")
+        closureParam = p["closureParam"]
+        if p["findAlpha"]:
+            g = prefs.values("oz.generic")
+            sc.imp("from pysasfit.oz.generic_polydisperse_sas import solveAlpha")
+            sc.comment("closure parameter alpha from thermodynamic consistency (compressibility = virial route)")
+            sc.add(call("alpha, resid, chi_inv = solveAlpha", bracket=(g["alpha_lo"], g["alpha_hi"]),
+                        tol=g["alpha_tol"], potential=p["potential"], potentialArgs=p["potentialArgs"],
+                        srel=p["srel"], nbins=p["nbins"], closure=p["closure"], phi=p["phi"],
+                        closureParam2=p["closureParam2"], meanRadius=p["meanRadius"],
+                        distribution=p["distribution"], mannAlpha=p.get("mannAlpha"), formfactor=Code("ff"),
+                        solverClass=solver, **grid),
+                   f"print(f'alpha = {{alpha:.4f}}, residual {{resid:+.2e}} '"
+                   f"f'({{\"consistent\" if abs(resid) < {lit(g['alpha_accept'])} * chi_inv else \"NOT consistent\"}})')")
+            closureParam = Code("alpha")
+        sc.comment("the polydisperse system and its OZ solve")
+        sc.add(call("sas = GenericPolydisperseSAS", p["potential"], p["potentialArgs"], p["phi"], p["srel"],
+                    nbins=p["nbins"], nFF=p["nFF"], closure=p["closure"], meanRadius=p["meanRadius"],
+                    closureParam=closureParam, closureParam2=p["closureParam2"], distribution=p["distribution"],
+                    formfactor=Code("ff"), solverClass=solver, deflateOnUnphysical=p.get("deflate", 0),
+                    mannAlpha=p.get("mannAlpha"), **grid))
+        data_path = getattr(self, "dataPath", None) if getattr(self, "data", None) is not None else None
+        if data_path:
+            sc.imp("from pysasfit.oz.polydisperse_fit import loadCurve")
+            sc.comment("measured data (4th column: Q resolution sigma)")
+            sc.add(f"Qd, Id, dId, dQd = loadCurve({path_lit(data_path)}, withResolution=True)")
+        if p["resolution"] is not None and data_path:
+            sc.imp("from pysasfit.oz.polydisperse_fit import Resolution")
+            sc.comment("Q resolution: the model on the extended grid, smeared onto the data Q")
+            sc.add(call("resolution = Resolution", Code("Qd"), Code("dQd"), kernel=self.kernelVar.get(),
+                        nSigma=prefs.get("oz.generic.res_n_sigma"), oversample=prefs.get("oz.generic.res_oversample")),
+                   "Q, Qmodel, smear = resolution.Q, resolution.Qext, resolution")
+        else:
+            sc.comment("Q grid of the plot")
+            sc.add(f"Q = np.logspace(np.log10({lit(p['Qmin'])}), np.log10({lit(p['Qmax'])}), {p['nQ']})",
+                   "Qmodel, smear = Q, None")
+        sc.comment("what a measurement sees: scale * I + power law, smeared, + background")
+        sc.add(f"scale, background = {lit(p['scale'])}, {lit(p['background'])}")
+        if p["usePorod"]:
+            qfloor = f"max({lit(p['porodQmin'])}, 1e-30)" if p["porodQmin"] else "max(np.min(Q), 1e-30)"
+            sc.add(f"porod = {lit(p['porodA'])} * np.maximum(Qmodel, {qfloor}) ** ({lit(-4.0 + p['porodD'])})")
+        else:
+            sc.add("porod = 0.0")
+        sc.add("",
+               "def observable(curve):",
+               "    total = scale * curve + porod",
+               "    return (smear(total) if smear is not None else total) + background",
+               "",
+               "I = observable(sas.I_exact(Qmodel))",
+               "S_number = sas.S_number(Q)        # number-number structure factor",
+               "S_partials = sas.S_partials(Q)    # partial S_ij(Q) of the classes")
+        plot = ["fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))"]
+        if data_path:
+            plot.append("ax1.errorbar(Qd, Id, dId, fmt='o', ms=3, color='k', label='data')")
+        plot += ["ax1.plot(Q, I, label='calculated')"]
+        fit_free = self._python_fit(sc, p, data_path) if data_path else None
+        if fit_free:
+            plot.append("ax1.plot(fit['Q'], fit['fit'], 'r-', label=f\"fit, chi2 = {fit['chi2_reduced']:.4g}\")")
+        plot += ["ax1.set_xscale('log')", "ax1.set_yscale('log')", "ax1.set_xlabel('Q')", "ax1.set_ylabel('I(Q)')",
+                 "ax1.legend()", "ax2.plot(Q, S_number)", "ax2.set_xlabel('Q')", "ax2.set_ylabel('S_NN(Q)')",
+                 "fig.tight_layout()"]
+        sc.add_plot(*plot)
+        return sc.text()
+
+    def _python_fit(self, sc, p, data_path):
+        """Fit part of :meth:`python_code`: the same PolydisperseFit as the Fit button; returns the free names."""
+        from ...core.pycode import Code, call, lit
+
+        def live(n):
+            cb = getattr(self, "_fitChecks", {}).get(n)
+            return True if cb is None else _isLive(cb)
+        free = [n for n, v in self.fitFlags.items() if v.get() and live(n)]
+        LINEAR = ("scale", "background", "porodA")
+        nonlinear = [n for n in free if n not in LINEAR]
+        if not nonlinear:
+            sc.comment("no fit: tick at least one parameter besides scale, background and A")
+            return None
+        params = {}
+        for n in nonlinear:
+            x = self._currentValue(n)
+            bv = getattr(self, "_fitBoundVars", {}).get(n)
+            d = self.FIT_BOUNDS.get(n, (-np.inf, np.inf))
+            if bv is not None:
+                def num(t):
+                    t = str(t).strip().lower()
+                    return np.inf if t in ("inf", "+inf") else -np.inf if t == "-inf" else float(t)
+                try:
+                    lo, hi = num(bv[0].get()), num(bv[1].get())
+                except ValueError:
+                    sc.comment(f"no fit: a bound of '{n}' is not a number")
+                    return None
+                if not (lo < hi) or lo < d[0] or hi > d[1] or not (lo <= x <= hi):
+                    sc.comment(f"no fit: the bounds of '{n}' are not valid (see the Fit button's message)")
+                    return None
+            else:
+                lo, hi = self.FIT_BOUNDS.get(n, (x / 50.0 if x > 0 else -abs(x) * 50, abs(x) * 50 + 1.0))
+                lo, hi = min(lo, x * 0.999), max(hi, x * 1.001)
+            params[n] = (x, lo, hi)
+        sc.imp("from pysasfit.oz.polydisperse_fit import PolydisperseFit")
+        sc.comment("fit to the measured data: nonlinear parameters (start, lower, upper); scale, background and A "
+                   "are solved exactly unless fixed")
+        if p["ff"] == "Core-shell":
+            sc.add("",
+                   "def make_ff(shell, rhoCore, rhoShell, rhoRatio=None, **_ignored):",
+                   "    rs = rhoShell if rhoRatio is None else float(rhoRatio) * float(rhoCore)",
+                   "    return CoreShellFixedShell(rho_core=rhoCore, rho_shell=rs, thickness=shell)",
+                   "")
+        fixed = {k: p[k] for k in ("phi", "srel", "meanRadius", "shell", "rhoCore", "rhoShell", "rhoRatio", "linkC",
+                                   "porodD", "closureParam", "closureParam2")}
+        cls = p["solverClass"]
+        res = Code("resolution") if p["resolution"] is not None else None
+        sc.add(call("fitter = PolydisperseFit", Code("Qd"), Code("Id"), Code("dId"), potential=p["potential"],
+                    potentialArgs=p["potentialArgs"], closure=p["closure"], parameters=params, fixed=fixed,
+                    nbins=p["nbins"], nFF=p["nFF"], distribution=p["distribution"], resolution=res,
+                    formfactorFactory=Code("make_ff" if p["ff"] == "Core-shell" else "None"),
+                    solverClass=Code(cls.__name__ if cls is not None else "None"), mannAlpha=p.get("mannAlpha"),
+                    warmStart=p["warmStart"], usePorod=p["usePorod"], porodQmin=p["porodQmin"],
+                    fixedPorodAmplitude=p["porodA"] if p["fixPorodA"] else None,
+                    linkedArg=((p["deltaIndex"], p["linkC"], "shell")
+                               if p["linkDelta"] and p["deltaIndex"] is not None else None),
+                    fixedScale=p["scale"] if p["fixScale"] else None,
+                    fixedBackground=p["background"] if p["fixBackground"] else None,
+                    sasOptions=p["settings"], diffStep=prefs.get("oz.generic.diff_step")))
+        name = p.get("fitter", "scipy least_squares")
+        if name.startswith("nlopt "):
+            nl = prefs.values("numerics.nlopt")
+            sc.imp("from pysasfit.oz.polydisperse_fit import fitWithNLopt")
+            sc.add(call("fit = fitWithNLopt", Code("fitter"), method=name.split()[1], maxNfev=nl["max_nfev"],
+                        ftol=nl["ftol"], constraints=("shellInsideSmallestCore",) if p["ff"] == "Core-shell" else ()))
+        elif name.startswith("bumps "):
+            bp = prefs.values("numerics.bumps")
+            sc.imp("from pysasfit.oz.polydisperse_fit import fitWithBumps")
+            sc.add(call("fit = fitWithBumps", Code("fitter"), method=name.split(None, 1)[1], steps=bp["steps"] or None,
+                        pop=bp["pop"], burn=bp["burn"], samples=bp["samples"]))
+        elif "starts" in name:
+            sc.add(call("fit = fitter.runMultiStart", nStarts=prefs.get("oz.generic.n_starts"),
+                        maxNfev=self.FIT_MAX_NFEV))
+        else:
+            sc.add(call("fit = fitter.run", maxNfev=self.FIT_MAX_NFEV))
+        sc.add("print('fitted:', fit['parameters'])",
+               "print('scale', fit['scale'], ' background', fit['background'], ' A', fit['porodAmplitude'],",
+               "      ' chi2_red', fit['chi2_reduced'], ' success', fit['success'])")
+        return list(params)
+
     def _onCompute(self):
         if self.worker is not None and self.worker.is_alive():
             showinfo("busy", "a calculation is already running")

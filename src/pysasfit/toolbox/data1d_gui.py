@@ -50,6 +50,8 @@ class Data1DTool(QtWidgets.QWidget):
             b = QtWidgets.QPushButton(text)
             b.clicked.connect(slot)
             row.addWidget(b)
+        from ..core import pycode
+        row.addWidget(pycode.button(self.python_code, self))
         row.addStretch(1)
         lv.addLayout(row)
         self.table = QtWidgets.QTableWidget(0, 5)
@@ -131,6 +133,52 @@ class Data1DTool(QtWidgets.QWidget):
     def _log(self, t):
         self.status.emit(t)
 
+    def _recipe_of(self, d, expr, deps=()):
+        """Remember how ``d`` was made (for "Copy Python code"): ``expr`` with {0}, {1} for the data sets ``deps``."""
+        if not hasattr(self, "_recipes"):
+            self._recipes = {}
+        self._recipes[id(d)] = (expr, list(deps), d)
+        return d
+
+    def python_code(self):
+        """Script that makes the selected data sets (all when none is selected) the way they were made here:
+        files read, data from pySASred / merge as values, the operations in order ("Copy Python code")."""
+        from ..core.pycode import Script, call, lit
+
+        targets = self.selected() or list(self.data)
+        if not targets:
+            raise ValueError("No 1D data yet.")
+        recipes = getattr(self, "_recipes", {})
+        sc = Script("pyTOOLbox", "1D data arithmetic")
+        sc.imp("import numpy as np", "from pysasfit.toolbox import data1d as d1")
+        names = {}
+
+        def emit(d):
+            if id(d) in names:
+                return names[id(d)]
+            r = recipes.get(id(d))
+            if r is not None and r[2] is d:
+                args = [emit(x) for x in r[1]]
+                expr = r[0].format(*args)
+            else:                                   # from pySASred / merge / 2D: the values
+                expr = call("d1.Data1D", d.x, d.y, d.dy, d.dx, name=d.name, xlabel=d.xlabel, xunit=d.xunit,
+                            yunit=d.yunit, source=d.source)
+            v = f"ds{len(names) + 1}"
+            names[id(d)] = v
+            sc.add(f"{v} = {expr}   # {d.name}" if "\n" not in expr else f"{v} = {expr}")
+            return v
+
+        for d in targets:
+            emit(d)
+        out = ", ".join(names[id(d)] for d in targets)
+        sc.add(f"results = [{out}]")
+        sc.add_plot("fig, ax = plt.subplots()", "for d in results:",
+                    "    ax.errorbar(d.x, d.y, d.dy, fmt='.-', ms=3, label=d.name)",
+                    "ax.set_xlabel(f'{results[0].xlabel} [{results[0].xunit}]')",
+                    "if results[0].is_q:", "    ax.set_xscale('log')", "    ax.set_yscale('log')",
+                    "ax.legend(fontsize=7)")
+        return sc.text()
+
     def add_data(self, ds, select=True):
         ds = [d for d in ds if d is not None and len(d.x)]
         self.data += ds
@@ -150,7 +198,10 @@ class Data1DTool(QtWidgets.QWidget):
         new = []
         for p in ps:
             try:
-                new += d1.read_data1d(p)
+                got = d1.read_data1d(p)
+                for k, d in enumerate(got):
+                    self._recipe_of(d, f"d1.read_data1d({os.path.abspath(p)!r})[{k}]")
+                new += got
             except Exception as exc:  # noqa: BLE001
                 self._log(f"not read: {os.path.basename(p)}: {exc}")
         self.add_data(new)
@@ -249,15 +300,17 @@ class Data1DTool(QtWidgets.QWidget):
         new = []
         for d in self.selected():
             try:
-                new.append({"scale": d.scale, "divide": d.divide, "offset": d.offset,
-                            "minus": lambda x: d.offset(-x)}[op](v))
+                r = {"scale": d.scale, "divide": d.divide, "offset": d.offset,
+                     "minus": lambda x: d.offset(-x)}[op](v)
+                meth, arg = ("offset", -v) if op == "minus" else (op, v)
+                new.append(self._recipe_of(r, f"{{0}}.{meth}({arg!r})", [d]))
             except ZeroDivisionError as exc:
                 self._log(str(exc))
         self.add_data(new)
 
     def on_cut(self):
         lo, hi = _num(self.xmin.text()), _num(self.xmax.text())
-        self.add_data([d.cut(lo, hi) for d in self.selected()])
+        self.add_data([self._recipe_of(d.cut(lo, hi), f"{{0}}.cut({lo!r}, {hi!r})", [d]) for d in self.selected()])
 
     def on_binary(self):
         ia, ib = self.a_combo.currentIndex(), self.b_combo.currentIndex()
@@ -265,7 +318,9 @@ class Data1DTool(QtWidgets.QWidget):
             return
         f = _num(self.f.text()) or 1.0
         try:
-            self.add_data([d1.combine(self.data[ia], self.data[ib], self.op.currentData(), f)])
+            a, b = self.data[ia], self.data[ib]
+            self.add_data([self._recipe_of(d1.combine(a, b, self.op.currentData(), f),
+                                           f"d1.combine({{0}}, {{1}}, {self.op.currentData()!r}, {f!r})", [a, b])])
         except Exception as exc:  # noqa: BLE001
             self._log(f"not computed: {exc}")
 

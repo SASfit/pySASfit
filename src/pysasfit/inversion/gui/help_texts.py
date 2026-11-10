@@ -366,6 +366,11 @@ HELP: dict[str, str] = {
         "solver and plots the fit and the distribution."
     ),
     "result": "<b>Result</b>{dynamic}",
+    "python_code": (
+        "<b>Copy Python</b><br>Copies a Python script to the clipboard that repeats Solve with the "
+        "current settings: data file, error model, background, kernel and r grid, resolution, solver "
+        "and its options, Monte-Carlo errors, and plots the result (also File menu, Ctrl+Shift+C)."
+    ),
 }
 
 

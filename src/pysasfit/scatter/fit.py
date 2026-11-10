@@ -6,7 +6,7 @@ pyTOOLbox readers understand).
   (beam along x, detector horizontal = model qy, vertical = model qz, the beam component from the Ewald sphere
   when the wavelength is known).  Pixels can be thinned (every n-th) to keep a fit fast.
 
-Fitted parameters are the numeric parameters with a fit flag (the SasScatter FITFLAG_), bounded by their ranges
+Fitted parameters are the numeric parameters with a fit flag (the SasScatter ``FITFLAG_``), bounded by their ranges
 in :mod:`params`.  Lengths in nm, q in 1/nm as everywhere in pySCAtter.
 """
 from __future__ import annotations

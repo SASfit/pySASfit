@@ -72,6 +72,21 @@ class RawRun:
     excluded: str = ""            # excluded by hand (names.py, kept per folder): the reason; not reduced
 
     @property
+    def panel_SD_m(self) -> Optional[float]:
+        """SANS-LLB: sample distance of the wide-angle panels (left and bottom move together by design: their
+        mean; a bank run: its own panel); None for an instrument without panels."""
+        if self.panel is not None:
+            return float(self.panel.distance_m)
+        d = [float(p.distance_m) for p in (self.panels or {}).values()]
+        return float(np.mean(d)) if d else None
+
+    @property
+    def panel_SD_spread_m(self) -> float:
+        """Difference of the recorded distances of the wide-angle panels (0: as designed)."""
+        d = [float(p.distance_m) for p in (self.panels or {}).values()]
+        return float(max(d) - min(d)) if len(d) > 1 else 0.0
+
+    @property
     def SD_recorded_m(self) -> float:
         """Sample-detector distance as stored in the file (= SD_m)."""
         return self.SD_m

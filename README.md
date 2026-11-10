@@ -15,6 +15,10 @@ from the raw detector data (reduction with exact error propagation) to models, f
 | `pysasfit.morph` | **pySASmorph**: representative 3D two- and multi-phase morphologies from SAXS/SANS data (multi-level cut of one Gaussian field, contrast series with one common g(r)) (clipped Gaussian random fields, the SAXSMorph method of Ingham et al. 2011, reimplemented): extrapolation, γ(r), g(r), f(k), FFT or random-wave field, voxel structure with its back-calculated I(q), S/V, percolation, bicontinuity; VTK/HDF5/TIFF/STL export, 3D panel (pyqtgraph/OpenGL, optional PyVista window); see `docs/morph/` | `pysasfit-morph` |
 | `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
 
+Every tool copies a Python script that repeats its current calculation to the clipboard (*Copy Python* button,
+File → *Copy Python code*, Ctrl+Shift+C): data files, all settings and the preference values used; see
+`docs/python_code.md`.
+
 ## Installation
 
 ```bash
@@ -210,8 +214,7 @@ are not part of the installed package yet. `io_tools/SASformats.py` (BerSANS, HD
 ## To do
 
 - `pysasfit.morph`: validation against SAXSMorph 2.2 (`ToDo/SAXSMorpph/saxsmorph.jar`) and PySAXSMorph on reference
-  data; PSI SANS formats, contrast variation and uncertainty propagation (roadmap in `ToDo/SAXSMorpph/`);
-  logo bundle entries (pySASmorph icons are missing, the wordmark colour is teal #0F7C80).
+  data; PSI SANS formats, contrast variation and uncertainty propagation (roadmap in `ToDo/SAXSMorpph/`).
 
 - `pysasfit.sasred` phase 3: transmission, empty cell and Cd subtraction of the sample, detector efficiency in the
   GUI (compare with the SANS-I efficiency maps in `tools/*.mat`), thickness, absolute scale, collimation term of Qdev, pixel splitting,

@@ -196,6 +196,10 @@ class Launcher(QtWidgets.QMainWindow):
         for a in own:
             menu.addAction(a)
         extra = self._extra_actions(self.tabs.currentWidget(), name)
+        # "Copy Python code" of a tool without a menu bar (the OZ solver tabs)
+        cp = getattr(self.tabs.currentWidget(), "copy_python_action", None)
+        if name == "File" and cp is not None and cp not in extra:
+            extra.append(cp)
         if extra:
             menu.addSeparator()
             for a in extra:

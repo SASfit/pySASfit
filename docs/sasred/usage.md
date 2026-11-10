@@ -254,6 +254,10 @@ automatic direct-beam centres are determined again.
   φ horizontally (0° = +x, counter-clockwise, as for the sector), q vertically. In the polar view isotropic
   rings become horizontal bands and anisotropy shows as waves along φ; each (φ, q) cell takes the value of the
   pixel under its centre (no interpolation), cells outside the detector are light grey.
+* **axes** (cartesian view and *SANS-LLB: all detectors*): *pixels*, *angle 2θ* or *q_x, q_y*. In angle or q
+  every pixel is drawn at 2θ·(cos φ, sin φ) [°] or |q|·(cos φ, sin φ) [q unit shown] with the beam centre of the
+  geometry (φ = 0 along +x), so rings are circles at their 2θ or q; on SANS-LLB the central detector and the
+  panels sit at their true places. Masks are shown, but edited in pixels.
 
 ```{image} ../_static/sasred/mask_polar.png
 :alt: polar view of the detector image with the mask colours

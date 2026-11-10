@@ -1,5 +1,17 @@
 # pySASmorph: 3D two- and multi-phase morphologies from SAS data
 
+```{image} ../pySASfit-logo-bundle/logos/pySASmorph/svg/pySASmorph-light.svg
+:alt: pySASmorph
+:height: 56px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pySASmorph/svg/pySASmorph-dark.svg
+:alt: pySASmorph
+:height: 56px
+:class: only-dark
+```
+
 `pysasfit.morph` (GUI: `pysasfit-morph`, launcher tab **pySASmorph**) builds a *representative* three-dimensional
 two-phase structure whose two-point statistics reproduce a measured SAXS/SANS curve. It is a clean
 reimplementation of the method of SAXSMorph (B. Ingham, H. Li, E. L. Allen, M. F. Toney,

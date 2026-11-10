@@ -1559,8 +1559,9 @@ def available_backends():
         "dfols": ("DFO-LS", "dfols", _DFOLS_ALGORITHMS),
     }
     out = {k: (label, algs) for k, (label, mod, algs) in table.items() if find_spec(mod) is not None and algs}
-    for k in BACKENDS:  # backends registered by the user
-        out.setdefault(k, (k, {}))
+    for k in BACKENDS:  # backends registered by the user (the built-in ones are listed above only if installed)
+        if k not in table:
+            out.setdefault(k, (k, {}))
     return out
 
 

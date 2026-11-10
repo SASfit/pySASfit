@@ -243,9 +243,9 @@ def extrapolate(q, I, sigma=None, qmin=None, qmax=None, low_q="guinier", low_q_p
 
     Parameters
     ----------
-    q, I, sigma : data (sigma optional, used as fit weights)
-    qmin, qmax : data range used (default: all)
-    low_q : 'guinier' (default), 'linear', 'constant' or 'none' (no data below q_min)
+    q, I, sigma : the measured curve as arrays (sigma optional, used as fit weights)
+    qmin, qmax : range of q used (default: all)
+    low_q : 'guinier' (default), 'linear', 'constant' or 'none' (no points below q_min)
     low_q_points : number of first points the low-q extrapolation is fitted to
     low_q_nodes : nodes of the extrapolation between q = 0 and q_min
     porod_points / porod_qmin : the Porod law is fitted to the last ``porod_points``
@@ -254,7 +254,7 @@ def extrapolate(q, I, sigma=None, qmin=None, qmax=None, low_q="guinier", low_q_p
     fit_background : fit I = K q^-4 + B and subtract B
     background : fixed flat background B subtracted before everything (used when ``fit_background``
         is False; manual correction)
-    refine : extra log-log interpolated nodes per data interval
+    refine : extra log-log interpolated nodes per interval between measured points
     K : fixed Porod constant (skips the fit); 0 switches the tail off
     """
     q = np.asarray(q, float)

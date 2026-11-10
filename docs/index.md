@@ -118,6 +118,12 @@ NeXus default plots) and the metadata lister for run ranges.
 :link: morph/index
 :link-type: doc
 
+```{image} pySASfit-logo-bundle/menu-icons/pySASmorph/pySASmorph-menu.svg
+:alt: pySASmorph
+:height: 40px
+:class: card-icon
+```
+
 Representative 3D two-phase structures from SAXS/SANS data (clipped Gaussian random fields, the SAXSMorph
 method): γ(r), g(r), voxel structure, its scattering, S/V and connectivity; VTK/HDF5/TIFF export, 3D view.
 :::
@@ -190,5 +196,6 @@ pySASmorph <morph/index>
 pySCAtter <scatter/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
+Copy Python code <python_code>
 API <api/index>
 ```

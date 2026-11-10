@@ -290,6 +290,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         m.addSeparator()
         m.addAction("Export I(q) (text)…", self.on_export_1d)
         m.addAction("Export 2D pattern (text / npy)…", self.on_export_2d)
+        from ..core import pycode
+        pycode.install(self, self.python_code, menu=m)
         from ..core.settings_dialog import add_preferences_menu
         add_preferences_menu(self, "scatter")
         self.menuBar().addMenu("&View")
@@ -307,6 +309,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.abort_button.clicked.connect(self.on_abort)
         row.addWidget(self.calc_button)
         row.addWidget(self.abort_button)
+        from ..core import pycode
+        row.addWidget(pycode.button(self.python_code, w))
         lay.addLayout(row)
         row = QtWidgets.QHBoxLayout()
         self.auto_1d = QtWidgets.QCheckBox("I(q) follows")
@@ -748,6 +752,58 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def _on_data_selected(self, _row):
         self.data_model = None
         self.calculate(two_d=False)
+
+    # ------------------------------------------------------------------ Python code
+    def python_code(self):
+        """Script: the parameters (those that differ from the defaults), I(q), the 2D pattern and, with data
+        selected, its model and the fit of the ticked parameters ("Copy Python code")."""
+        from ..core.pycode import Code, Script, call, lit, path_lit
+
+        p = self.params()
+        sc = Script("pySCAtter", "scattering pattern" + (" and fit" if self.current_data()[0] else ""))
+        sc.imp("import numpy as np", "from pysasfit.scatter import engine, params as P")
+        d0 = P.defaults()
+        changed = {k: v for k, v in p.items() if k not in d0 or d0[k] != v}
+        sc.comment("parameters (CrystalScatter names): the defaults and the values set on the panel")
+        sc.add("p = P.defaults()", f"p.update({lit(changed)})" if changed else "")
+        sc.comment("I(q) on the log q grid (EditQmin ... EditQmax) and the 2D pattern")
+        sc.add("q, I = engine.calc_1d(p)", "qx, qy, qz = engine.q_grid_2d(p)", "I2 = engine.intensity_2d(p, qx, qy, qz)")
+        kind, d = self.current_data()
+        plot = ["fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))", "ax1.loglog(q, I, label='model')"]
+        if kind is not None:
+            sc.comment(f"data: {d.name}")
+            path = getattr(d, "path", None)
+            if kind == "1d":
+                sc.imp("from pysasfit.scatter.fit import Data1D", "from pysasfit.toolbox.merge import read_curves")
+                sc.add(f"curves = read_curves({path_lit(path)})",
+                       f"data = Data1D.from_curve(next(c for c in curves if c.name == {d.name!r}))")
+                if not self.use_dq.isChecked():
+                    sc.add("data = Data1D(data.q, data.I, data.dI, None, data.name)   # without its q resolution")
+                plot.append("ax1.errorbar(data.q, data.I, data.dI, fmt='o', ms=2, label=data.name)")
+            else:
+                sc.imp("from pysasfit.scatter.fit import Data2D", "from pysasfit.toolbox.image2d import read_images")
+                sc.add(f"images = read_images({path_lit(path)})",
+                       f"data = Data2D.from_image(next(im for im in images if Data2D.from_image(im).name == {d.name!r}))")
+            flags = self.params_panel.flags()
+            if flags:
+                sc.imp("from pysasfit.scatter.fit import fit")
+                sc.comment("fit of the ticked parameters")
+                sc.add(call("res = fit", Code("p"), flags, Code("data"), self._q_limit(self.fit_qmin),
+                            self._q_limit(self.fit_qmax), every=self.every_px.value(),
+                            max_nfev=self.max_nfev.value(), log_weight=self.log_weight.isChecked()),
+                       "print(res.report())",
+                       "p.update(res.values)")
+            sc.imp("from pysasfit.scatter.fit import model_for")
+            sc.add("used = data.used()" if kind == "1d" else "used = data.used(every=1)",
+                   "I_model = model_for(p, data, used)   # the model at the data points")
+            if kind == "1d":
+                plot.append("ax1.loglog(data.q[used], I_model, 'r-', label='model at the data')")
+        plot += ["ax1.set_xlabel('q (1/nm)')", "ax1.set_ylabel('I(q)')", "ax1.legend()",
+                 "ext = (float(qy.min()), float(qy.max()), float(qz.min()), float(qz.max()))",
+                 "ax2.imshow(np.log10(np.clip(I2, I2.max() * 1e-8, None)).T, origin='lower', extent=ext)",
+                 "ax2.set_xlabel('q_y (1/nm)')", "ax2.set_ylabel('q_z (1/nm)')", "fig.tight_layout()"]
+        sc.add_plot(*plot)
+        return sc.text()
 
     # ------------------------------------------------------------------ fit
     def _q_limit(self, edit):

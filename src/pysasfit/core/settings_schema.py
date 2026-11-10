@@ -328,14 +328,15 @@ register(T, TT, "Detector distance", [
       "Date YYYY-MM-DD; empty: all runs.", kind="str"),
 ])
 register(T, TT, "SANS-LLB detector geometry", [
-    S("sasred.llb.central_dz_mm", 0.0, "central detector: offset of the detection layer [mm]",
-      "Added to the recorded distance of the central detector (q and solid angle).", lo=-500, hi=500),
-    S("sasred.llb.left.dx_mm", 0.0, "left panel: offset dx along posx [mm]", "", lo=-1000, hi=1000),
-    S("sasred.llb.left.dy_mm", 0.0, "left panel: offset dy along posy (along the tubes) [mm]", "", lo=-1000, hi=1000),
-    S("sasred.llb.left.dz_mm", 0.0, "left panel: offset dz along the beam [mm]", "", lo=-1000, hi=1000),
-    S("sasred.llb.bottom.dx_mm", 0.0, "bottom panel: offset dx along posx (along the tubes) [mm]", "", lo=-1000, hi=1000),
-    S("sasred.llb.bottom.dy_mm", 0.0, "bottom panel: offset dy along posy [mm]", "", lo=-1000, hi=1000),
-    S("sasred.llb.bottom.dz_mm", 0.0, "bottom panel: offset dz along the beam [mm]", "", lo=-1000, hi=1000),
+    S("sasred.llb.central_dz_mm", 3.0, "central detector: offset of the detection layer [mm]",
+      "Added to the recorded distance of the central detector (q and solid angle). Default: "
+      "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). Only (L + dz)·λ-scale is measured: 1.0013 × nominal at 2 m.", lo=-500, hi=500),
+    S("sasred.llb.left.dx_mm", -10.0, "left panel: offset dx along posx [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±2 mm", lo=-1000, hi=1000),
+    S("sasred.llb.left.dy_mm", -15.4, "left panel: offset dy along posy (along the tubes) [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±2 mm", lo=-1000, hi=1000),
+    S("sasred.llb.left.dz_mm", 45.0, "left panel: offset dz along the beam [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±10 mm, common to both panels", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dx_mm", -5.8, "bottom panel: offset dx along posx (along the tubes) [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±2 mm", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dy_mm", -8.3, "bottom panel: offset dy along posy [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±2 mm", lo=-1000, hi=1000),
+    S("sasred.llb.bottom.dz_mm", 45.0, "bottom panel: offset dz along the beam [mm]", "AgBe calibration 2026-11-10 (runs 9546/9568, see SANS-LLB_AgBe_offsets_2026-11-10). ±10 mm, common to both panels", lo=-1000, hi=1000),
     S("sasred.llb.end_px", 10, "pixels masked at both ends of every tube", "", kind="int", lo=0, hi=60),
 ])
 register(T, TT, "Resolution", [

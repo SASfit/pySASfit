@@ -107,6 +107,12 @@ def _lam_column() -> int:
     return COLUMNS.index("λ [nm]")
 
 
+def load_instrument_default(raw):
+    """The instrument file of a run as read (for "Copy Python code": what the GUI added to it)."""
+    from .reduce import load_instrument
+    return load_instrument(raw)
+
+
 class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
     instances = __import__("weakref").WeakSet()      # open windows (pyTOOLbox takes their results)
 
@@ -123,6 +129,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.centres = {}            # geometry (SD, λ) -> GeometryCentre: q and solid angle use it
         self.profiles = {}           # geometry -> BeamProfile of its direct beam: the resolution uses it
         self.masks = {}              # instrument configuration (catalogue.mask_key) -> edited uint32 mask
+        self.tregions = {}           # instrument configuration -> bool transmission region (semi-transparent beam stop)
         self._mask_key = None        # configuration of the mask in the editor
         self._centre_sync = False
         self.preview = None          # on-the-fly radial average of the selected run (not kept)
@@ -140,6 +147,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         fmenu.addAction("Save masks of all configurations…", self.on_save_masks)
         fmenu.addAction("Load masks of configurations…", self.on_load_masks)
         fmenu.addAction("Save &all reduced runs…", self.on_save_all)
+        from ..core import pycode
+        pycode.install(self, self.python_code, menu=fmenu)
         add_preferences_menu(self, "sasred")
         self._build_runs()
         self._build_reduction()
@@ -324,6 +333,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         clr.clicked.connect(self.clear_results)
         row.addWidget(self.reduce_button, 1)
         row.addWidget(clr)
+        from ..core import pycode
+        row.addWidget(pycode.button(self.python_code, w))
         lay.addLayout(row)
 
         g = QtWidgets.QGroupBox("Reduced runs")
@@ -394,7 +405,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self.det_view.addItem("cartesian (x, y)", "cartesian")
         self.det_view.addItem("polar (φ, q)", "polar")
         self.det_view.addItem("reduced 2D (result chosen)", "reduced2d")
-        self.det_view.addItem("SANS-LLB: all detectors (scattering angles)", "llb_all")
+        self.det_view.addItem("SANS-LLB: all detectors (2θ or q)", "llb_all")
         self.det_view.addItem("efficiency map", "efficiency")
         self.det_view.setToolTip("polar: azimuth φ horizontally (0° = horizontal direction +x, counter-clockwise), "
                                  "q vertically; rings become horizontal lines, anisotropy shows as waves")
@@ -403,6 +414,17 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             cb.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             cb.setMinimumContentsLength(14)
         bar.addWidget(labelled("view", self.det_view))
+        self.det_axes = QtWidgets.QComboBox()
+        self.det_axes.addItem("pixels", "pixels")
+        self.det_axes.addItem("angle 2θ", "angle")
+        self.det_axes.addItem("q_x, q_y", "q")
+        self.det_axes.setToolTip(
+            "Coordinates of the cartesian view and of 'SANS-LLB: all detectors'. angle: 2θ·(cos φ, sin φ) [°]; "
+            "q: |q|·(cos φ, sin φ) — every pixel at its scattering angle or scattering vector (beam centre of the "
+            "geometry, SANS-LLB panel offsets of the preferences), so rings are circles at their 2θ or q and the "
+            "central detector and the panels sit at their true places. Masks are edited in pixels.")
+        self.det_axes.currentIndexChanged.connect(lambda _i: self._draw_detector())
+        bar.addWidget(labelled("axes", self.det_axes))
         self.det_bank = QtWidgets.QComboBox()
         for t, d in (("central", ""), ("left panel", "left"), ("bottom panel", "bottom")):
             self.det_bank.addItem(t, d)
@@ -512,6 +534,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         from .table_gui import ReductionTableWidget
         self.table_panel = ReductionTableWidget(lambda: self.entries, self.centre_for, self, log=self.log)
         self.table_panel.reduce_rows = self.reduce_table_rows
+        self.table_panel.python_code_rows = self.python_code_table
         self.table_panel.show_efficiency = self.show_table_efficiency
         self.table_panel.rows_selected.connect(self._draw_iq)
         self.table_panel.changed.connect(self._schedule_check)      # a table edited: check again
@@ -530,7 +553,20 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         m.addAction("&Reduce geometry shown (2D, then I(q))", lambda: self.table_panel.page.on_reduce(all_rows=True))
         m.addAction("Reduce &selected rows", lambda: self.table_panel.page.on_reduce(all_rows=False))
         m.addSeparator()
+        m.addAction("Transmission through the semi-transparent &beam stop…", self.on_beamstop_transmission)
+        m.addSeparator()
         m.addAction("Send results to pyTOOLbox &merge (no files)", self.on_send_to_merge)
+
+    def on_beamstop_transmission(self):
+        """T from the counts in the transmission region (semi-transparent beam stop) of every row of the
+        reduction table shown, next to the transmission from the transmission runs."""
+        from .beamstop_gui import BeamstopTransmissionDialog
+        self._commit_mask()
+        self.show_table()
+        dlg = BeamstopTransmissionDialog(self)
+        self._beamstop_dialog = dlg
+        dlg.show()
+        return dlg
 
     def _runs_menu(self, pos):
         m = QtWidgets.QMenu(self)
@@ -714,7 +750,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             ed = self.mask_editor.mask
             if k == self._mask_key and ed is not None and ed.shape == raw.counts.shape and not self.mask_editor.pristine:
                 return ed.copy(), f"mask of {mask_key_label(k)} (detector panel)"
-            m = self.masks.get(k)
+            m = self._stored(self.masks, k)
             if m is not None and m.shape == raw.counts.shape:
                 return m.copy(), f"mask of {mask_key_label(k)}"
             return mk.default_mask(raw, self.centre_for(raw))[0], \
@@ -722,11 +758,37 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         ed = self.mask_editor.mask
         if k == self._mask_key and ed is not None and ed.shape == raw.counts.shape:
             return self.full_mask(raw.counts.shape), f"mask of {mask_key_label(k)} (detector panel)"
-        m = self.masks.get(k)
+        m = self._stored(self.masks, k)
         if m is not None and m.shape == raw.counts.shape:
             return m.copy(), f"mask of {mask_key_label(k)}"
         return mk.suggest_mask(raw.counts, self.centre_for(raw))[0], \
             f"suggested mask (no mask edited for {mask_key_label(k)})"
+
+    @staticmethod
+    def _stored(store, k):
+        """``store[k]``; for a SANS-LLB configuration also a mask saved before the panel distance was part of
+        the key (catalogue.legacy_mask_key)."""
+        from .catalogue import legacy_mask_key
+        v = store.get(k)
+        if v is None:
+            old = legacy_mask_key(k)
+            if old != k:
+                v = store.get(old)
+        return v
+
+    def region_for(self, raw):
+        """Transmission region (bool image: pixels of the beam transmitted through a semi-transparent beam
+        stop) of the instrument configuration of ``raw``, or None when none is drawn."""
+        from .catalogue import mask_key
+        k = mask_key(raw)
+        ed = self.mask_editor
+        if k == self._mask_key and ed.mask is not None and ed.mask.shape == raw.counts.shape:
+            r = ed.region
+        else:
+            r = self._stored(self.tregions, k)
+        if r is None or r.shape != raw.counts.shape or not r.any():
+            return None
+        return r.copy()
 
     def _sync_mask_config(self, raw):
         """Switch the editor to the mask of the configuration of ``raw``; the edited mask of the
@@ -737,29 +799,46 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if k != self._mask_key:
             if self._mask_key is not None and ed.mask is not None and not ed.pristine:
                 self.masks[self._mask_key] = ed.mask.copy()
+            if self._mask_key is not None:
+                self._commit_region()
             if self._mask_key is None and ed.mask is not None and not ed.pristine and k not in self.masks:
                 self.masks[k] = ed.mask.copy()               # mask restored from an older session
-            m = self.masks.get(k)
+            m = self._stored(self.masks, k)
+            r = self._stored(self.tregions, k)
             ed._undo.clear()
             ed._redo.clear()
+            ed.region = None
             if m is not None and m.shape == raw.counts.shape:
                 ed.mask = m.copy()
                 ed.pristine = False
             else:
                 ed.mask = None
                 ed.ensure(raw.counts.shape)
+            ed.region = r.copy() if r is not None and r.shape == raw.counts.shape else None
             ed._update_stats()
             self._mask_key = k
         n = len(set(self.masks) | ({k} if not ed.pristine else set()))
         coll, SD, lam, bst, bx, by = k
         self.mask_cfg.setText(f"mask: coll {coll:g}, SD {SD:g} m, {lam:g} Å, BS {bst or '?'} ({bx}, {by})"
-                              + (" · new" if ed.pristine else "") + (f" · {n} edited" if n else ""))
+                              + (" · new" if ed.pristine else "") + (f" · {n} edited" if n else "")
+                              + (" · transmission region" if ed.region is not None else ""))
         self.mask_cfg.setToolTip(f"mask for {mask_key_label(k)}" + (" (not edited yet)" if ed.pristine else "")
                                  + f"\nmasks edited for {n} configuration{'s' if n != 1 else ''}")
 
     def _commit_mask(self):
         if self._mask_key is not None and self.mask_editor.mask is not None and not self.mask_editor.pristine:
             self.masks[self._mask_key] = self.mask_editor.mask.copy()
+        self._commit_region()
+
+    def _commit_region(self):
+        """The transmission region in the editor into the store of its configuration (none: removed)."""
+        if self._mask_key is None:
+            return
+        r = self.mask_editor.region
+        if r is not None and r.any():
+            self.tregions[self._mask_key] = r.copy()
+        else:
+            self.tregions.pop(self._mask_key, None)
 
     def save_masks(self, path):
         """All configuration masks into one HDF5 file (one group per configuration)."""
@@ -767,32 +846,45 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         from .catalogue import mask_key_label
         self._commit_mask()
         with h5py.File(path, "w") as f:
-            f.attrs["description"] = "pySASred masks per instrument configuration (coll, SD, λ, beam stop)"
-            for i, (k, m) in enumerate(sorted(self.masks.items(), key=lambda kv: str(kv[0]))):
+            f.attrs["description"] = ("pySASred masks per instrument configuration (coll, SD, λ, beam stop); "
+                                      "transmission_region: pixels of the beam through a semi-transparent beam stop")
+            keys = sorted(set(self.masks) | set(self.tregions), key=str)
+            for i, k in enumerate(keys):
                 g = f.create_group(f"mask{i:03d}")
-                g.create_dataset("pixel_mask", data=np.asarray(m, np.uint32), compression="gzip")
+                if k in self.masks:
+                    g.create_dataset("pixel_mask", data=np.asarray(self.masks[k], np.uint32), compression="gzip")
+                if k in self.tregions:
+                    g.create_dataset("transmission_region", data=np.asarray(self.tregions[k], np.uint8),
+                                     compression="gzip")
                 g.attrs["key"] = json.dumps(list(k))
                 g.attrs["label"] = mask_key_label(k)
         return path
 
     def load_masks(self, path, replace=False):
         import h5py
-        new = {}
+        new, regions = {}, {}
         with h5py.File(path, "r") as f:
             for g in f.values():
                 k = json.loads(g.attrs["key"])
                 k[0:3] = [float(x) for x in k[0:3]]
-                new[tuple(k)] = np.asarray(g["pixel_mask"][()], np.uint32)
+                if "pixel_mask" in g:
+                    new[tuple(k)] = np.asarray(g["pixel_mask"][()], np.uint32)
+                if "transmission_region" in g:
+                    regions[tuple(k)] = np.asarray(g["transmission_region"][()]).astype(bool)
         if replace:
             self.masks = {}
+            self.tregions = {}
         self.masks.update(new)
+        self.tregions.update(regions)
         if self._mask_key in new:
             self.mask_editor.set_mask(new[self._mask_key], message="mask of the shown configuration loaded")
-        return len(new)
+        if self._mask_key in regions:
+            self.mask_editor.set_region(regions[self._mask_key], record=False)
+        return len(set(new) | set(regions))
 
     def on_save_masks(self):
         self._commit_mask()
-        if not self.masks:
+        if not self.masks and not self.tregions:
             QtWidgets.QMessageBox.information(self, "Masks", "No edited masks yet.")
             return
         p, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save masks of all configurations",
@@ -1536,6 +1628,12 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
 
     def _edges(self, raw, mask):
         from .core.averaging import q_edges
+        qmin, qmax = self._q_limits(raw, mask)
+        return q_edges(qmin, qmax, self.nbins.value(), self.spacing.currentData())
+
+    def _q_limits(self, raw, mask):
+        """(q min, q max) of the bins in 1/Å: the panel values, the data range of the unmasked pixels where
+        a value is 0 (and for a wide-angle panel)."""
         from .core.geometry import run_geometry
         u = self.units
         qmin, qmax = u.q_in(self.qmin.value()), u.q_in(self.qmax.value())      # internal: 1/Å
@@ -1549,10 +1647,222 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
             qmax = qmax if qmax > 0 else float(q.max()) * (1 + 1e-9)
         if qmax <= qmin:
             raise ValueError(f"q max ({u.q_out(qmax):g}) must be larger than q min ({u.q_out(qmin):g}) {u.q}")
-        e = q_edges(qmin, qmax, self.nbins.value(), self.spacing.currentData())
         self._last_bins = (f"{self.nbins.value()} {self.spacing.currentText()} q bins, "
                            f"{u.q_out(qmin):.4g}–{u.q_out(qmax):.4g} {u.q}")
-        return e
+        return qmin, qmax
+
+    def python_code_table(self, table, rows):
+        """Script that repeats the reduction of sample rows of the reduction table (2D with the correction data,
+        then the average with the bins, sector and normalisation of the Reduction panel) ("Copy Python code")."""
+        import base64
+        import copy
+        import dataclasses
+        import zlib
+
+        from ..core.pycode import Code, Script, call, lit, path_lit
+        from .efficiency_gui import GEOMETRY_PREFIX
+        from .reduction_table import RunChoice  # noqa: F401
+        paths = {e.run: e.path for e in self.entries}
+        u = self.units
+        sc = Script("pySASred", f"reduction table {table.config}: " + ", ".join(r.label for r in rows[:6])
+                    + (" ..." if len(rows) > 6 else ""))
+        sc.imp("import base64", "import copy", "import zlib", "import numpy as np",
+               "from pysasfit.sasred import names", "from pysasfit.sasred.absolute import average, reduce_row_2d",
+               "from pysasfit.sasred.core.averaging import q_edges", "from pysasfit.sasred.io.raw import read_raw",
+               "from pysasfit.sasred.reduce import load_instrument",
+               "from pysasfit.sasred.reduction_table import ReductionTable, RunChoice")
+        used = sorted({n for r in [*rows, *table.corrections.values()] for n in getattr(r, "used", []) or []
+                       if n in paths})
+        corr = {n: dict(self.name_corrections[n]) for n in used
+                if self.name_corrections is not None and n in self.name_corrections}
+        sc.comment("the reduction table of this geometry (correction data and samples)")
+        sc.add(f"table = ReductionTable.from_dict({lit(table.to_dict())})")
+        sc.comment("raw files of the runs the table uses; names and roles corrected by hand")
+        sc.add(f"paths = {lit({n: os.path.abspath(paths[n]) for n in used})}",
+               f"corrections = {lit(corr)}",
+               "_cache = {}",
+               "",
+               "def reader(bank=''):",
+               "    def read(n):",
+               "        if n not in _cache:",
+               "            _cache[n] = names.apply(read_raw(paths[n]), corrections)",
+               "        if bank:",
+               "            from pysasfit.sasred.io.sans_llb import bank_run",
+               "            return bank_run(_cache[n], bank)",
+               "        return _cache[n]",
+               "    return read",
+               "",
+               "def unpack_mask(text, shape):",
+               "    return np.frombuffer(zlib.decompress(base64.b64decode(text)), np.uint32).reshape(shape).copy()",
+               "",
+               "results = {}")
+        eff_spec = (getattr(table, "efficiency", "") or "").strip()
+        if table.scale_method() != "water" and eff_spec:
+            if eff_spec.startswith(GEOMETRY_PREFIX):
+                sc.comment(f"efficiency map from the table of {eff_spec[len(GEOMETRY_PREFIX):]}: reduce that table first "
+                           "and pass its map here (not part of this script)")
+                sc.add("efficiency = None")
+            else:
+                spec = eff_spec
+                path = spec.partition("::")[0].strip()
+                if not os.path.isabs(path) and getattr(self, "folder", ""):
+                    spec = os.path.join(self.folder, path) + ("::" + spec.partition("::")[2] if "::" in spec else "")
+                sc.imp("from pysasfit.sasred.absolute import load_efficiency")
+                sc.add(f"efficiency = load_efficiency({spec!r})")
+        else:
+            sc.add("efficiency = None")
+        sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
+        masks = {}
+        read0 = {}
+        for row in rows:
+            banks = [""]
+            if row.used and row.used[0] in paths:
+                try:
+                    from .io.raw import read_raw
+                    from . import names as nm
+                    if row.used[0] not in read0:
+                        read0[row.used[0]] = nm.apply(read_raw(paths[row.used[0]]), self.name_corrections)
+                    banks = self.banks_for(read0[row.used[0]]) or [""]
+                except Exception:  # noqa: BLE001
+                    pass
+            for sub, orig, spar in self._series_rows(table, row):
+                for bank in banks:
+                    raw0 = read0.get(sub.used[0])
+                    if raw0 is None:
+                        from .io.raw import read_raw
+                        from . import names as nm
+                        raw0 = read0[sub.used[0]] = nm.apply(read_raw(paths[sub.used[0]]), self.name_corrections)
+                    if bank:
+                        from .io.sans_llb import bank_run
+                        raw0 = bank_run(raw0, bank)
+                    tag = f"{table.config.split(',')[0]} {sub.label}" + (f" {bank}" if bank else "")
+                    mask, how = self.mask_for(raw0)
+                    m = np.ascontiguousarray(mask, np.uint32)
+                    blob = base64.b64encode(zlib.compress(m.tobytes(), 9)).decode()
+                    sc.comment(f"{tag} ({orig.info})")
+                    if (m.shape, blob) not in masks:
+                        masks[(m.shape, blob)] = f"mask{len(masks) + 1}"
+                        sc.add(f"# {how}", f"{masks[(m.shape, blob)]} = unpack_mask(")
+                        for i in range(0, len(blob), 100):
+                            sc.add(f"    {blob[i:i + 100]!r}")
+                        sc.add(f"    , {m.shape})")
+                    k = table.samples.index(orig)
+                    if sub is orig:
+                        sc.add(f"row = table.samples[{k}]")
+                    else:
+                        sc.add(f"row = copy.copy(table.samples[{k}])   # one point of the time series",
+                               f"row.runs = [RunChoice(n, True) for n in {lit([c.run for c in sub.runs])}]",
+                               "row.series = False", f"row.label = {sub.label!r}")
+                    inst = self.instrument_for(raw0)
+                    sc.add(f"read = reader({bank!r})", "raw0 = read(row.used[0])", "instrument = load_instrument(raw0)")
+                    nas = (inst.get("monitor") or {}).get("normaliser_after_selector")
+                    if nas is not None and load_instrument_default(raw0).get("monitor", {}).get("normaliser_after_selector") is None:
+                        sc.add(f"instrument.setdefault('monitor', {{}})['normaliser_after_selector'] = {lit(nas)}"
+                               "   # from the monitor test of the folder")
+                    prof = self.profile_for(raw0)
+                    if prof is not None:
+                        sc.imp("from pysasfit.sasred.core.beamprofile import BeamProfile")
+                        sc.add(call("profile = BeamProfile", **dataclasses.asdict(prof)))
+                    else:
+                        sc.add("profile = None")
+                    sc.add(call("r2 = reduce_row_2d", Code("table"), Code("row"), Code("read"),
+                                tuple(float(v) for v in self.centre_for(raw0)), mask=Code(masks[(m.shape, blob)]),
+                                instrument=Code("instrument"), normalise_by=self.norm.currentData(),
+                                k0=Code("table.water_g"),
+                                efficiency=Code("efficiency" if table.scale_method() != "water" else "None"),
+                                beam_profile=Code("profile")))
+                    qmin, qmax = self._q_limits(raw0, mask)
+                    sc.add(call("r1 = average", Code("r2"), Code(f"q_edges({lit(qmin)}, {lit(qmax)}, "
+                                                                 f"{self.nbins.value()}, {self.spacing.currentData()!r})"),
+                                sector_deg=sector))
+                    if spar:
+                        sc.add(f"r1.parameters.update({lit(spar)})")
+                    sc.add(f"results[{tag!r}] = r1")
+        sc.add("for key, r in results.items():", "    print(key, len(r.q), 'bins', r.intensity.unit)")
+        sc.add_plot("fig, ax = plt.subplots()", f"to_q = {lit(u.q_out(1.0))}   # 1/Å -> {u.q}",
+                    "for key, r in results.items():",
+                    "    ax.errorbar(r.q * to_q, r.I, r.idev(), fmt='.-', ms=3, label=key)",
+                    "ax.set_xscale('log')", "ax.set_yscale('log')", f"ax.set_xlabel('q ({u.q})')",
+                    "ax.set_ylabel('I')", "ax.legend(fontsize=7)")
+        return sc.text()
+
+    def python_code(self):
+        """Script that repeats "Reduce selected" for the selected runs: raw file, name corrections, mask of the
+        configuration (embedded, compressed), beam centre, beam profile (Qdev), q bins, normalisation, sector
+        ("Copy Python code")."""
+        import base64
+        import dataclasses
+        import zlib
+
+        from ..core.pycode import Code, Script, call, lit, path_lit
+        from .io.raw import read_raw
+        from . import names as nm
+
+        fw = QtWidgets.QApplication.focusWidget()
+        tp = getattr(self, "table_panel", None)
+        if tp is not None and fw is not None and tp.isAncestorOf(fw) and tp.page is not None:
+            return tp.page.python_code()              # the reduction table is in use: its rows
+        sel = [e for e in self.selected_entries() if e.raw is not None]
+        if not sel:
+            raise ValueError("Select the runs to reduce in the run table first.")
+        u = self.units
+        sc = Script("pySASred", f"reduction of run{'s' if len(sel) > 1 else ''} "
+                    + ", ".join(str(e.run) for e in sel[:8]) + (" ..." if len(sel) > 8 else ""))
+        sc.imp("import base64", "import zlib", "import numpy as np",
+               "from pysasfit.sasred import names", "from pysasfit.sasred.core.averaging import q_edges",
+               "from pysasfit.sasred.io.raw import read_raw", "from pysasfit.sasred.reduce import reduce_run_1d")
+        sc.add("",
+               "def unpack_mask(text, shape):",
+               "    \"\"\"The pixel mask (uint32 reason bits) as copied from the GUI: zlib + base64.\"\"\"",
+               "    return np.frombuffer(zlib.decompress(base64.b64decode(text)), np.uint32).reshape(shape).copy()",
+               "",
+               "results = {}")
+        sector = (self.sector_c.value(), self.sector_hw.value()) if self.sector.isChecked() else None
+        masks_written = {}
+        for e in sel:
+            for bank in self.banks_for(e.raw):
+                raw = nm.apply(read_raw(e.path, bank=bank), self.name_corrections)
+                mask, where = self.mask_for(raw)
+                qmin, qmax = self._q_limits(raw, mask)
+                key = self.result_key(raw.run, bank)
+                sc.comment(f"run {key}: {raw.sample_name}")
+                sc.add(f"raw = read_raw({path_lit(e.path)}" + (f", bank={bank!r})" if bank else ")"))
+                corr = (self.name_corrections or {}).get(int(raw.run)) if self.name_corrections is not None else None
+                if corr:
+                    sc.add(f"names.apply(raw, {{{int(raw.run)}: {lit(dict(corr))}}})   # name / role corrected by hand")
+                m = np.ascontiguousarray(mask, np.uint32)
+                blob = base64.b64encode(zlib.compress(m.tobytes(), 9)).decode()
+                mk = (m.shape, blob)
+                if mk not in masks_written:
+                    masks_written[mk] = f"mask{len(masks_written) + 1}"
+                    sc.add(f"# {where}")
+                    sc.add(f"{masks_written[mk]} = unpack_mask(")
+                    for i in range(0, len(blob), 100):
+                        sc.add(f"    {blob[i:i + 100]!r}")
+                    sc.add(f"    , {m.shape})")
+                prof = self.profile_for(raw)
+                if prof is not None:
+                    sc.imp("from pysasfit.sasred.core.beamprofile import BeamProfile")
+                    sc.add(call("profile = BeamProfile", **dataclasses.asdict(prof)))
+                else:
+                    sc.add("profile = None   # no direct-beam profile for this geometry: no Qdev")
+                sc.add(call("r = reduce_run_1d", Code("raw"), tuple(float(v) for v in self.centre_for(raw)),
+                            Code(f"q_edges({lit(qmin)}, {lit(qmax)}, {self.nbins.value()}, "
+                                 f"{self.spacing.currentData()!r})"),
+                            mask=Code(masks_written[mk]), normalise_by=self.norm.currentData(), sector_deg=sector,
+                            beam_profile=Code("profile")))
+                if bank:
+                    sc.add(f"r.parameters['bank'] = {bank!r}")
+                sc.add(f"results[{key!r}] = r")
+        sc.add("for key, r in results.items():",
+               "    print(key, r.raw.sample_name, len(r.q), 'bins, dead-time factor', round(r.deadtime_factor, 4))")
+        sc.add_plot("fig, ax = plt.subplots()",
+                    f"to_q = {lit(u.q_out(1.0))}   # 1/Å -> {u.q}",
+                    "for key, r in results.items():",
+                    "    ax.errorbar(r.q * to_q, r.I, r.idev(), fmt='.-', ms=3, label=f'{key} {r.raw.sample_name}')",
+                    "ax.set_xscale('log')", "ax.set_yscale('log')", f"ax.set_xlabel('q ({u.q})')",
+                    "ax.set_ylabel('I (counts / monitor / sr)')", "ax.legend(fontsize=7)")
+        return sc.text()
 
     def reduce_entry(self, e, bank: str = ""):
         """Reduce one catalogue entry with the panel settings (re-read with checksum); ``bank``: a
@@ -1671,7 +1981,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         self._sync_mask_config(raw)
         ax = fig.add_subplot(111)
         if self.det_view.currentData() == "llb_all":
-            self._draw_llb_all(fig, ax, sel[0].raw)
+            coord = self.det_axes.currentData()
+            self._draw_llb_all(fig, ax, sel[0].raw, "angle" if coord == "pixels" else coord)
             self.mask_editor._ax = None
             self.det_canvas.draw_idle()
             return
@@ -1687,6 +1998,11 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 ax.set_title(ax.get_title() + cnote, fontsize="medium")
             self.mask_editor._ax = None                     # editing only in the cartesian view
             self.mask_editor.attach()
+            self.det_canvas.draw_idle()
+            return
+        if self.det_axes.currentData() in ("angle", "q"):
+            self._draw_llb_all(fig, ax, raw, self.det_axes.currentData(), single=(c, cunit, cnote, norm))
+            self.mask_editor._ax = None                     # editing only in pixels
             self.det_canvas.draw_idle()
             return
         px, py = raw.pixel_size_m
@@ -1722,29 +2038,43 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         ax.set_title(f"run {raw.run}: {raw.sample_name}{cnote}", fontsize="medium")
         self.det_canvas.draw_idle()
 
-    def _draw_llb_all(self, fig, ax, raw):
-        """SANS-LLB: the central detector and the wide-angle panels together over the horizontal and
-        vertical scattering angles (geometry with the current beam centre and the panel offsets), counts
-        per steradian, with the mask of every bank shown as in the cartesian view (mask colours, own grey
-        scale or hidden, and the outline)."""
+    def detector_coordinates(self, g, coord):
+        """Plot coordinates of the pixels of geometry ``g``: ``coord`` "angle": 2θ·(cos φ, sin φ) in degrees,
+        "q": |q|·(cos φ, sin φ) in the q unit shown; φ the azimuth of the pixel (x of the central detector = 0°).
+        Rings are circles of radius 2θ or q, whatever the detector distance."""
+        phi = np.arctan2(g.y, g.x)
+        if coord == "q":
+            rad = self.units.q_out(np.asarray(g.q, float))
+        else:
+            rad = np.degrees(np.arctan2(np.hypot(g.x, g.y), g.z))
+        return rad * np.cos(phi), rad * np.sin(phi)
+
+    def _draw_llb_all(self, fig, ax, raw, coord="angle", single=None):
+        """Detectors over scattering angle or scattering vector (geometry with the current beam centre and the
+        SANS-LLB panel offsets): without ``single`` the SANS-LLB central detector and the wide-angle panels
+        together, counts per steradian; with ``single`` = (image, unit, note, norm) only ``raw`` (one bank, any
+        instrument) with the image of the cartesian view. The mask of every bank is shown as in the cartesian
+        view (mask colours, own grey scale or hidden, and the outline)."""
         from matplotlib.collections import LineCollection
         from matplotlib.colors import LogNorm
         from scipy.interpolate import RegularGridInterpolator
         from .core.geometry import run_geometry
         from .mask_editor import MASKED_CMAP, outline_segments, overlay_rgba
-        if getattr(raw, "instrument", "") != "sans_llb" or not raw.panels:
+        if single is None and (getattr(raw, "instrument", "") != "sans_llb" or not raw.panels):
             ax.text(0.5, 0.5, "not a SANS-LLB run", ha="center", va="center", transform=ax.transAxes)
             return
-        from .io.sans_llb import bank_run
         centre = self.centre_for(raw)
         mode = self.mask_editor.mode
         alpha = self.mask_editor.opacity.value() / 100
         parts = []
-        for b in ["", *raw.panels]:
-            r = bank_run(raw, b) if b else raw
+        if single is None:
+            from .io.sans_llb import bank_run
+            runs = [(b or "central", bank_run(raw, b) if b else raw) for b in ["", *raw.panels]]
+        else:
+            runs = [(getattr(raw, "bank", "") or "", raw)]
+        for b, r in runs:
             g = run_geometry(r, centre)
-            ang_x = np.degrees(np.arctan2(g.x, g.z))
-            ang_y = np.degrees(np.arctan2(g.y, g.z))
+            ang_x, ang_y = self.detector_coordinates(g, coord)
             ny, nx = ang_x.shape
             fx = RegularGridInterpolator((np.arange(ny), np.arange(nx)), ang_x, bounds_error=False, fill_value=None)
             fy = RegularGridInterpolator((np.arange(ny), np.arange(nx)), ang_y, bounds_error=False, fill_value=None)
@@ -1754,19 +2084,23 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 return fx(pts).reshape(np.shape(px)), fy(pts).reshape(np.shape(px))
             ey, ex = np.mgrid[-0.5:ny, -0.5:nx]
             Xe, Ye = to_angles(ex, ey)
-            dens = r.counts.astype(float) / g.d_omega
+            dens = r.counts.astype(float) / g.d_omega if single is None else np.asarray(single[0], float)
             m = np.asarray(self.mask_for(r)[0], np.uint32)
-            parts.append((b or "central", ang_x, ang_y, Xe, Ye, dens, m, to_angles))
-        good = [d[(m == 0) & (d > 0)] for *_, d, m, _t in parts]
-        allv = np.concatenate(good) if good else np.array([])
-        if allv.size == 0:
-            allv = np.concatenate([d[d > 0] for *_, d, m, _t in parts]) if parts else np.array([1.0])
-        norm = LogNorm(vmin=max(np.percentile(allv, 1), 1e-12), vmax=np.percentile(allv, 99.9))
+            parts.append((b, ang_x, ang_y, Xe, Ye, dens, m, to_angles))
+        if single is None:
+            good = [d[(m == 0) & (d > 0)] for *_, d, m, _t in parts]
+            allv = np.concatenate(good) if good else np.array([])
+            if allv.size == 0:
+                allv = np.concatenate([d[d > 0] for *_, d, m, _t in parts]) if parts else np.array([1.0])
+            norm = LogNorm(vmin=max(np.percentile(allv, 1), 1e-12), vmax=np.percentile(allv, 99.9))
+        else:
+            norm = single[3]
         cmap = self.det_cmap.currentText()
         im = None
         for name, ax_, ay_, Xe, Ye, d, m, to_angles in parts:
             masked = m != 0
-            show = np.ma.masked_where((d <= 0) | (masked & (mode != "colours")), d)
+            hide = ~np.isfinite(d) | ((d <= 0) if single is None else False)
+            show = np.ma.masked_where(hide | (masked & (mode != "colours")), d)
             im = ax.pcolormesh(Xe, Ye, show, norm=norm, cmap=cmap, shading="flat")
             if masked.any():
                 if mode == "colours":
@@ -1790,17 +2124,29 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                         segs.append(np.column_stack([X, Y]))
                     for col, lw in (("black", 2.2), ("white", 0.9)):
                         ax.add_collection(LineCollection(segs, colors=col, linewidths=lw, zorder=4), autolim=False)
-            ax.text(float(np.median(ax_)), float(np.max(Ye)), name, ha="center", va="bottom", fontsize=8)
+            if name:
+                ax.text(float(np.median(ax_)), float(np.max(Ye)), name, ha="center", va="bottom", fontsize=8)
         ax.plot([0], [0], "+", color="red", ms=12, mew=1.5, zorder=5)
         ax.set_aspect("equal")
         ax.autoscale_view()
-        ax.set_xlabel("2θ_x [°] (x of the central detector)")
-        ax.set_ylabel("2θ_y [°]")
+        if coord == "q":
+            ax.set_xlabel(f"q_x = |q| cos φ [{self.units.q}]")
+            ax.set_ylabel(f"q_y = |q| sin φ [{self.units.q}]")
+        else:
+            ax.set_xlabel("2θ cos φ [°]")
+            ax.set_ylabel("2θ sin φ [°]")
         n_m = sum(int(np.count_nonzero(m)) for *_, m, _t in parts)
-        ax.set_title(f"run {raw.run}: {raw.sample_name} – all detectors, counts/sr ({n_m} px masked)",
-                     fontsize="medium")
-        if im is not None:
-            fig.colorbar(im, ax=ax, label="counts / sr")
+        if single is None:
+            ax.set_title(f"run {raw.run}: {raw.sample_name} – all detectors, counts/sr ({n_m} px masked)",
+                         fontsize="medium")
+            if im is not None:
+                fig.colorbar(im, ax=ax, label="counts / sr")
+        else:
+            bank = f" – {raw.bank} panel" if getattr(raw, "bank", "") else ""
+            ax.set_title(f"run {raw.run}: {raw.sample_name}{bank}{single[2]}", fontsize="medium")
+            if im is not None:
+                from ..toolbox.viewer import image_colorbar
+                decorate_colorbar(image_colorbar(fig, ax, im, single[1]), self.det_scale.currentData())
 
     def _draw_detector_polar(self, fig, ax, raw, c, norm, cunit="counts"):
         """Detector image over (φ, q): φ = 0 horizontal (+x), counter-clockwise; masked cells in the
@@ -2057,7 +2403,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "detector_scale": self.det_scale.currentData(), "detector_cmap": self.det_cmap.currentText(),
                 "detector_view": self.det_view.currentData(), "bank": self.bank_combo.currentData(),
                 "detector_bank": self.det_bank.currentData(),
-                "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
+                "detector_axes": self.det_axes.currentData(), "detector_efficiency": self.det_eff.isChecked(), "detector_solid_angle": self.det_domega.isChecked(),
                 "mask_tools": self.mask_tools_button.isChecked(), "iq_show": self.iq_show.currentData(),
                 "iq_error_bars_I": self.iq_err_I.isChecked(), "iq_error_bars_q": self.iq_err_q.isChecked(),
                 "iq_xscale": self._iq_scales()[0], "iq_yscale": self._iq_scales()[1],
@@ -2078,7 +2424,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
     def save_session(self):
         try:
             self._commit_mask()
-            if self.masks:
+            if self.masks or self.tregions:
                 os.makedirs(os.path.dirname(self._session_masks_path()), exist_ok=True)
                 self.save_masks(self._session_masks_path())
         except Exception:  # noqa: BLE001 -- the session is a convenience
@@ -2161,6 +2507,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if "mask_tools" in s:
             self.mask_tools_button.setChecked(bool(s["mask_tools"]))
         self.det_eff.setChecked(bool(s.get("detector_efficiency", False)))
+        self.det_axes.setCurrentIndex(max(0, self.det_axes.findData(s.get("detector_axes", "pixels"))))
         self.det_domega.setChecked(bool(s.get("detector_solid_angle", False)))
         for key, cb in (("iq_error_bars_I", self.iq_err_I), ("iq_error_bars_q", self.iq_err_q)):
             if key in s:

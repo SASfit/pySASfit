@@ -413,7 +413,9 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         self.btn_run.clicked.connect(self.on_run)
         self.btn_stop.clicked.connect(self.on_stop)
         self.btn_save.clicked.connect(self.on_save)
-        for b in (self.btn_run, self.btn_stop, self.btn_save):
+        from ..core import pycode
+        self.btn_python = pycode.button(self.python_code, self)
+        for b in (self.btn_run, self.btn_stop, self.btn_save, self.btn_python):
             row.addWidget(b)
         cl.addLayout(row)
         self.progress = QtWidgets.QProgressBar()
@@ -575,6 +577,7 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         self.cb_geom.currentIndexChanged.connect(lambda *_: self._update_ift_points(new_data=True))
         self.sp_nr.valueChanged.connect(lambda *_: self._update_ift_points(follow=False))
         self._init_project()
+        pycode.install(self)
 
     # ------------------------------------------------------------------ project hooks
     def _project_columns(self):
@@ -876,6 +879,164 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
             return
         self.sp_rmax.setValue(rm)
         self.log_msg(f"Guinier estimate r_max = {rm:.5g}")
+
+    # ------------------------------------------------------------------ Python code
+    def python_code(self):
+        """Script that repeats the current run (data, q range, resolution, background, method, grid and the
+        Settings -> Preferences values the fit uses); "Copy Python code"."""
+        from ..core.pycode import Code, Script, call, lit, nondefault, path_lit
+        from . import geometry as _geo
+        from .twostep import IFT_DEFAULTS
+        from ..core import background as _bg
+
+        sc = Script("pySLDprofile", "radial density profile from SAS data (Hansen 2016)")
+        sc.imp("import numpy as np", "from pysasfit.core.io import load_data")
+        sc.comment("data, q units and q range as on the panel")
+        sc.add(f"q, I, s, dq = load_data({path_lit(self.filename)})")
+        name, unit = Q_UNITS[self.cb_units.currentIndex()]
+        if unit != 1.0:
+            sc.add(f"q = q * {unit!r}   # {name}", f"dq = dq * {unit!r} if dq is not None else None")
+        qmin, qmax = self.sp_qmin.value(), self.sp_qmax.value()
+        sc.add(f"m = (q >= {lit(qmin)} - 1e-12) & (q <= {lit(qmax)} + 1e-12)",
+               "q, I, s, dq = q[m], I[m], s[m], (dq[m] if dq is not None else None)")
+        # numerics of the shells / p(r) and of the background start values (module-wide, Preferences)
+        geo = nondefault(prefs.values("sldprofile.geo"), {k: prefs.find("sldprofile.geo." + k).default
+                                                           for k in prefs.values("sldprofile.geo")})
+        bgs = nondefault(prefs.values("numerics.background"),
+                         {k: prefs.find("numerics.background." + k).default for k in prefs.values("numerics.background")})
+        if geo or bgs:
+            sc.comment("module-wide numerics from Settings -> Preferences")
+            if geo:
+                sc.imp("from pysasfit.sldprofile import geometry")
+                sc.add(f"geometry.DEFAULTS.update({lit(geo)})")
+            if bgs:
+                sc.imp("from pysasfit.core import background as bg_module")
+                sc.add(f"bg_module.START_DEFAULTS.update({lit(bgs)})")
+        # resolution
+        ires = self.cb_res.currentIndex()
+        rp = prefs.values("sldprofile.res")
+        rkw = dict(kernel=self.cb_kernel.currentText(), fwhm=self.ck_fwhm.isChecked(), nSigma=rp["n_sigma"],
+                   oversample=rp["oversample"])
+        sc.comment("instrumental resolution")
+        if ires == 1:
+            sc.imp("from pysasfit.core.resolution import Resolution")
+            sc.add(call("resolution = Resolution", Code("dq"), **rkw))
+        elif ires == 2:
+            sc.imp("from pysasfit.core.resolution import Resolution")
+            sc.add(call("resolution = Resolution", self.sp_res.value(), **rkw))
+        elif ires == 3:
+            sc.imp("from pysasfit.core.resolution import SlitResolution")
+            sc.add(call("resolution = SlitResolution", self.sp_res.value(), n_nodes=rp["slit_nodes"]))
+        else:
+            sc.add("resolution = None")
+        # background
+        terms = []
+        ic = self.cb_bg.currentIndex()
+        if ic == 1:
+            terms.append(call("Constant", self.sp_bg.value(), fit=False))
+        elif ic == 2:
+            terms.append("Constant()")
+        if self.ck_pl.isChecked():
+            terms.append(call("PowerLaw", n=self.sp_pl_n.value(), fit_n=self.ck_pl_fitn.isChecked()))
+        if self.ck_oz.isChecked():
+            xi = self.sp_oz_xi.value()
+            terms.append(call("OrnsteinZernike", xi=xi if xi > 0 else None, fit_xi=self.ck_oz_fitxi.isChecked()))
+        names = [t.split("(")[0] for t in terms]
+        sc.imp("from pysasfit.core.background import Background" + "".join(f", {n}" for n in dict.fromkeys(names)))
+        sc.comment("background")
+        sc.add(f"background = Background([{', '.join(terms)}])")
+        # prior of the maximum-entropy regularisation
+        reg = self.cb_reg.currentText()
+        prior = "None"
+        if reg == "maxent":
+            pc = self.cb_prior.currentText()
+            if pc == "previous result":
+                if self.result is None:
+                    raise ValueError("The prior 'previous result' needs a previous result: run the fit first.")
+                pr = np.clip(self.result.best.rho,
+                             prefs.get("sldprofile.gui.prior_floor") * np.abs(self.result.best.rho).max(), None)
+                sc.comment("maximum-entropy prior: the profile of the previous run")
+                sc.add(f"prior = {lit(pr)}")
+                prior = "prior"
+            elif pc == "hollow shell":
+                sc.comment("maximum-entropy prior: hollow shell")
+                sc.add(f"prior = lambda x: np.where(x < {lit(self.sp_shell.value())}, "
+                       f"{lit(prefs.get('sldprofile.gui.hollow_level'))}, 1.0)")
+                prior = "prior"
+        # grid / representation
+        gmode = self.cb_grid.currentIndex()
+        degree = (None, 3, 2)[self.cb_rep.currentIndex()]
+        grid = ("power", self.sp_gamma.value()) if gmode == 1 else None
+        if degree is not None:
+            sc.imp("from pysasfit.sldprofile import BSplines")
+            grid_code = call("BSplines", degree, grid)
+        else:
+            grid_code = lit(grid)
+        options = prefs.values("sldprofile.opt")
+        self._sync_workers_from_prefs()
+        options["n_workers"] = int(self.sp_workers.value())
+        options = nondefault(options, DensityProfileFit.DEFAULT_OPTIONS)
+        basis = ("rho", "mass", float(self.sp_p.value()))[self.cb_basis.currentIndex()]
+        sc.imp("from pysasfit.sldprofile import DensityProfileFit")
+        sc.comment("the model: geometry, number of shells / coefficients, regularisation")
+        fit_kw = dict(geometry=self.cb_geom.currentText(), n=self.sp_n.value(), regularization=reg,
+                      prior=Code(prior), outer=self.cb_outer.currentText(), background=Code("background"),
+                      resolution=Code("resolution"), basis=basis, grid=Code(grid_code))
+        if options:
+            fit_kw["options"] = options
+        sc.add(call("fitter = DensityProfileFit", Code("q"), Code("I"), Code("s"), **fit_kw))
+        fix = self.ck_fix.isChecked()
+        sc.comment("r_max: start value (or fixed value) and the scanned range")
+        if self.ck_auto.isChecked():
+            sc.add("r_max = fitter.guess_r_max()   # Guinier estimate")
+        else:
+            sc.add(f"r_max = {lit(self.sp_rmax.value())}")
+        extra = nondefault(prefs.values("sldprofile.fit"), DensityProfileFit.fit)
+        lo, hi = self.sp_lo.value(), self.sp_hi.value()
+        rng = Code(f"({lit(lo)} * r_max, {lit(hi)} * r_max)")
+        if self.cb_method.currentIndex() == 1:
+            from .twostep import two_step_fit as _tsf
+            sc.imp("from pysasfit.sldprofile import two_step_fit")
+            sc.comment("two-step method (Glatter): IFT I(q) -> p(r), then deconvolution p(r) -> rho(r)")
+            tkw = dict(geometry=Code("fitter.geometry"), n=Code("fitter.n"), regularization=Code("fitter.regularization"),
+                       prior=Code("fitter.prior"), outer=Code("fitter.outer"), basis=Code("fitter.basis"),
+                       grid=Code("fitter.grid"), resolution=Code("fitter.resolution"),
+                       background=(False, self.sp_bg.value(), True)[ic], r_max=Code("r_max"), fix_r_max=fix,
+                       r_max_range=None if fix else rng, n_D=self.sp_nc.value(), n_r=self.sp_nr.value(),
+                       errors=("diagonal", "covariance")[self.cb_perr.currentIndex()],
+                       alpha_from=("intensity", "evidence")[self.cb_alpha2.currentIndex()])
+            if options:
+                tkw["options"] = Code("fitter.opt")
+            ift = nondefault(prefs.values("sldprofile.ift"), IFT_DEFAULTS)
+            if ift:
+                tkw["ift_options"] = ift
+            tkw.update(nondefault(dict(penalty=prefs.get("sldprofile.twostep.penalty"),
+                                       n_sub=prefs.get("sldprofile.twostep.n_sub"), **prefs.values("sldprofile.fit")),
+                                  _tsf))
+            sc.add(call("two = two_step_fit", Code("q"), Code("I"), Code("s"), **tkw),
+                   "result = two.as_profile_result()", "print(two.summary())")
+        else:
+            kw = dict(r_max=Code("r_max"), fix_r_max=fix, n_coarse=self.sp_nc.value(), n_fine=self.sp_nf.value(),
+                      r_max_range=rng, **extra)
+            if gmode == 2:
+                ad = prefs.values("sldprofile.adaptive")
+                sc.comment("adaptive grid: an over-smoothed solution on the uniform grid sets the shell widths")
+                rm_ad = f"{lit(self.result.best.r_max)}   # r_max of the previous result" if self.result is not None \
+                    else "r_max"
+                sc.add(f"r_ad = {rm_ad}",
+                       "sol_u, _ = fitter.best_alpha(r_ad)",
+                       call("grid = fitter.adaptive_grid", Code("r_ad"), beta=self.sp_beta.value(),
+                            max_ratio=ad["max_ratio"],
+                            min_width=ad["min_width"] if ad["min_width"] > 0 else "auto",
+                            solution=Code(f"fitter.solve(sol_u.alpha * np.exp({lit(ad['smoothing'])}), r_ad, x0=sol_u.x)")))
+                if degree is not None:
+                    sc.add(f"grid = BSplines({degree}, grid)")
+                fit_kw["grid"] = Code("grid")
+                sc.add(call("fitter = DensityProfileFit", Code("q"), Code("I"), Code("s"), **fit_kw))
+            sc.comment("Bayesian fit: alpha and r_max from the evidence")
+            sc.add(call("result = fitter.fit", **kw), "print(result.summary())")
+        sc.add_plot("result.plot(data=(q, I, s))")
+        return sc.text()
 
     # ------------------------------------------------------------------ fit
     def on_run(self):

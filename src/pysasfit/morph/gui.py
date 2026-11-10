@@ -142,6 +142,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.act_export_stl = m.addAction("Export surface (STL)…", self.on_export_stl)
         m.addSeparator()
         m.addAction("Anisotropic 2D data (&texture)…", self.on_anisotropic)
+        from ..core import pycode
+        pycode.install(self, self.python_code, menu=m)
         from ..core.settings_dialog import add_preferences_menu
         add_preferences_menu(self, None)
         self.menuBar().addMenu("&View")
@@ -315,6 +317,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.btn_run.setFont(f2)
         row.addWidget(self.btn_corr)
         row.addWidget(self.btn_run)
+        from ..core import pycode
+        row.addWidget(pycode.button(self.python_code, w))
         lay.addLayout(row)
         self.progress = QtWidgets.QProgressBar()
         self.progress.setRange(0, 100)
@@ -790,6 +794,64 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.refresh()
         self.view3d.set_result(res if res.labels is not None else None, self._length_unit())
         self.statusBar().showMessage("; ".join(res.warnings) if res.warnings else "ok", 15000)
+
+    def python_code(self):
+        """Script: the curves with their SLDs, weights and backgrounds, the parameters of the panel and the
+        reconstruction (Reconstruct, if the last run was one, else Correlations) ("Copy Python code")."""
+        from ..core.pycode import Code, Script, call, lit, nondefault, path_lit
+
+        p = self.params()
+        sets = self.dataset_objects()
+        full = self.result is not None and self.result.labels is not None
+        sc = Script("pySASmorph", "3D morphology from SAS data" + (" (reconstruction)" if full else " (correlations)"))
+        sc.imp("import numpy as np", "from pysasfit.morph.io import load_curve",
+               "from pysasfit.morph.multiphase import DataSet, MultiParameters, correlations_multi, reconstruct_multi")
+        sc.comment("the curves (background-subtracted or with a flat background B) and the SLD of every phase")
+        sc.add("sets = []")
+        if not sets:
+            sc.add(f"q, I, sigma = load_curve({path_lit(None)})",
+                   call("sets.append(DataSet", Code("q"), Code("I"), Code("sigma"),
+                        sld=np.asarray(self._sld_columns()[0] if self._sld_columns() else [1.0, 0.0], float)) + ")")
+        for d in sets:
+            if d.path and os.path.isfile(d.path):
+                sc.add(f"q, I, sigma = load_curve({path_lit(d.path)})")
+                q, I, sg = "q", "I", "sigma"
+            else:
+                sc.add(f"q, I, sigma = {lit(d.q)}, {lit(d.I)}, {lit(d.sigma)}")
+                q, I, sg = "q", "I", "sigma"
+            kw = dict(sld=d.sld, name=d.name)
+            if d.weight != 1.0:
+                kw["weight"] = d.weight
+            kw["fit_background"] = d.fit_background
+            if d.background is not None:
+                kw["background"] = d.background
+            sc.add(call("sets.append(DataSet", Code(q), Code(I), Code(sg), **kw) + ")")
+        pd = nondefault(p.to_dict(), MultiParameters().to_dict())
+        sc.comment("parameters of the panel (lengths in the inverse unit of q)")
+        sc.add(call("params = MultiParameters", **pd))
+        if full:
+            sc.comment("extrapolation, correlation functions, random field, phases, their scattering and statistics")
+            sc.add("res = reconstruct_multi(sets, params, keep_field=True)")
+        else:
+            sc.comment("extrapolation, correlation functions, common g(r), f(k) and the model I(q)")
+            sc.add("res = correlations_multi(sets, params)")
+        sc.add("print(res.report())")
+        plot = ["fig, axes = plt.subplots(1, 2 if res.labels is not None else 1, figsize=(12, 5), squeeze=False)",
+                "ax = axes[0, 0]",
+                "for c in res.curves:",
+                "    ax.plot(c.q_data, c.I_data, 'o', ms=3, mfc='none', label=c.data.name)",
+                "    ax.plot(c.q_data, c.I_model, 'k-', lw=1)",
+                "    if c.I_voxel is not None:",
+                "        ax.plot(c.q_voxel, c.I_voxel, '.', ms=3)",
+                "ax.set_xscale('log')", "ax.set_yscale('log')",
+                f"ax.set_xlabel('q ({self._q_unit()})')", "ax.set_ylabel('I(q)')", "ax.legend()",
+                "if res.labels is not None:",
+                "    n = res.labels.shape[0]",
+                "    axes[0, 1].imshow(res.labels[:, :, n // 2].T, origin='lower', cmap='viridis',",
+                "                      extent=(0, res.params.box_size, 0, res.params.box_size))",
+                f"    axes[0, 1].set_title('slice z = L/2 ({self._length_unit()})')"]
+        sc.add_plot(*plot, "fig.tight_layout()")
+        return sc.text()
 
     def on_correlations(self):
         self._run(False)

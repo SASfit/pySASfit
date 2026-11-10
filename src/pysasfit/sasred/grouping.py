@@ -66,6 +66,7 @@ def mid_time(raw) -> Optional[float]:
 FIELDS: Dict[str, Callable] = {
     "sample": lambda r: r.sample_name,
     "SD_m": lambda r: r.SD_m,
+    "panel_SD_m": lambda r: getattr(r, "panel_SD_m", None),     # SANS-LLB wide-angle panels (None: none)
     "coll_m": lambda r: r.coll_m,
     "wavelength_A": lambda r: r.wavelength_A,
     "dlam_over_lam": lambda r: r.dlam_over_lam_fwhm,

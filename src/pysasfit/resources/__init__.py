@@ -14,7 +14,7 @@ the installed package) and, in a source checkout, in the logo bundle itself. Wit
 nothing breaks.
 
 Tools: ``pySASfit`` (the suite, launcher), ``pySLDprofile``, ``pyINVersion``, ``pyOZsolver``, ``pySASstudio``
-(model explorer), ``pySASred``, ``pyTOOLbox``. The former names pyInversion and pySASbox are accepted
+(model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``. The former names pyInversion and pySASbox are accepted
 (:data:`ALIASES`).
 """
 
@@ -25,7 +25,8 @@ import os
 __all__ = ["TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "ALIASES", "tool_icon", "tile_icon", "logo_path",
            "icon_path", "menu_icon_path", "wordmark"]
 
-TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter")
+TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter",
+         "pySASmorph")
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -54,7 +55,7 @@ TOOL_COLOURS = {
     "pySLDprofile": ("#C23A93", "#D77FB9"),
     "pySASstudio": ("#2F6FED", "#78A1F3"),
     "pyTOOLbox": ("#D9730D", "#E6A462"),
-    "pySASmorph": ("#0F7C80", "#5FB0B3"),      # teal; no logo files yet (not in TOOLS)
+    "pySASmorph": ("#0E2740", "#FFFFFF"),      # marine: tile #0E2740, navy/white wordmark core as in its logo
     "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
 }
 

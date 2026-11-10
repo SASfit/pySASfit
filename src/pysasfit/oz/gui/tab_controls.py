@@ -97,8 +97,11 @@ class PolydisperseTabControls:
         #the only code that knows how to unwind a run consistently, and a
         #future interface may want them back.
 
-        lay.addWidget(qtkit.hbox(qtkit.button("Save...", self._onSaveAll),
-                                 qtkit.button("Load...", self._onLoadAll)))
+        buttons = [qtkit.button("Save...", self._onSaveAll), qtkit.button("Load...", self._onLoadAll)]
+        if callable(getattr(self, "python_code", None)):
+            from ...core import pycode
+            buttons.append(pycode.button(self.python_code, parent))
+        lay.addWidget(qtkit.hbox(*buttons))
 
         self.exportFormatVar = qtkit.StringVar(value="ASCII")
         self._exportDispatch = {

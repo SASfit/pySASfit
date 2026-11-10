@@ -373,6 +373,8 @@ class MetaLister(QWidget):
         self.status = QLabel("Ready.")
         bottom = QHBoxLayout()
         bottom.addWidget(gen)
+        from ..core import pycode
+        bottom.addWidget(pycode.button(self.python_code, self))
         bottom.addWidget(cp)
         bottom.addWidget(sv)
         bottom.addWidget(pb)
@@ -489,6 +491,37 @@ class MetaLister(QWidget):
         self.rebuild_entry_list()
         self.set_status(f"Scan done: {len(self.entry_state)} entries known, {new} new.")
         self.persist()
+
+    def python_code(self):
+        """Script: the files of the number range and the ticked entries, listed as a table (pandas when
+        installed) ("Copy Python code")."""
+        from ..core.pycode import Script, lit, path_lit
+
+        keys = [k for k, v in self.entry_state.items() if v and not k.endswith("@units")]
+        if not keys:
+            raise ValueError("Tick the entries to list first.")
+        sc = Script("pyTOOLbox", "HDF metadata listing")
+        sc.imp("import os", "import re", "from pysasfit.toolbox.meta_lister import collect_entries")
+        folder = self.folder_edit.text().strip()
+        sc.add(f"folder = {path_lit(folder) if folder else path_lit(None)}",
+               f"instrument, year = {self.instr_edit.text().strip()!r}, {self.year_edit.text().strip()!r}",
+               f"first, last = {self.from_edit.text().strip() or 0}, {self.to_edit.text().strip() or 0}",
+               f"keys = {lit(keys, 0)}",
+               "pat = re.compile(rf'^{re.escape(instrument)}{re.escape(year)}n(\\d+)\\.hdf$', re.IGNORECASE)",
+               "files = sorted((int(m.group(1)), name) for name in os.listdir(folder)",
+               "               if (m := pat.match(name)) and first <= int(m.group(1)) <= last)",
+               "rows = []",
+               "for _, name in files:",
+               "    data = collect_entries(os.path.join(folder, name))",
+               "    rows.append([name] + [data.get(k, '') for k in keys])",
+               "try:",
+               "    import pandas as pd",
+               "    table = pd.DataFrame(rows, columns=['file'] + keys)",
+               "    print(table.to_string())",
+               "except ImportError:",
+               "    for row in rows:",
+               "        print('\\t'.join(str(v) for v in row))")
+        return sc.text()
 
     # ---- listing
     def generate(self):

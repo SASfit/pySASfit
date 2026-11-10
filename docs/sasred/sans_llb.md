@@ -12,6 +12,15 @@ is chosen from the file ({func}`pysasfit.sasred.io.raw.read_raw`). Instrument fi
 | left | 16 vertical ³He tubes, 136 pixels along each | 13.4 mm across, 5 mm along | `left_detector/distance` |
 | bottom | 16 horizontal ³He tubes, 136 pixels along each | 5 mm along, 13.4 mm across | `bottom_detector/distance` |
 
+**Configuration.** The left and bottom panels sit on their own carriage, at the same distance from the sample by
+design. Their distance is part of the instrument configuration: the run table shows *SD [m] (panels)* as
+"4.00 (1.02)", the configurations of the run plan and the reduction table end in "panels 1.02 m", runs are grouped
+only with runs at the same panel distance (1 %), and the masks are kept per panel distance (the panels can shadow
+the edge of the central detector). Panels at different recorded distances are marked with "!" in the run table
+and named in its comment. Beam centre and beam profile do not depend on the panels: they stay per (SD, λ, coll).
+Reduction tables and masks saved before the panel distance was part of the configuration are still found for it
+when only one panel distance was measured at that setting.
+
 The run in the run table is the **central detector**: beam centre, masks, transmissions, grouping and the
 reduction table work on it as for SANS-I. The wide-angle panels travel along with the run. In the Reduction
 panel, **detector** chooses what *Reduce selected* and the reduction table reduce: the central
@@ -31,8 +40,19 @@ central detector (x against posx, y with posy; on the left panel row 0 is at the
 masks of all banks and configurations in one file. The live I(q) follows the bank shown. The reduction uses the
 edited mask of each bank (else the default panel mask) – also in the reduction table.
 
-The detector view **SANS-LLB: all detectors** shows the three banks together over the horizontal and vertical
-scattering angle (counts per steradian), with the current beam centre and panel offsets.
+**Semi-transparent beam stop.** Some SANS-LLB beam stops let a small, fixed fraction of the direct beam through.
+The beam behind it can then measure the transmission of the sample during the scattering run itself. The mask
+editor has a second layer for it, the **transmission region** (see [Masks](masks.md#transmission-region)): pixels
+that are used for the transmitted intensity and not left out of anything. *Reduction → Transmission through the
+semi-transparent beam stop…* compares it with the transmissions of the reduction table, so that you can find out
+whether it is reliable before relying on it. Nothing in the reduction uses it yet. The files do not say whether
+a beam stop is semi-transparent (`beam_stop` holds only its size, inclination and x, y), so a region is drawn only
+for the configurations where it is.
+
+The detector view **SANS-LLB: all detectors** shows the three banks together (counts per steradian), with the
+current beam centre and panel offsets, every pixel at its scattering angle 2θ·(cos φ, sin φ) or, with
+**axes → q_x, q_y**, at its scattering vector |q|·(cos φ, sin φ): rings are circles at their 2θ or q on all
+three detectors, which is a direct check of the offsets.
 
 ## Geometry and its corrections
 
@@ -56,6 +76,13 @@ The offsets are set under *Settings → Preferences → pySASred → SANS-LLB de
 
 Every reduction notes the offsets used. Determine them with a standard that puts rings on the panels (silver
 behenate in the 4 m setting: 2.15, 3.23 and 4.30 nm⁻¹ on both panels).
+
+The factory defaults are the silver behenate calibration of 2026-11-10 (runs 9546 at 8 m and 9568 at 17.5 m,
+beam centres from the direct-beam runs 9535 and 9557): left dx −10.0, dy −15.4 mm; bottom dx −5.8, dy −8.3 mm
+(±2 mm, they follow the beam centre 1:1); dz +45 ± 10 mm for both panels; central dz +3 mm (only (L + dz) times
+the wavelength scale is measured, 1.0013 × nominal). The rings on the central detector are elliptical
+(x/y = 1.032 ± 0.002 in all runs): its effective pixel pitch is about 5.08 mm in x and 4.92 mm in y, which is
+not corrected yet.
 
 ### What the commissioning data (Maren, 2026-08, λ = 0.5 nm) show
 

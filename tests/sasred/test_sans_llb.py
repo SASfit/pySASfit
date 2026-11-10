@@ -5,6 +5,22 @@ import h5py
 import numpy as np
 import pytest
 
+
+_LLB_OFFSETS = ("sasred.llb.central_dz_mm", "sasred.llb.left.dx_mm", "sasred.llb.left.dy_mm", "sasred.llb.left.dz_mm",
+                "sasred.llb.bottom.dx_mm", "sasred.llb.bottom.dy_mm", "sasred.llb.bottom.dz_mm")
+
+
+@pytest.fixture(autouse=True)
+def _nominal_llb_geometry():
+    """The tests check the nominal geometry: the calibrated offsets (factory defaults) set to 0 in memory."""
+    from pysasfit.core import settings
+    old = {k: settings.get(k) for k in _LLB_OFFSETS}
+    for k in _LLB_OFFSETS:
+        settings.set_value(k, 0.0)
+    yield
+    for k, v in old.items():
+        settings.set_value(k, v)
+
 LAM_NM = 0.5
 
 
@@ -236,11 +252,57 @@ def test_gui_panel_masks(tmp_path, monkeypatch):
         w.det_bank.setCurrentIndex(0)
         app.processEvents()
         assert ed.mask.shape == (128, 128)
-        assert any(k[3].endswith("left panel") for k in w.masks)
+        assert any("left panel" in k[3] for k in w.masks)
         w.bank_combo.setCurrentIndex(w.bank_combo.findData("left"))
         w.live.setChecked(False)
         w.on_reduce()
         r = w.results["5262 left"]
         assert int((r.flags != 0).sum()) == 2 * 10 * 16 + 16 * 10
+    finally:
+        w.close()
+
+
+def test_gui_detector_axes_angle_and_q(tmp_path, monkeypatch):
+    """Detector view in 2θ and in (q_x, q_y): every pixel at its scattering angle / vector, |q_x, q_y| = q."""
+    pytest.importorskip("PySide6")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    monkeypatch.setenv("PYSASFIT_SETTINGS", str(tmp_path / "settings.json"))
+    from PySide6 import QtWidgets
+    from pysasfit.sasred.core.geometry import run_geometry
+    from pysasfit.sasred.gui import MainWindow
+    from pysasfit.sasred.io.sans_llb import bank_run
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    d = tmp_path / "raw"
+    d.mkdir()
+    write_llb(d / "sans-llb2026n005262.hdf", "S", seed=1)
+    w = MainWindow()
+    try:
+        w.set_folder(str(d))
+        w.select_runs([5262])
+        app.processEvents()
+        raw = w.entries[0].raw
+        for b in ("", "left", "bottom"):
+            g = run_geometry(bank_run(raw, b) if b else raw, w.centre_for(raw))
+            qx, qy = w.detector_coordinates(g, "q")
+            assert np.allclose(np.hypot(qx, qy), w.units.q_out(g.q))
+            ax_, ay_ = w.detector_coordinates(g, "angle")
+            tt = np.degrees(np.arccos(g.z / np.sqrt(g.x ** 2 + g.y ** 2 + g.z ** 2)))
+            assert np.allclose(np.hypot(ax_, ay_), tt)
+            assert np.allclose(np.arctan2(qy, qx), np.arctan2(g.y, g.x))
+        for view in ("cartesian", "llb_all"):
+            for axes in ("angle", "q"):
+                w.det_view.setCurrentIndex(w.det_view.findData(view))
+                w.det_axes.setCurrentIndex(w.det_axes.findData(axes))
+                w._draw_detector()
+                lab = w.det_canvas.figure.axes[0].get_xlabel()
+                assert ("q_x" in lab) == (axes == "q") and ("2θ" in lab) == (axes == "angle")
+        w.det_view.setCurrentIndex(w.det_view.findData("cartesian"))
+        w.det_bank.setCurrentIndex(w.det_bank.findData("left"))
+        w._draw_detector()
+        assert "left panel" in w.det_canvas.figure.axes[0].get_title()
+        w.det_axes.setCurrentIndex(w.det_axes.findData("pixels"))
+        w.det_view.setCurrentIndex(w.det_view.findData("cartesian"))
+        w._draw_detector()
+        assert "pixel" in w.det_canvas.figure.axes[0].get_xlabel()
     finally:
         w.close()

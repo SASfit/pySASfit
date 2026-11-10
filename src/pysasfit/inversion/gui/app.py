@@ -248,6 +248,8 @@ class MainWindow(ProjectMixin, DockMixin, QMainWindow):
         self.setStatusBar(self.status)
         self._refresh_help_sizes()
         self._init_project()
+        from pysasfit.core import pycode
+        pycode.install(self)
 
     # ---------------------------------------------------------------- project hooks
     def _project_extra_widgets(self) -> dict:
@@ -696,8 +698,15 @@ class MainWindow(ProjectMixin, DockMixin, QMainWindow):
         self.solve_button = QPushButton("Solve")
         self.solve_button.clicked.connect(self._on_solve)
         self.solve_button.setEnabled(False)
-        solve_form.addRow(self.solve_button)
+        from pysasfit.core import pycode
+        self.python_button = pycode.button(self.python_code, self)
+        self.python_button.setToolTip("")          # explained in the info panel, as the other controls
+        row = QHBoxLayout()
+        row.addWidget(self.solve_button, 1)
+        row.addWidget(self.python_button)
+        solve_form.addRow(row)
         self._help(self.solve_button, "solve")
+        self._help(self.python_button, "python_code")
 
         self.solve_result_label = self._short_label("not solved yet")
         solve_form.addRow(self.solve_result_label)
@@ -1080,6 +1089,138 @@ class MainWindow(ProjectMixin, DockMixin, QMainWindow):
         self._autosave()
         if self.mc_uncertainty_check.isChecked():
             self._start_bootstrap(solver_key, A, I_sub, spline, solver_kwargs, result, chi2_final)
+
+    def python_code(self):
+        """Script that repeats Solve with the current settings: data, error model, background, kernel and its
+        r grid, resolution, solver and its options, Monte-Carlo errors ("Copy Python code")."""
+        from pysasfit.core.pycode import Code, Script, call, lit, nondefault, path_lit
+
+        sc = Script("pyINVersion", "size distribution / p(r) by inversion")
+        sc.imp("import numpy as np", "from pysasfit.inversion.io_utils import load_sas_data")
+        path = getattr(self.data, "source_path", None) if self.data is not None else None
+        sc.comment("data")
+        sc.add(f"data = load_sas_data({path_lit(path)})", "q, I = data.q, data.I")
+        model = self.error_model_combo.currentData()
+        sc.comment("uncertainties: " + self.error_model_combo.currentText())
+        if model == "file":
+            sc.add("sigma = np.asarray(data.dI, float)")
+        else:
+            sc.imp("from pysasfit.inversion.goodness_of_fit import estimate_errors")
+            sc.add(call("sigma = estimate_errors", Code("q"), Code("I"), model,
+                        relative=self.error_rel_spin.value() / 100.0, window=self.error_window_spin.value(),
+                        degree=prefs.get("inversion.gui.poly_degree"),
+                        half_width=prefs.get("inversion.gui.poly_half_width")))
+        opts = nondefault(prefs.values("inversion.opt"), _solver_registry.OPTION_DEFAULTS)
+        sc.imp("from pysasfit.inversion import solver_registry")
+        sc.comment("numerical options from Settings -> Preferences")
+        sc.add(f"solver_registry.apply_options({lit(opts) if opts else ''})")
+        sc.comment("background")
+        if self.use_fixed_bg.isChecked():
+            sc.add(f"background = np.full_like(q, {lit(self.fixed_bg_spin.value())}, dtype=float)")
+        elif self.bg_result is not None:
+            sc.imp("from pysasfit.inversion.background import fit_background")
+            sc.add(call("bg_fit = fit_background", Code("q"), Code("I"), q_min=self.bg_qmin.value(),
+                        q_max=self.bg_qmax.value(), dI=Code("sigma")),
+                   "background = bg_fit.evaluate(q)")
+        else:
+            sc.add("background = np.zeros_like(q)")
+        sc.add("I_sub = I - background")
+        kernel_key = self.kernel_combo.currentData()
+        kspec = KERNEL_REGISTRY[kernel_key]
+        alpha = self.alpha_spin.value() if kspec.uses_alpha else 0.0
+        solver_key = self.solver_combo.currentData()
+        use_spline = solver_key in self._SPLINE_SOLVERS or self.spline_check.isChecked()
+        r_spacing = "uniform" if use_spline else self.r_spacing_combo.currentData()
+        r_max, n_r = self.r_max_spin.value(), self.r_n_spin.value()
+        r_interp = self.r_interp_combo.currentData()
+        r_grid = make_r_grid(r_max, n_r, r_spacing)
+        if solver_key in self._LINEAR_ONLY_SOLVERS or len(r_grid) < 4:
+            r_interp = "linear"
+        sc.imp("from pysasfit.inversion.kernel_registry import KERNEL_REGISTRY",
+               "from pysasfit.inversion.kernels import make_r_grid")
+        sc.comment(f"kernel: {self.kernel_combo.currentText()}; r grid")
+        sc.add(f"kernel = KERNEL_REGISTRY[{kernel_key!r}].func", f"alpha = {lit(alpha)}",
+               f"r_grid = make_r_grid({lit(r_max)}, {n_r}, {r_spacing!r})")
+        use_res = self.res_check.isChecked() and self.data is not None and self.data.dQ is not None
+        if use_res:
+            rp = prefs.values("inversion.res")
+            sc.imp("from pysasfit.core.resolution import Resolution")
+            sc.comment("instrumental resolution: the kernel on the extended q grid, smeared onto the measured q")
+            sc.add(call("q_k, R_res = Resolution", Code("data.dQ"), kernel=self.res_kernel_combo.currentData(),
+                        fwhm=rp["fwhm"], nSigma=rp["n_sigma"], oversample=rp["oversample"]) + ".setup(q)",
+                   "smear = lambda K: R_res @ K")
+        else:
+            sc.add("q_k, smear = q, (lambda K: K)")
+        q_kmax = float(np.max(self.data.q)) if self.data is not None else None
+        dr_max = float(np.max(np.diff(r_grid)))
+        fine = (not use_spline) and (r_spacing != "uniform" or r_interp != "linear" or (
+            q_kmax is not None and dr_max > prefs.get("inversion.gui.fine_grid_factor") * np.pi / q_kmax))
+        if self.data is not None and use_res and not use_spline and r_spacing == "uniform" and r_interp == "linear":
+            # the decision uses the extended q grid of the resolution: let the script decide the same way
+            fine = None
+        if fine is None:
+            sc.imp("from pysasfit.inversion.kernels import build_kernel_on_nodes, build_size_distribution_kernel")
+            sc.add(f"if np.max(np.diff(r_grid)) > {lit(prefs.get('inversion.gui.fine_grid_factor'))} * np.pi / q_k.max():",
+                   "    # p(r) between the grid points, kernel integrated on a fine grid",
+                   f"    A = smear(build_kernel_on_nodes(q_k, r_grid, kernel, alpha=alpha, interpolation={r_interp!r}))",
+                   "else:",
+                   "    A = smear(build_size_distribution_kernel(q_k, r_grid, kernel, alpha=alpha))")
+        elif fine:
+            sc.imp("from pysasfit.inversion.kernels import build_kernel_on_nodes")
+            sc.add("# p(r) linear or cubic between the grid points, kernel integrated on a fine grid",
+                   f"A = smear(build_kernel_on_nodes(q_k, r_grid, kernel, alpha=alpha, interpolation={r_interp!r}))")
+        else:
+            sc.imp("from pysasfit.inversion.kernels import build_size_distribution_kernel")
+            sc.add("A = smear(build_size_distribution_kernel(q_k, r_grid, kernel, alpha=alpha))")
+        solver_kwargs = {name: self.option_widgets[name][1].currentData()
+                         for name in (SOLVER_REGISTRY[solver_key].options or {})}
+        if solver_key in self._TARGET_CHI2_SOLVERS and self.target_chi2_check.isChecked():
+            solver_kwargs["target_chi2_r"] = prefs.get("inversion.gui.target_chi2")
+        sc.imp("from pysasfit.inversion.solver_registry import run_solver")
+        spline = "None"
+        if use_spline:
+            sc.imp("from pysasfit.inversion.kernels import build_size_distribution_kernel, quadrature_points",
+                   "from pysasfit.inversion.solver_registry import SplineOptions")
+            sc.comment("cubic B-spline representation; basis integrated on a finer r grid")
+            sc.add(f"r_quad = np.linspace(0.0, {lit(r_max)}, quadrature_points({lit(r_max)}, q_k.max(), {n_r}))",
+                   call("spline = SplineOptions", n_coeffs=self.spline_n_coeffs_spin.value(),
+                        spacing=self.spline_spacing_combo.currentData(),
+                        A_quad=Code("smear(build_size_distribution_kernel(q_k, r_quad, kernel, alpha=alpha))")))
+            spline = "spline"
+        sc.comment(f"solver: {self.solver_combo.currentText()}")
+        sc.add(call("result = run_solver", solver_key, Code("A"), Code("I_sub"), Code("sigma"), spline=Code(spline),
+                    **solver_kwargs),
+               "chi2_r = result.chi2_r_history[-1] if result.chi2_r_history else float('nan')",
+               "print(f'chi2_r = {chi2_r:.4g}')")
+        if self.mc_uncertainty_check.isChecked():
+            seed = prefs.get("inversion.gui.bootstrap_seed")
+            nw = int(prefs.get("inversion.gui.bootstrap_workers") or 0)
+            sc.imp("from pysasfit.inversion.uncertainty import bootstrap_uncertainty, replicate_solver")
+            sc.comment("Monte-Carlo errors: re-solves of resampled data")
+            sc.add(call("solve_fn = replicate_solver", solver_key, Code("A"), Code("sigma"), spline=Code(spline),
+                        **solver_kwargs),
+                   call("boot = bootstrap_uncertainty", Code("solve_fn"), Code("I_sub"), Code("sigma"),
+                        n_boot=self.n_boot_spin.value(), center=Code("result.fitted_b"),
+                        rng=Code("None" if seed < 0 else f"np.random.default_rng({seed})"),
+                        workers=None if nw == 0 else nw))
+        ylabel = kspec.result_label if not kspec.uses_alpha else f"x(r) = N(r) r^{alpha:g}"
+        plot = ["fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))",
+                "ax1.errorbar(q, I, sigma, fmt='.', ms=3, color='k', alpha=0.5, label='data')",
+                "ax1.plot(q, result.fitted_b + background, 'r-', label='fit')",
+                "if np.any(background):",
+                "    ax1.plot(q, background, '--', label='background')",
+                "ax1.set_xscale('log')", "ax1.set_yscale('log')", "ax1.set_xlabel('q')", "ax1.set_ylabel('I(q)')",
+                "ax1.legend()"]
+        if self.mc_uncertainty_check.isChecked():
+            plot += ["ax2.fill_between(r_grid, boot.x_mean - boot.x_std, boot.x_mean + boot.x_std, alpha=0.25)",
+                     "ax2.plot(r_grid, boot.x_mean, '-', label='bootstrap mean')",
+                     "ax2.plot(r_grid, result.x, 'r--', lw=1, label='single solve')", "ax2.legend()"]
+        else:
+            plot += ["ax2.plot(r_grid, result.x, '-')"]
+        plot += ["ax2.axhline(0, color='k', lw=0.5)", "ax2.set_xlabel('r')", f"ax2.set_ylabel({ylabel!r})",
+                 "fig.tight_layout()"]
+        sc.add_plot(*plot)
+        return sc.text()
 
     def _start_bootstrap(self, solver_key, A, I_sub, spline, solver_kwargs, result, chi2_final):
         """Monte-Carlo re-solves in a background thread: the window stays usable, the status line shows the

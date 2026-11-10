@@ -77,9 +77,21 @@ def mask_key(raw) -> tuple:
     bst = str(getattr(raw, "beamstop_type", "") or "")
     if getattr(raw, "bank", ""):                     # SANS-LLB wide-angle panel: a mask of its own
         bst = f"{bst} | {raw.bank} panel"
+    pd = getattr(raw, "panel_SD_m", None)
+    if pd is not None:                               # SANS-LLB: the panels' distance belongs to the configuration
+        bst = f"{bst} | panels {pd:.2f} m"
     return (round(float(raw.coll_m), 1), round(float(raw.SD_m), 1), round(float(raw.wavelength_A), 1),
             bst, int(round(bx)) if np.isfinite(bx) else None,
             int(round(by)) if np.isfinite(by) else None)
+
+
+def legacy_mask_key(key) -> tuple:
+    """The mask key as written before the panel distance was part of it (masks saved then are still
+    found for their configuration)."""
+    import re as _re
+    if not isinstance(key[3], str) or "| panels" not in key[3]:
+        return key
+    return key[:3] + (_re.sub(r" \| panels [-0-9.]+ m$", "", key[3]),) + tuple(key[4:])
 
 
 def mask_key_label(key) -> str:
@@ -327,6 +339,11 @@ class CatalogueEntry:
         if self.remark:
             kind += " ?"
         SD = f"{r.SD_m:.2f}"
+        pd = getattr(r, "panel_SD_m", None)
+        if pd is not None:                           # SANS-LLB: central (wide-angle panels)
+            SD += f" ({pd:.2f})"
+            if getattr(r, "panel_SD_spread_m", 0.0) > 0.001:
+                SD += " !"
         bx, by = r.beamstop_xy_mm
         bs = f"{r.beamstop_type or '?'} ({bx:.0f}, {by:.0f})"
         dl = "" if r.dlam_over_lam_fwhm is None else f"{r.dlam_over_lam_fwhm:.3f}"
@@ -345,10 +362,14 @@ class CatalogueEntry:
             parts.append(f"skipped: {self.skip}")
         if self.remark:
             parts.append(self.remark)
+        r = self.raw
+        if r is not None and getattr(r, "panel_SD_spread_m", 0.0) > 0.001:
+            d = ", ".join(f"{k} {p.distance_m:.3f} m" for k, p in (r.panels or {}).items())
+            parts.append(f"wide-angle panels at different distances ({d})")
         return "; ".join(parts)
 
 
-COLUMNS = ["run", "sample", "kind", "λ [nm]", "dλ/λ (tilt)", "coll [m]", "SD [m]", "beam stop (x, y mm)", "att.", "monitor1",
+COLUMNS = ["run", "sample", "kind", "λ [nm]", "dλ/λ (tilt)", "coll [m]", "SD [m] (panels)", "beam stop (x, y mm)", "att.", "monitor1",
            "time [s]", "counts", "aborted", "comment"]
 
 

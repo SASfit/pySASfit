@@ -149,7 +149,7 @@ def defaults():
 
 
 def write_ini(path, p, fit=None, section="hypscat"):
-    """Write a parameter file (same key=value layout as CrystalScatter *.ini, FITFLAG_<key>=NN)."""
+    """Write a parameter file (same key=value layout as CrystalScatter ``*.ini``, ``FITFLAG_<key>=NN``)."""
     fit = fit or {}
     with open(path, "w", encoding="utf-8") as f:
         f.write("[%s]\n" % quote(section))

@@ -2,7 +2,14 @@
 
 ```{image} ../pySASfit-logo-bundle/logos/pySCAtter/svg/pySCAtter-light.svg
 :alt: pySCAtter
-:height: 60px
+:height: 56px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pySCAtter/svg/pySCAtter-dark.svg
+:alt: pySCAtter
+:height: 56px
+:class: only-dark
 ```
 
 pySCAtter calculates 1D and 2D small-angle scattering patterns of particles, of their orientation
@@ -320,5 +327,6 @@ GPU libraries (CuPy, PyOpenCL) are not used. Their wheels do not install into th
 
 theory
 validation
-api
 ```
+
+The API reference of this tool is listed in the [API reference](../api/index.md).

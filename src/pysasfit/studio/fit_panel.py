@@ -520,6 +520,7 @@ class FitPanel(QtWidgets.QWidget):
                 q, I, s, *_ = load_data(fn, q_scale=scale)
                 if hasattr(self.explorer, "add_dataset"):
                     self.explorer.add_dataset(q, I, s, fn)
+                    self.explorer.datasets[-1]["q_scale"] = scale      # for "Copy Python code"
                 else:
                     self.explorer.set_data(q, I, s, fn)
             except Exception as exc:  # noqa: BLE001 -- file format problems etc.
@@ -670,6 +671,95 @@ class FitPanel(QtWidgets.QWidget):
                 continue
             problem.add_prior_text(line)
         return problem, model
+
+    def python_fit_code(self, sc, n):
+        """Add the fit as set up here to the script ``sc`` (data sets ``q1, I1, s1`` ... and models ``model1`` ... are
+        defined there): the same FitProblem as :meth:`_build_problem`, the method and its options."""
+        from ..core.pycode import Code, call, lit
+
+        try:
+            self._build_problem()                       # the same checks as the Fit button
+        except (ValueError, KeyError) as exc:
+            sc.comment(f"no fit: {exc.args[0] if exc.args else exc}")
+            return
+        e = self.explorer
+        sc.imp("from pysasfit.studio.fitting import FitProblem")
+        sc.comment("the fit problem as in the Fit panel")
+        sc.add("problem = FitProblem()")
+        sets = self._datasets()
+        names = [d["name"] for d in sets]
+        if len(set(names)) < n:
+            names = [f"{k + 1}" for k in range(n)]
+        rng = self.q_range()
+        for k in range(n):
+            sc.add(call("problem.add_dataset", Code(f"(q{k + 1}, I{k + 1}, s{k + 1})"), Code(f"model{k + 1}"),
+                        name=names[k], q_range=rng))
+        links = self.links()
+        amap = e.label_map() if hasattr(e, "label_map") else {lab: a for a, lab, *_ in e.parameter_entries()}
+        linked = {}
+        for ln in links:
+            linked.setdefault(amap[ln.target], set()).update(range(n) if ln.datasets is None else ln.datasets)
+        for address, label, lo_text, hi_text in self._selection:
+            lo, hi = _bound(lo_text, -math.inf), _bound(hi_text, math.inf)
+            free = [k for k in range(n) if k not in linked.get(address, set())]
+            if not free:
+                continue
+            bounds = {}
+            if lo != -math.inf:
+                bounds["lower"] = lo
+            if hi != math.inf:
+                bounds["upper"] = hi
+            if address in self._local and n > 1:
+                for k in free:
+                    sc.add(call("problem.add_parameter", address, [k], label=f"{label}[{names[k]}]", **bounds))
+            else:
+                sc.add(call("problem.add_parameter", address, free, label=label, **bounds))
+        starts = [(k, a, float(v)) for k, ov in getattr(e, "overrides", {}).items() for a, v in ov.items() if k < n]
+        if starts:
+            sc.comment("start values that differ per data set (separate parameters of an earlier fit)")
+            for k, a, v in starts:
+                sc.add(f"problem._remember({k}, {a!r})", f"problem._base[({k}, {a!r})] = {lit(v)}",
+                       f"for p in problem.parameters:",
+                       f"    if p.address == {a!r} and p.datasets == ({k},):",
+                       f"        p.value = {lit(v)}")
+        glob = {g.name: g for g in self.global_parameters()}
+        used = set().union(*[ln.names for ln in links]) if links else set()
+        for g in glob.values():
+            if g.name in used:
+                kw = {}
+                if g.lower != -math.inf:
+                    kw["lower"] = g.lower
+                if g.upper != math.inf:
+                    kw["upper"] = g.upper
+                if not g.fit:
+                    kw["fixed"] = True
+                sc.add(call("problem.add_global", g.name, g.value, **kw))
+        for ln in links:
+            ds = None if ln.datasets is None else list(ln.datasets)
+            if ln.factor is not None:
+                sc.add(call("problem.link", ln.name, amap[ln.target], ds, ln.factor))
+            else:
+                sc.add(call("problem.link_expression", amap[ln.target], ln.expression, ds, label=ln.target))
+        for line in self.constraints.toPlainText().splitlines():
+            if line.strip() and not line.strip().startswith("#"):
+                sc.add(f"problem.add_constraint({line.strip()!r})")
+        for line in self.priors.toPlainText().splitlines():
+            if line.strip() and not line.strip().startswith("#"):
+                sc.add(f"problem.add_prior_text({line.strip()!r})")
+        options = {}
+        if self.max_eval.value():
+            options["maxeval"] = self.max_eval.value()
+        if self.backend.currentData() != "scipy" and self.polish.isChecked():
+            options["polish"] = True
+        if self.backend.currentData() == "bumps" and self.bumps_opts.text().strip():
+            options["bumps"] = fitting.parse_option_text(self.bumps_opts.text())
+        for key, box in (("vp", self.vp), ("cache", self.cache), ("coarse", self.coarse), ("grid", self.grid)):
+            if box.isChecked():
+                options[key] = True
+        sc.comment(f"fit ({self.backend.currentText()}, {self.algorithm.currentText()})")
+        sc.add(call("summary = problem.fit", self.backend.currentData(), self.algorithm.currentData(), **options),
+               "print(summary.text())",
+               "# the fitted values are now in the contributions and models above")
 
     def _fit_or_stop(self):
         if self._thread is not None:

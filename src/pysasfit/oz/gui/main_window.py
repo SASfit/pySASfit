@@ -79,6 +79,17 @@ class OZWidget(QtWidgets.QTabWidget):
                 print(f"[oz gui] optional tab '{tabLabel}' unavailable:\n{tb}", file=sys.stderr)
                 self.addTab(_error_widget(tabLabel, tb), f"{tabLabel} (error)")
 
+        from ...core import pycode
+        pycode.install(self)
+
+    def python_code(self):
+        """Script of the tab in front ("Copy Python code")."""
+        w = self.currentWidget()
+        fn = getattr(w, "python_code", None)
+        if fn is None:
+            raise ValueError(f"The tab '{self.tabText(self.currentIndex())}' has no Python code.")
+        return fn()
+
     def shutdown(self):
         """Restore stdout/stderr (redirected into the Log tab)."""
         self.ozTab.restoreOutput()
@@ -92,6 +103,9 @@ class OZMainWindow(QtWidgets.QMainWindow):
         add_preferences_menu(self, "oz")
         self.oz = OZWidget(extra_tabs=extra_tabs)
         self.setCentralWidget(self.oz)
+        file_menu = QtWidgets.QMenu("&File", self)
+        self.menuBar().insertMenu(self.menuBar().actions()[0], file_menu)
+        file_menu.addAction(self.oz.copy_python_action)      # "Copy Python code" of the tab in front
         self.resize(1200, 776)
 
     def closeEvent(self, event):

@@ -298,6 +298,8 @@ class HDF5Viewer(QtWidgets.QWidget):
                                     "type or centre of gravity), radial / sector / azimuthal averages, polar view")
         self.to2d_button.clicked.connect(self.on_to_2d)
         bar.addWidget(self.to2d_button)
+        from ..core import pycode
+        bar.addWidget(pycode.button(self.python_code, self))
         bar.addStretch(1)
         dv.addLayout(bar)
         self.dims_box = QtWidgets.QWidget()
@@ -394,6 +396,51 @@ class HDF5Viewer(QtWidgets.QWidget):
         self._rebuild_dims()
 
     # ------------------------------------------------------------------ dimensions and modes
+    def python_code(self):
+        """Script: open the file with h5py, read the object shown (the slice of the view for 2D and more
+        dimensions) and plot it as the viewer does ("Copy Python code")."""
+        from ..core.pycode import Script, path_lit
+
+        if self.current is None:
+            raise ValueError("Select a data set in the HDF5 tree first.")
+        path, h5path = self.current
+        mode = self._effective_mode()
+        sc = Script("pyTOOLbox", f"HDF5 {h5path}")
+        sc.imp("import h5py", "import numpy as np")
+        sc.add(f"path = {path_lit(path)}", f"h5path = {h5path!r}")
+        if self._shape is None:
+            sc.add("with h5py.File(path, 'r') as f:",
+                   "    g = f[h5path]",
+                   "    print(dict(g.attrs))",
+                   "    for name, obj in g.items():",
+                   "        print(name, obj.shape if isinstance(obj, h5py.Dataset) else '(group)')")
+            return sc.text()
+        nd = len(self._shape)
+        if nd >= 2 and mode in ("Line", "Heatmap", "Matrix"):
+            x, y = self._dims()
+            idx = self._index()
+            sl = ", ".join(":" if d in (x, y) else str(idx[d]) for d in range(nd))
+            sc.add("with h5py.File(path, 'r') as f:", f"    a = f[h5path][{sl}]   # the slice shown",
+                   "    attrs = dict(f[h5path].attrs)")
+            if y is not None and x is not None and y > x:
+                sc.add("a = a.T   # rows: the y dimension, as in the heatmap")
+        else:
+            sc.add("with h5py.File(path, 'r') as f:", "    a = f[h5path][()]", "    attrs = dict(f[h5path].attrs)")
+        sc.add("print(a.shape if hasattr(a, 'shape') else a, attrs)")
+        if mode == "Line":
+            plot = ["fig, ax = plt.subplots()", "ax.plot(np.asarray(a, float).ravel())"]
+            if self.logx.isChecked():
+                plot.append("ax.set_xscale('log')")
+            if self.logy.isChecked():
+                plot.append("ax.set_yscale('log')")
+            sc.add_plot(*plot, "ax.set_title(h5path)")
+        elif mode == "Heatmap":
+            norm = ", norm='log'" if self.logc.isChecked() else ""
+            sc.add_plot("fig, ax = plt.subplots()",
+                        f"im = ax.imshow(np.asarray(a, float), origin='lower', cmap={self.cmap.currentText()!r}{norm})",
+                        "fig.colorbar(im)", "ax.set_title(h5path)")
+        return sc.text()
+
     def _effective_mode(self):
         m = self.mode.currentText()
         if self._shape is None:                                  # group

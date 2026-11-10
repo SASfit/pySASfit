@@ -127,7 +127,7 @@ class RunSetDialog(QtWidgets.QDialog):
             from .catalogue import is_transmission
             m = float(r.monitors.get("monitor1" if r.instrument == "sans_i" else r.preset_monitor, 0))
             vals = [str(c.run), r.sample_name, "trans." if is_transmission(r) else "scatt.", f"{r.coll_m:.1f}",
-                    f"{r.SD_m:.2f}",
+                    f"{r.SD_m:.2f}" + (f" ({r.panel_SD_m:.2f})" if getattr(r, "panel_SD_m", None) is not None else ""),
                     str(r.start_time)[:19], f"{r.counting_time_s:.0f}", f"{m:.4g}",
                     f"{float(r.counts.sum()) / m:.5g}" if m else ""]
         for j, v in enumerate(vals, start=1):
@@ -427,6 +427,8 @@ class GeometryPage(QtWidgets.QWidget):
         b2.clicked.connect(lambda: self.on_reduce(all_rows=False))
         red.addWidget(b)
         red.addWidget(b2)
+        from ..core import pycode
+        red.addWidget(pycode.button(self.python_code, self))
         red.addStretch(1)
         flow_w, flow = _flow_row()
         for text, fn in (("Add a sample", self.on_add_sample), ("Add many samples…", self.on_add_many),
@@ -464,6 +466,16 @@ class GeometryPage(QtWidgets.QWidget):
         if fn is None:
             self._log("reduction not available here")
             return None
+        return fn(self.table, rows)
+
+    def python_code(self):
+        """Script of "Reduce selected samples" (rows selected) or "Reduce all samples" ("Copy Python code")."""
+        rows = [r for r in (self.selected_rows() or list(self.table.samples)) if r.used]
+        if not rows:
+            raise ValueError("No sample rows with runs in this table.")
+        fn = getattr(self.panel, "python_code_rows", None)
+        if fn is None:
+            raise ValueError("Python code is not available here.")
         return fn(self.table, rows)
 
     def _log(self, text):
@@ -1012,10 +1024,14 @@ class GeometryPage(QtWidgets.QWidget):
         r = self.ref_raw
         if r is None:
             return [("kind", ("scattering",))]
-        return [("kind", ("scattering",)),
-                ("SD_m", (round(0.99 * r.SD_m, 3), round(1.01 * r.SD_m, 3))),
-                ("wavelength_A", (round(0.98 * r.wavelength_A, 3), round(1.02 * r.wavelength_A, 3))),
-                ("coll_m", (round(0.99 * r.coll_m, 3), round(1.01 * r.coll_m, 3)))]
+        out = [("kind", ("scattering",)),
+               ("SD_m", (round(0.99 * r.SD_m, 3), round(1.01 * r.SD_m, 3))),
+               ("wavelength_A", (round(0.98 * r.wavelength_A, 3), round(1.02 * r.wavelength_A, 3))),
+               ("coll_m", (round(0.99 * r.coll_m, 3), round(1.01 * r.coll_m, 3)))]
+        pd = getattr(r, "panel_SD_m", None)
+        if pd is not None:                       # SANS-LLB: the wide-angle panels at the same distance
+            out.append(("panel_SD_m", (round(0.99 * pd, 3), round(1.01 * pd, 3))))
+        return out
 
 
 
@@ -1035,6 +1051,7 @@ class ReductionTableWidget(QtWidgets.QWidget):
         self._log = log or (lambda s: None)
         self.plan = None
         self.reduce_rows = None                    # set by the main window: (table, rows) -> reduce
+        self.python_code_rows = None               # set by the main window: (table, rows) -> script text
         self.show_efficiency = None                # set by the main window: (table) -> show its efficiency map
         self.excluded: List[str] = []              # geometries removed from the reduction
         lay = QtWidgets.QVBoxLayout(self)
@@ -1217,14 +1234,20 @@ class ReductionTableWidget(QtWidgets.QWidget):
         trans = self._trans_table()
         es = self._entries()
         folder = os.path.dirname(es[0].path) if es else ""
+        from .plan import config_base
         prev = {t.config: t for t in self.tables() if t.source == "plan" and t.folder == folder}
         self._clear_pages()
-        for cfg in configurations(self.plan):
-            if cfg in self.excluded:
+        cfgs = configurations(self.plan)
+        for cfg in cfgs:
+            # a table / exclusion saved before the panel distance was part of the configuration text
+            # belongs to it when that is unambiguous
+            old = config_base(cfg)
+            unique = sum(config_base(c) == old for c in cfgs) == 1
+            if cfg in self.excluded or (unique and old != cfg and old in self.excluded):
                 continue
             t = from_plan(self.plan, cfg, raws, trans)
             t.folder = folder
-            kept = carry_over(t, prev.get(cfg))
+            kept = carry_over(t, prev.get(cfg) or (prev.get(old) if unique else None))
             if kept:
                 self._log(f"{cfg}: kept from the table before – {kept}")
             ents = [e for e in self.plan.entries if e.config == cfg and e.kind == "scattering"]

@@ -458,6 +458,63 @@ class RYPolydisperseYukawaTab(PolydisperseTabControls, QtWidgets.QWidget):
         p["ff"] = self.ffVar.get()
         return p
 
+    def python_code(self):
+        """Script: the same Rogers-Young calculation as Compute -- classes of the size distribution, alpha from
+        thermodynamic consistency, S(Q) matrices and the number-number S(Q) ("Copy Python code")."""
+        from ...core.pycode import Code, Script, call, lit, prefs_lines
+
+        p = self._readInputs()
+        cls = self.selectedSolverClass()
+        ry = prefs.values("oz.ry")
+        sc = Script("pyOZsolver", f"polydisperse Yukawa, Rogers-Young closure ({p['dist']})")
+        sc.imp("import numpy as np", "from pysasfit.oz import rypolydisperseWrapper as rypw",
+               "from pysasfit.oz.preferences import apply_solver_settings",
+               "from pysasfit.oz.polydisperse_yukawa_sas import discretize")
+        sc.comment("solver defaults from Settings -> Preferences")
+        sc.add(*prefs_lines("oz.solvers", "oz.consistency", "numerics.deflation", "numerics.msa", "numerics.rmsa",
+                            apply="apply_solver_settings()"))
+        sc.comment("size distribution of the radius R and its classes; the RY solver takes diameters 2R")
+        dp = p["distpars"]
+        if p["dist"] == "Log-normal":
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import LogNormal")
+            sc.add(f"relsd = {lit(dp['relsd'])}",
+                   f"dist = LogNormal({lit(dp['R0'])} / np.sqrt(1.0 + relsd**2), float(np.sqrt(np.log(1.0 + relsd**2))))"
+                   "   # median from the mean")
+        elif p["dist"] == "Schulz-Zimm":
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import SchulzZimm")
+            sc.add(call("dist = SchulzZimm", dp["R0"], relsd=dp["relsd"]))
+        elif p["dist"] == "Gamma":
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import Gamma")
+            sc.add(call("dist = Gamma", dp["k"], dp["theta"]))
+        else:
+            sc.imp("from pysasfit.oz.polydisperse_yukawa_sas import Beta")
+            sc.add(call("dist = Beta", dp["Rmin"], dp["Rmax"], dp["a"], dp["b"]))
+        sc.add(f"R, weights = discretize(dist, {p['nbins']}, nsig={lit(ry['nsig'])})",
+               "sigmas = 2.0 * R",
+               f"phi, z, K = {lit(p['phi'])}, {lit(p['z'])}, {lit(p['K'])}",
+               "x = weights * phi * 6 / (np.pi * np.sum(weights * sigmas**3))   # number densities")
+        sc.comment("alpha of the RY closure from thermodynamic consistency (the wrapper's default solver, as the GUI)")
+        sc.add(call("alpha, alpha_residual = rypw.solve_alpha", Code("sigmas"), Code("x"), Code("z"), Code("K"),
+                    bracket=(ry["alpha_lo"], ry["alpha_hi"]), tol=ry["alpha_tol"], progress=Code("print"),
+                    solverClass=Code("rypw._solverClasses()[0][1]")),
+               f"print(f'alpha = {{alpha:.4f}}', 'consistent' if abs(alpha_residual) < {lit(ry['alpha_accept'])} "
+               f"else f'NOT consistent (residual {{alpha_residual:+.3g}})')")
+        if cls is not None:
+            sc.imp(f"from {cls.__module__} import {cls.__name__}")
+        sc.comment("structure factors")
+        sc.add(call("ry = rypw.RYPolydisperseYukawa", Code("sigmas"), Code("x"), Code("z"), Code("K"), Code("alpha"),
+                    solverClass=Code(cls.__name__ if cls is not None else "None"),
+                    deflateOnUnphysical=p.get("deflate", 0)),
+               f"Q = np.logspace(np.log10({lit(p['Qmin'])}), np.log10({lit(p['Qmax'])}), {p['nQ']})",
+               "S = np.array([ry.S_matrix(q) for q in Q])          # partial S_ij(Q)",
+               "wv = np.sqrt(x / np.sum(x))",
+               "S_number = np.einsum('i,qij,j->q', wv, S, wv)      # number-number S(Q)")
+        sc.add_plot("fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))",
+                    "ax1.plot(Q, S_number)", "ax1.set_xlabel('Q')", "ax1.set_ylabel('S_NN(Q)')",
+                    "for i in range(len(sigmas)):", "    ax2.plot(Q, S[:, i, i], label=f'S_{i}{i}')",
+                    "ax2.set_xlabel('Q')", "ax2.legend(fontsize=7)", "fig.tight_layout()")
+        return sc.text()
+
     def _onCompute(self):
         if self.worker is not None and self.worker.is_alive():
             self.statusVar.set("a calculation is already running")

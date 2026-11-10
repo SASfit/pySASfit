@@ -3,14 +3,14 @@
 A Gaussian random field psi(r) with unit variance and correlation function
 g(r) = <psi(0) psi(r)>, g(0) = 1, is cut at the level alpha: phase 2 ("pore") is
 psi > alpha, so its volume fraction is phi = P(psi > alpha) = erfc(alpha/sqrt 2)/2.
-The indicator correlation of the cut field (Berk 1987/1991; Quintanilla 2007) is
+The indicator correlation of the cut field (Berk 1987/1991; Quintanilla 2007) is::
 
     S2(r) - phi^2 = F(g(r)),
     F(g) = 1/(2 pi) integral_0^g exp(-alpha^2/(1+t)) / sqrt(1-t^2) dt
          = 1/(2 pi) integral_0^{arcsin g} exp(-alpha^2/(1+sin theta)) d theta,
 
 with F(1) = phi(1-phi). For a two-phase sample the scattering gives
-S2(r) - phi^2 = phi(1-phi) gamma(r) (Debye), hence
+S2(r) - phi^2 = phi(1-phi) gamma(r) (Debye), hence::
 
     g(r) = F^-1( phi(1-phi) gamma(r) ).
 
@@ -18,7 +18,7 @@ F is tabulated in theta (smooth integrand, no endpoint singularity) and
 inverted by monotone interpolation. Values of gamma outside the range a
 level-cut field can reach are clipped and counted (:attr:`LevelCut.clipped`).
 
-The spectral function is the 3D Fourier transform of g,
+The spectral function is the 3D Fourier transform of g::
 
     f(k) = 4 pi integral r^2 g(r) sin(kr)/(kr) dr,
 
