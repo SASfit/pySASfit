@@ -229,3 +229,131 @@ def test_flat_background(tmp_path, fake_denss):
         w2.close()
     finally:
         prefs.reset()
+
+
+# ------------------------------------------------- Dmax when DENSS's own estimate fails (large particles)
+FAKE_DMAX_CRASH = '''
+import sys
+if "-d" not in sys.argv:          # DENSS 1.8.7: estimate_dmax -> Sasrec -> shannon_channels(NaN)
+    sys.stderr.write('  File "core.py", line 942, in estimate_dmax\\nValueError: cannot convert float NaN to integer\\n')
+    raise SystemExit(1)
+'''
+
+
+def large_particle_curve(R_nm=250.0, seed=None):
+    """Sphere of radius R (Rg = 194 nm) measured from q = 0.004 1/nm on: only a few Guinier points.  With noise
+    (``seed`` 0) DENSS 1.8.7's own Dmax estimate stops with 'cannot convert float NaN to integer'."""
+    q = np.geomspace(0.004, 0.385, 91)
+    x = q * R_nm
+    I = 3500.0 * (3 * (np.sin(x) - x * np.cos(x)) / x ** 3) ** 2
+    e = 0.025 * I + 0.01
+    if seed is not None:
+        I = I + np.random.default_rng(seed).normal(0, e)
+    return q, I, e
+
+
+def test_guinier_rg_uses_the_guinier_range():
+    q = np.linspace(0.01, 1.0, 200)
+    rg = 3.0
+    I = 100 * np.exp(-(q * rg) ** 2 / 3)
+    r, I0, n = D.guinier_rg(q, I, 0.01 * I)
+    assert r == pytest.approx(rg, rel=1e-6) and I0 == pytest.approx(100, rel=1e-6)
+    assert q[n - 1] * r <= 1.3 < q[n] * r
+    r, _I0, n = D.guinier_rg(*large_particle_curve())          # sphere: Rg = sqrt(3/5) R = 193.6 nm
+    assert r == pytest.approx(193.6, rel=0.05) and n >= 5
+    with pytest.raises(ValueError, match="Guinier"):
+        D.guinier_rg(q, np.exp(q), None)                          # rising: no Guinier law
+
+
+def test_dmax_fallback_when_denss_cannot_estimate_it(tmp_path, fake_denss):
+    script = fake_denss / "denss" / "scripts" / "denss_abinitio.py"
+    script.write_text(FAKE_DMAX_CRASH + script.read_text())
+    q, I, e = large_particle_curve()
+    r = D.run_denss((q, I, e), cwd=tmp_path / "run")
+    rg = D.guinier_rg(q, I, e)[0]
+    assert r.dmax_nm == pytest.approx(3.5 * rg)
+    cmd = r.run["cmd"]
+    assert float(cmd[cmd.index("-d") + 1]) == pytest.approx(35 * rg, rel=1e-5)   # Å
+    assert len(r.warnings) == 1 and "could not estimate Dmax" in r.warnings[0]
+    # a given Dmax is never replaced: the error stays
+    script.write_text(FAKE_DMAX_CRASH.replace('"-d" not in sys.argv', "True"))
+    with pytest.raises(D.DenssError, match="estimate_dmax"):
+        D.run_denss((q, I, e), dmax_nm=400, cwd=tmp_path / "run2")
+    # a file as input (q in 1/nm) works the same way
+    script.write_text(FAKE_DMAX_CRASH + FAKE_ABINITIO)
+    f = tmp_path / "curve.dat"
+    np.savetxt(f, np.c_[q, I, e])
+    r = D.run_denss(f, cwd=tmp_path / "run3")
+    assert r.dmax_nm == pytest.approx(3.5 * rg)
+
+
+def test_no_guinier_law_gives_a_clear_message(tmp_path, fake_denss):
+    script = fake_denss / "denss" / "scripts" / "denss_abinitio.py"
+    script.write_text(FAKE_DMAX_CRASH + script.read_text())
+    q = np.linspace(0.01, 1.0, 50)
+    with pytest.raises(D.DenssError, match="enter Dmax"):
+        D.run_denss((q, np.exp(q), 0.01 * np.exp(q)), cwd=tmp_path / "run")
+
+
+def test_a_far_too_large_dmax_of_denss_is_flagged(tmp_path, fake_denss):
+    script = fake_denss / "denss" / "scripts" / "denss_abinitio.py"
+    script.write_text(script.read_text().replace("Maximum dimension: 40.000", "Maximum dimension: 30000.0"))
+    r = D.run_denss(large_particle_curve(), cwd=tmp_path / "run")      # Rg 194 nm, DENSS: Dmax 3000 nm
+    assert r.dmax_nm is None and len(r.warnings) == 1 and "far too large" in r.warnings[0]
+    r = D.run_denss(large_particle_curve(), dmax_nm=3000, cwd=tmp_path / "run2")   # the user's choice: no warning
+    assert not r.warnings
+
+
+@pytest.mark.denss
+@pytest.mark.skipif(_real_denss() is None, reason="DENSS is not installed")
+def test_real_denss_large_particle(tmp_path):
+    """DENSS 1.8.7 crashes in its Dmax estimate on this curve; pyDENsity runs it with 3.5 Guinier Rg."""
+    r = D.run_denss(large_particle_curve(seed=0), seed=1, cwd=tmp_path / "run")
+    assert r.dmax_nm == pytest.approx(3.5 * 193.6, rel=0.1)
+    assert "could not estimate Dmax" in r.warnings[0] and np.all(np.isfinite(r.rho))
+
+
+# ------------------------------------- denss-all workers are fresh processes (spawn: Windows, macOS; forkserver)
+FAKE_WORKER = '''
+
+def make_map(args):
+    """One map in a worker process (like denss.core.multi_denss): NumPy-2 names and write_mrc must be patched."""
+    import numpy as np
+    import denss
+    i, out, o = args
+    np.in1d(np.arange(3), [1]); np.trapz([1, 2, 3])
+    rho = np.zeros((16, 16, 16)); rho[4:12, 4:12, 4:12] = 1.0
+    denss.write_mrc(rho, np.array([48.0]), out + "/%s_%d_aligned.mrc" % (o, i))
+    return i
+'''
+
+
+def test_denss_all_workers_get_the_numpy2_patches(tmp_path, fake_denss):
+    (fake_denss / "denss" / "__init__.py").write_text('__version__ = "0.0-fake"\nfrom .core import write_mrc\n')
+    core = fake_denss / "denss" / "core.py"
+    core.write_text(core.read_text() + FAKE_WORKER)
+    body = FAKE_ALL.replace(
+        'for i in range(a.nm):\n    denss.write_mrc(rho, 16 * 3.0, out + "/%s_%d_aligned.mrc" % (a.o, i))',
+        'import multiprocessing as mp, denss.core\n'
+        'with mp.get_context("spawn").Pool(2) as pool:\n'
+        '    pool.map(denss.core.make_map, [(i, out, a.o) for i in range(a.nm)])')
+    assert "spawn" in body
+    # spawned workers import the script again as __mp_main__: guarded like the real denss_all.py
+    body = "def main():\n" + "".join("    " + ln + "\n" for ln in body.strip().splitlines()) + \
+        'if __name__ == "__main__":\n    main()\n'
+    (fake_denss / "denss" / "scripts" / "denss_all.py").write_text(body)
+    r = D.run_denss_all(D.sphere_curve(), nmaps=3, cores=2, cwd=tmp_path / "all")
+    assert len(r.maps) == 3 and not r.warnings
+
+
+def test_the_run_sitecustomize_keeps_a_shadowed_one(tmp_path, fake_denss, monkeypatch):
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "sitecustomize.py").write_text("import os\nos.environ['PYDENSITY_TEST_OTHER'] = 'ran'\n")
+    env = D._shim_env({"PYTHONPATH": str(other)}, tmp_path / "run")
+    import subprocess
+    import sys
+    code = "import os, numpy as np; print(hasattr(np, 'in1d'), os.environ.get('PYDENSITY_TEST_OTHER'))"
+    out = subprocess.run([sys.executable, "-c", code], env={**os.environ, **env},
+                         capture_output=True, text=True, check=True).stdout.split()
+    assert out == ["True", "ran"]

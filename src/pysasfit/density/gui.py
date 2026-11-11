@@ -965,6 +965,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                   "options": {"mode": self.mode.currentIndex(), "dmax": self.dmax.value(), "nmaps": self.nmaps.value(),
                               "cores": self.cores.value(), "enan": self.enan.isChecked(),
                               "level": self.level.value()},
+                  "guides": self.view3d.guide_state(),
                   "maps": [str(r["result"].map_file) for r in self.runs], "dock_state": self.dock_state()}
             p = self._session_path()
             os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -1001,6 +1002,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.cores.setValue(int(o.get("cores", self.cores.value())))
             self.enan.setChecked(bool(o.get("enan", True)))
             self.level.setValue(int(o.get("level", 100)))
+            self.view3d.set_guide_state(st.get("guides"))
             cur = int(st.get("current", 0))
             if 0 <= cur < self.curve_list.count():
                 self.curve_list.setCurrentRow(cur)

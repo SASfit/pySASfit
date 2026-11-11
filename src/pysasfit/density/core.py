@@ -19,7 +19,9 @@ Compatibility: DENSS 1.8.7 (the current release) uses ``np.in1d`` and ``np.trapz
 passes a one-element array to ``struct.pack`` when writing MRC maps (``denss.core.write_mrc``, re-exported as
 ``denss.write_mrc``), which NumPy 2.x rejects.  The process is
 therefore started through a small shim (:data:`SHIM`) that adds the two names (``np.isin``, ``np.trapezoid``) and
-writes maps with a plain float box size, without changing the DENSS installation.
+writes maps with a plain float box size, without changing the DENSS installation.  The same patches are the
+``sitecustomize`` of every run (a ``.pydensity`` folder in the run folder, first on PYTHONPATH), so that the worker
+processes of ``denss-all`` get them too: multiprocessing starts them as fresh interpreters on Windows and macOS.
 """
 from __future__ import annotations
 
@@ -47,9 +49,11 @@ class DenssError(RuntimeError):
     pass
 
 
-#: started as ``python -c SHIM <module> <args>``: NumPy 2 compatibility, then the DENSS script as __main__
-SHIM = r'''
-import runpy, sys
+#: NumPy 2 compatibility of DENSS 1.8.7 (np.in1d and np.trapz were removed in NumPy 2.4; write_mrc passes a
+#: one-element array to struct.pack).  Run in every process of a DENSS run: as ``sitecustomize`` of the run (see
+#: :func:`_shim_env`), so that also the worker processes of denss-all get it (multiprocessing starts them fresh on
+#: Windows and macOS (spawn) and on Linux with Python >= 3.14 (forkserver)).
+PATCH = r'''
 import numpy as np
 if not hasattr(np, "in1d"):
     np.in1d = lambda a, b, assume_unique=False, invert=False: np.isin(np.ravel(a), b, assume_unique=assume_unique,
@@ -59,20 +63,49 @@ if not hasattr(np, "trapz"):
 try:
     import denss as _d
     import denss.core as _dc
-    _orig_write_mrc = _dc.write_mrc
-    def _write_mrc(rho, side, filename="map.mrc"):
-        s = np.atleast_1d(np.asarray(side, float)).ravel()
-        s = (float(s[0]),) * 3 if len(s) == 1 else tuple(float(x) for x in s)
-        return _orig_write_mrc(rho, s, filename)
-    _dc.write_mrc = _write_mrc
-    if getattr(_d, "write_mrc", None) is _orig_write_mrc:     # the package re-exports it (denss-all uses that one)
-        _d.write_mrc = _write_mrc
+    if not getattr(_dc.write_mrc, "_pydensity", False):
+        _orig_write_mrc = _dc.write_mrc
+        def _write_mrc(rho, side, filename="map.mrc"):
+            s = np.atleast_1d(np.asarray(side, float)).ravel()
+            s = (float(s[0]),) * 3 if len(s) == 1 else tuple(float(x) for x in s)
+            return _orig_write_mrc(rho, s, filename)
+        _write_mrc._pydensity = True
+        _dc.write_mrc = _write_mrc
+        if getattr(_d, "write_mrc", None) is _orig_write_mrc:     # the package re-exports it (denss-all uses it)
+            _d.write_mrc = _write_mrc
 except Exception:
     pass
+'''
+
+#: ``sitecustomize.py`` of a run: the patches, then a ``sitecustomize`` it shadows (if the environment has one)
+SITECUSTOMIZE = PATCH + r'''
+import importlib.util as _ilu, os as _os, sys as _sys
+_here = _os.path.dirname(_os.path.abspath(__file__))
+for _p in list(_sys.path):
+    _f = _os.path.join(_p or ".", "sitecustomize.py")
+    if _os.path.abspath(_p or ".") != _here and _os.path.isfile(_f):
+        _spec = _ilu.spec_from_file_location("_pydensity_shadowed_sitecustomize", _f)
+        _spec.loader.exec_module(_ilu.module_from_spec(_spec))
+        break
+'''
+
+#: started as ``python -c SHIM <module> <args>``: the patches, then the DENSS script as __main__
+SHIM = PATCH + r'''
+import runpy, sys
 mod = sys.argv[1]
 sys.argv = [mod] + sys.argv[2:]
 runpy.run_module(mod, run_name="__main__", alter_sys=True)
 '''
+
+
+def _shim_env(env: dict, cwd: Path) -> dict:
+    """``env`` with the patch folder of the run (``cwd/.pydensity``, holding sitecustomize.py) first on PYTHONPATH."""
+    d = Path(cwd) / ".pydensity"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "sitecustomize.py").write_text(SITECUSTOMIZE, encoding="utf-8")
+    old = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(d) + (os.pathsep + old if old else "")
+    return env
 
 
 # ===================================================================================== finding DENSS
@@ -139,6 +172,7 @@ def _run(module: str, args: Sequence, cwd: Path, python: Optional[str], timeout:
     env = os.environ.copy()
     env.setdefault("MPLBACKEND", "Agg")              # DENSS plots to files only
     env["PYTHONIOENCODING"] = "utf-8"
+    _shim_env(env, cwd)                              # the worker processes of denss-all need the patches too
     t0 = time.time()
     try:
         p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -295,6 +329,7 @@ class DenssResult:
     log: dict = field(default_factory=dict)
     run: dict = field(default_factory=dict, repr=False)
     warnings: list = field(default_factory=list)
+    dmax_nm: Optional[float] = None  # Dmax passed to DENSS (None: DENSS estimated it or took it from the file)
 
 
 @dataclass
@@ -316,6 +351,7 @@ class DenssAllResult:
     workdir: Path
     run: dict = field(default_factory=dict, repr=False)
     warnings: list = field(default_factory=list)
+    dmax_nm: Optional[float] = None
 
 
 def _prepare(data, cwd: Path, units_in: str):
@@ -358,6 +394,84 @@ def _common_args(dmax_nm, mode, nsamples, voxel, oversampling, steps, ncs, ncs_a
     return args + [str(x) for x in (extra or ())]
 
 
+# ===================================================================================== Dmax when DENSS cannot
+DMAX_PER_RG = 3.5   # DENSS's own rule (estimate_dmax: "dmax is roughly 3.5*rg for most particles")
+
+
+def guinier_rg(q, I, dI=None, qrg_max: float = 1.3, nmin: int = 5):
+    """Rg and I(0) from a weighted Guinier fit ln I = ln I0 - (q Rg)²/3 over the points with q·Rg <= ``qrg_max``
+    (iterated: the range follows the Rg).  q in 1/nm -> (Rg [nm], I0, number of points).  Raises ValueError if
+    the low-q data show no Guinier decrease."""
+    q, I = np.asarray(q, float), np.asarray(I, float)
+    e = np.ones_like(I) if dI is None else np.asarray(dI, float)
+    ok = np.isfinite(q) & np.isfinite(I) & (I > 0) & np.isfinite(e) & (e > 0) & (q > 0)
+    q, I, e = q[ok], I[ok], e[ok]
+    order = np.argsort(q)
+    q, I, e = q[order], I[order], e[order]
+    if q.size < nmin:
+        raise ValueError(f"only {q.size} usable points (I > 0) for a Guinier fit")
+    n, seen = min(max(nmin, 20), q.size), set()
+    rg = I0 = np.nan
+    while n not in seen:
+        seen.add(n)
+        w = I[:n] / e[:n]                                  # weights of ln I: sigma(ln I) = dI / I
+        A = np.vstack([np.ones(n), -q[:n] ** 2 / 3.0]).T * w[:, None]
+        c = np.linalg.lstsq(A, np.log(I[:n]) * w, rcond=None)[0]
+        if not np.isfinite(c[1]) or c[1] <= 0:
+            raise ValueError("the low-q intensity does not decrease like a Guinier law (rising or flat)")
+        rg, I0 = float(np.sqrt(c[1])), float(np.exp(c[0]))
+        n = int(np.clip(np.sum(q * rg <= qrg_max), nmin, q.size))
+    return rg, I0, n
+
+
+def _load_curve(data, cwd: Path, fname: str, units_in: str):
+    """(q [1/nm], I, dI) of the input: the arrays, or the copied file (columns q I dI)."""
+    if not isinstance(data, (str, Path)):
+        q, I, dI = (list(data) + [None])[:3]
+        return np.asarray(q, float), np.asarray(I, float), None if dI is None else np.asarray(dI, float)
+    a = np.loadtxt(cwd / fname, comments="#", ndmin=2)
+    q = a[:, 0] * (1.0 if units_in == "nm" else 10.0)
+    return q, a[:, 1], a[:, 2] if a.shape[1] > 2 else None
+
+
+def _run_dmax(module, make_args, dmax_nm, data, cwd: Path, fname: str, units_in: str, python, timeout):
+    """Run DENSS; if no Dmax was given and DENSS's own estimate fails (``estimate_dmax`` in DENSS 1.8 takes an
+    unregularised P(r) of the first half of the data and stops with 'cannot convert float NaN to integer' when its
+    Rg is not real, which happens for large particles whose Guinier range is a few points), run again with
+    Dmax = 3.5·Rg from a Guinier fit.  -> (run, warnings, dmax_nm used or None)."""
+    try:
+        return _run(module, make_args(dmax_nm), cwd, python, timeout), [], dmax_nm
+    except DenssError as exc:
+        if dmax_nm or "estimate_dmax" not in str(exc):
+            raise
+        first = exc
+    try:
+        rg, _I0, n = guinier_rg(*_load_curve(data, cwd, fname, units_in))
+    except (ValueError, OSError) as exc:
+        raise DenssError(f"DENSS could not estimate Dmax from these data and no Guinier Rg was found either "
+                         f"({exc}): enter Dmax (e.g. from a P(r) of pyATsas or pyINVersion).\n{first}") from first
+    dmax = DMAX_PER_RG * rg
+    note = (f"DENSS could not estimate Dmax from the data; used Dmax = {DMAX_PER_RG:g}·Rg = {dmax:.4g} nm "
+            f"(Guinier Rg {rg:.4g} nm from {n} points). Enter Dmax from a P(r) for a better result")
+    return _run(module, make_args(dmax), cwd, python, timeout), [note], dmax
+
+
+def _dmax_check(dmax_A, used, data, cwd: Path, fname: str, units_in: str):
+    """Warning if DENSS chose Dmax itself and it is far above the Guinier value (its estimate scans P(r) without
+    regularisation and gave 10 times the true Dmax for large particles in tests)."""
+    if used is not None or not np.isfinite(dmax_A) or dmax_A <= 0:
+        return []
+    try:
+        rg = guinier_rg(*_load_curve(data, cwd, fname, units_in))[0]
+    except (ValueError, OSError):
+        return []
+    if dmax_A / 10.0 > 3.0 * DMAX_PER_RG * rg:
+        return [(f"DENSS estimated Dmax = {dmax_A / 10:.4g} nm, {dmax_A / 10 / rg:.0f} times the Guinier Rg "
+                 f"({rg:.4g} nm): probably far too large (coarse voxels). Enter Dmax from a P(r), or about "
+                 f"{DMAX_PER_RG * rg:.3g} nm")]
+    return []
+
+
 def _fit_nm(q, I, e, Im):
     return np.asarray(q) * 10.0, np.asarray(I), np.asarray(e), np.asarray(Im)
 
@@ -368,13 +482,17 @@ def run_denss(data, dmax_nm: Optional[float] = None, mode: str = "FAST", nsample
               ne: Optional[float] = None, gpu: bool = False, extra: Sequence = (), units_in: str = "nm",
               python: Optional[str] = None, cwd=None, timeout: float = 7200) -> DenssResult:
     """One DENSS reconstruction (``denss``).  ``data``: (q [1/nm], I, dI), or a file (GNOM ``.out`` or ``.dat``, q
-    in ``units_in``).  ``dmax_nm`` None: taken from a GNOM file or estimated by DENSS.  ``voxel`` in Å."""
+    in ``units_in``).  ``dmax_nm`` None: taken from a GNOM file or estimated by DENSS (if DENSS's estimate fails: 3.5 Guinier Rg, with a
+    warning).  ``voxel`` in Å."""
     cwd = Path(cwd or tempfile.mkdtemp(prefix="pydensity_"))
     fname, units = _prepare(data, cwd, units_in)
-    args = ["-f", fname, "-u", units, "-o", "denss", "--plot_off", "-q",
-            *_common_args(dmax_nm, mode, nsamples, voxel, oversampling, steps, ncs, ncs_axis, ncs_type, seed, ne,
-                          gpu, extra)]
-    run = _run("denss.scripts.denss_abinitio", args, cwd, python, timeout)
+    def make_args(d):
+        return ["-f", fname, "-u", units, "-o", "denss", "--plot_off", "-q",
+                *_common_args(d, mode, nsamples, voxel, oversampling, steps, ncs, ncs_axis, ncs_type, seed, ne, gpu,
+                              extra)]
+
+    run, notes, used = _run_dmax("denss.scripts.denss_abinitio", make_args, dmax_nm, data, cwd, fname, units_in,
+                                 python, timeout)
     rho, vox, _h = read_mrc(_need(cwd / "denss.mrc", run))
     sup = None
     if (cwd / "denss_support.mrc").is_file():
@@ -391,6 +509,10 @@ def run_denss(data, dmax_nm: Optional[float] = None, mode: str = "FAST", nsample
     res = DenssResult(rho, vox, sup, *_fit_nm(q, I, e, Im), chi, float(log.get("rg", np.nan)),
                       float(log.get("support_volume", np.nan)), int(log.get("steps", len(stats[0]))), stats,
                       cwd / "denss.mrc", cwd, log, run)
+    res.warnings.extend(notes)
+    res.warnings.extend(_dmax_check(float(log.get("dmax", np.nan)), used if used else dmax_nm, data, cwd, fname,
+                                    units_in))
+    res.dmax_nm = used
     if not np.isfinite(res.rg):
         res.warnings.append("DENSS reported no real Rg (the map may not have converged)")
     return res
@@ -407,11 +529,14 @@ def run_denss_all(data, dmax_nm: Optional[float] = None, nmaps: int = 20, cores:
     cwd = Path(cwd or tempfile.mkdtemp(prefix="pydensity_all_"))
     fname, units = _prepare(data, cwd, units_in)
     before = {p.name for p in cwd.iterdir()}
-    args = ["-f", fname, "-u", units, "-o", "denss", "-nm", int(nmaps), "-j", max(1, int(cores)), "--plot_off",
-            "-en_on" if enantiomers else "-en_off",
-            *_common_args(dmax_nm, mode, nsamples, voxel, oversampling, steps, ncs, ncs_axis, ncs_type, None, ne, gpu,
-                          extra)]
-    run = _run("denss.scripts.denss_all", args, cwd, python, timeout)
+    def make_args(d):
+        return ["-f", fname, "-u", units, "-o", "denss", "-nm", int(nmaps), "-j", max(1, int(cores)), "--plot_off",
+                "-en_on" if enantiomers else "-en_off",
+                *_common_args(d, mode, nsamples, voxel, oversampling, steps, ncs, ncs_axis, ncs_type, None, ne, gpu,
+                              extra)]
+
+    run, notes, used = _run_dmax("denss.scripts.denss_all", make_args, dmax_nm, data, cwd, fname, units_in, python,
+                                 timeout)
     new = sorted((p for p in cwd.iterdir() if p.is_dir() and p.name not in before and p.name.startswith("denss")),
                  key=lambda p: p.stat().st_mtime)
     if not new:
@@ -430,9 +555,12 @@ def run_denss_all(data, dmax_nm: Optional[float] = None, nmaps: int = 20, cores:
             fsc = np.loadtxt(f, comments="#", ndmin=2)[:, :2]
         except ValueError:
             pass
-    rgm = rgs = chi = np.nan
+    rgm = rgs = chi = dmax_A = np.nan
     for lg in sorted(out.glob("*.log")):
         txt = lg.read_text(errors="replace")
+        m = re.search(r"Maximum dimension:\s*([-+0-9.eE]+)", txt)
+        if m and not np.isfinite(dmax_A):
+            dmax_A = float(m.group(1))
         m = re.search(r"Average \|Rg\|\.*:\s*([-+0-9.eE]+)\s*\+-\s*([-+0-9.eE]+)", txt)
         if m:
             rgm, rgs = float(m.group(1)), float(m.group(2))
@@ -449,6 +577,9 @@ def run_denss_all(data, dmax_nm: Optional[float] = None, nmaps: int = 20, cores:
             pass
     maps = sorted(out.glob("denss_*_aligned.mrc"))
     r = DenssAllResult(rho, vox, avg, maps, res_, res_sd, fsc, rgm, rgs, *_fit_nm(q, I, e, Im), chi, out, run)
+    r.warnings.extend(notes)
+    r.warnings.extend(_dmax_check(dmax_A, used if used else dmax_nm, data, cwd, fname, units_in))
+    r.dmax_nm = used
     if not np.isfinite(res_):
         r.warnings.append("no FSC resolution found (denss_fsc.dat)")
     if len(maps) < nmaps:

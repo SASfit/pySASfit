@@ -47,7 +47,7 @@ spaces, umlauts or long paths (OneDrive folders, for example).
 | p(r) | DATGNOM and GNOM distributions with their errors, optionally normalised |
 | Results | one row per curve: Rg ± error and I(0) (Guinier), its points and quality, flat background (or the one subtracted), Dmax, real-space Rg and total estimate (DATGNOM, GNOM), χ² of the model fit, number of bead models; *File → Export results table* writes it as CSV |
 | Log | every command line, its folder and the last lines of the programs' output |
-| 3D model | bead models and spherical-harmonics envelopes, several at once (tick to show), bead size, envelope opacity; *Load…* reads `.pdb`, `.cif` and `.flm` files (see below) |
+| 3D model | bead models and spherical-harmonics envelopes, several at once (tick to show), bead size, envelope opacity, optional scale bar and size box; *Load…* reads `.pdb`, `.cif` and `.flm` files (see below) |
 | ATSAS | installation, licence, self test, and buttons with the original icons for the interactive programs: ATSAS launcher, PRIMUS, CHROMIXS, PEAK, SASPLOT, GNOMPLOT, SVDPLOT, SASDOC, MASSHA (legacy). With *open with the selected curve / p(r)*, PRIMUS and SASPLOT get the selected curve (its point range), GNOMPLOT its last `.out` file |
 
 Programs run in the background; the window stays usable. Every run gets its own folder
@@ -124,6 +124,15 @@ fits — if not, please send it.
 
 The 3D panel needs `pyqtgraph` and `PyOpenGL` (`pip install -e ".[atsas]"`, the same packages as the pySASmorph 3D
 panel). It also works when detached into its own window (the OpenGL context is rebuilt).
+
+**Size guides.** *scale bar* draws a bar of a round length (1, 2 or 5 × 10ⁿ, about a fifth of the view width) in the
+lower left corner, like on a micrograph. Its length is measured across the line of sight at the depth of the centre
+of the objects and is recomputed while you rotate or zoom (parts nearer the camera look a little larger, farther
+parts smaller: perspective). *box* draws the bounding box of the shown objects with its three edge lengths, either
+along the x, y, z axes or along the **principal axes** of the objects (length, width, thickness of the particle,
+independent of its orientation); the lengths are written at the edges of the lower corner nearest the camera and
+move with the camera after each rotation. The unit is nm or Å (*auto*: nm from 10 nm on); the lengths are also listed
+below the object list, and *Image…* saves the view with the guides. The settings are kept in the session.
 
 ## When a program returns no result
 

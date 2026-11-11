@@ -14,6 +14,7 @@ from .core import (  # noqa: F401
     DenssInfo,
     DenssResult,
     find_denss,
+    guinier_rg,
     isosurface,
     level_for_volume,
     read_fit,
@@ -26,6 +27,6 @@ from .core import (  # noqa: F401
     write_mrc,
 )
 
-__all__ = ["SHIM", "DenssAllResult", "DenssError", "DenssInfo", "DenssResult", "find_denss", "isosurface",
+__all__ = ["SHIM", "DenssAllResult", "DenssError", "DenssInfo", "DenssResult", "find_denss", "guinier_rg", "isosurface",
            "level_for_volume", "read_fit", "read_mrc", "read_stats", "run_denss", "run_denss_all", "selftest",
            "sphere_curve", "write_mrc"]

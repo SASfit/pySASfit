@@ -23,15 +23,19 @@ DENSS 1.8.7 (the current release) does not run unchanged with current NumPy: it 
 NumPy 2.4 removed, and its MRC writer passes a one-element array to `struct.pack`, which NumPy 2 rejects (the single
 map fails at the end, `denss-all` when writing the reference map). pyDENsity therefore starts DENSS through a small
 shim that adds `np.in1d` (as `np.isin`) and `np.trapz` (as `np.trapezoid`) and hands the MRC writer a plain float box
-size. The DENSS installation itself is not changed; with an older NumPy the shim does nothing.
+size. The DENSS installation itself is not changed; with an older NumPy the shim does nothing. The same patches
+are written as `sitecustomize.py` into a `.pydensity` folder of every run and put first on `PYTHONPATH`: `denss-all`
+computes its maps in a `multiprocessing` pool, whose workers are fresh Python processes on Windows and macOS (spawn)
+and would otherwise fail with `module 'numpy' has no attribute 'in1d'`. A `sitecustomize` of your environment still
+runs after it.
 
 ## Panels
 
 | panel | content |
 |---|---|
 | Data | curves (text, pySASred ASCII, NXcanSAS; q in 1/nm) with their point range, or a GNOM `.out` file (DENSS then uses its regularised curve and Dmax; give the q unit of the file); **flat background** of the high-q tail and its subtraction (see below) |
-| DENSS | the installation found (Python, version), *Search again*, *Self test*. **Map**: mode FAST (simple shapes) / SLOW (complex molecules) / MEMBRANE (negative contrast allowed), Dmax (empty: from the GNOM file or estimated by DENSS), oversampling, grid points or voxel size, steps, rotational symmetry (n, axis, cyclic / dihedral / icosahedral), seed, GPU (CuPy), further options; *Run one map*. **Averaged map**: number of maps (20 by default), cores, enantiomer selection; *Run denss-all* (maps, enantiomer selection, alignment, average, FSC resolution) |
-| Density (3D) | isosurface of the selected map; *enclosed volume* sets the level so that the surface encloses the given percentage of the DENSS support volume; optionally the support (translucent). Same 3D panel as pyATsas (rotate, zoom, image) |
+| DENSS | the installation found (Python, version), *Search again*, *Self test*. **Map**: mode FAST (simple shapes) / SLOW (complex molecules) / MEMBRANE (negative contrast allowed), Dmax (empty: from the GNOM file or estimated by DENSS, see [Dmax](#dmax)), oversampling, grid points or voxel size, steps, rotational symmetry (n, axis, cyclic / dihedral / icosahedral), seed, GPU (CuPy), further options; *Run one map*. **Averaged map**: number of maps (20 by default), cores, enantiomer selection; *Run denss-all* (maps, enantiomer selection, alignment, average, FSC resolution) |
+| Density (3D) | isosurface of the selected map; *enclosed volume* sets the level so that the surface encloses the given percentage of the DENSS support volume; optionally the support (translucent); optional scale bar and size box (x y z or principal axes: length, width, thickness). Same 3D panel as pyATsas (rotate, zoom, image; see *Size guides* in the pyATsas page) |
 | I(q) | the data used by DENSS, the scattering of the map (single map, or the mean of the maps of an average) and the residuals |
 | Convergence | χ², Rg and support volume per step of a single map |
 | Slices | three central slices through the map |
@@ -45,6 +49,22 @@ also reads them back).
 
 Units: the panels use q in 1/nm (pySASfit), DENSS works in 1/Å and Å; pyDENsity converts. Dmax is entered in nm;
 maps, Rg and volumes are in Å as DENSS reports them.
+
+## Dmax
+
+Give **Dmax** whenever you know it (from a P(r): pyATsas GNOM/DATGNOM, pyINVersion), or load a GNOM `.out` file. Without
+it DENSS estimates Dmax itself (`estimate_dmax`: unregularised P(r) fits of the first half of the data over a range of
+Dmax values). For large particles, whose Guinier range is only a few points, that estimate is unreliable:
+
+* it can stop with `ValueError: cannot convert float NaN to integer` (the Rg of one trial P(r) is not real). pyDENsity
+  then runs DENSS again with Dmax = 3.5 Rg, the rule DENSS uses itself, Rg from a Guinier fit over q·Rg ≤ 1.3
+  (`density.guinier_rg`), and says so in the log and the run table;
+* when it does not stop it may be far too large: for a sphere of R = 250 nm (Dmax 500 nm) measured from
+  q = 0.004 1/nm it gave 4 to 29 µm depending on the noise, which makes the voxels and the run time huge. pyDENsity
+  warns when DENSS's Dmax exceeds 3 × 3.5 Rg.
+
+The voxel size of a FAST map is about oversampling × Dmax / grid points (3 × Dmax / 32); for fine detail of a large
+particle use SLOW (64 points) or set the grid points.
 
 ## Flat background
 

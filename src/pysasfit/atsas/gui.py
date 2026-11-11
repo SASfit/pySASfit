@@ -1627,7 +1627,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 "iq_scale": self.iq_scale.currentIndex(),
                 "bg": [self.bg_qmin.value(), self.bg_qmax.value(), self.bg_fix.isChecked(), self.bg_exp.value(),
                        self.bg_use.currentIndex()],
-                "dg_range": self.dg_range.currentIndex()}
+                "dg_range": self.dg_range.currentIndex(),
+                "guides": self.model_view.guide_state()}
 
     def _set_options(self, o):
         try:
@@ -1654,6 +1655,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.bg_qmin.setValue(b[0]); self.bg_qmax.setValue(b[1]); self.bg_fix.setChecked(b[2])  # noqa: E702
                 self.bg_exp.setValue(b[3]); self.bg_use.setCurrentIndex(b[4])  # noqa: E702
             self.dg_range.setCurrentIndex(int(o.get("dg_range", 0)))
+            self.model_view.set_guide_state(o.get("guides"))
         except (TypeError, ValueError, IndexError):
             pass
 
