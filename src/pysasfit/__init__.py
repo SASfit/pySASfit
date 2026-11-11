@@ -18,6 +18,8 @@ morph       pySASmorph: representative 3D two-phase morphologies from SAS data
             (clipped Gaussian random fields, SAXSMorph method), with a Qt GUI
 atsas       pyATsas: the ATSAS programs (installed separately) from Python and
             as a launcher tab (Guinier, p(r), CRYSOL, DAMMIF, PRIMUS ...)
+density     pyDENsity: electron-density maps with DENSS (installed separately),
+            as a launcher tab
 toolbox     pyTOOLbox, small helpful tools: HDF5 viewer (in the spirit of myHDF5)
             and metadata lister for the raw data files (formerly ``sasbox``)
 gui         common Qt launcher (``pysasfit-gui``)
@@ -30,7 +32,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "atsas", "gui")
+_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "atsas", "density", "gui")
 
 __all__ = list(_SUBPACKAGES)
 

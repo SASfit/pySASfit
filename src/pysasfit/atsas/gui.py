@@ -6,7 +6,8 @@
 Also the "pyATsas" tab of the pySASfit launcher. Panels (View menu; each can be moved, stacked or detached):
 
 Data         curves (text, pySASred ASCII, NXcanSAS -- all entries), point range used for every program
-Analysis     AUTORG (Guinier), DATGNOM (automatic p(r)), GNOM (fixed Dmax, systems 0-6), CRYSOL / CRYSON
+Analysis     AUTORG (Guinier), flat background of the high-q tail (DATPOROD and an independent check fit;
+             subtracting it adds a new curve), DATGNOM (automatic p(r), up to s·Rg ≈ 8 or all points), GNOM (fixed Dmax, systems 0-6), CRYSOL / CRYSON
              (model curve, fit to the curve), DAMMIF (bead models from the last p(r))
 I(q)         data, Guinier range and line, GNOM fit, model curve; log-log, Guinier, Kratky ...
 p(r)         DATGNOM and GNOM distance distributions with errors
@@ -26,6 +27,7 @@ import os
 import re
 import sys
 import threading
+from pathlib import Path
 import traceback
 
 import numpy as np
@@ -38,6 +40,7 @@ from ..core import settings as prefs  # noqa: E402
 from ..core.docking import DockMixin, plot_panel  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
 from . import core as A  # noqa: E402
+from . import models as M  # noqa: E402
 
 __all__ = ["MainWindow", "main"]
 
@@ -48,7 +51,7 @@ GNOM_SYSTEMS = [(0, "0: monodisperse, p(r)"), (1, "1: polydisperse spheres, D_V(
                 (5, "5: cylinders of radius rad56, length distribution"),
                 (6, "6: spherical shells, rad56 = relative thickness")]
 IQ_SCALES = ["log I vs log q", "log I vs q", "Guinier: ln I vs q²", "Kratky: q² I vs q", "linear"]
-COLUMNS = ["curve", "Rg (Guinier)", "I(0)", "points", "quality", "Dmax (DATGNOM)", "Rg (real)",
+COLUMNS = ["curve", "Rg (Guinier)", "I(0)", "points", "quality", "flat bg", "Dmax (DATGNOM)", "Rg (real)",
            "total est.", "Dmax (GNOM)", "Rg (GNOM)", "χ² (model)", "bead models"]
 
 
@@ -72,6 +75,41 @@ class _Signals(QtCore.QObject):
     done = QtCore.Signal(object, object, object)       # tag, result, error text
 
 
+class _FloatEdit(QtWidgets.QLineEdit):
+    """Line edit for one float of any magnitude (a spin box rounds to its decimals): value / setValue /
+    valueChanged like QDoubleSpinBox."""
+    valueChanged = QtCore.Signal(float)
+
+    def __init__(self, parent=None):
+        super().__init__("0", parent)
+        v = QtGui.QDoubleValidator(self)
+        v.setNotation(QtGui.QDoubleValidator.Notation.ScientificNotation)
+        v.setLocale(QtCore.QLocale.c())
+        self.setValidator(v)
+        self._v = 0.0
+        self.editingFinished.connect(self._commit)
+
+    def _commit(self):
+        try:
+            x = float(self.text())
+        except ValueError:
+            self.setText(f"{self._v:.8g}")
+            return
+        if x != self._v:
+            self._v = x
+            self.valueChanged.emit(x)
+
+    def value(self):
+        return self._v
+
+    def setValue(self, x):
+        x = float(x)
+        self.setText(f"{x:.8g}")
+        if x != self._v:
+            self._v = x
+            self.valueChanged.emit(x)
+
+
 # ===================================================================================== main window
 class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -81,6 +119,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.curves = []                 # pysasfit.toolbox.merge.Curve (q in 1/nm)
         self.results = {}                # curve name -> {"autorg": GuinierResult, "datgnom": ..., ...}
         self.model_path = ""
+        self.derived = {}                # name of a background-subtracted curve -> (source name, bg)
         self._busy = False
         self._signals = _Signals()
         self._signals.done.connect(self._on_done)
@@ -100,10 +139,15 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._add_dock("results", "Results", self.table, Dock.RightDockWidgetArea)
         self._add_dock("log", "Log", self.log_view, Dock.RightDockWidgetArea)
         self._add_dock("programs", "ATSAS", self.programs_widget, Dock.LeftDockWidgetArea, scrollable=True)
+        from .view3d import ModelView
+        self.model_view = ModelView()
+        self._add_dock("model3d", "3D model", self.model_view, Dock.RightDockWidgetArea)
         self.splitDockWidget(self.docks["iq"], self.docks["pr"], QtCore.Qt.Orientation.Horizontal)
         self.splitDockWidget(self.docks["iq"], self.docks["results"], QtCore.Qt.Orientation.Vertical)
         self.tabifyDockWidget(self.docks["results"], self.docks["log"])
         self.tabifyDockWidget(self.docks["analysis"], self.docks["programs"])
+        self.tabifyDockWidget(self.docks["pr"], self.docks["model3d"])
+        self.docks["pr"].raise_()
         self.docks["results"].raise_()
         self.docks["analysis"].raise_()
         self._finish_docks()
@@ -243,9 +287,76 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         f.addRow(self.ag_result)
         tb.addItem(p, "Guinier (AUTORG)")
 
+        # --- flat background
+        p = QtWidgets.QWidget()
+        f = QtWidgets.QFormLayout(p)
+        hint = QtWidgets.QLabel("High-q tail fitted with I = A q^-B + bg: DATPOROD --exponent --constant (ATSAS) "
+                                "and an independent fit as a check. Subtracting bg gives a new curve for GNOM.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: gray;")
+        f.addRow(hint)
+        self.bg_qmin = QtWidgets.QDoubleSpinBox()
+        self.bg_qmax = QtWidgets.QDoubleSpinBox()
+        for sp in (self.bg_qmin, self.bg_qmax):
+            sp.setMinimumWidth(70)
+            sp.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Fixed)
+            sp.setRange(0.0, 1e4)
+            sp.setDecimals(4)
+            sp.setSingleStep(0.1)
+            sp.setSuffix(" 1/nm")
+            sp.valueChanged.connect(lambda _v: self.draw_iq())
+        b = QtWidgets.QPushButton("30 %")
+        b.setToolTip("q range of the tail: the last 30 % of the points of the range")
+        b.clicked.connect(self._default_tail)
+        r = QtWidgets.QHBoxLayout()
+        r.addWidget(self.bg_qmin, 1)
+        r.addWidget(QtWidgets.QLabel("…"))
+        r.addWidget(self.bg_qmax, 1)
+        r.addWidget(b)
+        f.addRow("tail q", r)
+        self.bg_fix = QtWidgets.QCheckBox("exponent fixed at")
+        self.bg_fix.setToolTip("Only for the independent fit (DATPOROD always fits B): B = 4 for sharp interfaces "
+                               "(Porod), 2 for Gaussian chains ...")
+        self.bg_exp = QtWidgets.QDoubleSpinBox()
+        self.bg_exp.setRange(0.5, 6.0)
+        self.bg_exp.setValue(4.0)
+        r = QtWidgets.QHBoxLayout()
+        r.addWidget(self.bg_fix)
+        r.addWidget(self.bg_exp)
+        r.addStretch(1)
+        f.addRow("check fit", r)
+        self.bg_button = QtWidgets.QPushButton("Fit background")
+        self.bg_button.setToolTip("DATPOROD (if installed) and the independent fit on the tail of the selected curve")
+        self.bg_button.clicked.connect(lambda _c=False: self.run_background())
+        f.addRow(self.bg_button)
+        self.bg_result = QtWidgets.QLabel("")
+        self.bg_result.setWordWrap(True)
+        self.bg_result.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        f.addRow(self.bg_result)
+        self.bg_use = QtWidgets.QComboBox()
+        self.bg_use.addItem("DATPOROD", "datporod")
+        self.bg_use.addItem("independent fit", "fit")
+        self.bg_use.currentIndexChanged.connect(lambda _i: self._fill_bg_value())
+        f.addRow("use", self.bg_use)
+        self.bg_value = _FloatEdit()
+        self.bg_value.setToolTip("Flat background subtracted from I (same unit as I); can be edited")
+        self.bg_value.valueChanged.connect(lambda _v: self.draw_iq())
+        f.addRow("bg", self.bg_value)
+        b = QtWidgets.QPushButton("Subtract → new curve")
+        b.setToolTip("Adds the curve I − bg (errors unchanged) to the data list and selects it; the original stays")
+        b.clicked.connect(self.on_subtract_background)
+        f.addRow(b)
+        tb.addItem(p, "Flat background (DATPOROD)")
+
         # --- DATGNOM / GNOM
         p = QtWidgets.QWidget()
         f = QtWidgets.QFormLayout(p)
+        self.dg_range = QtWidgets.QComboBox()
+        self.dg_range.addItem("up to s·Rg ≈ 8 (DATGNOM default)", "default")
+        self.dg_range.addItem("all points of the range", "all")
+        self.dg_range.setToolTip("DATGNOM fits only up to s·Rg ≈ 8 unless --last is given; 'all points' passes "
+                                 "the last point of the selected range. Subtract a flat background first.")
+        f.addRow("DATGNOM fits", self.dg_range)
         f.addRow(self._run_button("Run DATGNOM (automatic Dmax)", self.run_datgnom,
                                   "p(r) with automatic Dmax; Rg from AUTORG (run first if missing)"))
         self.gn_dmax = QtWidgets.QDoubleSpinBox()
@@ -355,12 +466,105 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.dm_unit.addItem("Å", "ANGSTROM")
         self.dm_unit.setToolTip("--unit of the p(r) file; pySASfit curves are in 1/nm")
         f.addRow("unit", self.dm_unit)
+        self.dm_format = QtWidgets.QComboBox()
+        self.dm_format.addItem("PDB (MASSHA reads it)", "pdb")
+        self.dm_format.addItem("mmCIF (ATSAS 4 default)", "cif")
+        self.dm_format.setToolTip("--model-format; mmCIF models are converted to PDB when opened in MASSHA")
+        f.addRow("model file", self.dm_format)
         f.addRow(self._run_button("Run DAMMIF", self.run_dammif,
                                   "bead models from the GNOM p(r) of the selected curve (else DATGNOM)"))
         self.dm_result = QtWidgets.QLabel("")
         self.dm_result.setWordWrap(True)
         f.addRow(self.dm_result)
+        self.dm_models = QtWidgets.QComboBox()
+        self.dm_models.setToolTip("bead models of the last DAMMIF runs of this curve")
+        f.addRow("model", self.dm_models)
+        r = QtWidgets.QHBoxLayout()
+        b = QtWidgets.QPushButton("Show in 3D")
+        b.setToolTip("Draw the selected model in the 3D model panel (all models: hold Shift)")
+        b.clicked.connect(lambda _c=False: self.show_beads_3d(all_models=bool(
+            QtWidgets.QApplication.keyboardModifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier)))
+        r.addWidget(b)
+        self.dm_massha = QtWidgets.QPushButton("Open in MASSHA")
+        self.dm_massha.setToolTip("MASSHA (ATSAS legacy, Windows): bead models, envelopes and atomic models")
+        self.dm_massha.clicked.connect(lambda _c=False: self.open_in_massha("beads"))
+        r.addWidget(self.dm_massha)
+        f.addRow(r)
         tb.addItem(p, "Bead models (DAMMIF)")
+
+        # --- SASHA
+        p = QtWidgets.QWidget()
+        f = QtWidgets.QFormLayout(p)
+        self.sh_avail = QtWidgets.QLabel("")
+        self.sh_avail.setWordWrap(True)
+        self.sh_avail.setStyleSheet("color: gray;")
+        f.addRow(self.sh_avail)
+        self.sh_smax = QtWidgets.QDoubleSpinBox()
+        self.sh_smax.setRange(0.01, 100)
+        self.sh_smax.setDecimals(3)
+        self.sh_smax.setValue(2.0)
+        self.sh_smax.setSuffix(" 1/nm")
+        self.sh_smax.setToolTip("End of the fitted range. Envelopes describe only low resolution: about q·Rg ≤ 6-8")
+        f.addRow("q max", self.sh_smax)
+        self.sh_sym = QtWidgets.QComboBox()
+        self.sh_sym.addItems(["P1", "P2", "P222", "Pmmm", "P3"])
+        f.addRow("symmetry", self.sh_sym)
+        self.sh_lmax = QtWidgets.QSpinBox()
+        self.sh_lmax.setRange(1, 10)
+        self.sh_lmax.setValue(4)
+        self.sh_lmax.setToolTip("Highest harmonic order L: (L+1)² parameters for P1. 4 suits P1, 6 Pmmm (manual)")
+        f.addRow("harmonics L", self.sh_lmax)
+        self.sh_aniso = QtWidgets.QComboBox()
+        for t, v in (("oblate", "O"), ("prolate", "P"), ("spherical", "S")):
+            self.sh_aniso.addItem(t, v)
+        self.sh_aniso.setToolTip("Anisometry of the starting ellipsoid")
+        f.addRow("start shape", self.sh_aniso)
+        self.sh_mw = QtWidgets.QDoubleSpinBox()
+        self.sh_mw.setRange(0.1, 1e6)
+        self.sh_mw.setDecimals(2)
+        self.sh_mw.setValue(30)
+        self.sh_mw.setSuffix(" kDa")
+        b = QtWidgets.QPushButton("estimate")
+        b.setToolTip("From the Guinier Rg for a compact protein: V = 4π/3 (√(5/3) Rg)³, 1.35 g/cm³")
+        b.clicked.connect(self._estimate_sasha_inputs)
+        r = QtWidgets.QHBoxLayout()
+        r.addWidget(self.sh_mw, 1)
+        r.addWidget(b)
+        f.addRow("mol. weight", r)
+        self.sh_rg = QtWidgets.QDoubleSpinBox()
+        self.sh_rg.setRange(0.1, 1e5)
+        self.sh_rg.setDecimals(2)
+        self.sh_rg.setValue(15)
+        self.sh_rg.setSuffix(" Å")
+        self.sh_rg.setToolTip("Rg as SASHA asks for it (Å); 'estimate' takes it from AUTORG")
+        f.addRow("Rg", self.sh_rg)
+        self.sh_button = self._run_button("Run SASHA", self.run_sasha,
+                                          "spherical-harmonics envelope of the selected curve (point range)")
+        f.addRow(self.sh_button)
+        self.sh_result = QtWidgets.QLabel("")
+        self.sh_result.setWordWrap(True)
+        self.sh_result.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        f.addRow(self.sh_result)
+        r = QtWidgets.QHBoxLayout()
+        b = QtWidgets.QPushButton("Show in 3D")
+        b.clicked.connect(lambda _c=False: self.show_envelope_3d())
+        r.addWidget(b)
+        self.sh_massha = QtWidgets.QPushButton("Open in MASSHA")
+        self.sh_massha.clicked.connect(lambda _c=False: self.open_in_massha("envelope"))
+        r.addWidget(self.sh_massha)
+        f.addRow(r)
+        r = QtWidgets.QHBoxLayout()
+        b = QtWidgets.QPushButton("SASHA interactively…")
+        b.setToolTip("Prepare a run folder with the curve, open SASHA there in a console window and answer its "
+                     "dialog yourself; then 'Load .flm…'")
+        b.clicked.connect(lambda _c=False: self.sasha_interactive())
+        r.addWidget(b)
+        b = QtWidgets.QPushButton("Load .flm…")
+        b.setToolTip("Read an envelope written by SASHA (or CRYSOL) for the selected curve")
+        b.clicked.connect(lambda _c=False: self.load_flm())
+        r.addWidget(b)
+        f.addRow(r)
+        tb.addItem(p, "Envelope (SASHA, spherical harmonics)")
         self.analysis_widget = w
 
     def _build_plots(self):
@@ -460,6 +664,17 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             have = b is not None and A.program_path(exe, d) is not None
             btn.setEnabled(have)
             btn.setToolTip("" if have else f"{exe} is not in this ATSAS installation")
+        d_ = self.atsas_dir()
+        has_sasha = b is not None and M.legacy_path("sasha20", d_) is not None
+        has_massha = b is not None and A.program_path("massha", d_) is not None
+        self.sh_avail.setText(
+            "SASHA (Legacy/sasha20) found. Old interactive program: pyATsas answers its documented dialog and "
+            "checks the transcript (sasha_dialog.log in the run folder)." if has_sasha else
+            "SASHA is in the Legacy folder of the Windows ATSAS only; not found here. 'Load .flm…' still works.")
+        self._has_sasha = has_sasha
+        for btn in (self.dm_massha, self.sh_massha):
+            btn.setEnabled(has_massha)
+            btn.setToolTip("" if has_massha else "MASSHA (Legacy folder of the Windows ATSAS) not found")
         self._update_buttons()
 
     # ------------------------------------------------------------------ data
@@ -519,6 +734,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 sp.blockSignals(False)
             self.curve_info.setText(f"{n} points, q = {c.q.min():.4g} … {c.q.max():.4g} 1/nm")
             self.curve_info.setToolTip(c.path)
+            if self.bg_qmax.value() <= self.bg_qmin.value() or self.bg_qmin.value() > c.q.max():
+                self._default_tail()
+            self._fill_bg_value()
         self._show_results()
         self.draw_all()
 
@@ -561,7 +779,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._update_buttons()
         self.progress.setRange(0, 0)
         self.log(f"--- {text}")
-        self.statusBar().showMessage(text + " …")
+        self._status(text + " …", "run")
 
         def work():
             try:
@@ -578,14 +796,25 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._busy = False
         self.progress.setRange(0, 1)
         self._update_buttons()
+        kind, name = tag
         if err:
-            self.log(err)
-            self.statusBar().showMessage(f"{tag[0]} failed", 8000)
+            first = err.strip().splitlines()[0] if err.strip() else "failed"
+            self.log(f"✖ {kind} {name}: {err}")
+            if name:
+                self.results.setdefault(name, {})["error"] = err
+            self._status(f"✖ {kind} failed{' for ' + name if name else ''}: {first}", "error")
+            d = self.docks.get("log")
+            if d is not None and not self.detached.get("log"):
+                d.raise_()                           # the message is there
+            self._fill_table()
             self._show_results()
             return
-        kind, name = tag
+        if name:
+            self.results.setdefault(name, {}).pop("error", None)
         if kind == "multi":
             self.results.setdefault(name, {}).update(res)
+            if "background" in res:
+                self._fill_bg_value()
         elif kind == "batch":
             for nm, r in res.items():
                 self.results.setdefault(nm, {}).update(r)
@@ -596,10 +825,43 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         for r in (res.values() if isinstance(res, dict) else [res]):
             for run in self._runs_of(r):
                 self._log_run(run)
-        self.statusBar().showMessage(f"{kind} done", 5000)
+        warns = {}                                   # curve -> warnings of this run
+        if kind == "batch":
+            for nm, r in res.items():
+                warns[nm] = self._warnings_of(r)
+                if r.get("error"):
+                    self.log(f"✖ {nm}: {r['error']}")
+        elif kind != "selftest":
+            warns[name] = self._warnings_of(res)
+        nw = 0
+        for nm, ws in warns.items():
+            self.results.setdefault(nm, {})["warnings"] = ws
+            for w_ in ws:
+                self.log(f"⚠ {nm}: {w_}")
+            nw += len(ws)
+        nerr = sum(1 for r in res.values() if isinstance(r, dict) and r.get("error")) if kind == "batch" else 0
+        if nerr:
+            self._status(f"✖ {kind}: {nerr} of {len(res)} curves failed (see Log and the Results table)", "error")
+        elif nw:
+            self._status(f"⚠ {kind} done with {nw} warning{'s' if nw > 1 else ''}: "
+                         f"{next(w_ for ws in warns.values() for w_ in ws)}", "warning")
+        else:
+            self._status(f"{kind} done", "ok")
         self._fill_table()
         self._show_results()
         self.draw_all()
+
+    def _status(self, text, level="ok"):
+        colour = {"error": "#c00000", "warning": "#b36b00"}.get(level, "")
+        self.statusBar().setStyleSheet(f"QStatusBar {{ color: {colour}; }}" if colour else "")
+        self.statusBar().showMessage(text, 0 if (colour or level == "run") else 5000)
+
+    @staticmethod
+    def _warnings_of(r):
+        """Warnings of all result objects in ``r`` (a result or a dict of them, nested)."""
+        if isinstance(r, dict):
+            return [w for v in r.values() for w in MainWindow._warnings_of(v)]
+        return list(getattr(r, "warnings", None) or [])
 
     @staticmethod
     def _runs_of(r):
@@ -654,13 +916,14 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if g0 is not None and getattr(g0, "offset", None) != off:
             g0 = None                                    # AUTORG of another point range: run again
         common = self._common()
+        last = len(data[0]) if self.dg_range.currentData() == "all" else None
 
         def fn():
             g = g0
             if g is None:
                 g = A.autorg(data, cwd=cwd, **common)
                 g.offset = off
-            return {"autorg": g, "datgnom": A.datgnom(data, rg=g.rg, cwd=cwd, **common)}
+            return {"autorg": g, "datgnom": A.datgnom(data, rg=g.rg, last=last, cwd=cwd, **common)}
         self._start(("multi", c.name), fn, f"DATGNOM {c.name}")
 
     def _dmax_from_datgnom(self):
@@ -668,6 +931,103 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         p = self.results.get(c.name, {}).get("datgnom") if c else None
         if p is not None and np.isfinite(p.dmax):
             self.gn_dmax.setValue(p.dmax)
+
+    # ---- flat background
+    def _default_tail(self):
+        c = self.current()
+        if c is None:
+            return
+        i1 = self.last.value()
+        i0 = max(self.first.value() - 1, int(i1 - 0.3 * (i1 - self.first.value() + 1)))
+        self.bg_qmin.setValue(float(c.q[i0]))
+        self.bg_qmax.setValue(float(c.q[i1 - 1]))
+
+    def _tail_indices(self, c):
+        qa, qb = self.bg_qmin.value(), self.bg_qmax.value()
+        idx = np.nonzero((c.q >= qa * (1 - 1e-9)) & (c.q <= qb * (1 + 1e-9)))[0]
+        if len(idx) < 5:
+            raise A.AtsasError("fewer than 5 points in the tail q range (Flat background page)")
+        return int(idx[0]) + 1, int(idx[-1]) + 1            # 1-based, as in ATSAS
+
+    def run_background(self):
+        c = self.current()
+        if c is None:
+            return self.log("no curve selected")
+        if self.bg_qmax.value() <= self.bg_qmin.value():
+            self._default_tail()
+        try:
+            first, last = self._tail_indices(c)
+        except A.AtsasError as e:
+            return self.log(str(e))
+        data = (c.q, c.I, np.asarray(c.dI, float))
+        exp = self.bg_exp.value() if self.bg_fix.isChecked() else None
+        use_atsas = getattr(self, "installed", False) and A.program_path("datporod", self.atsas_dir()) is not None
+        cwd = self._run_dir("datporod", c) if use_atsas else None
+        common = self._common()
+
+        def fn():
+            out = {}
+            sl = slice(first - 1, last)
+            try:
+                out["fit"] = A.fit_power_background(c.q[sl], c.I[sl], np.asarray(c.dI, float)[sl], exponent=exp)
+            except Exception as e:  # noqa: BLE001
+                out["fit"] = f"failed: {e}"
+            if use_atsas:
+                try:
+                    out["datporod"] = A.datporod_exponent(data, first, last, constant=True, cwd=cwd, **common)
+                except A.AtsasError as e:
+                    out["datporod"] = f"failed: {e}"
+            else:
+                out["datporod"] = "not available (no ATSAS / datporod)"
+            return {"background": out}
+        if self._busy:
+            return
+        self._start(("multi", c.name), fn, f"flat background of {c.name} (points {first}–{last})")
+
+    def _fill_bg_value(self):
+        c = self.current()
+        bgr = (self.results.get(c.name, {}) if c else {}).get("background") or {}
+        pr = bgr.get(self.bg_use.currentData())
+        if not isinstance(pr, A.PorodResult):
+            pr = next((v for v in bgr.values() if isinstance(v, A.PorodResult)), None)
+        if pr is not None:
+            self.bg_value.setValue(pr.bg)
+
+    def _bg_text(self, c):
+        r = self.results.get(c.name, {})
+        if r.get("bg_subtracted") is not None:
+            return f"−{_fmt(r['bg_subtracted'])} (subtracted)"
+        bgr = r.get("background") or {}
+        pr = bgr.get("datporod") if isinstance(bgr.get("datporod"), A.PorodResult) else bgr.get("fit")
+        return f"{_fmt(pr.bg)} ± {_fmt(pr.dbg, 2)}" if isinstance(pr, A.PorodResult) else ""
+
+    def subtract_background(self, c, bg):
+        """Add the curve I − bg of ``c`` to the list (the original is kept) and return it."""
+        import dataclasses
+        entry = (c.entry + " " if c.entry else "") + f"minus bg {bg:.4g}"
+        new = dataclasses.replace(c, I=np.asarray(c.I, float) - bg, meta=dict(c.meta), entry=entry)
+        if any(x.name == new.name for x in self.curves):
+            return next(x for x in self.curves if x.name == new.name)
+        self.curves.append(new)
+        self.curve_list.addItem(new.name)
+        src = self.results.get(c.name, {})
+        self.results[new.name] = {"bg_subtracted": bg, "source": c.name}
+        if src.get("range"):
+            self.results[new.name]["range"] = src["range"]
+        self.derived[new.name] = (c.name, bg)
+        return new
+
+    def on_subtract_background(self):
+        c = self.current()
+        if c is None:
+            return
+        bg = self.bg_value.value()
+        if bg == 0:
+            return self.log("background is 0: fit it first or enter a value")
+        new = self.subtract_background(c, bg)
+        self.curve_list.setCurrentRow(next(i for i, x in enumerate(self.curves) if x is new))
+        self._fill_table()
+        self.log(f"{new.name}: I − {bg:.6g}")
 
     def run_gnom(self):
         c = self.current()
@@ -715,7 +1075,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         p = r.get("gnom") or r.get("datgnom")
         if p is None:
             return self.log("run GNOM or DATGNOM for this curve first")
-        extra = []
+        extra = [f"--model-format={self.dm_format.currentData()}"]
         if self.dm_unit.currentData():
             extra.append(f"--unit={self.dm_unit.currentData()}")
         kw = dict(nruns=self.dm_runs.value(), mode=self.dm_mode.currentText(), symmetry=self.dm_sym.currentText(),
@@ -723,6 +1083,161 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         cwd = self._run_dir("dammif", c)
         self._start(("dammif", c.name), lambda: A.dammif(p.out_file, cwd=cwd, **kw, **self._common()),
                     f"DAMMIF {self.dm_runs.value()} × {c.name}")
+
+    # ---- bead models, envelopes, MASSHA
+    def _dammif_models(self, all_models=False):
+        c = self.current()
+        d = (self.results.get(c.name, {}) if c else {}).get("dammif")
+        if d is None or not d.models:
+            return []
+        if all_models:
+            return list(d.models)
+        p = self.dm_models.currentData()
+        return [Path(p)] if p else [d.models[0]]
+
+    def show_beads_3d(self, all_models=False, paths=None):
+        paths = paths or self._dammif_models(all_models)
+        if not paths:
+            return self.log("no bead model: run DAMMIF first (or Load… in the 3D model panel)")
+        for p in paths:
+            try:
+                self.model_view.add_beads(M.read_bead_model(p))
+            except A.AtsasError as e:
+                self.log(f"✖ {e}")
+        self._raise("model3d")
+
+    def show_envelope_3d(self):
+        c = self.current()
+        sh = (self.results.get(c.name, {}) if c else {}).get("sasha")
+        if sh is None:
+            return self.log("no envelope: run SASHA (or Load .flm…) first")
+        e = sh.envelope
+        if e is None or not e.verified:
+            why = e.check if e is not None else "the .flm file could not be read"
+            self._status(f"⚠ envelope not drawn: {why}. Open it in MASSHA.", "warning")
+            return self.log(f"⚠ envelope not drawn: {why}")
+        self.model_view.add_envelope(e, f"{c.name}: SASHA envelope")
+        self._raise("model3d")
+
+    def _raise(self, name):
+        d = self.docks.get(name)
+        if d is not None:
+            if not d.isVisible():
+                self.set_panel_visible(name, True)
+            d.raise_()
+
+    def open_in_massha(self, what="beads"):
+        if A.program_path("massha", self.atsas_dir()) is None:
+            return self._status("✖ MASSHA is not installed (Legacy folder of the Windows ATSAS)", "error")
+        c = self.current()
+        files = []
+        if what == "beads":
+            for p in self._dammif_models():
+                p = Path(p)
+                if p.suffix.lower() != ".pdb":                 # MASSHA reads PDB (CA/P atoms) and SLD/FLM
+                    try:
+                        p = M.write_bead_pdb(M.read_bead_model(p), p.with_suffix(".massha.pdb"))
+                    except (A.AtsasError, OSError) as e:
+                        self.log(f"✖ {e}")
+                        continue
+                files.append(p)
+        else:
+            sh = (self.results.get(c.name, {}) if c else {}).get("sasha")
+            if sh is not None:
+                files.append(sh.flm)
+        if not files:
+            return self.log(f"nothing to open in MASSHA (no {'bead model' if what == 'beads' else 'envelope'})")
+        try:
+            A.launch("massha", [Path(f).name for f in files], atsas_dir=self.atsas_dir(),
+                     cwd=Path(files[0]).parent)
+            self._status(f"MASSHA started with {', '.join(Path(f).name for f in files)}", "ok")
+        except (A.AtsasError, OSError) as e:
+            self.log(f"✖ MASSHA: {e}")
+
+    def _estimate_sasha_inputs(self):
+        c = self.current()
+        g = (self.results.get(c.name, {}) if c else {}).get("autorg")
+        if g is None:
+            return self.log("run AUTORG first: the estimate uses the Guinier Rg")
+        rg_nm = g.rg
+        v_nm3 = 4 * np.pi / 3 * (np.sqrt(5 / 3) * rg_nm) ** 3
+        self.sh_rg.setValue(10 * rg_nm)
+        self.sh_mw.setValue(0.813 * v_nm3)                    # kDa: 1.35 g/cm³ · N_A
+        self.sh_smax.setValue(min(float(c.q[self.last.value() - 1]), 7.0 / rg_nm))
+
+    def run_sasha(self):
+        if M.legacy_path("sasha20", self.atsas_dir()) is None:
+            return self._status("✖ SASHA (Legacy/sasha20) is not installed: Windows ATSAS only", "error")
+        c = self.current()
+        try:
+            (q, I, dI), _off = self.used(c)
+        except A.AtsasError as e:
+            return self.log(str(e))
+        keep = q <= self.sh_smax.value() * 1.0001
+        if keep.sum() < 10:
+            return self.log("fewer than 10 points below q max")
+        kw = dict(smax=self.sh_smax.value(), mw_kda=self.sh_mw.value(), rg_angstrom=self.sh_rg.value(),
+                  symmetry=self.sh_sym.currentText(), lmax=self.sh_lmax.value(),
+                  anisometry=self.sh_aniso.currentData(), timeout=self._timeout())
+        cwd = self._run_dir("sasha", c)
+        common = self._common()
+        self._start(("sasha", c.name), lambda: M.sasha((q[keep], I[keep], dI[keep]), cwd=cwd, **kw, **common),
+                    f"SASHA {c.name}")
+
+    def sasha_interactive(self):
+        exe = M.legacy_path("sasha20", self.atsas_dir())
+        if exe is None:
+            return self._status("✖ SASHA (Legacy/sasha20) is not installed: Windows ATSAS only", "error")
+        c = self.current()
+        try:
+            (q, I, dI), _off = self.used(c)
+        except A.AtsasError as e:
+            return self.log(str(e))
+        cwd = Path(self._run_dir("sasha", c))
+        A.write_dat(cwd / "mon.dat", q, I, dI, title=c.name)
+        (cwd / "README.txt").write_text(
+            "SASHA started by pyATsas.\nData file: mon.dat, q = 4 pi sin(theta)/lambda in 1/nm (units choice 2).\n"
+            "Give an output name (e.g. sas); then use 'Load .flm...' in pyATsas.\n")
+        import subprocess
+        kw = {"creationflags": getattr(subprocess, "CREATE_NEW_CONSOLE", 0)} if A.IS_WIN else {}
+        try:
+            subprocess.Popen([str(exe)], cwd=str(cwd), env=A._child_env(self.atsas_dir()), **kw)
+        except OSError as e:
+            return self.log(f"✖ SASHA: {e}")
+        self._last_sasha_dir = cwd
+        self.log(f"SASHA opened in {cwd}: data mon.dat, units 2 (1/nm). Load the .flm when it has finished.")
+
+    def load_flm(self, path=None):
+        c = self.current()
+        if path is None:
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "SASHA envelope",
+                                                            str(getattr(self, "_last_sasha_dir", "")),
+                                                            "envelopes (*.flm);;All files (*)")
+        if not path:
+            return
+        path = Path(path)
+        try:
+            env = M.read_flm(path)
+        except A.AtsasError as e:
+            env = None
+            self.log(f"⚠ {e}")
+        fq = fe = fm = np.array([])
+        fim = path.with_suffix(".fim")
+        if fim.is_file():
+            try:
+                a = A.read_dat(fim)
+                fq, fe, fm = a[:, 0], a[:, 1], a[:, -1]
+            except A.AtsasError:
+                pass
+        res = M.SashaResult(env, path, fq, fe, fm, path.parent, "")
+        if env is not None and not env.verified:
+            res.warnings.append(f"envelope {env.check}; use MASSHA")
+        if c is not None:
+            self.results.setdefault(c.name, {})["sasha"] = res
+        for w_ in res.warnings:
+            self.log(f"⚠ {w_}")
+        self._show_results()
+        self.draw_iq()
 
     def run_batch(self):
         curves = list(self.curves)
@@ -736,17 +1251,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.log(f"{c.name}: {e}")
                 continue
             jobs.append((c, data, off, self._run_dir("batch", c)))
+        common = self._common()
+        all_pts = self.dg_range.currentData() == "all"
 
         def fn():
             out = {}
             for c, data, off, cwd in jobs:
+                r = out[c.name] = {}
                 try:
-                    g = A.autorg(data, cwd=cwd, **self._common())
+                    g = A.autorg(data, cwd=cwd, **common)
                     g.offset = off
-                    p = A.datgnom(data, rg=g.rg, cwd=cwd, **self._common())
-                    out[c.name] = {"autorg": g, "datgnom": p}
-                except A.AtsasError as e:
-                    out[c.name] = {"error": str(e)}
+                    r["autorg"] = g
+                    r["datgnom"] = A.datgnom(data, rg=g.rg, last=len(data[0]) if all_pts else None, cwd=cwd,
+                                             **common)
+                except Exception as e:  # noqa: BLE001 -- one bad curve must not stop the batch
+                    r["error"] = f"{type(e).__name__}: {e}" if not isinstance(e, A.AtsasError) else str(e)
             return out
         self._start(("batch", ""), fn, f"AUTORG + DATGNOM of {len(jobs)} curves")
 
@@ -765,6 +1284,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         ok = getattr(self, "installed", False) and not self._busy
         for b in getattr(self, "_run_buttons", []):
             b.setEnabled(ok)
+        if hasattr(self, "sh_button"):
+            self.sh_button.setEnabled(ok and getattr(self, "_has_sasha", False))
 
     # ------------------------------------------------------------------ launching ATSAS programs
     def on_launch(self, exe, with_data=False):
@@ -809,7 +1330,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             pts = f"{g.first + o}–{g.last + o}"
         return [c.name,
                 f"{_fmt(g.rg)} ± {_fmt(g.rg_err, 2)}" if g else "", _fmt(g.i0) if g else "", pts,
-                _fmt(g.quality, 3) if g else "",
+                _fmt(g.quality, 3) if g else "", self._bg_text(c),
                 _fmt(p.dmax) if p else "", _fmt(p.rg_real) if p else "", _fmt(p.total_estimate, 3) if p else "",
                 _fmt(q.dmax) if q else "", _fmt(q.rg_real) if q else "",
                 _fmt(m.chi2) if m else "", str(len(d.models)) if d else ""]
@@ -821,9 +1342,14 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             for j, v in enumerate(self._row(c)):
                 it = QtWidgets.QTableWidgetItem(v)
                 t.setItem(i, j, it)
-            err = self.results.get(c.name, {}).get("error")
-            if err:
-                t.item(i, 0).setToolTip(err)
+            r = self.results.get(c.name, {})
+            err, ws = r.get("error"), r.get("warnings")
+            if err or ws:
+                it = t.item(i, 0)
+                it.setToolTip(("✖ " + err) if err else "\n".join("⚠ " + w_ for w_ in ws))
+                it.setBackground(QtGui.QColor("#f4c7c3" if err else "#fce8b2"))
+                it.setForeground(QtGui.QColor("#000000"))
+                it.setText(("✖ " if err else "⚠ ") + it.text())
 
     def _show_results(self):
         c = self.current()
@@ -845,6 +1371,40 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                                ("model curve calculated" if m is not None else ""))
         d = r.get("dammif")
         self.dm_result.setText(f"{len(d.models)} models in\n{d.workdir}" if d else "")
+        cur = self.dm_models.currentText()
+        self.dm_models.clear()
+        for mp in (d.models if d else []):
+            self.dm_models.addItem(Path(mp).name, str(mp))
+        if cur:
+            i = self.dm_models.findText(cur)
+            if i >= 0:
+                self.dm_models.setCurrentIndex(i)
+        sh = r.get("sasha")
+        if sh is None:
+            self.sh_result.setText("")
+        else:
+            e = sh.envelope
+            txt = f"envelope: {sh.flm}"
+            if e is not None:
+                txt += f"\nRg {_fmt(e.rg)} Å, V {_fmt(e.volume)} Å³ — {e.check}"
+            self.sh_result.setText(txt)
+        bgr = r.get("background") or {}
+        lines = []
+        for key, lab in (("datporod", "DATPOROD"), ("fit", "independent fit")):
+            pr = bgr.get(key)
+            if isinstance(pr, A.PorodResult):
+                lines.append(f"{lab}: bg = {_fmt(pr.bg)} ± {_fmt(pr.dbg, 2)}, B = {_fmt(pr.b, 3)} ± {_fmt(pr.db, 2)}, "
+                             f"χ²/n = {_fmt(pr.chi2, 3)}" + (f"  ({pr.note})" if pr.note and key == "datporod" else ""))
+            elif pr:
+                lines.append(f"{lab}: {pr}")
+        if bgr.get("datporod") and isinstance(bgr.get("fit"), A.PorodResult) and \
+                isinstance(bgr.get("datporod"), A.PorodResult):
+            a_, b_ = bgr["datporod"], bgr["fit"]
+            dif = abs(a_.bg - b_.bg)
+            tol = 3 * np.hypot(a_.dbg if np.isfinite(a_.dbg) else 0, b_.dbg if np.isfinite(b_.dbg) else 0)
+            if tol > 0 and dif > tol:
+                lines.append("⚠ the two estimates differ by more than 3σ: check the tail range and the exponent")
+        self.bg_result.setText("\n".join(lines))
 
     def draw_all(self):
         self.draw_iq()
@@ -892,6 +1452,36 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 if p is not None and len(p.q):
                     x, y = self._transform(p.q, p.i_reg)
                     ax.plot(x, y, sty, lw=1.2, label=k.upper() + " fit")
+                    if k == "datgnom" and p.q[-1] < c0.q[min(n1, len(c0.q)) - 1] * 0.98:
+                        xe = self._transform(np.array([p.q[-1]]), np.array([1.0]))[0][0]
+                        ax.axvline(xe, color="r", ls=":", lw=1)
+                        ax.annotate("DATGNOM fit ends", (xe, 0.97), xycoords=("data", "axes fraction"),
+                                    rotation=90, va="top", ha="right", color="r", fontsize="small")
+            bgr = r.get("background")
+            if bgr:
+                qa, qb = self.bg_qmin.value(), self.bg_qmax.value()
+                qq = np.geomspace(max(qa, 1e-6), max(qb, qa * 1.01, 1e-5), 80)
+                for key, sty, lab in (("datporod", "c-", "DATPOROD"), ("fit", "y--", "check fit")):
+                    pr = bgr.get(key)
+                    if isinstance(pr, A.PorodResult):
+                        x, y = self._transform(qq, pr.model(qq))
+                        ax.plot(x, y, sty, lw=1.4, label=f"{lab}: B = {_fmt(pr.b, 3)}, bg = {_fmt(pr.bg)}")
+            if self.bg_value.value() != 0 and s in (0, 1, 4):
+                ax.axhline(self.bg_value.value(), color="c", ls="--", lw=0.8, label="bg to subtract")
+            if r.get("bg_subtracted") is not None:
+                ax.set_title(f"background {_fmt(r['bg_subtracted'])} subtracted", fontsize="small")
+            d = r.get("dammif")
+            if d is not None and d.fits:
+                try:
+                    a = A.read_dat(d.fits[0])
+                    x, y = self._transform(a[:, 0], a[:, -1])
+                    ax.plot(x, y, "-", color="#0B6666", lw=1.2, label="DAMMIF fit (model 1)")
+                except A.AtsasError:
+                    pass
+            sh = r.get("sasha")
+            if sh is not None and len(sh.fit_q):
+                x, y = self._transform(sh.fit_q, sh.fit_model)
+                ax.plot(x, y, "-", color="#b36b00", lw=1.2, label="SASHA envelope fit")
             m = r.get("crysol")
             if m is not None and len(m.q):
                 x, y = self._transform(m.q, m.i_model)
@@ -970,17 +1560,42 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             raise ValueError("Load a curve first.")
         sc = Script("pyATsas", f"Guinier analysis and p(r) of {c.name} with ATSAS")
         sc.imp("import numpy as np", "from pysasfit import atsas", "from pysasfit.toolbox.merge import read_curves")
-        sc.comment("the curve (q in 1/nm) and the point range used")
-        sc.add(f"curve = next(c for c in read_curves({path_lit(c.path)}) if c.name == {c.name!r})",
-               f"i0, i1 = {self.first.value() - 1}, {self.last.value()}",
-               "data = (curve.q[i0:i1], curve.I[i0:i1], curve.dI[i0:i1])")
         d = self.atsas_dir()
         kw = {"atsas_dir": d} if d else {}
+        root, bg_total = c.name, 0.0
+        while root in self.derived:                       # background-subtracted curve: back to the file
+            root, b_ = self.derived[root]
+            bg_total += b_
+        sc.comment("the curve (q in 1/nm) and the point range used")
+        sc.add(f"curve = next(c for c in read_curves({path_lit(c.path)}) if c.name == {root!r})")
+        r = self.results.get(c.name, {})
+        bgr = (self.results.get(root, {}).get("background") or {})
+        if bg_total or bgr:
+            sc.comment("flat background: DATPOROD --exponent --constant on the high-q tail (points 1-based), "
+                       "and the independent check fit")
+            if bgr:
+                qa, qb = self.bg_qmin.value(), self.bg_qmax.value()
+                sc.add(f"tail = (curve.q >= {qa!r}) & (curve.q <= {qb!r})",
+                       "first, last = np.nonzero(tail)[0][[0, -1]] + 1",
+                       call("bgp = atsas.datporod_exponent", Code("(curve.q, curve.I, curve.dI)"), Code("first"),
+                            Code("last"), **kw),
+                       call("bgf = atsas.fit_power_background", Code("curve.q[tail]"), Code("curve.I[tail]"),
+                            Code("curve.dI[tail]"),
+                            exponent=self.bg_exp.value() if self.bg_fix.isChecked() else None),
+                       "print(f'DATPOROD: bg = {bgp.bg:.4g} +- {bgp.dbg:.2g}, B = {bgp.b:.3g}; "
+                       "check fit: bg = {bgf.bg:.4g} +- {bgf.dbg:.2g}, B = {bgf.b:.3g}')")
+            sc.add(f"bg = {bg_total!r}   # subtracted on the panel" if bg_total else "bg = 0.0   # bgp.bg to subtract it")
+        else:
+            sc.add("bg = 0.0")
+        sc.add(f"i0, i1 = {self.first.value() - 1}, {self.last.value()}",
+               "data = (curve.q[i0:i1], curve.I[i0:i1] - bg, curve.dI[i0:i1])")
+        del r
         sc.comment("Guinier analysis and automatic p(r)")
         sc.add(call("g = atsas.autorg", Code("data"), mininterval=self.ag_minint.value(),
                     smaxrg=self.ag_smaxrg.value(), minrg=self.ag_minrg.value(), **kw),
                "print(f'Rg = {g.rg:.4g} +- {g.rg_err:.2g} nm, I(0) = {g.i0:.4g}')",
-               call("p = atsas.datgnom", Code("data"), rg=Code("g.rg"), **kw),
+               call("p = atsas.datgnom", Code("data"), rg=Code("g.rg"),
+                    **({"last": Code("len(data[0])")} if self.dg_range.currentData() == "all" else {}), **kw),
                "print(f'DATGNOM: Dmax = {p.dmax:.4g} nm, Rg = {p.rg_real:.4g} nm, total estimate {p.total_estimate:.3g}')")
         sc.comment("p(r) with the Dmax and options of the panel")
         sc.add(call("p2 = atsas.gnom", Code("data"), dmax=self.gn_dmax.value(), system=self.gn_system.currentData(),
@@ -1009,7 +1624,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                        self.cr_smax.value(), self.cr_fit.isChecked(), self.cr_extra.text()],
                 "dm": [self.dm_runs.value(), self.dm_mode.currentIndex(), self.dm_sym.currentText(),
                        self.dm_unit.currentIndex()],
-                "iq_scale": self.iq_scale.currentIndex()}
+                "iq_scale": self.iq_scale.currentIndex(),
+                "bg": [self.bg_qmin.value(), self.bg_qmax.value(), self.bg_fix.isChecked(), self.bg_exp.value(),
+                       self.bg_use.currentIndex()],
+                "dg_range": self.dg_range.currentIndex()}
 
     def _set_options(self, o):
         try:
@@ -1031,6 +1649,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.dm_runs.setValue(d[0]); self.dm_mode.setCurrentIndex(d[1])  # noqa: E702
                 self.dm_sym.setCurrentText(d[2]); self.dm_unit.setCurrentIndex(d[3])  # noqa: E702
             self.iq_scale.setCurrentIndex(int(o.get("iq_scale", 0)))
+            b = o.get("bg")
+            if b:
+                self.bg_qmin.setValue(b[0]); self.bg_qmax.setValue(b[1]); self.bg_fix.setChecked(b[2])  # noqa: E702
+                self.bg_exp.setValue(b[3]); self.bg_use.setCurrentIndex(b[4])  # noqa: E702
+            self.dg_range.setCurrentIndex(int(o.get("dg_range", 0)))
         except (TypeError, ValueError, IndexError):
             pass
 
@@ -1043,7 +1666,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 if c.path not in files:
                     files.append(c.path)
             ranges = {c.name: self.results.get(c.name, {}).get("range") for c in self.curves}
+            derived = [[n, src, bg] for n, (src, bg) in self.derived.items()]
             s = {"version": 1, "files": files, "ranges": ranges, "current": self.curve_list.currentRow(),
+                 "derived": derived,
                  "options": self._options(), "dock_state": self.dock_state()}
             with open(p, "w", encoding="utf-8") as fh:
                 json.dump(s, fh, indent=1)
@@ -1064,6 +1689,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                     self.results.setdefault(name, {})["range"] = tuple(rng)
             if files:
                 self.load_files(files)
+                for _n, src, bg in s.get("derived") or []:          # background-subtracted curves
+                    base = next((c for c in self.curves if c.name == src), None)
+                    if base is not None:
+                        self.subtract_background(base, float(bg))
+                self._fill_table()
                 cur = int(s.get("current", 0))
                 if 0 <= cur < len(self.curves):
                     self.curve_list.setCurrentRow(cur)

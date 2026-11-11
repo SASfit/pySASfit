@@ -42,12 +42,14 @@ TOOLS = [
     ("pySASmorph", "pysasfit.morph.gui", "MainWindow"),
     ("pySCAtter", "pysasfit.scatter.gui", "MainWindow"),
     ("pyATsas", "pysasfit.atsas.gui", "MainWindow"),
+    ("pyDENsity", "pysasfit.density.gui", "MainWindow"),
     ("pyTOOLbox", "pysasfit.toolbox.gui", "MainWindow"),
 ]
 
 # tab title -> preferences page
 _TOOL_KEYS = {"pySLDprofile": "sldprofile", "pyINVersion": "inversion", "pyOZsolver": "oz",
-             "pySASred": "sasred", "pyTOOLbox": "toolbox", "pySCAtter": "scatter", "pyATsas": "atsas"}
+             "pySASred": "sasred", "pyTOOLbox": "toolbox", "pySCAtter": "scatter", "pyATsas": "atsas",
+             "pyDENsity": "density"}
 
 # tab title -> logo bundle name (pysasfit.resources)
 # (the tab titles are the tool names of the logo bundle; other titles may name their logo here)
@@ -65,6 +67,8 @@ _TOOL_INFO = {
                  "algorithms after Wagener & Förster), fits to 1D and 2D data",
     "pyATsas": "the ATSAS programs (EMBL Hamburg / BIOSAXS, installed separately): Guinier analysis, p(r), model "
                "curves, bead models; starts PRIMUS, CHROMIXS, PEAK, ...",
+    "pyDENsity": "electron-density maps from SAXS/SANS curves with DENSS (Grant 2018; installed separately): single "
+                 "and averaged maps, isosurfaces, slices",
     "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data (masks, averages, sums), 1D data arithmetic",
 }
 

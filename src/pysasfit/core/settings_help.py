@@ -690,6 +690,22 @@ HELP = {
     "atsas.dammif.nruns":
         "Start value of the number of independent DAMMIF runs. Several runs (10 or more) are needed to judge "
         "the uniqueness of a bead model (DAMAVER / DAMCLUST); they run in parallel on all but one core.",
+    # =================================================================== pyDENsity
+    "density.python":
+        "Python interpreter in which DENSS is installed (pip install denss). Empty: the Python running pySASfit, "
+        "then python / python3 on the PATH, then the interpreter of a 'denss' script on the PATH. Set it when DENSS "
+        "lives in another environment (e.g. a python.org Python next to the MSYS2 one).",
+    "density.workdir":
+        "Every DENSS run of the pyDENsity panel gets its own sub-folder here (date, time, kind, curve) with the "
+        "input file and everything DENSS writes (maps .mrc, fits, log; denss-all: the aligned maps, the average "
+        "and the FSC curve), so maps can be opened later in ChimeraX or PyMOL. Empty: denss_runs next to the "
+        "pySASfit preferences file.",
+    "density.timeout":
+        "A single DENSS map that takes longer is stopped and reported as failed; denss-all gets four times this "
+        "limit. SLOW mode with fine grids can take more than an hour per map.",
+    "density.cores":
+        "Start value of the number of maps that denss-all computes in parallel (its -j option). Each map needs one "
+        "core and its own memory (grids of 64³ and more need several hundred MB).",
     # =================================================================== appearance
     "appearance.panel_title.mode":
         "Title bars of the docked panels coloured like window title bars under Windows. 'active panel in "

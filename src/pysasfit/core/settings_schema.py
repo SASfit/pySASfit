@@ -414,6 +414,27 @@ register(T, TT, "ATSAS installation and runs", [
 ])
 
 # ---------------------------------------------------------------------------
+# pyDENsity (DENSS)
+# ---------------------------------------------------------------------------
+def _denss_found():
+    try:
+        from ..density.core import find_denss
+        i = find_denss()
+        return f"{i.python} (DENSS {i.version})"
+    except Exception:  # noqa: BLE001
+        return "DENSS not found for this Python"
+
+
+T, TT = "density", "pyDENsity"
+register(T, TT, "DENSS installation and runs", [
+    S("density.python", "", "Python with DENSS", "Empty: found automatically.", kind="str", placeholder=_denss_found),
+    S("density.workdir", "", "folder for the DENSS runs", "Empty: denss_runs next to the preferences file.",
+      kind="str", placeholder=lambda: _next_to_preferences("denss_runs")),
+    S("density.timeout", 7200, "time limit of one map (s)", "", kind="int", lo=10, hi=7 * 86400),
+    S("density.cores", 4, "denss-all: cores (start value)", "", kind="int", lo=1, hi=256),
+])
+
+# ---------------------------------------------------------------------------
 # Appearance of the windows (all tools)
 # ---------------------------------------------------------------------------
 T, TT = "appearance", "Appearance"

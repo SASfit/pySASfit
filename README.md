@@ -14,7 +14,8 @@ from the raw detector data (reduction with exact error propagation) to models, f
 | `pysasfit.oz` | Ornstein–Zernike solvers and closures, polydisperse/multicomponent structure factors, SAS models, analytic references (MSA, RMSA, Robertus, Gazzillo), fitting; from pyOZgui, GUI ported from Tk to Qt (see `docs/oz/README.md`) | `pysasfit-oz` |
 | `pysasfit.morph` | **pySASmorph**: representative 3D two- and multi-phase morphologies from SAXS/SANS data (multi-level cut of one Gaussian field, contrast series with one common g(r)) (clipped Gaussian random fields, the SAXSMorph method of Ingham et al. 2011, reimplemented): extrapolation, γ(r), g(r), f(k), FFT or random-wave field, voxel structure with its back-calculated I(q), S/V, percolation, bicontinuity; VTK/HDF5/TIFF/STL export, 3D panel (pyqtgraph/OpenGL, optional PyVista window); see `docs/morph/` | `pysasfit-morph` |
 | `pysasfit.atsas` | **pyATsas**: the programs of an ATSAS installation (EMBL Hamburg / BIOSAXS, installed separately with its own licence) on pySASfit curves: AUTORG, DATGNOM, GNOM, CRYSOL / CRYSON, DAMMIF with plots and a results table; starts PRIMUS, CHROMIXS, PEAK, …; finds ATSAS on Windows, Linux and macOS; see `docs/atsas/` | `pysasfit-atsas` |
-| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pySCAtter, pyATsas, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
+| `pysasfit.density` | **pyDENsity**: electron-density maps from SAXS/SANS curves with DENSS (T. D. Grant 2018; GPL-3.0, installed separately with `pip install denss`, run as a separate process; NumPy-2 shim for DENSS 1.8.7): single and averaged maps (denss-all, FSC resolution), isosurfaces, slices; see `docs/density/` | `pysasfit-density` |
+| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pySCAtter, pyATsas, pyDENsity, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
 
 Every tool copies a Python script that repeats its current calculation to the clipboard (*Copy Python* button,
 File → *Copy Python code*, Ctrl+Shift+C): data files, all settings and the preference values used; see
@@ -171,6 +172,7 @@ src/pysasfit/
                         headers/ (93 plugin headers), templates/, sasfit_lib/ (installed binaries, not in git)
     oz/                 pyOZgui library modules (ozLib, solvers, closures, polydisperse SAS, fitting, wrappers,
                         librmsa.dll); oz/gui/ Qt GUI (main_window, oz_solver_tab, the polydisperse tabs, qtkit)
+    density/            core.py (running DENSS, MRC maps, isosurfaces), gui.py (pyDENsity)
     atsas/              core.py (finding ATSAS, running and parsing its programs), gui.py (pyATsas)
     gui/launcher.py
     resources/          tool icons and logos (copied from docs/pySASfit-logo-bundle by tools/sync_logos.py)

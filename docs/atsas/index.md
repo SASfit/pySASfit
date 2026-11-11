@@ -42,12 +42,13 @@ spaces, umlauts or long paths (OneDrive folders, for example).
 | panel | content |
 |---|---|
 | Data | curves: text (q I dI [dq]), pySASred ASCII, NXcanSAS (every entry), as in pyTOOLbox; q in 1/nm. *points*: the range given to every program (1-based, as in ATSAS) |
-| Analysis | AUTORG (min. interval, q_max·Rg, minimum Rg); DATGNOM (Rg from AUTORG, which is run first if missing); GNOM (Dmax, systems 0–6, zero conditions, r points, α); CRYSOL / CRYSON (model curve, or fit to the selected curve, further options as text); DAMMIF (runs in parallel, mode, symmetry, unit; uses the GNOM p(r), else DATGNOM). *Rg + p(r) of all*: AUTORG and DATGNOM for every loaded curve |
-| I(q) | data, points outside the range (grey ×), Guinier range and line, DATGNOM / GNOM fits, model curve; log–log, log–lin, Guinier (ln I vs q², low-q part), Kratky (q² I), linear |
+| Analysis | AUTORG (min. interval, q_max·Rg, minimum Rg); flat background of the high-q tail (see below); DATGNOM (Rg from AUTORG, which is run first if missing; fit up to s·Rg ≈ 8 or over all points of the range); GNOM (Dmax, systems 0–6, zero conditions, r points, α); CRYSOL / CRYSON (model curve, or fit to the selected curve, further options as text); DAMMIF (runs in parallel, mode, symmetry, unit; uses the GNOM p(r), else DATGNOM). *Rg + p(r) of all*: AUTORG and DATGNOM for every loaded curve |
+| I(q) | data, points outside the range (grey ×), Guinier range and line, DATGNOM / GNOM fits and where the DATGNOM fit ends (red dotted line), the two background fits of the tail and the background to subtract (dashed), model curve; log–log, log–lin, Guinier (ln I vs q², low-q part), Kratky (q² I), linear |
 | p(r) | DATGNOM and GNOM distributions with their errors, optionally normalised |
-| Results | one row per curve: Rg ± error and I(0) (Guinier), its points and quality, Dmax, real-space Rg and total estimate (DATGNOM, GNOM), χ² of the model fit, number of bead models; *File → Export results table* writes it as CSV |
+| Results | one row per curve: Rg ± error and I(0) (Guinier), its points and quality, flat background (or the one subtracted), Dmax, real-space Rg and total estimate (DATGNOM, GNOM), χ² of the model fit, number of bead models; *File → Export results table* writes it as CSV |
 | Log | every command line, its folder and the last lines of the programs' output |
-| ATSAS | installation, licence, self test, and buttons with the original icons for the interactive programs: ATSAS launcher, PRIMUS, CHROMIXS, PEAK, SASPLOT, GNOMPLOT, SVDPLOT, SASDOC. With *open with the selected curve / p(r)*, PRIMUS and SASPLOT get the selected curve (its point range), GNOMPLOT its last `.out` file |
+| 3D model | bead models and spherical-harmonics envelopes, several at once (tick to show), bead size, envelope opacity; *Load…* reads `.pdb`, `.cif` and `.flm` files (see below) |
+| ATSAS | installation, licence, self test, and buttons with the original icons for the interactive programs: ATSAS launcher, PRIMUS, CHROMIXS, PEAK, SASPLOT, GNOMPLOT, SVDPLOT, SASDOC, MASSHA (legacy). With *open with the selected curve / p(r)*, PRIMUS and SASPLOT get the selected curve (its point range), GNOMPLOT its last `.out` file |
 
 Programs run in the background; the window stays usable. Every run gets its own folder
 (`<date>-<time>_<program>_<curve>` in **Preferences → folder for the ATSAS runs**, by default `atsas_runs` next to the
@@ -60,6 +61,92 @@ are in nm. CRYSOL's *q max* is in the unit CRYSOL assumes for the model curve (1
 *Copy Python* (Ctrl+Shift+C) puts a script on the clipboard that repeats AUTORG, DATGNOM and GNOM of the selected
 curve with the panel's settings.
 
+## Flat background (incoherent scattering)
+
+GNOM has no option to fit a constant, and DATGNOM stops at s·Rg ≈ 8 unless `--last` is given. Over a wider range a
+flat background (incoherent scattering of hydrogen in SANS, an imperfect buffer subtraction) is fitted as if it were
+particle scattering: p(r) gets a spike or oscillations at small r. The page **Flat background (DATPOROD)** estimates the
+constant from the high-q tail, so that it can be subtracted before GNOM:
+
+* **DATPOROD `--exponent --constant`** (ATSAS) fits I(s) = A s⁻ᴮ − C to the points of the tail q range. The manual
+  does not say on which side C is subtracted; pyATsas evaluates both readings at the fitted points and takes the one
+  that describes the data (the result line says which). `bg` is always the value to subtract from I.
+* **Independent fit** (pySASfit, no ATSAS needed) of I = A q⁻ᴮ + bg with weighted least squares, with B free or
+  fixed (4 = Porod for sharp interfaces, 2 for Gaussian chains). A difference of more than 3σ between the two
+  estimates is flagged: then the tail does not follow one power law plus a constant (choose another q range, fix the
+  exponent, or the data end before the Porod region).
+* B and bg are strongly correlated when the tail is short or the power law is still far above the background; the
+  errors show it. Use the widest tail that is clearly beyond the last form-factor features.
+* **Subtract → new curve** adds the curve I − bg (errors unchanged) to the data list, named `… minus bg <value>`; the
+  original stays. The value can be edited before subtracting. Subtracted curves are restored with the session.
+
+Then run DATGNOM with *all points of the range* (or GNOM) on the new curve. *Copy Python* includes the background
+fits and the subtraction.
+
+## Shapes: bead models and spherical-harmonics envelopes
+
+ATSAS has two kinds of ab-initio shape:
+
+* **Bead models** (dummy atoms on a grid): DAMMIF and DAMMIN, MONSA (several phases, e.g. SAXS with SANS contrast
+  variation), DAMMIX (mixtures), GASBOR (dummy residues), then DAMAVER / DAMCLUST over repeated runs. The panel runs
+  DAMMIF; models of the others can be loaded in the 3D panel.
+* **Envelopes** r(ω) = Σ F_lm Y_lm(ω) from spherical harmonics: **SASHA**. It exists only in the `Legacy` folder of the
+  Windows installation (`sasha20.exe`; `sashaqw.exe` is the same with its own window), not in the main ATSAS 4
+  programs. DAMMIN/DAMMIF, GASBOR and CRYSOL also expand amplitudes in spherical harmonics, but only to compute the
+  scattering; their result is beads or atoms.
+
+Viewing: ATSAS 4 has no 3D viewer of its own; the legacy **MASSHA** (`Legacy\massha.exe`) shows envelopes, bead
+models and atomic models (from PDB files it shows only CA and P atoms, which is how bead models are written).
+Otherwise PyMOL, ChimeraX or VMD open the model files (beads as atoms; show them as spheres of the bead radius).
+
+**Bead models (DAMMIF page).** *model file* PDB (default here, MASSHA reads it) or mmCIF (ATSAS 4 default; converted
+to PDB for MASSHA). After the run the models are listed; *Show in 3D* draws the selected one (Shift: all), *Open in
+MASSHA* starts MASSHA with it. The I(q) plot shows the fit of model 1 (`.fir`). Bead models are read from PDB
+(`ATOM`/`HETATM`) or mmCIF (`_atom_site`), coordinates in Å; the bead radius from the header ("DAM packing radius"
+...), else half the median nearest-neighbour distance. Checked against the DAMMIN example of ATSAS 4.1.4 (608 beads,
+radius 1.8 Å, Rg 15.40 Å and Dmax 49.1 Å as in its header).
+
+**Envelopes (page "Envelope (SASHA, spherical harmonics)").** SASHA is an interactive dialog program from the ATSAS 2
+era. *Run SASHA* writes the selected curve (point range, up to *q max*) as `mon.dat` and answers the documented
+dialog through stdin: working mode User, data `mon.dat`, units 2 (4π sinθ/λ in 1/nm), no dimer data, output `sas`,
+s_max, default start shape, symmetry (P1, P2, P222, Pmmm, P3), harmonic order L, start anisometry, molecular weight
+(kDa) and Rg (Å) — *estimate* derives both from the Guinier Rg for a compact protein. The transcript is kept in
+`sasha_dialog.log` in the run folder and checked: if the prompts did not appear in the documented order, a warning
+says so. If SASHA writes no `sas.flm`, the run fails with its output. *SASHA interactively…* prepares the run folder
+and opens SASHA there in a console to answer the dialog yourself; *Load .flm…* then reads the result.
+
+The layout of the `.flm` file is not documented. pyATsas reconstructs the envelope from the coefficients in several
+possible readings (indexed rows or sequences, complex or real harmonics) and accepts one only if its volume and Rg
+agree within 3 % with the values SASHA writes into the same file. Only then is the envelope drawn in the 3D panel
+(translucent, over a bead model if one is shown); otherwise the reason is shown and MASSHA is the way to look at it.
+This check has been tested with synthetic files only: the first real SASHA file will show whether one of the readings
+fits — if not, please send it.
+
+The 3D panel needs `pyqtgraph` and `PyOpenGL` (`pip install -e ".[atsas]"`, the same packages as the pySASmorph 3D
+panel). It also works when detached into its own window (the OpenGL context is rebuilt).
+
+## When a program returns no result
+
+Every call checks what the program left behind, not only its exit code (ATSAS programs sometimes exit with 0 and
+write nothing). The call raises `AtsasError`, with the last lines of the program's output, when:
+
+* the program cannot be started (not executable, blocked) or exceeds the time limit;
+* it exits with an error (no Guinier region, missing licence, …);
+* the expected output file is missing or empty (DATGNOM/GNOM `.out`, CRYSOL `.fit` when a fit was asked for,
+  `.int`/`.abs` otherwise);
+* the output has no usable numbers: no p(r) table or NaN in it, no valid Rg from AUTORG, no valid DATPOROD fit, NaN
+  in a model curve;
+* DAMMIF produced no bead model in any run. If only some runs fail, the models of the others are kept and the failed
+  runs are listed in `errors` and in a warning.
+
+Results that exist but are doubtful carry `warnings` (a list of texts): AUTORG quality below 0.5 or aggregation
+flagged; GNOM total estimate below 0.5, p(r) negative by more than 5 % of its maximum, no real-space Rg or fitted
+I(q) found; no χ² in the CRYSOL output; fewer DAMMIF models than runs.
+
+In the panel a failure turns the status bar red, marks the curve with ✖ in the Results table (the tooltip gives
+the message) and brings the Log panel forward; warnings mark it with ⚠ (orange). *Rg + p(r) of all* goes on with
+the other curves when one fails, and keeps the AUTORG result when only DATGNOM fails.
+
 ## Scripts
 
 ```python
@@ -70,6 +157,9 @@ c = read_curves("lysozyme.dat")[0]
 g = atsas.autorg((c.q, c.I, c.dI))                 # GuinierResult: rg, rg_err, i0, first, last, quality
 p = atsas.datgnom((c.q, c.I, c.dI), rg=g.rg)       # GnomResult: r, pr, pr_err, q, i_reg, dmax, rg_real, ...
 p2 = atsas.gnom("lysozyme.dat", dmax=6.0, system=0)
+b = atsas.datporod_exponent((c.q, c.I, c.dI), first=300, last=len(c.q))   # PorodResult: a, b, bg, dbg, chi2
+f = atsas.fit_power_background(c.q[299:], c.I[299:], c.dI[299:], exponent=4) # the same without ATSAS
+p3 = atsas.datgnom((c.q, c.I - b.bg, c.dI), rg=g.rg, last=len(c.q))       # all points, background subtracted
 m = atsas.crysol("6lyz.pdb", "lysozyme.dat")       # CrysolResult: q, i_model, chi2 (cryson: program="cryson")
 d = atsas.dammif(p.out_file, nruns=10)             # DammifResult: models, fits, workdir
 atsas.launch("primusqt", ["lysozyme.dat"])         # interactive programs

@@ -150,6 +150,14 @@ AUTORG, DATGNOM, GNOM, CRYSOL and DAMMIF of an ATSAS installation (installed sep
 pySASfit curves, with plots and a results table; starts PRIMUS, CHROMIXS, PEAK with the selected curve.
 :::
 
+:::{grid-item-card} pyDENsity: electron-density maps
+:link: density/index
+:link-type: doc
+
+Low-resolution electron-density maps from SAXS/SANS curves with DENSS (Grant 2018; installed separately): single
+maps and averages with FSC resolution, isosurfaces and slices.
+:::
+
 :::{grid-item-card} The launcher
 :link: launcher
 :link-type: doc
@@ -203,6 +211,7 @@ pyOZsolver <oz/index>
 pySASmorph <morph/index>
 pySCAtter <scatter/index>
 pyATsas <atsas/index>
+pyDENsity <density/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 Copy Python code <python_code>

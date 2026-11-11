@@ -132,8 +132,9 @@ folder. Both settings can be remembered between sessions.
 
 **Data and fit.** The *Fit* panel (*View → Fit*) loads a data file (`pysasfit.core.load_data`; q × factor for
 unit conversion), takes an optional fit q range and shows the parameters ticked for fitting. The residuals
-Δ/σ appear below the plot. *Fit* runs the optimiser in a thread (*Stop* cancels it), *Undo fit* restores the values
-before it. The *Constraints* tab takes inequalities and equalities (`c1_ff_R + c1_ff_L < 100`, `c1_scale + c2_scale == 1`;
+Δ/σ appear below the plot. *Fit* runs the optimiser in a thread; with *live view* the *Progress* tab shows the best
+model so far, χ²/dof against the evaluations and the current parameter values while it runs, and *Stop* ends the fit
+keeping that best point. *Undo fit* restores the values before it. The *Constraints* tab takes inequalities and equalities (`c1_ff_R + c1_ff_L < 100`, `c1_scale + c2_scale == 1`;
 names are the parameter labels with `.` replaced by `_`, so `ff_R` with a single contribution; the Fit panel's
 tooltip lists them), the *Priors* tab priors (`label form args`: `normal`, `lognormal`, `halfnormal`, `loguniform`, see
 "Priors for positive parameters and ranges") and the *Result* tab shows values, errors, χ²/dof, the constraints and the

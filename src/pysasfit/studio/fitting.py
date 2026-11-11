@@ -854,7 +854,8 @@ class FitProblem:
                   vp=False, cache=False, snap=0.05, **options):  # fmt: skip
         """Run the fit; returns a :class:`FitSummary` (the parameters keep the fitted values).
 
-        ``callback(nfev, chi2_red)`` is called for every evaluation; ``cancel`` is a ``threading.Event`` that stops
+        ``callback(nfev, chi2_red)`` is called for every evaluation; a callback with an attribute ``on_best(ctx)`` is
+        also told about every new best point (``ctx.best_vals``, ``ctx.best_curves()``: live view). ``cancel`` is a ``threading.Event`` that stops
         the fit (the best point so far is returned). ``penalty`` weighs the constraints for ``"scipy"``.
         ``vp`` switches variable projection on, ``cache`` the form-factor cache (``snap``: see the module docstring).
         ``options`` go to the backend (``max_nfev``, ``xtol``, ``ftol`` ... for scipy; ``maxeval``, ``maxtime``,
@@ -969,6 +970,7 @@ class _Context:
         self.cov_u = None  # covariance in the scaled variables, if the backend has one (DREAM)
         self.asym = {}  # free index -> (minus, plus) interval in the scaled variables
         self.best_chi2, self.best_u = math.inf, None
+        self.best_vals = self.best_r = None  # all parameter values and residuals of the best point (live view)
         self.ndata = sum(d.q.size for d in problem.datasets) + problem.n_prior_rows()
         self.dof = max(self.ndata - len(self.all_free), 1)
 
@@ -1015,19 +1017,40 @@ class _Context:
     def residual(self, u):
         if self.cancel is not None and self.cancel.is_set():
             raise FitCancelled
+        v = self.vals(u)
         if self.lin:
-            r = self.problem._residuals_vp(self.vals(u), self.lin)
+            r = self.problem._residuals_vp(v, self.lin)  # stores the solved linear parameters in v
         else:
-            r = self.problem._residuals(self.vals(u))
+            r = self.problem._residuals(v)
         chi2 = float(np.sum(r**2))
         if self.problem.log_uniform:  # the point is judged by chi2 plus the scalar prior term
             chi2 += self.problem.prior_penalty(self.vals(u))
         self.nfev += 1
         if chi2 < self.best_chi2 and not self.constraints_violated(u):
             self.best_chi2, self.best_u = chi2, np.array(u, float)
+            self.best_vals, self.best_r = v, np.array(r, float)
+            on_best = getattr(self.callback, "on_best", None)
+            if on_best is not None:  # live view: the caller is told about every improvement
+                on_best(self)
         if self.callback is not None:
             self.callback(self.nfev, min(self.best_chi2, chi2) / self.dof)
         return r
+
+    def best_curves(self):
+        """``[(q, I_data, sigma, I_model)]`` per data set at the best point so far, rebuilt from its residuals
+        (r = (I_model - I) / sigma * sqrt(weight)): no model evaluation, safe to call while the fit runs."""
+        if self.best_r is None:
+            return []
+        out, pos = [], 0
+        for d in self.problem.datasets:
+            n = d.q.size
+            rk = self.best_r[pos : pos + n]
+            pos += n
+            w = math.sqrt(d.weight) if d.weight > 0 else 0.0
+            Im = d.I + rk * d.sigma / w if w > 0 else np.full(n, np.nan)
+            Im = np.where(rk == BIG, np.nan, Im)  # points where the model failed
+            out.append((d.q, d.I, d.sigma, Im))
+        return out
 
     def chi2(self, u):
         c = float(np.sum(self.residual(u) ** 2))

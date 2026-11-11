@@ -57,26 +57,165 @@ class _ParameterTable(QtWidgets.QTableWidget):
 
 class _FitThread(QtCore.QThread):
     progress = QtCore.Signal(int, float)
+    snapshot = QtCore.Signal(object)  # live view: dict with the best point so far (see _on_best)
     done = QtCore.Signal(object)  # FitSummary or an exception
 
-    def __init__(self, problem, backend, algorithm, options, parent=None):
+    SNAPSHOT_INTERVAL = 0.4  # s between two live-view updates (the plot need not follow every improvement)
+
+    def __init__(self, problem, backend, algorithm, options, parent=None, live=False):
         super().__init__(parent)
         self.problem, self.backend, self.algorithm, self.options = problem, backend, algorithm, options
         self.cancel = threading.Event()
+        self.live = live
         self._last = 0.0
+        self._last_snap = -math.inf
+        self.trace = []  # (evaluations, best chi2/dof) at every improvement
+        self._ctx, self._offset = None, 0  # coarse to fine runs two fits: count the evaluations on
+
+    def _on_best(self, ctx):
+        """A new best point (called in this thread). The snapshot holds only copies and arrays the fit does not change
+        again: the plot is drawn in the window's thread while the fit goes on."""
+        if ctx is not self._ctx:
+            if self._ctx is not None:
+                self._offset += self._ctx.nfev
+            self._ctx = ctx
+        n = self._offset + ctx.nfev
+        self.trace.append((n, ctx.best_chi2 / ctx.dof))
+        now = time.monotonic()
+        if now - self._last_snap < self.SNAPSHOT_INTERVAL:
+            return
+        self._last_snap = now
+        self.snapshot.emit({"nfev": n, "chi2_red": ctx.best_chi2 / ctx.dof, "trace": list(self.trace),
+                            "values": np.array(ctx.best_vals, float), "curves": ctx.best_curves()})
 
     def run(self):
-        def callback(n, chi2_red):
-            now = time.monotonic()
-            if now - self._last > 0.1:  # the window need not hear about every evaluation
-                self._last = now
-                self.progress.emit(n, chi2_red)
+        thread = self
 
+        class _Callback:
+            def __call__(self, n, chi2_red):
+                now = time.monotonic()
+                if now - thread._last > 0.1:  # the window need not hear about every evaluation
+                    thread._last = now
+                    thread.progress.emit(thread._offset + n, chi2_red)
+
+        callback = _Callback()
+        if self.live:
+            callback.on_best = self._on_best
         try:
             result = self.problem.fit(self.backend, self.algorithm, callback=callback, cancel=self.cancel, **self.options)
         except Exception as exc:  # noqa: BLE001 -- shown in the panel
             result = exc
         self.done.emit(result)
+
+
+class _LiveView(QtWidgets.QWidget):
+    """'Progress' tab: data and the best model so far, chi²/dof against the evaluations, start and current values."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        lay = QtWidgets.QVBoxLayout(self)
+        lay.setContentsMargins(2, 2, 2, 2)
+        self.info = QtWidgets.QLabel("Start a fit: the best point found so far is shown here while it runs.")
+        self.info.setWordWrap(True)
+        lay.addWidget(self.info)
+        split = QtWidgets.QSplitter()
+        self.fig = self.canvas = None
+        try:
+            from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+            from matplotlib.figure import Figure
+
+            self.fig = Figure(figsize=(4, 3), layout="constrained")
+            gs = self.fig.add_gridspec(2, 1, height_ratios=[3, 1])
+            self.ax = self.fig.add_subplot(gs[0])
+            self.ax_chi = self.fig.add_subplot(gs[1])
+            self.canvas = FigureCanvasQTAgg(self.fig)
+            self.canvas.setMinimumHeight(180)
+            split.addWidget(self.canvas)
+        except Exception:  # noqa: BLE001, S110 -- no matplotlib: the table alone
+            pass
+        self.table = QtWidgets.QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["parameter", "start", "best so far"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
+        split.addWidget(self.table)
+        split.setSizes([420, 220])
+        lay.addWidget(split, 1)
+        self._rows, self._names, self._lines = [], [], []
+        self.logx = self.logy = True
+        self.draws = 0  # number of plot updates (tests)
+
+    def start(self, rows, names, logx=True, logy=True):
+        """A new fit. ``rows``: [(index in the value vector, label, start value)] of the free parameters;
+        ``names``: data set names."""
+        self._rows, self._names, self._lines = list(rows), list(names), []
+        self.logx, self.logy = logx, logy
+        t = self.table
+        t.setRowCount(len(self._rows))
+        for r, (_i, label, v0) in enumerate(self._rows):
+            for c, text in enumerate((label, f"{v0:.6g}", "")):
+                t.setItem(r, c, QtWidgets.QTableWidgetItem(text))
+        t.resizeColumnsToContents()
+        self.info.setText("fitting … waiting for the first evaluation")
+        if self.fig is not None:
+            self.ax.clear()
+            self.ax_chi.clear()
+            self.canvas.draw_idle()
+
+    def update_snapshot(self, snap, final=None):
+        """Show a snapshot of :class:`_FitThread` (``final``: text for the finished fit)."""
+        vals = snap.get("values")
+        if vals is not None:
+            for r, (i, _label, _v0) in enumerate(self._rows):
+                if i < len(vals):
+                    item = self.table.item(r, 2)
+                    if item is not None:
+                        item.setText(f"{vals[i]:.6g}")
+        self.info.setText(final or f"fitting …  best so far after {snap['nfev']} evaluations:  chi²/dof = {snap['chi2_red']:.4g}")
+        if self.fig is None:
+            return
+        curves = snap.get("curves") or []
+        ax = self.ax
+        if len(self._lines) != len(curves):  # first snapshot: data points and one model line per data set
+            ax.clear()
+            self._lines = []
+            for k, (q, I, sig, Im) in enumerate(curves):
+                color = _TAB10[k % len(_TAB10)]
+                name = self._names[k] if k < len(self._names) else f"data {k + 1}"
+                ax.errorbar(q, I, yerr=sig, fmt="o", ms=2.5, lw=0.6, color=color, alpha=0.45, label=name)
+                (line,) = ax.plot(q, Im, "-", lw=1.6, color=color)
+                self._lines.append(line)
+            ax.set_xscale("log" if self.logx else "linear")
+            if self.logy:
+                ax.set_yscale("log", nonpositive="mask")
+                pos = np.concatenate([np.asarray(I, float)[np.asarray(I, float) > 0] for _q, I, _s, _m in curves] or [[]])
+                if pos.size:  # the data set the range, not the error bars reaching down to 0
+                    ax.set_ylim(pos.min() / 2, pos.max() * 2)
+                from matplotlib.ticker import NullFormatter
+
+                ax.yaxis.set_minor_formatter(NullFormatter())  # minor labels overlap on a short log range
+            ax.set_ylabel("I(q)", fontsize="small")
+            ax.tick_params(labelsize="small")
+            ax.grid(True, which="both", alpha=0.25)
+            if len(curves) > 1:
+                ax.legend(fontsize="small")
+        else:
+            for line, (q, _I, _s, Im) in zip(self._lines, curves):
+                line.set_data(q, Im)
+        trace = snap.get("trace") or []
+        chi = self.ax_chi
+        chi.clear()
+        if trace:
+            n, c = np.array(trace, float).T
+            chi.step(n, c, where="post", color="#d62728", lw=1.4)
+            if np.all(c > 0):
+                chi.set_yscale("log")
+        chi.set_xlabel("evaluations", fontsize="small")
+        chi.set_ylabel("chi²/dof", fontsize="small")
+        chi.tick_params(labelsize="small")
+        chi.grid(True, which="both", alpha=0.25)
+        self.canvas.draw_idle()
+        self.draws += 1
 
 
 class FitPanel(QtWidgets.QWidget):
@@ -148,7 +287,14 @@ class FitPanel(QtWidgets.QWidget):
             "finish with a least-squares fit started at the best point found "
             "(reaches the minimum of chi² exactly and gives the errors)"
         )
+        self.live = QtWidgets.QCheckBox("live view")
+        self.live.setChecked(True)
+        self.live.setToolTip(
+            "show the best point found so far while the fit runs (tab 'Progress': data and model, chi²/dof against the "
+            "evaluations, start and current values). Costs no extra model evaluations. Stop keeps that best point."
+        )
         self.fit_btn = QtWidgets.QPushButton("Fit")
+        self.fit_btn.setToolTip("start the fit; while it runs: stop it and keep the best point found so far")
         self.fit_btn.clicked.connect(self._fit_or_stop)
         self.undo_btn = QtWidgets.QPushButton("Undo fit")
         self.undo_btn.setEnabled(False)
@@ -156,7 +302,7 @@ class FitPanel(QtWidgets.QWidget):
         self.status = QtWidgets.QLabel("")
         self.status.setSizePolicy(QtWidgets.QSizePolicy.Policy.Ignored, QtWidgets.QSizePolicy.Policy.Preferred)
         for w in (QtWidgets.QLabel("optimiser"), self.backend, self.algorithm, QtWidgets.QLabel("max evaluations"),
-                  self.max_eval, self.polish, self.fit_btn, self.undo_btn):  # fmt: skip
+                  self.max_eval, self.polish, self.live, self.fit_btn, self.undo_btn):  # fmt: skip
             row.addWidget(w)
         row.addWidget(self.status, 1)
         lay.addLayout(row)
@@ -313,6 +459,8 @@ class FitPanel(QtWidgets.QWidget):
         page.addLayout(brow)
         page.addWidget(self.result, 1)
         tabs.addTab(self.result_page, "Result")
+        self.progress_page = _LiveView()
+        tabs.addTab(self.progress_page, "Progress")
         self.tabs = tabs
         split.addWidget(tabs)
         split.setSizes([300, 640])
@@ -793,9 +941,15 @@ class FitPanel(QtWidgets.QWidget):
         if self.grid.isChecked():
             options["grid"] = True
         self._problem, self._model = problem, model
-        self._thread = _FitThread(problem, self.backend.currentData(), self.algorithm.currentData(), options, self)
-        self._thread.progress.connect(lambda n, c: self._message(f"fitting …  {n} evaluations, chi²/dof ≈ {c:.4g}"))
+        live = self.live.isChecked()
+        self._thread = _FitThread(problem, self.backend.currentData(), self.algorithm.currentData(), options, self,
+                                  live=live)  # fmt: skip
+        self._thread.progress.connect(
+            lambda n, c: self._message(f"fitting …  {n} evaluations, chi²/dof ≈ {c:.4g}"))
         self._thread.done.connect(self._finished)
+        if live:
+            self._start_live(problem)
+            self._thread.snapshot.connect(self.progress_page.update_snapshot)
         e.set_busy(True)
         self._update_buttons()
         self._message("fitting …")
@@ -815,12 +969,45 @@ class FitPanel(QtWidgets.QWidget):
         self._write_back(self._problem)
         self._summary = result
         self.result.setPlainText(result.text())
-        self.tabs.setCurrentWidget(self.result_page)
+        stopped = "cancelled" in result.message
+        if thread.live:
+            self._final_live(thread, result, stopped)
+        if not stopped:
+            self.tabs.setCurrentWidget(self.result_page)
         self.undo_btn.setEnabled(True)
         self._update_buttons()
-        self._message(
-            f"{'converged' if result.success else 'NOT converged: ' + result.message}   chi²/dof = {result.chi2_red:.4g}",
-            error=not result.success,
+        if stopped:
+            self._message(f"stopped after {result.nfev} evaluations: best point so far kept, chi²/dof = {result.chi2_red:.4g}"
+                          "   (Undo fit restores the start values)")
+        else:
+            self._message(
+                f"{'converged' if result.success else 'NOT converged: ' + result.message}   chi²/dof = {result.chi2_red:.4g}",
+                error=not result.success,
+            )
+
+    def _start_live(self, problem):
+        """Prepare the Progress tab for the fit of ``problem`` and show it."""
+        rows = [(i, p.label, float(p.value)) for i, p in enumerate(problem.parameters) if not p.fixed]
+        e = self.explorer
+        logx = e.logx.isChecked() if hasattr(e, "logx") else True
+        logy = e.logy.isChecked() if hasattr(e, "logy") else True
+        self.progress_page.start(rows, [d.name for d in problem.datasets], logx, logy)
+        self.tabs.setCurrentWidget(self.progress_page)
+
+    def _final_live(self, thread, result, stopped):
+        """The finished fit in the Progress tab: the final curves (after a refinement, they differ from the last
+        snapshot) and values."""
+        problem = self._problem
+        curves = [(d.q, d.I, d.sigma, np.asarray(Im, float)) for d, (_q, Im) in zip(problem.datasets, result.curves)]
+        trace = list(thread.trace)
+        n_total = thread._offset + (thread._ctx.nfev if thread._ctx is not None else 0)
+        if trace and n_total > trace[-1][0]:
+            trace.append((n_total, trace[-1][1]))
+        values = np.array([p.value for p in problem.parameters], float)
+        state = "stopped: best point so far kept" if stopped else ("converged" if result.success else "NOT converged")
+        self.progress_page.update_snapshot(
+            {"nfev": result.nfev, "chi2_red": result.chi2_red, "trace": trace, "values": values, "curves": curves},
+            final=f"{state}   {result.nfev} evaluations,  chi²/dof = {result.chi2_red:.4g}",
         )
 
     def _write_back(self, problem):

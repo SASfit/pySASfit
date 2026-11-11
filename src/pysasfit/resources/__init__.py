@@ -20,6 +20,10 @@ Tools: ``pySASfit`` (the suite, launcher), ``pySLDprofile``, ``pyINVersion``, ``
 ``pyATsas`` (the ATSAS panel) has no logo in the bundle: its icon is the original ATSAS icon, read at run time
 from the user's ATSAS installation (``share/icons/hicolor/<n>x<n>/apps/atsas.png``, see
 :func:`pysasfit.atsas.core.icon_files`); pySASfit does not ship a copy. Without ATSAS a plain placeholder is drawn.
+
+``pyDENsity`` (DENSS): DENSS 1.8.7 has no logo (the package contains no image file). If an installed DENSS ships
+one (an image named ``*logo*`` or ``*icon*`` in its package folder), it is used; otherwise pyDENsity has its own icon
+(contour lines of a density map on its blue tile).
 """
 
 from __future__ import annotations
@@ -33,7 +37,7 @@ TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio",
          "pySASmorph")
 
 #: tools whose icon comes from an external program's installation, not from the logo bundle
-EXTERNAL_TOOLS = ("pyATsas",)
+EXTERNAL_TOOLS = ("pyATsas", "pyDENsity")
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -47,6 +51,7 @@ WORDMARKS = {
     "pySASmorph": ("py", "SAS", "morph"),
     "pySCAtter": ("py", "SCA", "tter"),
     "pyATsas": ("py", "AT", "sas"),
+    "pyDENsity": ("py", "DEN", "sity"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -66,6 +71,7 @@ TOOL_COLOURS = {
     "pySASmorph": ("#0E2740", "#FFFFFF"),      # marine: tile #0E2740, navy/white wordmark core as in its logo
     "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
     "pyATsas": ("#0B6666", "#5FA8A8"),         # teal of the ATSAS icon tile
+    "pyDENsity": ("#2B4C9B", "#8FA6D9"),       # deep blue (own icon: contour lines of a density map)
 }
 
 #: old tool names -> current ones
@@ -136,6 +142,14 @@ def external_icon(tool, atsas_dir=None):
     if key in _EXTERNAL_CACHE:
         return _EXTERNAL_CACHE[key]
     icon = QtGui.QIcon()
+    tool = ALIASES.get(tool, tool)
+    if tool == "pyDENsity":
+        for path in _denss_logo_files():
+            icon.addFile(str(path))
+        if icon.isNull():
+            icon = _density_icon(TOOL_COLOURS[tool][0])
+        _EXTERNAL_CACHE[key] = icon
+        return icon
     try:
         from ..atsas.core import icon_files
         for size, path in icon_files("atsas", atsas_dir):
@@ -145,6 +159,64 @@ def external_icon(tool, atsas_dir=None):
     if icon.isNull():
         icon = _placeholder_icon(TOOL_COLOURS.get(tool, COLOURS["core"])[0])
     _EXTERNAL_CACHE[key] = icon
+    return icon
+
+
+def _denss_logo_files():
+    """Image files named *logo* / *icon* in the installed DENSS package (none in DENSS 1.8.7). Found without
+    importing DENSS."""
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("denss")
+    except (ImportError, ValueError):
+        return []
+    if spec is None or not spec.submodule_search_locations:
+        return []
+    out = []
+    for root in spec.submodule_search_locations:
+        for dirpath, _dirs, files in os.walk(root):
+            for f in files:
+                low = f.lower()
+                if low.endswith((".png", ".svg", ".ico")) and ("logo" in low or "icon" in low):
+                    out.append(os.path.join(dirpath, f))
+    return sorted(out)
+
+
+def _density_icon(colour):
+    """pyDENsity's own icon: nested contour lines of a two-lobed density on the tool's tile."""
+    import math
+    from PySide6 import QtCore, QtGui
+
+    icon = QtGui.QIcon()
+    for s in (16, 24, 32, 48, 64, 128, 256):
+        pm = QtGui.QPixmap(s, s)
+        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        p = QtGui.QPainter(pm)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setBrush(QtGui.QColor(colour))
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
+        p.drawRoundedRect(QtCore.QRectF(0, 0, s, s), s * 0.16, s * 0.16)
+        levels = (1.0, 0.68, 0.38) if s >= 32 else (1.0, 0.55)
+        for k, lev in enumerate(levels):
+            path = QtGui.QPainterPath()
+            n = 72
+            for i in range(n + 1):
+                t = 2 * math.pi * i / n
+                r = lev * (0.30 + 0.07 * math.cos(2 * t) + 0.035 * math.cos(3 * t + 0.6))
+                x = 0.5 + r * math.cos(t) * 1.12
+                y = 0.52 + r * math.sin(t) * 0.92
+                path.moveTo(x * s, y * s) if i == 0 else path.lineTo(x * s, y * s)
+            path.closeSubpath()
+            c = QtGui.QColor("white")
+            c.setAlphaF(1.0 if k == 0 else 0.85)
+            if k == len(levels) - 1:
+                p.setBrush(QtGui.QColor(255, 255, 255, 235))
+            else:
+                p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
+            p.setPen(QtGui.QPen(c, max(1.1, s / 22)))
+            p.drawPath(path)
+        p.end()
+        icon.addPixmap(pm)
     return icon
 
 

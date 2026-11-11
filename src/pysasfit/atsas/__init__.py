@@ -1,7 +1,8 @@
 """pyATsas: the ATSAS programs (EMBL Hamburg / BIOSAXS GmbH) from Python and from the pySASfit launcher.
 
 core   thin wrapper around the ATSAS command-line programs: finds the installation (Windows, Linux,
-       macOS), runs autorg, datgnom, gnom, crysol / cryson, dammif and parses their output; starts the
+       macOS), runs autorg, datgnom, gnom, datporod (flat background), crysol / cryson, dammif and parses
+       their output; an independent fit of the flat background (no ATSAS needed); starts the
        interactive ATSAS programs (PRIMUS, CHROMIXS, PEAK, ...)
 gui    Qt panel (``pysasfit-atsas`` and the "pyATsas" tab of the launcher): Guinier analysis, p(r),
        model curves and bead models of the loaded curves, with plots and a results table
@@ -17,13 +18,16 @@ from .core import (  # noqa: F401
     DammifResult,
     GnomResult,
     GuinierResult,
+    PorodResult,
     GUI_PROGRAMS,
     atsas_root,
     autorg,
     crysol,
     dammif,
     datgnom,
+    datporod_exponent,
     find_atsas,
+    fit_power_background,
     gnom,
     icon_files,
     launch,
@@ -38,7 +42,7 @@ from .core import (  # noqa: F401
     write_dat,
 )
 
-__all__ = ["AtsasError", "CrysolResult", "DammifResult", "GnomResult", "GuinierResult", "GUI_PROGRAMS",
-           "atsas_root", "autorg", "crysol", "dammif", "datgnom", "find_atsas", "gnom", "icon_files", "launch",
-           "license_file", "parse_gnom_out", "program_path", "read_dat", "run_tool", "selftest", "sphere_curve",
-           "version", "write_dat"]
+__all__ = ["AtsasError", "CrysolResult", "DammifResult", "GnomResult", "GuinierResult", "PorodResult", "GUI_PROGRAMS",
+           "atsas_root", "autorg", "crysol", "dammif", "datgnom", "datporod_exponent", "find_atsas",
+           "fit_power_background", "gnom", "icon_files", "launch", "license_file", "parse_gnom_out", "program_path",
+           "read_dat", "run_tool", "selftest", "sphere_curve", "version", "write_dat"]

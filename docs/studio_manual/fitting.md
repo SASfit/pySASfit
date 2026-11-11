@@ -67,6 +67,31 @@ In a script the same is `FitProblem.add_dataset` per data set (with `ModelFuncti
 contributions of each), `add_local` for separate parameters, `add_global("P1", …)` and `link("P1", "1.ff.R",
 datasets=[1], factor=2)`.
 
+## Watching and stopping a fit
+
+The fit runs in a thread, so the window stays usable. With **live view** ticked (next to *Fit*; on by default) the
+**Progress** tab opens when the fit starts and shows the best point found so far, updated a few times a second:
+
+- the data of every data set with the current best model,
+- χ²/dof of the best point against the number of model evaluations (a curve that has gone flat for a long time is a
+  reason to stop),
+- a table of the fitted parameters: start value and best value so far.
+
+The live view costs no extra model evaluations: the curve is rebuilt from the residuals of the best point
+(I = I<sub>data</sub> + r σ / √weight), with the linear parameters already solved when variable projection is on.
+Untick it to save the redrawing for very fast models with many data points.
+
+While the fit runs the *Fit* button reads **Stop**. Stop ends the fit after the current evaluation and keeps the best
+point found so far: its values go into the parameter rows, the Result tab lists them (marked "cancelled") with errors
+from the Jacobian at that point, and the Progress tab stays on the picture where the fit stopped. *Undo fit* goes back
+to the start values. With *coarse to fine* the evaluation count runs on through both stages; χ²/dof may jump up at
+the start of the fine stage because the finer integral changes the model slightly.
+
+In a script the same information comes from the callback: `problem.fit(..., callback=cb, cancel=event)` calls
+`cb(nfev, chi2_red)` for every evaluation and, if `cb` has an attribute `on_best`, `cb.on_best(ctx)` for every new best
+point (`ctx.best_vals`: all parameter values, `ctx.best_curves()`: `[(q, I, sigma, I_model)]` per data set). Setting
+`event` stops the fit; the summary then keeps the best point.
+
 ## The engine in a script
 
 ```{literalinclude} ../../examples/studio/03_fit_with_engine.py

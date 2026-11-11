@@ -12,6 +12,8 @@ Covered programs
     autorg    Guinier Rg, I(0)                        (--format=ssv)
     datgnom   automatic p(r), Dmax                     (GNOM .out parsed)
     gnom      p(r) with a fixed Dmax, systems 0-6      (GNOM .out parsed)
+    datporod  --exponent --constant: flat background of the high-q tail (with fit_power_background,
+              an independent fit without ATSAS, as a check)
     crysol    scattering of an atomic model (+ fit); cryson for neutrons
     dammif    ab-initio bead models (n parallel runs)
     launch    start the interactive ATSAS programs (PRIMUS, CHROMIXS, PEAK, ...)
@@ -45,7 +47,8 @@ import numpy as np
 __all__ = [
     "AtsasError", "find_atsas", "run_tool", "version", "write_dat", "read_dat",
     "autorg", "datgnom", "gnom", "crysol", "dammif", "parse_gnom_out",
-    "GuinierResult", "GnomResult", "CrysolResult", "DammifResult",
+    "GuinierResult", "GnomResult", "CrysolResult", "DammifResult", "PorodResult", "datporod_exponent",
+    "fit_power_background",
     "inv_A_to_inv_nm", "inv_nm_to_inv_A", "atsas_root", "license_file",
     "selftest", "sphere_curve", "GUI_PROGRAMS", "program_path", "launch", "icon_files", "app_icon_files",
 ]
@@ -225,6 +228,8 @@ def run_tool(tool: str, args: Sequence[str], cwd=None, atsas_dir=None,
                            timeout=timeout, env=_child_env(atsas_dir), **kw)
     except subprocess.TimeoutExpired as e:
         raise AtsasError(f"{tool} timed out after {timeout} s") from e
+    except OSError as e:                 # not executable, wrong architecture, blocked by antivirus ...
+        raise AtsasError(f"{tool} could not be started ({cmd[0]}): {e}") from e
     info = RunInfo(cmd, cwd, p.stdout or "", p.stderr or "", p.returncode)
     if check and p.returncode != 0:
         msg = (p.stderr or p.stdout or "").strip()
@@ -232,6 +237,32 @@ def run_tool(tool: str, args: Sequence[str], cwd=None, atsas_dir=None,
             msg += f"\n(licence expected at {atsas_root(atsas_dir) / 'atsas.lic'})"
         raise AtsasError(f"{tool} failed ({p.returncode}):\n{msg}")
     return info
+
+
+def _tail(run: Optional[RunInfo], n: int = 12) -> str:
+    """Last lines of a run's output, for error messages."""
+    if run is None:
+        return ""
+    text = "\n".join(x for x in ((run.stderr or "").strip(), (run.stdout or "").strip()) if x)
+    lines = text.splitlines()[-n:]
+    return ("\n" + "\n".join(lines)) if lines else " (the program printed nothing)"
+
+
+def _need_file(path: Path, tool: str, run: Optional[RunInfo]) -> Path:
+    """The output file a program should have written; AtsasError (with its output) if missing or empty."""
+    path = Path(path)
+    if not path.is_file():
+        raise AtsasError(f"{tool} finished but wrote no {path.name} (in {path.parent}):{_tail(run)}")
+    if path.stat().st_size == 0:
+        raise AtsasError(f"{tool} wrote an empty {path.name} (in {path.parent}):{_tail(run)}")
+    return path
+
+
+def _finite(*vals) -> bool:
+    try:
+        return all(np.isfinite(float(v)) for v in vals)
+    except (TypeError, ValueError):
+        return False
 
 
 def version(atsas_dir=None) -> str:
@@ -321,6 +352,7 @@ class GuinierResult:
     quality: float
     aggregated: float
     run: RunInfo = field(repr=False)
+    warnings: list = field(default_factory=list)
 
 
 def autorg(data, mininterval: Optional[int] = None, smaxrg: Optional[float] = None,
@@ -350,8 +382,15 @@ def autorg(data, mininterval: Optional[int] = None, smaxrg: Optional[float] = No
             vals = nums + [np.nan] * (8 - len(nums))
     if r.returncode != 0 or vals is None:
         raise AtsasError(f"autorg found no Guinier region:\n{r.stderr or r.stdout}")
-    return GuinierResult(vals[0], vals[1], vals[2], vals[3], int(vals[4]),
-                         int(vals[5]), vals[6], vals[7], r)
+    if not (_finite(vals[0], vals[2], vals[4], vals[5]) and vals[0] > 0):
+        raise AtsasError(f"autorg returned no valid Rg ({' '.join(map(str, vals[:6]))}):{_tail(r)}")
+    g = GuinierResult(vals[0], vals[1], vals[2], vals[3], int(vals[4]),
+                      int(vals[5]), vals[6], vals[7], r)
+    if _finite(g.quality) and g.quality < 0.5:
+        g.warnings.append(f"AUTORG quality {g.quality:.2f} < 0.5: the Guinier range is doubtful")
+    if _finite(g.aggregated) and g.aggregated > 0:
+        g.warnings.append(f"AUTORG flags aggregation ({g.aggregated:g})")
+    return g
 
 
 # ----------------------------------------------------------------------------
@@ -372,6 +411,7 @@ class GnomResult:
     total_estimate: float
     out_file: Path
     run: Optional[RunInfo] = field(default=None, repr=False)
+    warnings: list = field(default_factory=list)
 
 
 def _grab(pattern, text, default=np.nan):
@@ -379,9 +419,10 @@ def _grab(pattern, text, default=np.nan):
     return float(m.group(1).replace("D", "E")) if m else default
 
 
-def parse_gnom_out(path) -> GnomResult:
-    """Parse a GNOM .out file (ATSAS 2.8 - 4.x formats)."""
-    path = Path(path)
+def parse_gnom_out(path, run: Optional[RunInfo] = None, tool: str = "GNOM") -> GnomResult:
+    """Parse a GNOM .out file (ATSAS 2.8 - 4.x formats).  AtsasError if the file is missing, empty or has no
+    p(r) table; questionable values (no Dmax / Rg, negative p(r), poor total estimate) go to ``warnings``."""
+    path = _need_file(Path(path), tool, run)
     txt = path.read_text(errors="replace")
     lines = txt.splitlines()
 
@@ -434,9 +475,13 @@ def parse_gnom_out(path) -> GnomResult:
     a = np.array([r[:3] for r in pr_rows]) if pr_rows else np.empty((0, 3))
     dmax = _grab(r"(?:Real space range|Dmax)\s*[:=]?\s*(?:" + _FLOAT +
                  r"\s*(?:to|-)\s*)?(" + _FLOAT + ")", txt)
+    if not len(a):
+        raise AtsasError(f"{tool}: no p(r) table in {path}:{_tail(run)}")
+    if not np.all(np.isfinite(a[:, :2])):
+        raise AtsasError(f"{tool}: p(r) in {path} contains NaN/inf:{_tail(run)}")
     if np.isnan(dmax) and len(a):
         dmax = a[-1, 0]
-    return GnomResult(
+    res = GnomResult(
         r=a[:, 0], pr=a[:, 1], pr_err=a[:, 2],
         q=q, i_exp=iexp, i_err=ierr, i_reg=ireg,
         dmax=dmax,
@@ -446,7 +491,20 @@ def parse_gnom_out(path) -> GnomResult:
                       _grab(r"Real space I\(0\)\s*[:=]\s*(" + _FLOAT + ")", txt)),
         total_estimate=_grab(r"Total\s+Estimate\s*[:=]?\s*(" + _FLOAT + ")", txt),
         out_file=path,
+        run=run,
     )
+    w = res.warnings
+    if not len(res.q):
+        w.append(f"{tool}: no fitted I(q) found in {path.name}")
+    if not _finite(res.rg_real):
+        w.append(f"{tool}: no real-space Rg found in {path.name}")
+    te = res.total_estimate
+    if _finite(te) and te < 0.5:
+        w.append(f"{tool}: total estimate {te:.2f} < 0.5 (GNOM rates the solution as poor)")
+    pmax = np.nanmax(np.abs(res.pr)) if len(res.pr) else 0
+    if pmax > 0 and np.nanmin(res.pr) < -0.05 * pmax:
+        w.append(f"{tool}: p(r) is negative by more than 5 % of its maximum (Dmax or background?)")
+    return res
 
 
 def datgnom(data, rg: Optional[float] = None, first: Optional[int] = None,
@@ -464,9 +522,7 @@ def datgnom(data, rg: Optional[float] = None, first: Optional[int] = None,
     if last:
         args.append(f"--last={last}")
     r = run_tool("datgnom", args, cwd=cwd, atsas_dir=atsas_dir)
-    res = parse_gnom_out(cwd / out)
-    res.run = r
-    return res
+    return parse_gnom_out(cwd / out, run=r, tool="DATGNOM")
 
 
 def gnom(data, dmax: float, rmin: float = 0.0, force_zero_rmin: bool = True,
@@ -491,9 +547,127 @@ def gnom(data, dmax: float, rmin: float = 0.0, force_zero_rmin: bool = True,
         if v is not None:
             args.append(f"--{k}={v}")
     r = run_tool("gnom", args, cwd=cwd, atsas_dir=atsas_dir)
-    res = parse_gnom_out(cwd / out)
-    res.run = r
-    return res
+    return parse_gnom_out(cwd / out, run=r, tool="GNOM")
+
+
+# ----------------------------------------------------------------------------
+# flat background: DATPOROD --exponent --constant, and an independent fit
+# ----------------------------------------------------------------------------
+@dataclass
+class PorodResult:
+    """High-q fit I(q) = A q^-B + bg.  ``bg`` is the flat background in the sense I = signal + bg (to be
+    subtracted from the data); ``c`` is DATPOROD's C as printed.  ``first``/``last``: 1-based points of the
+    data that were fitted."""
+    a: float
+    da: float
+    b: float
+    db: float
+    bg: float
+    dbg: float
+    chi2: float
+    first: int
+    last: int
+    c: float = np.nan
+    source: str = "datporod"
+    note: str = ""
+    run: Optional[RunInfo] = field(default=None, repr=False)
+
+    def model(self, q):
+        return self.a * np.asarray(q, float) ** (-self.b) + self.bg
+
+
+def _chi2(q, I, dI, model):
+    w = np.where(np.isfinite(dI) & (dI > 0), dI, np.nan)
+    r = (I - model) / w
+    r = r[np.isfinite(r)]
+    return float(np.sum(r ** 2) / max(len(r) - 3, 1)) if len(r) else np.nan
+
+
+def datporod_exponent(data, first: Optional[int] = None, last: Optional[int] = None,
+                      constant: bool = True, atsas_dir=None, cwd=None) -> PorodResult:
+    """DATPOROD --exponent [--constant]: I(s) = A s^-B - C over the points first..last (1-based).
+
+    The manual writes the model as A s^-B - C and calls C "a constant to subtract" without saying on which
+    side.  Both readings are tested against the fitted points and the one that describes the data is used;
+    ``bg`` is then the background to subtract from I (``note`` tells which reading was taken)."""
+    cwd = Path(cwd or tempfile.mkdtemp(prefix="pyatsas_datporod_"))
+    f = _as_file(data, cwd)
+    a = read_dat(cwd / f)
+    n = len(a)
+    first = int(first or 1)
+    last = int(last or n)
+    args: list = [f, "--exponent", f"--first={first}", f"--last={last}"]
+    if constant:
+        args.append("--constant")
+    r = run_tool("datporod", args, cwd=cwd, atsas_dir=atsas_dir)
+    vals = None
+    for line in r.stdout.splitlines():
+        nums = []
+        for t in line.split():
+            try:
+                nums.append(float(t.replace("D", "E")))
+            except ValueError:
+                break
+        if len(nums) >= 7:
+            vals = nums[:7]
+    if vals is None:
+        raise AtsasError(f"datporod: no result in its output:\n{r.stdout}\n{r.stderr}")
+    A_, dA, B_, dB, C_, dC, chi = vals
+    if not _finite(A_, B_, C_):
+        raise AtsasError(f"datporod returned no valid fit (A={A_}, B={B_}, C={C_}):{_tail(r)}")
+    q, I = a[first - 1:last, 0], a[first - 1:last, 1]
+    dI = a[first - 1:last, 2] if a.shape[1] > 2 else np.full(len(q), np.nan)
+    base = A_ * q ** (-B_)
+    c_minus, c_plus = _chi2(q, I, dI, base - C_), _chi2(q, I, dI, base + C_)
+    if C_ == 0 or not (np.isfinite(c_minus) and np.isfinite(c_plus)):
+        bg, note = -C_, "I = A q^-B - C (as in the manual)"
+    elif c_plus < c_minus:
+        bg, note = C_, "C fits as I = A q^-B + C"
+    else:
+        bg, note = -C_, "C fits as I = A q^-B - C"
+    return PorodResult(A_, dA, B_, dB, bg, dC, chi, first, last, c=C_, source="datporod", note=note, run=r)
+
+
+def fit_power_background(q, I, dI=None, exponent: Optional[float] = None) -> PorodResult:
+    """Independent weighted least-squares fit I = A q^-B + bg of the given (tail) points, without ATSAS.
+    ``exponent``: B fixed (4 = Porod), else fitted.  Errors from the Jacobian (scaled by the reduced χ²
+    when it exceeds 1)."""
+    from scipy.optimize import least_squares
+    q, I = np.asarray(q, float), np.asarray(I, float)
+    dI = np.full_like(I, np.nan) if dI is None else np.asarray(dI, float)
+    ok = np.isfinite(q) & np.isfinite(I) & (q > 0)
+    q, I, dI = q[ok], I[ok], dI[ok]
+    if len(q) < 4:
+        raise AtsasError("fewer than 4 points for the background fit")
+    w = np.where(np.isfinite(dI) & (dI > 0), dI, np.maximum(np.abs(I) * 0.01, 1e-30))
+    k = max(3, len(q) // 5)
+    bg0 = float(np.median(I[-k:]))
+    B0 = exponent if exponent is not None else 4.0
+    A0 = max(float(np.median((I[:k] - bg0) * q[:k] ** B0)), 1e-30)
+    fixed = exponent is not None
+
+    def unpack(p):
+        return (np.exp(p[0]), exponent, p[1]) if fixed else (np.exp(p[0]), p[1], p[2])
+
+    def res(p):
+        A_, B_, bg = unpack(p)
+        return (A_ * q ** (-B_) + bg - I) / w
+
+    p0 = [np.log(A0), bg0] if fixed else [np.log(A0), B0, bg0]
+    sol = least_squares(res, p0, x_scale="jac")
+    A_, B_, bg = unpack(sol.x)
+    m = len(q) - len(sol.x)
+    chi = float(np.sum(sol.fun ** 2) / max(m, 1))
+    try:
+        cov = np.linalg.inv(sol.jac.T @ sol.jac) * max(chi, 1.0)
+        err = np.sqrt(np.diag(cov))
+    except np.linalg.LinAlgError:
+        err = np.full(len(sol.x), np.nan)
+    dA = A_ * err[0]
+    dB = 0.0 if fixed else err[1]
+    dbg = err[-1]
+    return PorodResult(A_, dA, B_, dB, bg, dbg, chi, 1, len(q), c=np.nan, source="pyATsas fit",
+                       note="B fixed" if fixed else "")
 
 
 # ----------------------------------------------------------------------------
@@ -508,6 +682,7 @@ class CrysolResult:
     chi2: float
     files: list[Path]
     run: RunInfo = field(repr=False)
+    warnings: list = field(default_factory=list)
 
 
 def crysol(model, data=None, lm: int = 20, ns: int = 101, smax: float = 0.5,
@@ -523,18 +698,28 @@ def crysol(model, data=None, lm: int = 20, ns: int = 101, smax: float = 0.5,
     r = run_tool(program, args, cwd=cwd, atsas_dir=atsas_dir)
     files = sorted(cwd.iterdir())
     fit = sorted(cwd.glob("*.fit"), key=lambda p: p.stat().st_mtime)
-    if data is not None and fit:
-        txt = fit[-1].read_text(errors="replace")
+    if data is not None:
+        if not fit:
+            raise AtsasError(f"{program}: a fit to the data was asked for, but no .fit file was written "
+                             f"(in {cwd}):{_tail(r)}")
+        txt = _need_file(fit[-1], program, r).read_text(errors="replace")
         pat = r"Chi\^?2\s*[:=]\s*(" + _FLOAT + ")"
         chi2 = _grab(pat, txt, _grab(pat, r.stdout))
         a = read_dat(fit[-1])
-        return CrysolResult(a[:, 0], a[:, -1], a[:, 1],
-                            a[:, 2] if a.shape[1] > 3 else None, chi2, files, r)
-    curve = sorted(cwd.glob("*.int")) or sorted(cwd.glob("*.abs"))
-    if not curve:
-        raise AtsasError(f"{program} produced no .int/.abs file")
-    a = read_dat(curve[-1])
-    return CrysolResult(a[:, 0], a[:, 1], None, None, np.nan, files, r)
+        if a.shape[1] < 3:
+            raise AtsasError(f"{program}: {fit[-1].name} has {a.shape[1]} columns, expected q, I_exp, (σ,) I_fit")
+        res = CrysolResult(a[:, 0], a[:, -1], a[:, 1], a[:, 2] if a.shape[1] > 3 else None, chi2, files, r)
+        if not _finite(chi2):
+            res.warnings.append(f"{program}: no χ² found in {fit[-1].name} or the output")
+    else:
+        curve = sorted(cwd.glob("*.int")) or sorted(cwd.glob("*.abs"))
+        if not curve:
+            raise AtsasError(f"{program} produced no .int/.abs file (in {cwd}):{_tail(r)}")
+        a = read_dat(_need_file(curve[-1], program, r))
+        res = CrysolResult(a[:, 0], a[:, 1], None, None, np.nan, files, r)
+    if not np.all(np.isfinite(res.i_model)):
+        raise AtsasError(f"{program}: the model curve contains NaN/inf:{_tail(r)}")
+    return res
 
 
 # ----------------------------------------------------------------------------
@@ -546,6 +731,8 @@ class DammifResult:
     fits: list[Path]
     workdir: Path
     runs: list[RunInfo] = field(repr=False)
+    warnings: list = field(default_factory=list)
+    errors: list = field(default_factory=list)     # messages of the runs that failed
 
 
 def dammif(gnom_out, nruns: int = 10, mode: str = "fast", symmetry: str = "P1",
@@ -557,15 +744,28 @@ def dammif(gnom_out, nruns: int = 10, mode: str = "fast", symmetry: str = "P1",
     g = _as_file(gnom_out, cwd)
 
     def one(i):
-        return run_tool("dammif", [g, f"--mode={mode}", f"--symmetry={symmetry}",
-                                   f"--prefix=dammif_{i:02d}", *extra],
-                        cwd=cwd, atsas_dir=atsas_dir, timeout=timeout)
+        try:            # one failing run must not lose the others
+            return run_tool("dammif", [g, f"--mode={mode}", f"--symmetry={symmetry}",
+                                       f"--prefix=dammif_{i:02d}", *extra],
+                            cwd=cwd, atsas_dir=atsas_dir, timeout=timeout), None
+        except AtsasError as e:
+            return None, f"run {i}: {e}"
 
     n = max_workers or max(1, min(nruns, (os.cpu_count() or 2) - 1))
     with ThreadPoolExecutor(n) as ex:
-        runs = list(ex.map(one, range(1, nruns + 1)))
-    models = sorted(cwd.glob("dammif_*-1.cif")) + sorted(cwd.glob("dammif_*-1.pdb"))
-    return DammifResult(models, sorted(cwd.glob("dammif_*.fir")), cwd, runs)
+        out = list(ex.map(one, range(1, nruns + 1)))
+    runs = [r for r, _e in out if r is not None]
+    errors = [e for _r, e in out if e]
+    models = [p for p in sorted(cwd.glob("dammif_*-1.cif")) + sorted(cwd.glob("dammif_*-1.pdb"))
+              if p.stat().st_size > 0]
+    if not models:
+        first = errors[0] if errors else "no model files dammif_NN-1.cif/.pdb" + _tail(runs[0] if runs else None)
+        raise AtsasError(f"DAMMIF produced no bead model in {nruns} runs (in {cwd}):\n{first}")
+    res = DammifResult(models, sorted(cwd.glob("dammif_*.fir")), cwd, runs, errors=errors)
+    if len(models) < nruns:
+        res.warnings.append(f"DAMMIF: {len(models)} of {nruns} runs gave a model"
+                            + (f"; {len(errors)} failed, first: {errors[0].splitlines()[0]}" if errors else ""))
+    return res
 
 
 # ----------------------------------------------------------------------------
@@ -654,16 +854,21 @@ GUI_PROGRAMS = [
     ("GNOMPLOT", "gnomplotqt", "gnom", "plot GNOM .out files"),
     ("SVDPLOT", "svdplot", "svd", "singular value decomposition of data series"),
     ("SASDOC", "sasdoc", "atsas", "ATSAS documentation"),
+    ("MASSHA", "massha", "massha", "envelopes, bead and atomic models (legacy, Windows)"),
 ]
 
 
 def program_path(name: str, atsas_dir=None) -> Optional[Path]:
-    """Path of an ATSAS executable, or None if this installation does not have it."""
+    """Path of an ATSAS executable (``bin``, else ``Legacy`` of a Windows installation), or None."""
     try:
-        p = find_atsas(atsas_dir) / (name + EXE_SUFFIX)
+        b = find_atsas(atsas_dir)
     except AtsasError:
         return None
-    return p if p.is_file() else None
+    for d in (b, b.parent / "Legacy"):
+        p = d / (name + EXE_SUFFIX)
+        if p.is_file():
+            return p
+    return None
 
 
 def launch(name: str, args: Sequence = (), atsas_dir=None, cwd=None) -> subprocess.Popen:

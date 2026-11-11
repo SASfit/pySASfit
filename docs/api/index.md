@@ -15,4 +15,5 @@ pySASred <../sasred/api>
 pyTOOLbox <../toolbox/api>
 pySCAtter <../scatter/api>
 pyATsas <../atsas/api>
+pyDENsity <../density/api>
 ```
