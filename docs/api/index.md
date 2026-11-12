@@ -14,6 +14,7 @@ studio <../studio_api>
 pySASred <../sasred/api>
 pyTOOLbox <../toolbox/api>
 pySCAtter <../scatter/api>
+pySEBpolymers <../seb/api>
 pyATsas <../atsas/api>
 pyDENsity <../density/api>
 ```

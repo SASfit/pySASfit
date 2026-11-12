@@ -392,6 +392,16 @@ register(T, TT, "Calculation and fit (pySCAtter)", [
 ])
 
 # ---------------------------------------------------------------------------
+# pySEBpolymers
+# ---------------------------------------------------------------------------
+T, TT = "seb", "pySEBpolymers"
+register(T, TT, "Calculation and fit (pySEBpolymers)", [
+    S("seb.auto", True, "I(q) follows every parameter change", "", kind="bool"),
+    S("seb.n_mu", 128, "orientational average: Gauss-Legendre points", "", kind="int", lo=8, hi=4096),
+    S("seb.fit.max_nfev", 200, "fit: largest number of model evaluations", "", kind="int", lo=5, hi=100000),
+])
+
+# ---------------------------------------------------------------------------
 # pyATsas (ATSAS programs)
 # ---------------------------------------------------------------------------
 def _atsas_found():
@@ -432,6 +442,16 @@ register(T, TT, "DENSS installation and runs", [
       kind="str", placeholder=lambda: _next_to_preferences("denss_runs")),
     S("density.timeout", 7200, "time limit of one map (s)", "", kind="int", lo=10, hi=7 * 86400),
     S("density.cores", 4, "denss-all: cores (start value)", "", kind="int", lo=1, hi=256),
+])
+
+# ---------------------------------------------------------------------------
+# pyDENSSmulti (several contrasts, own iteration)
+# ---------------------------------------------------------------------------
+T, TT = "densitymulti", "pyDENSSmulti"
+register(T, TT, "Runs", [
+    S("densitymulti.workdir", "", "folder for the runs", "Empty: denssmulti_runs next to the preferences file.",
+      kind="str", placeholder=lambda: _next_to_preferences("denssmulti_runs")),
+    S("densitymulti.threads", 4, "maps computed at the same time (start value)", "", kind="int", lo=1, hi=256),
 ])
 
 # ---------------------------------------------------------------------------

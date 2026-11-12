@@ -20,6 +20,10 @@ atsas       pyATsas: the ATSAS programs (installed separately) from Python and
             as a launcher tab (Guinier, p(r), CRYSOL, DAMMIF, PRIMUS ...)
 density     pyDENsity: electron-density maps with DENSS (installed separately),
             as a launcher tab
+densitymulti pyDENSSmulti: 3D maps from several contrasts (SANS contrast
+            variation, SANS + SAXS), own DENSS-type iteration, as a launcher tab
+seb         pySEBpolymers: form factors of structures of linked sub-units
+            (chains, rods, spheres, shells, ...; SEB / Svaneborg-Pedersen formalism)
 toolbox     pyTOOLbox, small helpful tools: HDF5 viewer (in the spirit of myHDF5)
             and metadata lister for the raw data files (formerly ``sasbox``)
 gui         common Qt launcher (``pysasfit-gui``)
@@ -32,7 +36,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "atsas", "density", "gui")
+_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "atsas", "density", "densitymulti", "seb", "gui")
 
 __all__ = list(_SUBPACKAGES)
 

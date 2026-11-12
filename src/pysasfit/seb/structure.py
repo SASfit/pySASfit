@@ -1,0 +1,361 @@
+"""Structures built from linked sub-units and their scattering.
+
+Formalism (Svaneborg & Pedersen, J. Chem. Phys. 136, 104105 (2012)):
+for a tree of sub-units I with excess scattering lengths beta_I,
+
+    S(q) = sum_I beta_I^2 F_I
+         + sum_{I != J} beta_I beta_J A_{I,a} [prod_K Psi_{K,b,c}] A_{J,d}
+
+where the product runs over the sub-units K on the path between I and J,
+entering K at reference point b and leaving at c; a and d are the
+reference points through which the path leaves I and enters J.
+The normalised form factor is S / (sum_I beta_I)^2.
+
+The double sum is evaluated with a tree recursion in O(N) (instead of
+O(N^2) pairs), so dendrimers and brushes with thousands of sub-units are
+cheap.  ``form_factor_pairs`` is the direct O(N^2) sum, kept for testing.
+"""
+from collections import defaultdict, deque
+import itertools
+
+import numpy as np
+
+from .subunits import REGISTRY, SubUnit
+
+
+class _Entry:
+    __slots__ = ("name", "kind", "tag", "model")
+
+    def __init__(self, name, kind, tag, model):
+        self.name, self.kind, self.tag, self.model = name, kind, tag, model
+
+
+class Structure:
+    """A flat structure: named sub-units joined at reference points.
+
+    Reference points are written ``"name.ref"`` or, for distributed
+    references, ``"name.ref#label"``: the same label means the same point,
+    different labels independent random points.  An unlabelled distributed
+    reference gets a fresh label (a new random point).
+
+    Parameters of sub-unit ``name`` with tag ``t`` (default ``t = name``) are
+    ``beta_t`` and its size parameters ``Rg_t``, ``R_t``, ``L_t`` ...; sub-units
+    sharing a tag share parameters.
+    """
+
+    def __init__(self, name="structure"):
+        self.name = name
+        self._units = {}           # name -> _Entry
+        self._parent = {}          # union-find over vertex keys
+        self._auto = itertools.count()
+
+    # -- building ---------------------------------------------------------
+    def add(self, kind, name, tag=None, model=None):
+        """Add a sub-unit.  ``kind`` is a type name (see ``REGISTRY``) or a
+        SubUnit instance (custom sub-unit or non-default quadrature)."""
+        if name in self._units:
+            raise ValueError(f"sub-unit '{name}' already exists")
+        if "." in name or "#" in name:
+            raise ValueError("sub-unit names must not contain '.' or '#'")
+        if isinstance(kind, SubUnit):
+            model, kind = kind, kind.kind
+        if model is None:
+            if kind not in REGISTRY:
+                raise KeyError(f"unknown sub-unit type '{kind}'")
+            model = REGISTRY[kind]()
+        self._units[name] = _Entry(name, kind, tag or name, model)
+        return name
+
+    def link(self, *args, tag=None):
+        """``link("a.end2", "b.end1")`` joins two existing reference points;
+        ``link("GaussianPolymer", "c1.end1", "core.surface#x", tag="chain")``
+        first adds sub-unit ``c1`` of the given type, then links."""
+        if len(args) == 3:
+            kind, new_ref, old_ref = args
+            self.add(kind, new_ref.split(".")[0], tag=tag)
+        elif len(args) == 2:
+            new_ref, old_ref = args
+        else:
+            raise TypeError("link(ref1, ref2) or link(kind, new_ref, old_ref)")
+        a, b = self._vertex(new_ref), self._vertex(old_ref)
+        self._union(a, b)
+        return self
+
+    def include(self, other, prefix):
+        """Copy all sub-units and links of ``other`` with names prefixed by
+        ``prefix`` (tags are kept, so parameters stay shared)."""
+        for e in other._units.values():
+            self.add(e.model, prefix + e.name, tag=e.tag)
+        for key in other._parent:
+            root = other._find(key)
+            k2 = (prefix + key[0],) + key[1:]
+            r2 = (prefix + root[0],) + root[1:]
+            self._parent.setdefault(k2, k2)
+            self._parent.setdefault(r2, r2)
+            self._union(k2, r2)
+        return self
+
+    def ref(self, name, refname, label=None):
+        """Build a reference string."""
+        return f"{name}.{refname}" + (f"#{label}" if label is not None else "")
+
+    # -- vertex bookkeeping ------------------------------------------------
+    def _vertex(self, s):
+        if "." not in s:
+            raise ValueError(f"reference '{s}' must be 'name.ref[#label]'")
+        name, rest = s.split(".", 1)
+        ref, _, label = rest.partition("#")
+        if name not in self._units:
+            raise KeyError(f"no sub-unit '{name}'")
+        model = self._units[name].model
+        model.check_ref(ref)
+        if model.is_distributed(ref):
+            if not label:
+                label = f"_auto{next(self._auto)}"
+        else:
+            label = ""
+        key = (name, ref, label)
+        self._parent.setdefault(key, key)
+        return key
+
+    def _find(self, k):
+        while self._parent[k] != k:
+            self._parent[k] = self._parent[self._parent[k]]
+            k = self._parent[k]
+        return k
+
+    def _union(self, a, b):
+        ra, rb = self._find(a), self._find(b)
+        if ra != rb:
+            self._parent[ra] = rb
+
+    def _graph(self):
+        """Bipartite graph sub-unit <-> junction vertex.  Returns
+        unit_vertices[name] = list of (vertex_id, ref) and
+        vertex_units[vid] = list of (name, ref)."""
+        roots = {}
+        unit_vertices = {n: [] for n in self._units}
+        vertex_units = defaultdict(list)
+        for key in self._parent:
+            r = self._find(key)
+            vid = roots.setdefault(r, len(roots))
+            name, ref, _ = key
+            if any(v == vid for v, _ in unit_vertices[name]):
+                raise ValueError(f"sub-unit '{name}' is linked to itself (loop)")
+            unit_vertices[name].append((vid, ref))
+            vertex_units[vid].append((name, ref))
+        # tree test: connected and edges = nodes - 1
+        n_nodes = len(self._units) + len(roots)
+        n_edges = sum(len(v) for v in unit_vertices.values())
+        if len(self._units) > 1 and n_edges != n_nodes - 1:
+            raise ValueError("structure is not a tree (loops or disconnected parts)")
+        return unit_vertices, vertex_units
+
+    # -- parameters ---------------------------------------------------------
+    def parameters(self):
+        """Names of all parameters, sorted."""
+        out = set()
+        for e in self._units.values():
+            if e.kind != "Point":
+                out.add(f"beta_{e.tag}")
+            out.update(f"{s}_{e.tag}" for s in e.model.size_params)
+        return sorted(out)
+
+    def _unit_params(self, e, params):
+        try:
+            return {s: float(params[f"{s}_{e.tag}"]) for s in e.model.size_params}
+        except KeyError as err:
+            raise KeyError(f"missing parameter {err} for sub-unit '{e.name}'") from None
+
+    def _beta(self, e, params):
+        if e.kind == "Point":
+            return 0.0
+        return float(params.get(f"beta_{e.tag}", 1.0))
+
+    # -- evaluation ---------------------------------------------------------
+    class _Cache:
+        def __init__(self, q):
+            self.q, self.d = q, {}
+
+        def get(self, e, p, what, *refs):
+            key = (id(e.model), tuple(sorted(p.items())), what, refs)
+            if key not in self.d:
+                m = e.model
+                if what == "F":
+                    v = m.ff(self.q, p)
+                elif what == "A":
+                    v = m.amp(self.q, p, refs[0])
+                else:
+                    v = m.psi(self.q, p, *refs)
+                self.d[key] = np.asarray(v, dtype=float)
+            return self.d[key]
+
+    def form_factor(self, q, params, normalized=True):
+        """Form factor of the structure.  ``normalized=False`` returns the
+        unnormalised S(q) (S(0) = (sum beta)^2)."""
+        q = np.atleast_1d(np.asarray(q, dtype=float))
+        S = self._tree_sum(q, params)
+        if not normalized:
+            return S
+        return S / self._beta_sum(params) ** 2
+
+    def _beta_sum(self, params):
+        return sum(self._beta(e, params) for e in self._units.values())
+
+    def _tree_sum(self, q, params):
+        uv, vu = self._graph()
+        names = list(self._units)
+        cache = self._Cache(q)
+        P = {n: self._unit_params(self._units[n], params) for n in names}
+        B = {n: self._beta(self._units[n], params) for n in names}
+
+        # BFS over the bipartite tree from the first sub-unit
+        order, parent = [], {}
+        start = ("u", names[0])
+        parent[start] = None
+        dq = deque([start])
+        while dq:
+            node = dq.popleft()
+            order.append(node)
+            if node[0] == "u":
+                nbrs = [("v", v) for v, _ in uv[node[1]]]
+            else:
+                nbrs = [("u", n) for n, _ in vu[node[1]]]
+            for nb in nbrs:
+                if nb not in parent:
+                    parent[nb] = node
+                    dq.append(nb)
+        if sum(1 for n in order if n[0] == "u") != len(names):
+            raise ValueError("structure is disconnected")
+
+        total = np.zeros_like(q)
+        for n in names:
+            if B[n] != 0.0:
+                total += B[n] ** 2 * cache.get(self._units[n], P[n], "F")
+
+        T = {}   # sub-unit -> amplitude of its subtree seen from parent vertex
+        Sv = {}  # vertex -> summed amplitude of everything below it
+        for node in reversed(order):
+            if node[0] == "v":
+                kids = [T[n] for n, _ in vu[node[1]] if parent.get(("u", n)) == node]
+                s = np.sum(kids, axis=0) if kids else np.zeros_like(q)
+                total += s * s - sum(t * t for t in kids)
+                Sv[node[1]] = s
+                continue
+            name = node[1]
+            e, p, b = self._units[name], P[name], B[name]
+            pv = parent[node]
+            pref = None
+            G, H = {}, {}
+            for vid, ref in uv[name]:
+                if pv is not None and vid == pv[1]:
+                    pref = ref
+                    continue
+                s = Sv[vid]
+                G[ref] = G.get(ref, 0.0) + s
+                H[ref] = H.get(ref, 0.0) + s * s
+
+            def bA(ref):
+                return b * cache.get(e, p, "A", ref) if b != 0.0 else 0.0
+
+            refs = list(G)
+            for r in refs:
+                total += 2.0 * bA(r) * G[r]
+            for i, r in enumerate(refs):
+                if e.model.is_distributed(r):
+                    total += cache.get(e, p, "P", r, r) * (G[r] * G[r] - H[r])
+                for u in refs[i + 1:]:
+                    total += 2.0 * cache.get(e, p, "P", *sorted((r, u))) * G[r] * G[u]
+            if pref is not None:
+                t = bA(pref) + np.zeros_like(q)
+                for r in refs:
+                    t = t + cache.get(e, p, "P", *sorted((pref, r))) * G[r]
+                T[name] = t
+        return total
+
+    def form_factor_pairs(self, q, params, normalized=True):
+        """Direct O(N^2) double sum (reference implementation for tests)."""
+        q = np.atleast_1d(np.asarray(q, dtype=float))
+        uv, vu = self._graph()
+        cache = self._Cache(q)
+        names = list(self._units)
+        P = {n: self._unit_params(self._units[n], params) for n in names}
+        B = {n: self._beta(self._units[n], params) for n in names}
+        total = sum(B[n] ** 2 * cache.get(self._units[n], P[n], "F") for n in names)
+        for i, I in enumerate(names):
+            # BFS from I: record (previous unit, entry ref) to rebuild paths
+            prev = {("u", I): None}
+            dq = deque([("u", I)])
+            while dq:
+                node = dq.popleft()
+                if node[0] == "u":
+                    for vid, ref in uv[node[1]]:
+                        nb = ("v", vid)
+                        if nb not in prev:
+                            prev[nb] = (node, ref)
+                            dq.append(nb)
+                else:
+                    for n, ref in vu[node[1]]:
+                        nb = ("u", n)
+                        if nb not in prev:
+                            prev[nb] = (node, ref)
+                            dq.append(nb)
+            for J in names[i + 1:]:
+                if B[I] == 0.0 or B[J] == 0.0:
+                    continue
+                # walk back J -> I
+                node = ("u", J)
+                vnode, dref = prev[node]
+                term = cache.get(self._units[J], P[J], "A", dref)
+                while True:
+                    unode, exit_ref = prev[vnode]          # unit that leads to vnode, via exit_ref
+                    if unode == ("u", I):
+                        term = term * cache.get(self._units[I], P[I], "A", exit_ref)
+                        break
+                    vnode, entry_ref = prev[unode]
+                    K = unode[1]
+                    term = term * cache.get(self._units[K], P[K], "P",
+                                            *sorted((entry_ref, exit_ref)))
+                total = total + 2.0 * B[I] * B[J] * term
+        if not normalized:
+            return total
+        return total / self._beta_sum(params) ** 2
+
+    # -- misc ---------------------------------------------------------------
+    def set_quadrature(self, n_mu):
+        """Gauss-Legendre points of the orientational average of all oriented sub-units
+        (SolidCylinder, Spheroid, ThinDisk)."""
+        from .subunits import OrientedBody
+        for e in self._units.values():
+            if isinstance(e.model, OrientedBody):
+                e.model.set_n_mu(n_mu)
+        return self
+
+    def units(self):
+        """[(name, kind, tag)] of all sub-units."""
+        return [(e.name, e.kind, e.tag) for e in self._units.values()]
+
+    def links(self):
+        """Junctions: one list of 'name.ref[#label]' per point that joins two or more sub-units."""
+        groups = defaultdict(list)
+        for key in self._parent:
+            groups[self._find(key)].append(key)
+        out = []
+        for keys in groups.values():
+            if len(keys) > 1:
+                out.append([f"{n}.{r}" + (f"#{lab}" if lab and not lab.startswith("_auto") else "")
+                            for n, r, lab in sorted(keys)])
+        return out
+
+    def radius_of_gyration2(self, params, q0=None):
+        """Rg^2 from the Guinier expansion F = 1 - q^2 Rg^2/3 + O(q^4),
+        by Richardson extrapolation of 3(1-F)/q^2."""
+        scale = max([v for k, v in params.items() if not k.startswith("beta_")] + [1.0])
+        q0 = q0 or 1e-2 / scale
+        qs = np.array([q0, q0 / 2])
+        F = self.form_factor(qs, params)
+        g = 3 * (1 - F) / qs**2
+        return (4 * g[1] - g[0]) / 3
+
+    def __repr__(self):
+        return f"<Structure {self.name}: {len(self._units)} sub-units>"

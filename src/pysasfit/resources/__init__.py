@@ -14,7 +14,7 @@ the installed package) and, in a source checkout, in the logo bundle itself. Wit
 nothing breaks.
 
 Tools: ``pySASfit`` (the suite, launcher), ``pySLDprofile``, ``pyINVersion``, ``pyOZsolver``, ``pySASstudio``
-(model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``. The former names pyInversion and pySASbox are accepted
+(model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``, ``pySEBpolymers``. The former names pyInversion and pySASbox are accepted
 (:data:`ALIASES`).
 
 ``pyATsas`` (the ATSAS panel) has no logo in the bundle: its icon is the original ATSAS icon, read at run time
@@ -24,6 +24,9 @@ from the user's ATSAS installation (``share/icons/hicolor/<n>x<n>/apps/atsas.png
 ``pyDENsity`` (DENSS): DENSS 1.8.7 has no logo (the package contains no image file). If an installed DENSS ships
 one (an image named ``*logo*`` or ``*icon*`` in its package folder), it is used; otherwise pyDENsity has its own icon
 (contour lines of a density map on its blue tile).
+
+``pyDENSSmulti`` (several contrasts) has its own icon: two overlapping lobes in two colours (two components) with
+contour lines, on its teal-blue tile.
 """
 
 from __future__ import annotations
@@ -34,10 +37,10 @@ __all__ = ["TOOLS", "EXTERNAL_TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "A
            "icon_path", "menu_icon_path", "wordmark"]
 
 TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter",
-         "pySASmorph")
+         "pySASmorph", "pySEBpolymers")
 
 #: tools whose icon comes from an external program's installation, not from the logo bundle
-EXTERNAL_TOOLS = ("pyATsas", "pyDENsity")
+EXTERNAL_TOOLS = ("pyATsas", "pyDENsity", "pyDENSSmulti")
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -50,8 +53,10 @@ WORDMARKS = {
     "pyTOOLbox": ("py", "TOOL", "box"),
     "pySASmorph": ("py", "SAS", "morph"),
     "pySCAtter": ("py", "SCA", "tter"),
+    "pySEBpolymers": ("py", "SEB", "polymers"),
     "pyATsas": ("py", "AT", "sas"),
     "pyDENsity": ("py", "DEN", "sity"),
+    "pyDENSSmulti": ("py", "DENSS", "multi"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -70,8 +75,10 @@ TOOL_COLOURS = {
     "pyTOOLbox": ("#D9730D", "#E6A462"),
     "pySASmorph": ("#0E2740", "#FFFFFF"),      # marine: tile #0E2740, navy/white wordmark core as in its logo
     "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
+    "pySEBpolymers": ("#6B8E23", "#9CB46C"),   # olive: core with grafted chains on the menu icon
     "pyATsas": ("#0B6666", "#5FA8A8"),         # teal of the ATSAS icon tile
     "pyDENsity": ("#2B4C9B", "#8FA6D9"),       # deep blue (own icon: contour lines of a density map)
+    "pyDENSSmulti": ("#1F7A8C", "#6FB3C0"),    # teal blue (own icon: two coloured lobes, one per component)
 }
 
 #: old tool names -> current ones
@@ -143,6 +150,10 @@ def external_icon(tool, atsas_dir=None):
         return _EXTERNAL_CACHE[key]
     icon = QtGui.QIcon()
     tool = ALIASES.get(tool, tool)
+    if tool == "pyDENSSmulti":
+        icon = _multi_icon(TOOL_COLOURS[tool][0])
+        _EXTERNAL_CACHE[key] = icon
+        return icon
     if tool == "pyDENsity":
         for path in _denss_logo_files():
             icon.addFile(str(path))
@@ -219,6 +230,42 @@ def _density_icon(colour):
         icon.addPixmap(pm)
     return icon
 
+
+def _multi_icon(colour):
+    """pyDENSSmulti's own icon: two overlapping lobes in two colours (two components), each with a contour line,
+    on the tool's tile."""
+    import math
+    from PySide6 import QtCore, QtGui
+
+    icon = QtGui.QIcon()
+    for s in (16, 24, 32, 48, 64, 128, 256):
+        pm = QtGui.QPixmap(s, s)
+        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        p = QtGui.QPainter(pm)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setBrush(QtGui.QColor(colour))
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
+        p.drawRoundedRect(QtCore.QRectF(0, 0, s, s), s * 0.16, s * 0.16)
+        for (cx, cy, r, fill) in ((0.40, 0.55, 0.25, QtGui.QColor(255, 255, 255, 235)),
+                                  (0.64, 0.42, 0.20, QtGui.QColor(255, 196, 64, 235))):
+            path = QtGui.QPainterPath()
+            n = 64
+            for i in range(n + 1):
+                t = 2 * math.pi * i / n
+                rr = r * (1 + 0.08 * math.cos(3 * t + cx * 7))
+                x, y = cx + rr * math.cos(t), cy + rr * math.sin(t)
+                path.moveTo(x * s, y * s) if i == 0 else path.lineTo(x * s, y * s)
+            path.closeSubpath()
+            p.setBrush(fill)
+            p.setPen(QtGui.QPen(QtGui.QColor(colour).darker(140), max(0.8, s / 40)))
+            p.drawPath(path)
+        if s >= 32:                                   # inner contour of the first lobe
+            p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
+            p.setPen(QtGui.QPen(QtGui.QColor(colour), max(1.0, s / 32)))
+            p.drawEllipse(QtCore.QPointF(0.38 * s, 0.57 * s), 0.12 * s, 0.11 * s)
+        p.end()
+        icon.addPixmap(pm)
+    return icon
 
 def _placeholder_icon(colour):
     from PySide6 import QtCore, QtGui

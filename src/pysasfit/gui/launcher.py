@@ -41,15 +41,17 @@ TOOLS = [
     ("pyOZsolver", "pysasfit.oz.gui.main_window", "OZWidget"),
     ("pySASmorph", "pysasfit.morph.gui", "MainWindow"),
     ("pySCAtter", "pysasfit.scatter.gui", "MainWindow"),
+    ("pySEBpolymers", "pysasfit.seb.gui", "MainWindow"),
     ("pyATsas", "pysasfit.atsas.gui", "MainWindow"),
     ("pyDENsity", "pysasfit.density.gui", "MainWindow"),
+    ("pyDENSSmulti", "pysasfit.densitymulti.gui", "MainWindow"),
     ("pyTOOLbox", "pysasfit.toolbox.gui", "MainWindow"),
 ]
 
 # tab title -> preferences page
 _TOOL_KEYS = {"pySLDprofile": "sldprofile", "pyINVersion": "inversion", "pyOZsolver": "oz",
-             "pySASred": "sasred", "pyTOOLbox": "toolbox", "pySCAtter": "scatter", "pyATsas": "atsas",
-             "pyDENsity": "density"}
+             "pySASred": "sasred", "pyTOOLbox": "toolbox", "pySCAtter": "scatter", "pySEBpolymers": "seb", "pyATsas": "atsas",
+             "pyDENsity": "density", "pyDENSSmulti": "densitymulti"}
 
 # tab title -> logo bundle name (pysasfit.resources)
 # (the tab titles are the tool names of the logo bundle; other titles may name their logo here)
@@ -65,10 +67,14 @@ _TOOL_INFO = {
     "pySASmorph": "representative 3D two-phase morphologies from SAS data (SAXSMorph method)",
     "pySCAtter": "scattering patterns of particles, lattices and orientation distributions (hypergeometric "
                  "algorithms after Wagener & Förster), fits to 1D and 2D data",
+    "pySEBpolymers": "form factors of structures of linked sub-units (micelles, stars, dendrimers, bottle brushes, ...; SEB / Svaneborg-Pedersen formalism), fits to 1D data",
     "pyATsas": "the ATSAS programs (EMBL Hamburg / BIOSAXS, installed separately): Guinier analysis, p(r), model "
                "curves, bead models; starts PRIMUS, CHROMIXS, PEAK, ...",
     "pyDENsity": "electron-density maps from SAXS/SANS curves with DENSS (Grant 2018; installed separately): single "
                  "and averaged maps, isosurfaces, slices",
+    "pyDENSSmulti": "3D maps from several SAS contrasts (SANS contrast variation, SANS + SAXS): volume "
+                    "fractions of the components (match points, H/D exchange) or a DENSS-Multiple-type SLD "
+                    "map; own DENSS-type iteration, no installation needed",
     "pyTOOLbox": "small helpful tools: HDF5 viewer, metadata lister, merging of reduced curves, 2D data (masks, averages, sums), 1D data arithmetic",
 }
 

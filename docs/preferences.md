@@ -613,6 +613,19 @@ Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
 - **2D fit: use every n-th pixel (start value)** — `scatter.fit.every_px` · factory: **2** · range: 1 … 32  
   2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all pixels; the χ² and the errors refer to the pixels used.
 
+### pySEBpolymers
+
+#### Calculation and fit (pySEBpolymers)
+
+- **I(q) follows every parameter change** — `seb.auto` · factory: **on** · on/off  
+  The I(q) panel of pySEBpolymers is recalculated 0.15 s after every change of a parameter, the model or the q grid. Off: only with Calculate, Build or after a fit (for very large structures).
+
+- **orientational average: Gauss-Legendre points** — `seb.n_mu` · factory: **128** · range: 8 … 4096  
+  Number of Gauss-Legendre points in cos(alpha) for the orientational average of the oriented sub-units (SolidCylinder, Spheroid, ThinDisk rim). 128 is accurate to about 1e-10 up to qL of a few hundred; long cylinders at large q need more. The other sub-units have closed forms.
+
+- **fit: largest number of model evaluations** — `seb.fit.max_nfev` · factory: **200** · range: 5 … 100000  
+  Largest number of model evaluations of a pySEBpolymers fit (Trust Region Reflective least squares; each fitted parameter costs one evaluation per iteration for the Jacobian).
+
 ### pyATsas
 
 #### ATSAS installation and runs

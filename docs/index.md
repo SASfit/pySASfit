@@ -142,6 +142,21 @@ method): γ(r), g(r), voxel structure, its scattering, S/V and connectivity; VTK
 orientation distributions with the hypergeometric algorithms of Wagener & Förster; fits to pySASred 1D and 2D data.
 :::
 
+:::{grid-item-card} pySEBpolymers: linked sub-units
+:link: seb/index
+:link-type: doc
+
+```{image} pySASfit-logo-bundle/menu-icons/pySEBpolymers/pySEBpolymers-menu.svg
+:alt: pySEBpolymers
+:height: 40px
+:class: card-icon
+```
+
+Form factors of micelles, stars, dendrimers, bottle brushes and other structures built from linked Gaussian
+chains, rods, spheres, shells, disks and cylinders (SEB / Svaneborg–Pedersen formalism), drawn in a graphical
+designer; 3D sketch, fits to 1D data.
+:::
+
 :::{grid-item-card} pyATsas: the ATSAS programs
 :link: atsas/index
 :link-type: doc
@@ -156,6 +171,14 @@ pySASfit curves, with plots and a results table; starts PRIMUS, CHROMIXS, PEAK w
 
 Low-resolution electron-density maps from SAXS/SANS curves with DENSS (Grant 2018; installed separately): single
 maps and averages with FSC resolution, isosurfaces and slices.
+:::
+
+:::{grid-item-card} pyDENSSmulti: maps from several contrasts
+:link: densitymulti/index
+:link-type: doc
+
+3D maps from SANS contrast variation (and SAXS): volume fractions of the components through the contrast matrix
+(match points, H/D exchange), or a DENSS-Multiple-type averaged SLD map; own DENSS-type iteration.
 :::
 
 :::{grid-item-card} The launcher
@@ -210,8 +233,10 @@ pyINVersion <inversion/index>
 pyOZsolver <oz/index>
 pySASmorph <morph/index>
 pySCAtter <scatter/index>
+pySEBpolymers <seb/index>
 pyATsas <atsas/index>
 pyDENsity <density/index>
+pyDENSSmulti <densitymulti/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 Copy Python code <python_code>

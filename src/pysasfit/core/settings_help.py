@@ -673,6 +673,17 @@ HELP = {
     "scatter.fit.every_px":
         "2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all "
         "pixels; the χ² and the errors refer to the pixels used.",
+    # =================================================================== pySEBpolymers
+    "seb.auto":
+        "The I(q) panel of pySEBpolymers is recalculated 0.15 s after every change of a parameter, the model or "
+        "the q grid. Off: only with Calculate, Build or after a fit (for very large structures).",
+    "seb.n_mu":
+        "Number of Gauss-Legendre points in cos(alpha) for the orientational average of the oriented sub-units "
+        "(SolidCylinder, Spheroid, ThinDisk rim). 128 is accurate to about 1e-10 up to qL of a few hundred; "
+        "long cylinders at large q need more. The other sub-units have closed forms.",
+    "seb.fit.max_nfev":
+        "Largest number of model evaluations of a pySEBpolymers fit (Trust Region Reflective least squares; "
+        "each fitted parameter costs one evaluation per iteration for the Jacobian).",
     # =================================================================== pyATsas
     "atsas.dir":
         "Folder of the ATSAS installation (the one with bin/ and atsas.lic), e.g. C:\\Program Files\\ATSAS-4.1.4 "
@@ -706,6 +717,16 @@ HELP = {
     "density.cores":
         "Start value of the number of maps that denss-all computes in parallel (its -j option). Each map needs one "
         "core and its own memory (grids of 64³ and more need several hundred MB).",
+    # =================================================================== pyDENSSmulti
+    "densitymulti.workdir":
+        "Every run of the pyDENSSmulti panel gets its own sub-folder here (date, time, scheme, number of contrasts) "
+        "with the maps (one MRC file per component, per contrast, the support; the SLD map of the averaging scheme), "
+        "the fits of every curve and a summary (multi_summary.json); several maps: the average and every single map "
+        "in map_xx. File → Open a result folder reads them back. Empty: denssmulti_runs next to the pySASfit "
+        "preferences file.",
+    "densitymulti.threads":
+        "Start value of the number of maps computed at the same time when several maps are averaged. Each map "
+        "needs its own memory (a 64³ grid with four contrasts: about 100 MB).",
     # =================================================================== appearance
     "appearance.panel_title.mode":
         "Title bars of the docked panels coloured like window title bars under Windows. 'active panel in "
