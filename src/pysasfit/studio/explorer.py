@@ -371,10 +371,23 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.logx.toggled.connect(self._on_scales)
         self.logy.toggled.connect(self._on_scales)
         self.autoscale.toggled.connect(self._schedule)
+        #AUTO-CALCULATE AND AN EXPLICIT CALCULATE BUTTON. On by default, so
+        #nothing changes for models that are cheap to evaluate; turn it off
+        #for one that takes seconds and the plot updates only when asked.
+        #The button's label gains an asterisk while a change is outstanding,
+        #so a stale curve is never passed off as current.
+        self._autocalc = True
+        self._pending = False
+        self.autocalc = QtWidgets.QCheckBox("auto-calculate")
+        self.autocalc.setChecked(True)
+        self.autocalc.toggled.connect(self._on_autocalc)
+        self.calc_btn = QtWidgets.QPushButton("Calculate")
+        self.calc_btn.clicked.connect(self._force_calc)
         from ..core.flowlayout import flow_bar
         rv.addWidget(flow_bar(                    # wraps to two rows in a narrow window
             "Q min:", self.qmin, self.units, "Q max:", self.qmax,
             "points:", self.npoints, self.logx, self.logy, self.autoscale,
+            self.autocalc, self.calc_btn,
         ))  # fmt: skip
 
         button_list = []
@@ -795,8 +808,40 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.canvas.draw_idle()
 
     def _schedule(self, *_):
+        #AUTOMATIC RECALCULATION IS OPTIONAL. Every parameter change funnels
+        #through here -- sliders, spin boxes, the Q range, the tab selection,
+        #contribution panels -- and starts a 40 ms debounce. That is right
+        #for a sphere and wrong for anything expensive: a model taking
+        #seconds per curve makes the interface unusable, since each keystroke
+        #queues another full calculation.
+        #
+        #With auto-calculate off the request is remembered rather than
+        #dropped, so pressing Calculate afterwards redraws once with
+        #everything that changed in the meantime.
+        if not getattr(self, "_autocalc", True):
+            self._pending = True
+            if hasattr(self, "calc_btn"):
+                #Say so, rather than leaving the plot silently stale. A
+                #curve that no longer matches the controls is worse than a
+                #slow one.
+                self.calc_btn.setText("Calculate *")
+            return
         if not self._busy:
             self._timer.start()
+
+    def _on_autocalc(self, on):
+        """Auto-calculate toggled: catch up immediately when switched on."""
+        self._autocalc = bool(on)
+        if self._autocalc:
+            self._force_calc()
+
+    def _force_calc(self, *_):
+        """Calculate now, whatever the auto setting."""
+        self._pending = False
+        if hasattr(self, "calc_btn"):
+            self.calc_btn.setText("Calculate")
+        if not self._busy:
+            self._redraw()
 
     def _q(self):
         try:
