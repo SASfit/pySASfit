@@ -166,11 +166,12 @@ def hankel_weights(x, k, kernel="j0", tail_low=True, tail_power=None, k_upper=No
 
 
 # --------------------------------------------------------------------------- FFTLog and QDHT (as in SASfit)
-METHODS = ("filon", "fftlog", "qdht")
+METHODS = ("filon", "fftlog", "qdht", "sasfit")
 METHOD_LABELS = {
     "filon": "exact on linear pieces (default)",
     "fftlog": "FFTLog (Hamilton 2000)",
     "qdht": "QDHT (Guizar-Sicairos 2004)",
+    "sasfit": "SASfit sasfit_hankel (strategy of the SASfit library tab)",
 }
 
 
@@ -186,6 +187,8 @@ DEFAULTS = {
     "n_points": 2048,  # FFTLog / QDHT
     "fft_low": 1e-5, "sesans_fft_high": 1e3, "msas_fft_high": 1000.0,  # wide: FFTLog rings at the ends of its grid
     "qdht_margin": 2.0, "qdht_r_factor": 10.0,
+    "sasfit_source": "spline",  # sasfit_hankel: I(Q) from a cubic spline on the Q grid, or "direct" (model per point)
+    "sasfit_r_per_decade": 32,  # sasfit_hankel MSAS: r points per decade (one adaptive transform each)
 }  # fmt: skip
 _current = dict(DEFAULTS)
 _loaded = False
@@ -213,7 +216,7 @@ def set_defaults(**settings):
     for k, v in settings.items():
         if k not in DEFAULTS:
             raise KeyError(f"unknown Hankel setting '{k}' (one of {', '.join(DEFAULTS)})")
-        _current[k] = _check_method(v) if k == "method" else type(DEFAULTS[k])(v)
+        _current[k] = _check_value(k, v)
     return dict(_current)
 
 
@@ -227,7 +230,7 @@ def load_settings():
         for k, d in DEFAULTS.items():
             if k in saved:
                 try:
-                    out[k] = _check_method(saved[k]) if k == "method" else type(d)(saved[k])
+                    out[k] = _check_value(k, saved[k])
                 except (TypeError, ValueError):
                     pass
     return out
@@ -238,6 +241,16 @@ def save_settings(settings):
     from . import paths
 
     paths.set_setting("hankel", {k: settings.get(k, DEFAULTS[k]) for k in DEFAULTS})
+
+
+def _check_value(key, v):
+    if key == "method":
+        return _check_method(v)
+    if key == "sasfit_source":
+        if v not in ("spline", "direct"):
+            raise ValueError("sasfit_source must be 'spline' or 'direct'")
+        return v
+    return type(DEFAULTS[key])(v)
 
 
 def _d(value, key):
@@ -398,6 +411,41 @@ def _cell_fraction(k, upper, log=False):
     return np.clip((lim[:, None] - e[None, :-1]) / (e[None, 1:] - e[None, :-1]), 0.0, 1.0)
 
 
+def _interpolant(x, y, tail_power=None, zero_above=False):
+    """f(t) for the adaptive SASfit strategies: cubic spline of y in ln x, constant below the first node, above the
+    last node a power law t^-p (``tail_power``), zero (``zero_above``) or constant."""
+    from scipy.interpolate import CubicSpline
+
+    lx = np.log(x)
+    cs = CubicSpline(lx, np.asarray(y, float))
+    x0, xn, y0, yn = float(x[0]), float(x[-1]), float(y[0]), float(y[-1])
+    c = cs.c
+    brk = lx
+
+    def f(t):
+        if t <= x0:
+            return y0
+        if t >= xn:
+            if zero_above:
+                return 0.0
+            return yn * (xn / t) ** tail_power if tail_power else yn
+        u = math.log(t)
+        i = min(max(int(np.searchsorted(brk, u)) - 1, 0), brk.size - 2)
+        d = u - brk[i]
+        return ((c[0, i] * d + c[1, i]) * d + c[2, i]) * d + c[3, i]
+
+    return f
+
+
+def _sasfit_library():
+    from .library import get_library
+
+    lib = get_library()
+    if getattr(lib.core, "sasfit_hankel", None) is None:
+        raise RuntimeError("this libsasfit has no sasfit_hankel")
+    return lib
+
+
 _ZEROS = {}
 
 
@@ -467,8 +515,10 @@ class SESANSTransform:
 
     def __init__(self, observable="G", thickness=1.0, wavelength=1.0, wavelength_delta=None, q_accept=None,
                  per_decade=None, q_min_factor=None, q_max_factor=None, q_range=None, tail_power=None, theta_max=None,
-                 accept_delta=None, method=None, n_points=None, fft_range=None, qdht_margin=None):  # fmt: skip
+                 accept_delta=None, method=None, n_points=None, fft_range=None, qdht_margin=None,
+                 sasfit_source=None):  # fmt: skip
         # None: the defaults of Settings → Integration… → Hankel transform (see DEFAULTS, set_defaults)
+        self.sasfit_source = _check_value("sasfit_source", _d(sasfit_source, "sasfit_source"))
         per_decade, q_min_factor = _d(per_decade, "sesans_per_decade"), _d(q_min_factor, "sesans_q_min_factor")
         q_max_factor, method, n_points = _d(q_max_factor, "sesans_q_max_factor"), _d(method, "method"), _d(n_points, "n_points")
         tail_power = _d(tail_power, "tail_power") if tail_power is not False else None
@@ -503,8 +553,33 @@ class SESANSTransform:
 
     @property
     def linear(self):
-        """G(δ) - G(0) is linear in I(Q) (variable projection works); P/P0 is not."""
-        return self.observable == "G"
+        """G(δ) - G(0) is linear in I(Q) (variable projection works); P/P0 is not. With sasfit_hankel there is no
+        weight matrix, so the model is treated as non-linear."""
+        return self.observable == "G" and self.method != "sasfit"
+
+    def g_from(self, delta, intensity):
+        """G(δ) - G(0) for the function ``intensity(k)`` (vectorised): weights @ I on the nodes, or libsasfit's
+        adaptive ``sasfit_hankel`` (method "sasfit")."""
+        delta = np.asarray(delta, float)
+        if self.method != "sasfit":
+            k, W = self.weights(delta)
+            return W @ np.asarray(intensity(k), float)
+        lib = _sasfit_library()
+        if self.sasfit_source == "direct":  # the model at every point the strategy asks for (as SASfit does)
+            def f(t):
+                return float(np.asarray(intensity(np.array([t])), float)[0])
+        else:
+            k, tail = self.grid(delta)
+            f = _interpolant(k, intensity(k), tail, zero_above=tail is None)
+        qmax = self.q_max(delta)
+        if qmax is None:
+            H = lib.hankel(f, np.abs(delta))
+            H0 = lib.integrate(lambda t: t * f(t), 0.0, math.inf)
+            return (H - H0) / (2 * np.pi)
+        out = np.empty(delta.size)  # resolution: ∫_0^Q_max I (J0 - 1) Q dQ (SASfit's branch with Qres > 0)
+        for i, (d, qm) in enumerate(zip(np.abs(delta), qmax)):
+            out[i] = lib.integrate(lambda t, d=d: f(t) * t * (special.j0(t * d) - 1.0), 0.0, float(qm))
+        return out / (2 * np.pi)
 
     domain = "delta"
 
@@ -555,6 +630,8 @@ class SESANSTransform:
     def weights(self, delta):
         """``(k, W)``: the Q nodes where I is needed and G(δ) - G(0) = W @ I(k) (cached)."""
         delta = np.asarray(delta, float)
+        if self.method == "sasfit":
+            raise ValueError("sasfit_hankel has no weight matrix (use g_from)")
         qmax = self.q_max(delta)
         if self.method == "filon":
             k, tail = self.grid(delta, qmax)
@@ -608,9 +685,8 @@ class SESANSTransform:
 
     def evaluate(self, model, delta):
         delta = np.asarray(delta, dtype=float)
-        k, W = self.weights(delta)
         bg = getattr(model, "background", 0.0)
-        G = W @ _particles(model, k) + (float(bg) if np.isscalar(bg) and bg is not None else 0.0)
+        G = self.g_from(delta, lambda k: _particles(model, k)) + (float(bg) if np.isscalar(bg) and bg is not None else 0.0)
         return self.finish(delta, G)
 
     def parts(self, model, delta, intensities):
@@ -643,7 +719,7 @@ class SESANSTransform:
         if self.theta_max:
             d["theta_max"] = self.theta_max
         d.update(method=self.method, n_points=self.n_points, fft_range=list(self.fft_range),
-                 qdht_margin=self.qdht_margin)  # fmt: skip
+                 qdht_margin=self.qdht_margin, sasfit_source=self.sasfit_source)  # fmt: skip
         if self.q_range:
             d["q_range"] = list(self.q_range)
         return d
@@ -671,8 +747,10 @@ class MSASTransform:
 
     def __init__(self, thickness=0.1, wavelength=0.6, norm="incident", per_decade=None, r_per_decade=None,
                  q_min_factor=None, q_max_factor=None, q_range=None, r_min_factor=None, r_max_factor=None,
-                 tail_power=None, method=None, n_points=None, fft_range=None, qdht_r_factor=None):  # fmt: skip
+                 tail_power=None, method=None, n_points=None, fft_range=None, qdht_r_factor=None,
+                 sasfit_r_per_decade=None):  # fmt: skip
         # None: the defaults of Settings → Integration… → Hankel transform (see DEFAULTS, set_defaults)
+        self.sasfit_r_per_decade = int(_d(sasfit_r_per_decade, "sasfit_r_per_decade"))
         per_decade, r_per_decade = _d(per_decade, "msas_per_decade"), _d(r_per_decade, "msas_r_per_decade")
         q_min_factor, q_max_factor = _d(q_min_factor, "msas_q_min_factor"), _d(q_max_factor, "msas_q_max_factor")
         r_min_factor, r_max_factor = _d(r_min_factor, "msas_r_min_factor"), _d(r_max_factor, "msas_r_max_factor")
@@ -716,6 +794,10 @@ class MSASTransform:
     def weights(self, q):
         """``(k, r, (Wkr, Wrq))``: I is needed at k; [G(0), G(r)] = Wkr @ I(k); ∫ψ J0(Qr) r dr = Wrq @ ψ(r)."""
         q = np.asarray(q, float)
+        if self.method == "sasfit":  # I on the exact method's Q grid (spline), a coarser r grid
+            k, r = self.grids(q)
+            r = log_grid(r[0], r[-1], self.sasfit_r_per_decade)
+            return k, r, ("sasfit",)
         if self.method != "filon":
             key = (self.method, q.tobytes(), self.n_points, self.fft_range, self.qdht_r_factor)
             return self._cache.get(key, lambda: self._grid_weights(q))
@@ -760,7 +842,14 @@ class MSASTransform:
     def multiple(self, q, Ik, I_single):
         """I_MSAS at ``q`` from I on the k grid and the single scattering I(q) at ``q`` (no background)."""
         k, r, w = self.weights(q)
-        if isinstance(w[0], str):  # FFTLog: two FFTs of length n with the precomputed plan
+        lib = None
+        if isinstance(w[0], str) and w[0] == "sasfit":  # libsasfit's adaptive strategy on a spline of I(Q)
+            lib = _sasfit_library()
+            fI = _interpolant(k, Ik, self.tail_power, zero_above=self.tail_power is None)
+            G0 = lib.integrate(lambda t: t * fI(t), 0.0, math.inf)
+            G = np.concatenate([[G0], lib.hankel(fI, r)]) / (2 * np.pi)
+            Wrq = None
+        elif isinstance(w[0], str):  # FFTLog: two FFTs of length n with the precomputed plan
             _tag, plan, w0, interp = w
             G = np.concatenate([[w0 @ Ik], plan.apply(Ik * k) / r / (2 * np.pi)])
             Wrq = None
@@ -775,7 +864,9 @@ class MSASTransform:
                              "scale of I(Q))")
         phi = lt * G[1:]
         psi = np.expm1(phi) - phi
-        if Wrq is None:
+        if lib is not None:
+            back = lib.hankel(_interpolant(r, psi, zero_above=True), np.abs(q))  # ∫ ψ J0(Qr) r dr
+        elif Wrq is None:
             back = interp @ (plan.apply(psi * r) / k)  # ∫ ψ J0(Qr) r dr on the k grid, then to the q of the data
         else:
             back = Wrq @ psi
@@ -793,7 +884,7 @@ class MSASTransform:
              "per_decade": self.per_decade, "r_per_decade": self.r_per_decade, "q_min_factor": self.q_min_factor,
              "q_max_factor": self.q_max_factor, "r_min_factor": self.r_min_factor, "r_max_factor": self.r_max_factor, "tail_power": self.tail_power if self.tail_power is not None else False}  # fmt: skip
         d.update(method=self.method, n_points=self.n_points, fft_range=list(self.fft_range),
-                 qdht_r_factor=self.qdht_r_factor)  # fmt: skip
+                 qdht_r_factor=self.qdht_r_factor, sasfit_r_per_decade=self.sasfit_r_per_decade)  # fmt: skip
         if self.q_range:
             d["q_range"] = list(self.q_range)
         return d
@@ -813,11 +904,12 @@ def make_transform(kind=None, **settings):
         return None
     if kind in ("sesans", "sesans_p"):
         keep = ("thickness", "wavelength", "wavelength_delta", "q_accept", "per_decade", "q_min_factor", "q_max_factor",
-                "q_range", "tail_power", "theta_max", "accept_delta", "method", "n_points", "fft_range", "qdht_margin")
+                "q_range", "tail_power", "theta_max", "accept_delta", "method", "n_points", "fft_range", "qdht_margin",
+                "sasfit_source")
         return SESANSTransform("G" if kind == "sesans" else "P", **{k: v for k, v in settings.items() if k in keep})
     if kind == "msas":
         keep = ("thickness", "wavelength", "norm", "per_decade", "r_per_decade", "q_min_factor", "q_max_factor", "q_range",
-                "method", "n_points", "fft_range", "qdht_r_factor",
+                "method", "n_points", "fft_range", "qdht_r_factor", "sasfit_r_per_decade",
                 "r_min_factor", "r_max_factor", "tail_power")  # fmt: skip
         return MSASTransform(**{k: v for k, v in settings.items() if k in keep})
     raise ValueError(f"unknown transform '{kind}' (one of {', '.join(TRANSFORM_KINDS)})")

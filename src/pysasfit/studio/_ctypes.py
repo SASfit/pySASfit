@@ -67,6 +67,7 @@ P_PARAM = ctypes.POINTER(SasfitParam)
 
 # scalar sasfit_func_one_t(scalar, sasfit_param *)
 FUNC_ONE = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, P_PARAM)
+HANKEL_FUNC = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, ctypes.c_void_p)  # f(k, param) of sasfit_hankel
 # scalar sasfit_func_vol_t(scalar, sasfit_param *, int)
 FUNC_VOL = ctypes.CFUNCTYPE(ctypes.c_double, ctypes.c_double, P_PARAM, ctypes.c_int)
 

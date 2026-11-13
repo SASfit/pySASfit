@@ -28,8 +28,10 @@ import os
 import sys
 import threading
 
+import numpy as np
+
 from . import paths
-from ._ctypes import DO_INIT_ARGS, FUNC_ONE, P_PARAM, SASFIT_PLUGIN_DEP_ERR, SEARCH_T, SasfitParam, plugin_functions
+from ._ctypes import DO_INIT_ARGS, FUNC_ONE, HANKEL_FUNC, P_PARAM, SASFIT_PLUGIN_DEP_ERR, SEARCH_T, SasfitParam, plugin_functions
 
 __all__ = ["SASfitLibrary", "SASfitLibraryNotFound", "get_library", "reset_library", "configure_precision", "reset_precision",
            "user_precision", "DEFAULT_PRECISION", "QUADRATURE"]
@@ -221,6 +223,42 @@ class SASfitLibrary:
         if param.errStatus:
             raise RuntimeError(param.error)
         return value
+
+    def hankel(self, f, x, nu=0.0):
+        """∫_0^∞ f(k) J_nu(k x) k dk for every x with libsasfit's ``sasfit_hankel`` (strategy: setting
+        ``hankel_strategy`` with ``N_Ogata``, ``h_Ogata``, ``nriq``; Settings → Integration… → SASfit library).
+
+        ``f(k)`` is a Python function returning a float; it is called point by point from C. Returns an array like x.
+        An exception in ``f`` is re-raised here; a SASfit error is raised as RuntimeError.
+        """
+        fn = getattr(self.core, "sasfit_hankel", None)
+        if fn is None:
+            raise RuntimeError("this libsasfit has no sasfit_hankel")
+        fn.argtypes = [ctypes.c_double, HANKEL_FUNC, ctypes.c_double, ctypes.c_void_p]
+        fn.restype = ctypes.c_double
+        errors = []
+
+        def kernel(k, _param):
+            if errors:
+                return 0.0
+            try:
+                return float(f(k))
+            except BaseException as exc:  # noqa: BLE001 -- must not propagate through C
+                errors.append(exc)
+                return 0.0
+
+        callback = HANKEL_FUNC(kernel)  # keep a reference during the calls
+        param = SasfitParam()
+        x = np.atleast_1d(np.asarray(x, float))
+        out = np.empty(x.shape)
+        with self._lock:
+            for i, xi in enumerate(x):
+                out[i] = fn(float(nu), callback, float(xi), ctypes.cast(ctypes.pointer(param), ctypes.c_void_p))
+                if errors:
+                    raise errors[0]
+                if param.errStatus:
+                    raise RuntimeError(param.error)
+        return out
 
     def get_precision(self):
         out = {}

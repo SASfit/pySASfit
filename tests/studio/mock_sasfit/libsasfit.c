@@ -43,3 +43,33 @@ scalar sasfit_sq_HardSphere(scalar q, sasfit_param *param) {
              + ga * (-pow(a, 4) * c + 4 * ((3 * a * a - 6) * c + (pow(a, 3) - 6 * a) * s + 6)) / pow(a, 5);
     return 1.0 / (1.0 + 24.0 * f * G / a);
 }
+
+/* sasfit_integrate_ctm and sasfit_hankel stand-ins (Simpson rule up to where f has decayed): only the plumbing of the
+   Python wrappers is tested with them, not SASfit's strategies. */
+typedef double hankel_f(double, void *);
+static double cutoff(double (*g)(double, void *), void *p) {
+    double kmax = 0.0, peak = 0.0, k;
+    for (k = 1e-6; k < 1e6; k *= 1.1) { double v = fabs(k * g(k, p)); if (v > peak) peak = v; }
+    for (k = 1e-6; k < 1e6; k *= 1.1) { double v = fabs(k * g(k, p)); if (v > 1e-13 * peak) kmax = k; }
+    return kmax > 0 ? kmax * 1.5 : 1.0;
+}
+static double simpson(double (*g)(double, void *), void *p, double a, double b, double x, int bessel) {
+    int n = 8000, i;
+    double h = (b - a) / n, s = 0.0;
+    for (i = 0; i <= n; i++) {
+        double k = a + i * h, w = (i == 0 || i == n) ? 1.0 : (i % 2 ? 4.0 : 2.0);
+        double v = g(k, p) * (bessel ? k * j0(k * x) : 1.0);
+        s += w * v;
+    }
+    return s * h / 3.0;
+}
+double sasfit_hankel(double nu, hankel_f *f, double x, void *param) {
+    (void)nu;
+    return simpson(f, param, 0.0, cutoff(f, param), x, 1);
+}
+typedef double one_f(double, sasfit_param *);
+double sasfit_integrate_ctm(double a, double b, one_f *f, sasfit_param *param, int limit, double epsabs, double epsrel) {
+    (void)limit; (void)epsabs; (void)epsrel;
+    if (isinf(b)) b = cutoff((double (*)(double, void *))f, param);
+    return simpson((double (*)(double, void *))f, param, a, b, 0.0, 0);
+}

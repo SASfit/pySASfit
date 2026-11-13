@@ -487,7 +487,9 @@ spin-echo length; the plot shows the data sets on the axis of the current one. S
 at the acceptance Q_max, fixed (`q_accept`, z-acceptance) or 2π sin(θ_max)/λ per spin-echo length (`theta_max`,
 Theta_zmax). Hankel method: exact on linear pieces (default), FFTLog (`scipy.fft.fht`) or QDHT (zeros of J0), as
 SASfit's HANKEL_FFTLOG / HANKEL_QDHT and MSAS_FFTLOG / MSAS_QDHT; all cached as matrices. Defaults (method, grids,
-N points) in Settings → Integration… → "Hankel transform (SESANS, MSAS)", saved as setting `hankel`.
+N points) in Settings → Integration… → "Hankel transform (SESANS, MSAS)", saved as setting `hankel`. Fourth method
+"SASfit sasfit_hankel": libsasfit's adaptive transform with the strategy of the SASfit library tab
+(`SASfitLibrary.hankel(f, x)`), for comparisons.
 
 Engine: `ModelFunction(…, transform=…)` with a `SESANSTransform` / `MSASTransform` of `pysasfit.studio.hankel` (or
 `make_transform("sesans" | "sesans_p" | "msas", …)`). The Hankel transforms integrate a piecewise-linear I(Q)·Q
@@ -611,9 +613,8 @@ Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not insta
 ## To do
 
 - **Hankel / SESANS:** ~~compute G(z) for any form factor~~ (done in Python, `pysasfit.studio.hankel`: SESANS and MSAS,
-  see {doc}`studio_manual/sesans_msas`); FFTLog and QDHT added as methods; still open:
-  BESTLIME and the adaptive `sasfit_hankel` strategies, the Hankel-strategy benchmark from sasfit-collab, a thickness
-  fit box in the explorer.
+  see {doc}`studio_manual/sesans_msas`); FFTLog, QDHT and sasfit_hankel (all SASfit strategies) added
+  as methods; still open: the Hankel-strategy benchmark from sasfit-collab, a thickness fit box in the explorer.
 - **Parameter names:** take the names of the remaining built-in libsasfit functions from the SASfit Tcl GUI
   (`sasfit.vfs`). Today only `ff_sphere`, `sd_LogNorm` and `sq_HardSphere` have names; the others are addressed as
   `p0`, `p1`, ...

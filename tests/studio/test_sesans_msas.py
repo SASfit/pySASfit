@@ -590,3 +590,44 @@ def test_slow_fft_length_is_only_suggested_in_the_dialog(explorer):
     assert dlg.hankel_result()["n_points"] == 2047
     dlg.h_fields["n_points"].setText("4096")
     assert dlg.h_nhint.text() == ""
+
+
+# --------------------------------------------------------------------------- libsasfit's sasfit_hankel
+# The mock libsasfit integrates with a plain Simpson rule: these tests check the plumbing (callbacks, G(0), the
+# resolution branch, the MSAS legs), not SASfit's strategies.
+def test_library_hankel_wrapper(studio_lib):
+    a = 30.0
+    x = np.array([0.0, 10.0, 50.0])
+    got = studio_lib.hankel(lambda k: np.exp(-k * k * a * a), x)
+    assert np.allclose(got, np.exp(-x**2 / (4 * a * a)) / (2 * a * a), rtol=1e-6)
+
+    def bad(k):
+        raise ZeroDivisionError("inside the callback")
+
+    with pytest.raises(ZeroDivisionError):
+        studio_lib.hankel(bad, [1.0])
+
+
+@pytest.mark.parametrize("source", ["spline", "direct"])
+def test_sesans_with_sasfit_hankel(studio_lib, source):
+    A, a = 2.0, 30.0
+    d = np.geomspace(1, 1000, 8)
+    exact = A / (4 * np.pi * a**2) * (np.exp(-d**2 / (4 * a**2)) - 1)
+    t = SESANSTransform("G", method="sasfit", sasfit_source=source)
+    assert not t.linear  # no weight matrix: variable projection leaves the scales to the optimiser
+    G = ModelFunction([Gauss(A, a)], transform=t)(d)
+    assert np.max(np.abs(G - exact)) < 1e-5 * np.max(np.abs(exact))
+    Gc = ModelFunction([Gauss(A, a)], transform=SESANSTransform("G", method="sasfit", q_accept=0.02))(d)
+    ref = np.array([_clipped_reference(A, a, x, 0.02) for x in d])
+    assert np.max(np.abs(Gc - ref)) < 1e-4 * np.max(np.abs(ref))
+
+
+def test_msas_with_sasfit_hankel(studio_lib):
+    a, lam, t = 30.0, 6.0, 0.1
+    q = np.geomspace(1e-3, 0.12, 8)
+    exact, tau = gauss_msas(q, 500.0, a, lam, t)
+    tr = MSASTransform(t, lam, norm="transmission", method="sasfit", q_range=(1e-4, 1.0), r_min_factor=0.3,
+                       r_max_factor=0.3, sasfit_r_per_decade=12)  # ranges the mock's Simpson rule can resolve
+    I = ModelFunction([Gauss(500.0, a)], transform=tr)(q)
+    assert np.max(np.abs(I - exact) / exact) < 1e-3
+    assert make_transform(tr.settings()).settings() == tr.settings()

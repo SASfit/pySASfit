@@ -380,8 +380,7 @@ class ModelFunction:
         t = self._transform
         if t is not None:
             if t.domain == "delta":  # SESANS: q are spin-echo lengths
-                k, W = t.weights(q)
-                G = W @ np.asarray(self.particles(k), dtype=float) + self._offset()
+                G = t.g_from(q, lambda k: np.asarray(self.particles(k), dtype=float)) + self._offset()
                 return t.finish(q, G)
             # MSAS: multiple scattering of the particles, then resolution and background
             qe, Wr = (q, None) if self.resolution is None else self.resolution.setup(q)

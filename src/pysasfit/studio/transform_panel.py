@@ -164,7 +164,9 @@ class TransformBox(QtWidgets.QGroupBox):
             "FFTLog: Hamilton's fast Hankel transform on a log grid (scipy.fft.fht), as SASfit's HANKEL_FFTLOG / "
             "MSAS_FFTLOG; N points of I(Q).\n"
             "QDHT: quasi-discrete Hankel transform on the zeros of J0, as SASfit's HANKEL_QDHT / MSAS_QDHT; spectrally "
-            "accurate for smooth I(Q), needs G(r) to vanish inside the support; N points of I(Q).")
+            "accurate for smooth I(Q), needs G(r) to vanish inside the support; N points of I(Q).\n"
+            "SASfit sasfit_hankel: libsasfit's adaptive transform with the strategy of Settings → Integration… → SASfit "
+            "library (OOURA, Ogata, FBT, …); for comparisons, slow, needs the SASfit library.")
         self.n_points = QtWidgets.QSpinBox()
         self.n_points.setRange(0, 65536)
         self.n_points.setSingleStep(256)

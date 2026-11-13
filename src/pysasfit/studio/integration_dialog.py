@@ -44,6 +44,9 @@ HANKEL_FIELDS = (  # (key, label, tooltip) of the numbers in the Hankel tab (the
     ("msas_fft_high", "FFTLog MSAS: to Q_max ×", "end of the FFTLog grid of MSAS: this factor × Q_max"),
     ("qdht_margin", "QDHT SESANS: support × δ_max", "QDHT assumes G(r) = 0 beyond this factor × δ_max"),
     ("qdht_r_factor", "QDHT MSAS: support … / Q_min", "QDHT assumes G(r) = 0 beyond this value / Q_min of the data"),
+    ("sasfit_r_per_decade", "sasfit_hankel MSAS: r points / decade",
+     "MSAS with sasfit_hankel: G(r) is computed on a log r grid with this many points per decade (one adaptive "
+     "transform each), then ψ(r) is splined for the transform back"),
 )
 
 SASFIT_CHOICES = (  # (setting, label, {name: value}) of the libsasfit settings that choose a strategy
@@ -181,9 +184,20 @@ class IntegrationDialog(QtWidgets.QDialog):
             "exact on linear pieces: I(Q)·Q linear between the points of a log grid, every piece integrated exactly "
             "against J0 (~300 evaluations of I(Q), exact resolution cut).\nFFTLog: Hamilton's fast Hankel transform "
             "(scipy.fft.fht), as SASfit's HANKEL_FFTLOG.\nQDHT: quasi-discrete Hankel transform on the zeros of J0, as "
-            "SASfit's HANKEL_QDHT."
+            "SASfit's HANKEL_QDHT.\nSASfit sasfit_hankel: libsasfit's own adaptive transform with the strategy chosen "
+            "in the SASfit library tab (hankel_strategy, N_Ogata, h_Ogata, nriq); slow, no weight matrix."
         )
         form3.addRow("method", self.h_method)
+        self.h_source = QtWidgets.QComboBox()
+        self.h_source.addItem("cubic spline of I(Q) on the Q grid (fast)", "spline")
+        self.h_source.addItem("the model at every point (as SASfit; slow)", "direct")
+        self.h_source.setToolTip(
+            "method 'SASfit sasfit_hankel': the adaptive strategy of the SASfit library tab (OOURA, Ogata, …) calls "
+            "I(Q) point by point. 'spline' evaluates the model once on the Q grid of the exact method (Q points / "
+            "decade) and lets the strategy integrate a cubic spline of it; 'direct' calls the model for every point "
+            "(SESANS only; MSAS always uses the spline)."
+        )
+        form3.addRow("sasfit_hankel: I(Q) from", self.h_source)
         self.h_fields = {}
         for key, label, tip in HANKEL_FIELDS:
             edit = QtWidgets.QLineEdit()
@@ -251,6 +265,7 @@ class IntegrationDialog(QtWidgets.QDialog):
         self.tail.setText(repr(float(s["tail"])))
         h = {**hk.DEFAULTS, **(hankel or {})}
         self.h_method.setCurrentIndex(max(self.h_method.findData(h["method"]), 0))
+        self.h_source.setCurrentIndex(max(self.h_source.findData(h.get("sasfit_source", "spline")), 0))
         for key, edit in self.h_fields.items():
             v = h[key]
             edit.setText(str(int(v)) if isinstance(hk.DEFAULTS[key], int) else f"{float(v):g}")
@@ -289,7 +304,7 @@ class IntegrationDialog(QtWidgets.QDialog):
                 "x_power": self.x_power.value(),
                 "tail": self._number(self.tail, "tail cut-off", positive=True),
             }
-            hankel = {"method": self.h_method.currentData()}
+            hankel = {"method": self.h_method.currentData(), "sasfit_source": self.h_source.currentData()}
             for key, edit in self.h_fields.items():
                 v = self._number(edit, key, positive=key != "tail_power")
                 if isinstance(hk.DEFAULTS[key], int):
