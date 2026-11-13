@@ -11,7 +11,10 @@ headers, see :mod:`pysasfit.studio.headers`) or a Python plugin:
 
 * a file ``sasstudio_<name>.py`` in one of :func:`pysasfit.studio.paths.python_plugin_dirs`
   (format: ``templates/python_plugin.py``), or
-* functions registered at run time with :func:`register_python_function`.
+* functions registered at run time with :func:`register_python_function`, among them the SasView models of the
+  ``sasmodels`` package (``ff_sv_<name>``, ``sq_sv_<name>``, :mod:`pysasfit.studio.sasmodels_bridge`).
+
+A Python callable with the attribute ``vectorized = True`` gets the whole x array at once.
 
 Python plugins take precedence, so a C plugin can be overridden for testing.
 """
@@ -102,6 +105,10 @@ class SASfitFunction:
     """One SASfit model function (form factor, structure factor, size distribution or peak)."""
 
     def __init__(self, name, library=None, errors="raise"):
+        if name not in _PYTHON_FUNCTIONS and name.startswith(("ff_sv_", "sq_sv_", "sd_sv_")):  # SasView (sasmodels)
+            from . import sasmodels_bridge
+
+            sasmodels_bridge.register_all()
         if name in _PYTHON_FUNCTIONS:
             impl = _PYTHON_FUNCTIONS[name]
         else:
@@ -172,6 +179,9 @@ class SASfitFunction:
         if self.language == "python":
             if pyfunc is None:
                 raise NotImplementedError(f"{self.name} has no {kind} function")
+            if getattr(pyfunc, "vectorized", False):  # e.g. the SasView models: one call for all x
+                v = np.asarray(pyfunc(x, p), dtype=float)
+                return v if v.ndim else float(v)
             for i, xi in np.ndenumerate(x):
                 out[i] = pyfunc(float(xi), p)
             return out if out.ndim else float(out)
@@ -204,6 +214,9 @@ class SASfitFunction:
         if self.language == "python":
             if self._py_v is None:
                 raise NotImplementedError(f"{self.name} has no volume function")
+            if getattr(self._py_v, "vectorized", False):
+                v = np.asarray(self._py_v(x, p, int(dist)), dtype=float).reshape(x.shape)
+                return v if v.ndim else float(v)
             for i, xi in np.ndenumerate(x):
                 out[i] = self._py_v(float(xi), p, int(dist))
         else:

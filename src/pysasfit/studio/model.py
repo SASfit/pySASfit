@@ -153,6 +153,11 @@ class ScatteringContribution:
         """
         if self.x_range is not None:
             return tuple(self.x_range)
+        hint = getattr(getattr(self.sd, "_py_i", None), "support", None)  # a distribution that knows its range
+        if hint is not None:
+            lo, hi = hint(self.sd_p)
+            if hi > lo:
+                return float(lo), float(hi)
         x0 = abs(self.ff_p[self.distributed]) or 1.0
         for p in self.sd_p[1:4]:  # typical location parameters of SASfit distributions
             if p > 0:

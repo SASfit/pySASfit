@@ -25,6 +25,10 @@ STRUCTURE_FACTOR_NAMES = ["none", "hard spheres (Percus-Yevick)", "sticky hard s
 SHELL_PROFILES = ["linear gradient", "power law (r/R)^alpha"]
 COMBOS = OrderedDict(LType=LTYPES, ComboBoxParticle=PARTICLES, Ordis=ORDIS, ComboBoxInterior=INTERIOR,
                      ComboBoxPeak=PEAKS, StructureFactor=STRUCTURE_FACTOR_NAMES, ShellProfile=SHELL_PROFILES)
+#: combo entries of SasScatter2 that pySCAtter does not calculate (kept for the .ini files, disabled in the GUI;
+#: the engine treats them as 'None')
+NOT_AVAILABLE = {"LType": {13: "CP-Layers: not available in pySCAtter (calculated as 'None')",
+                           19: "LDQ12 (quasicrystal): not available in pySCAtter (calculated as 'None')"}}
 COMBO_DEFAULT = dict(LType=12, ComboBoxParticle=0, Ordis=7, ComboBoxInterior=0, ComboBoxPeak=1, StructureFactor=0,
                      ShellProfile=0)
 
@@ -58,7 +62,7 @@ _g("Particle", [
     ("EditRadius", "EditRadius:", 1.0, 0, 1000, 4, "Inner radius (nm)"),
     ("EditRadiusi", "EditRadiusi:", 0.5, 0, 1000, 4, "Outer radius / shell thickness (nm)"),
     ("EditSigma", "EditSigma:", 0.07, 0, 5, 4, "Relative standard deviation of the radius"),
-    ("EditDbeta", "EditDBeta:", 0.4, 0, 360, 4, "Average angle (deg), width of the orientation distribution"),
+    ("EditDbeta", "EditDBeta:", 0.4, 0, 360, 4, "Width (deg) of the distribution of the particle axis about the director (Gaussian, Onsager, ...); anisometric particles only"),
     ("Length", "Length:", 1, 0, 1000, 4, "Structure length (nm)"),
     ("SigmaL", "SigmaL:", 0.06, 0, 5, 4, "Relative standard deviation of the length"),
     ("Alpha", "Alpha:", 0, -1e6, 1e6, 4, "Internal 'alphash' (superball: exponent p, 0 -> 2)"),
@@ -85,7 +89,7 @@ _g("Structure factor", [
 _g("Peak Shape", [
     ("EditPeakPar", "EditPeakPar:", 0, 0, 1e6, 4, "Peak shape parameter (Pseudo-Voigt: eta, Pearson VII: beta, Gamma: nu)"),
     ("EditDebyeWaller", "EditDebyeWaller:", 2, 0, 100, 3, "Average displacement from ideal lattice point (nm)"),
-    ("EditAzi", "EditAzi:", 180, 0, 1e6, 4, "Azimuthal domain size D_psi (nm): reflections spread over an arc of width 4/D_psi on the sphere |q| = g (0: no azimuthal dependence, rings)"),
+    ("EditAzi", "EditAzi:", 180, 0, 1e6, 4, "Azimuthal domain size D_psi (nm): reflections spread over an arc of width 4/D_psi on the sphere |q| = g (0: no azimuthal dependence, rings). Oriented lattices only: this is their orientational spread"),
     ("EditDomainSize", "EditDomainSize:", 400, 0, 5000, 2, "Radial domain size D (nm); peak width delta = 4/D"),
     ("VAx1", "x:", 1, -1000, 1000, 3, "u1 (x)"), ("VAx2", "y:", 0, -1000, 1000, 3, "u1 (y)"),
     ("VAx3", "z:", 0, -1000, 1000, 3, "u1 (z)"),
@@ -206,11 +210,11 @@ COMBO_LABELS = OrderedDict(ComboBoxParticle="particle", ComboBoxInterior="interi
 #: GUI labels of the numeric parameters (the SasScatter names stay the keys and the .ini names)
 LABELS = {
     "EditRadius": "R", "EditRadiusi": "R₂ / shell", "EditSigma": "σ_R (rel.)", "Length": "L", "SigmaL": "σ_L (rel.)",
-    "Alpha": "exponent p", "EditRho": "ρ shell", "EditDbeta": "orient. width (°)", "theta": "director θ (°)",
+    "Alpha": "exponent p", "EditRho": "ρ shell", "EditDbeta": "particle axis: width (°)", "theta": "director θ (°)",
     "phi": "director φ (°)", "ucpsi": "ψ about zone axis (°)", "ucn1": "zone axis u", "ucn2": "zone axis v",
     "ucn3": "zone axis w", "uca": "a", "ucb": "b", "ucc": "c", "ucalpha": "α (°)", "ucbeta": "β (°)",
     "ucgamma": "γ (°)", "EditPeakPar": "peak parameter", "EditDebyeWaller": "Debye-Waller σ_DW",
-    "EditDomainSize": "domain size D", "EditAzi": "azimuthal domain D_ψ", "HKLmax": "hkl max", "EditBFactor": "B factor", "I0": "I₀", "Base": "background",
+    "EditDomainSize": "domain size D", "EditAzi": "lattice: azimuthal domain D_ψ", "HKLmax": "hkl max", "EditBFactor": "B factor", "I0": "I₀", "Base": "background",
     "EditQmax": "q max", "EditQmin": "q min", "EditQsteps": "q points (1D)", "GridPoints": "grid points (2D)",
     "Editqz": "q offset (vertical)", "EditWavelength": "λ (nm)", "EditDet": "SD (m)", "EditPixelX": "pixel x (m)",
     "EditPixelY": "pixel y (m)", "EditPixelNoX": "pixels x", "EditPixelNoY": "pixels y", "BeamPosX": "beam x (px)",
@@ -220,7 +224,15 @@ LABELS = {
     "SigX": "domain size x", "SigY": "domain size y", "SigZ": "domain size z",
 }
 
-_ANISO = {1, 2, 4, 5, 6, 7, 8}          # particles with an orientation (cylinder, disk, cube, ellipsoids, ...)
+#: particles whose orientation distribution the engine calculates (cylinder, disk, cube, ellipsoid); the
+#: triaxial ellipsoid, super ellipsoid and superball are orientation averaged whatever 'orientation' says
+_ANISO = {1, 2, 4, 5}
+#: cell parameters that define the lattice (engine.make_lattice); 'orthorhombic' (any cell): all six
+_CELL_ALL = {"uca", "ucb", "ucc", "ucalpha", "ucbeta", "ucgamma"}
+CUBIC = ("sc", "bcc", "fcc", "fd3m", "gyroid", "obdd", "plumbers")
+CELL_KEYS = {"lamellae": {"uca"}, "hexcyl": {"uca"}, "hcp": {"uca", "ucc"}, "bct": {"uca", "ucc"},
+             **{k: {"uca"} for k in CUBIC},
+             "squarecyl": {"uca", "ucb", "ucgamma"}, "centered_rect": {"uca", "ucb", "ucgamma"}}
 
 
 def relevant(p):
@@ -228,34 +240,44 @@ def relevant(p):
     kind, inter = int(p["ComboBoxParticle"]), int(p["ComboBoxInterior"])
     lat = LTYPE_KIND.get(int(p["LType"])) is not None
     ordis = int(p["Ordis"])
-    used = {"I0", "Base", "EditQmax", "EditQmin", "EditQsteps", "GridPoints", "Editqz",
-            "EditWavelength", "EditDet", "EditPixelX", "EditPixelY", "EditPixelNoX", "EditPixelNoY", "BeamPosX",
-            "BeamPosY", "EditRadius"}
-    if kind not in (10, 11):
+    used = {"I0", "Base", "EditQmax", "EditQmin", "EditQsteps", "Editqz", "EditRadius"}
+    if p.get("EditQmaxPreset", True):        # 2D: square q map of +-q max
+        used.add("GridPoints")
+    else:                                    # 2D: pixels of the detector
+        used |= {"EditWavelength", "EditDet", "EditPixelX", "EditPixelY", "EditPixelNoX", "EditPixelNoY",
+                 "BeamPosX", "BeamPosY"}
+    # particle: the same order of precedence as engine.make_particle
+    if kind in (9, 10, 11):                      # chains, Teubner-Strey: no interior
+        used |= {9: {"EditSigma"}, 10: {"Length", "SigmaL"}, 11: {"Length"}}[kind]
+    elif inter in (3, 4) and kind in (0, 3):     # multi-shell / myelin
+        used |= {"EditSigma", "ShellN", "ShellThick"}
+        used |= {"EditRho", "ShellRho2"} if inter == 3 else {"EditRadiusi"}   # myelin: one contrast (a scale)
+    elif kind == 3:                              # vesicle: inner radius R, outer radius L
+        used |= {"EditSigma", "Length", "SigmaL"}
+    elif inter in (1, 2) and kind in (0, 1, 2, 5):
+        used |= {"EditSigma", "EditRadiusi", "EditRho"}
+        if kind != 0:
+            used.add("Length")
+        elif inter == 2 and int(p.get("ShellProfile", 0)) == 1:
+            used.add("ProfileAlpha")
+    else:
         used.add("EditSigma")
-    if kind in (1, 2, 5, 6, 7, 10, 11):
-        used.add("Length")
-    if kind == 10:
-        used.add("SigmaL")
-    if kind in (7, 8):
-        used.add("Alpha")
-    if kind == 3 or kind == 6 or inter in (1, 2, 4):
-        used.add("EditRadiusi")
-    if kind == 3 or inter in (1, 2, 3, 4):
-        used.add("EditRho")
-    if inter in (3, 4):
-        used |= {"ShellN", "ShellThick"}
-    if inter == 3:
-        used.add("ShellRho2")
-    if inter == 2 and int(p.get("ShellProfile", 0)) == 1:
-        used.add("ProfileAlpha")
+        if kind in (1, 2, 5, 6, 7):
+            used.add("Length")
+        if kind in (1, 2):
+            used.add("SigmaL")
+        if kind == 6:
+            used.add("EditRadiusi")
+        if kind in (7, 8):
+            used.add("Alpha")
     if ordis != 7 and kind in _ANISO:
-        used |= {"theta", "phi"}
+        if ordis != 13:                      # fibre: uniform about the beam, no director
+            used |= {"theta", "phi"}
         if ordis not in (6, 13):
             used.add("EditDbeta")
     if lat:
-        used |= {"uca", "ucb", "ucc", "ucalpha", "ucbeta", "ucgamma", "EditDomainSize", "EditDebyeWaller",
-                 "HKLmax"}
+        used |= {"EditDomainSize", "EditDebyeWaller", "HKLmax"}
+        used |= CELL_KEYS.get(LTYPE_KIND[int(p["LType"])], _CELL_ALL)
         if int(p["ComboBoxPeak"]) in (4, 5, 6):
             used.add("EditPeakPar")
         if int(p["ComboBoxPeak"]) == 7 and ordis == 7:            # anisotropic Gaussian: domain sizes per axis

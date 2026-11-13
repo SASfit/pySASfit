@@ -42,18 +42,28 @@ GROUP_TITLES = {"Particle": "Particle", "Interior": "Interior (shells)", "Orient
 GROUP_ORDER = ["Particle", "Interior", "Orientation", "Lattice", "Peak Shape", "Control", "Structure factor",
                "Pixel manipulation", "Calculation", "Experiment"]
 #: parameters shown on another page than their SasScatter group
-PAGE_EXTRA = {"Orientation": ["EditDbeta"]}
+PAGE_EXTRA = {"Orientation": ["EditDbeta", "EditAzi"]}
+#: toolbox page opened when a combo box changes (its parameters are there)
+COMBO_PAGE = {"ComboBoxParticle": "Particle", "ComboBoxInterior": "Interior", "Ordis": "Orientation",
+              "LType": "Lattice", "ComboBoxPeak": "Peak Shape", "StructureFactor": "Structure factor"}
 TOOLTIP_EXTRA = {
     "ComboBoxParticle": "Kratky Porod chain: R = Kuhn length, L = contour length, σ_L its spread.\n"
                         "Teubner-Strey: R = correlation length ξ, L = repeat distance d.\n"
-                        "Cylinder / disk: L = length; ellipsoids: L = semi-axis along the symmetry axis.",
+                        "Cylinder: R = radius, L = half length. Disk: R = half thickness, L = radius.\n"
+                        "Vesicle: R = inner radius, L = outer radius. Ellipsoids: L = semi-axis along the "
+                        "symmetry axis (triaxial: R₂ = third semi-axis).",
     "ComboBoxInterior": "core + shell: R = core radius, R₂ = outer radius, ρ shell = shell contrast (core 1).\n"
                         "inhomogeneous shell: linear gradient or power law (Förster & Burger 1998).\n"
                         "multi-shell: core R and n shells of equal thickness, contrasts alternate ρ shell / ρ 2nd shell.\n"
                         "myelin: water core R, n bilayers of R₂ (lipid, ρ shell) + shell thickness (water).",
     "Ordis": "isotropic: random orientation (powder). z-dir: perfectly aligned along z. fiber pattern: "
              "uniform rotation about z. Others: distribution of the particle axis about the director (θ, φ) "
-             "of width 'orient. width'.",
+             "of width 'particle axis: width' (page Orientation; anisometric particles only).\n"
+             "Lattices: oriented single crystal (zone axis, ψ); its reflections are spread over arcs of width "
+             "4/D_ψ ('lattice: azimuthal domain', page Orientation) with the profile of the peak shape -- the "
+             "kind of distribution chosen here acts on the particles only.\n"
+             "Orientation distributions are calculated for cylinder, disk and ellipsoid; the cube has 'z-dir' "
+             "only; triaxial ellipsoid, super ellipsoid and superball are always orientation averaged.",
     "LType": "None: single particles (structure factor below possible). Otherwise the decoupling approximation "
              "I = P (1 + β (Z − 1) e^(−B q²)) with the lattice factor Z: powder average for isotropic orientation, "
              "oriented single crystal (zone axis, ψ) otherwise, fibre average for 'fiber pattern'.",
@@ -85,11 +95,16 @@ class ParamPanel(QtWidgets.QWidget):
         for key, lab in P.COMBO_LABELS.items():
             cb = QtWidgets.QComboBox()
             cb.addItems(P.COMBOS[key])
+            for i, why in P.NOT_AVAILABLE.get(key, {}).items():      # listed (old .ini files), not selectable
+                cb.model().item(i).setEnabled(False)
+                cb.setItemData(i, why, QtCore.Qt.ItemDataRole.ToolTipRole)
             cb.setMinimumContentsLength(12)
             cb.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             if key in TOOLTIP_EXTRA:
                 cb.setToolTip(TOOLTIP_EXTRA[key])
             cb.currentIndexChanged.connect(self._on_change)
+            if key in COMBO_PAGE:
+                cb.activated.connect(lambda _i, g=COMBO_PAGE[key]: self.show_page(g))
             self.combo[key] = cb
             form.addRow(lab, cb)
         self.width_mode = QtWidgets.QComboBox()
@@ -111,6 +126,7 @@ class ParamPanel(QtWidgets.QWidget):
         hint.setWordWrap(True)
         lay.addWidget(hint)
         self.toolbox = QtWidgets.QToolBox()
+        self.page_index = {}                 # group -> toolbox index
         moved = {k: g for g, ks in PAGE_EXTRA.items() for k in ks}
         for g in GROUP_ORDER:
             keys = PAGE_EXTRA.get(g, []) + [k for k in P.GROUPS[g] if k not in P.UNUSED and k not in moved]
@@ -141,10 +157,15 @@ class ParamPanel(QtWidgets.QWidget):
                 grid.addWidget(fl, i, 2)
                 self.spin[k], self.flag[k], self.label[k] = sp, fl, lab
             grid.setRowStretch(len(keys), 1)
-            self.toolbox.addItem(page, GROUP_TITLES.get(g, g))
+            self.page_index[g] = self.toolbox.addItem(page, GROUP_TITLES.get(g, g))
         lay.addWidget(self.toolbox, 1)
         self._building = False
         self.set_params(P.defaults(), {})
+
+    def show_page(self, group):
+        """Open the toolbox page of ``group`` (after the user picked an entry of the combo box it belongs to)."""
+        if group in self.page_index:
+            self.toolbox.setCurrentIndex(self.page_index[group])
 
     # ---------------------------------------------------------------- values
     def _on_change(self, *_a):
@@ -329,7 +350,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.progress.setTextVisible(False)
         self.progress.setMaximumHeight(8)
         lay.addWidget(self.progress)
-        lay.addWidget(self.params_panel, 1)
+        # only the parameters scroll: the buttons and check boxes above stay in view
+        from ..core.scrolling import scrolled
+        self.params_scroll = scrolled(self.params_panel)
+        lay.addWidget(self.params_scroll, 1)
         self.model_widget = w
 
     def _build_plots(self):

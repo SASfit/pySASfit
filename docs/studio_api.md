@@ -29,6 +29,14 @@ work without it are listed here.
    :members: load_sesans, SESANSData, is_sesans_file
 ```
 
+## SasView models (sasmodels)
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.sasmodels_bridge
+   :members: available, register_all, set_length_unit, length_unit, model_names, DISTRIBUTIONS, sasview_distribution,
+      register_distributions
+```
+
 ## Integration of size distributions
 
 ```{eval-rst}

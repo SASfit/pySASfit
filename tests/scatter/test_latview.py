@@ -62,8 +62,11 @@ def test_powder_rings_and_other_kinds():
     rings = latview.detector_reflections(sc)
     assert not sc.oriented and rings[0]["hkl"] == (1, 1, 1)
     assert rings[0]["q"] == pytest.approx(2 * np.pi * np.sqrt(3) / 20)
-    hexc = latview.build_scene(_p(LType=1, ComboBoxParticle=1, Length=40, ucgamma=120), axes_mode="lattice")
-    assert hexc.dim == 2 and np.allclose(np.abs(hexc.axes[:, 2]), 1)       # rods vertical, as in the engine
+    kw = dict(LType=1, ComboBoxParticle=1, Length=40, ucgamma=120, ucpsi=0)
+    hexc = latview.build_scene(_p(ucn1=1, ucn2=0, ucn3=0, **kw), axes_mode="lattice")
+    assert hexc.dim == 2 and np.allclose(np.abs(hexc.axes[:, 2]), 1)       # zone axis [100]: rods vertical
+    hexc = latview.build_scene(_p(ucn1=0, ucn2=0, ucn3=1, **kw), axes_mode="lattice")
+    assert np.allclose(np.abs(hexc.axes[:, 0]), 1)                         # zone axis [001]: rods along the beam
     lam = latview.build_scene(_p(LType=0, ComboBoxParticle=2, EditRadius=2, Length=50, uca=12))
     assert lam.slab is not None and len(lam.slab["positions"]) >= 3
     gy = latview.build_scene(_p(LType=9, uca=30, ucb=30, ucc=30))

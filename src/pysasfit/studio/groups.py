@@ -201,6 +201,9 @@ def _group_path(group, defs):
 def _special(p):
     if getattr(p, "builtin", False):
         return "(built-in)", "built-in (libsasfit)", 1
+    if p.collection == "sasmodels":  # SasView models, one group per sasmodels category
+        cat = p.group.split(":", 1)[1] if ":" in p.group else "other"
+        return f"(sasview {cat})", f"SasView: {cat}", 5
     if p.collection == "python" or p.collection.endswith(".py"):
         return "(python)", "Python plugins", 2
     return "(ungrouped)", "(not in a group)", 3

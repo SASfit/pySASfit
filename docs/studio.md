@@ -476,6 +476,44 @@ Background model: `background + A * q^(-alpha)`, alpha starts at 4 (Porod). Rows
 
 In the plot the background (constant + power law) is drawn as a dashed grey line; it is hidden when the background is zero and in the S(q) view.
 
+## SasView models (sasmodels)
+
+With the `sasmodels` package installed (`pip install sasmodels`, or `pip install pysasfit[sasview]`), the models of
+SasView appear in the menus next to the SASfit functions: form factors and shape-independent models as `ff_sv_<name>`
+(groups "SasView: shape:sphere", "SasView: shape-independent", …), structure factors as `sq_sv_<name>` ("SasView:
+structure-factor"). Settings → "SasView models (sasmodels)" switches them off (setting `sasmodels`). Module
+`pysasfit.studio.sasmodels_bridge`.
+
+- **SASfit convention** (chosen 2026-11-13): a form factor is the intensity of one particle,
+  P(q) = ⟨F²⟩ = 10⁻⁴ (Δρ V F)² = V · I_SasView(scale = 1, background = 0), not SasView's per-volume intensity. With a
+  size distribution N(x), ∫ N P dx weights the sizes as for the SASfit plugins and N is a number density (1/Å³ gives I
+  in 1/cm). The amplitude ⟨F⟩ serves the decoupling approximation, the form volume the LMA. Shape-independent models
+  (V = 1 in sasmodels) are I_SasView itself.
+- **Units:** sasmodels works in Å (q in 1/Å, lengths in Å, SLD in 10⁻⁶/Å²). The bridge takes q and every length
+  parameter in the unit of the explorer's q axis (1/nm → nm, 1/Å → Å) and converts; SLDs stay in 10⁻⁶/Å². Changing the
+  q unit does not convert values already entered (status message). Scripts: `sasmodels_bridge.set_length_unit("nm")`
+  (Copy Python writes it).
+- **Parameters:** sasmodels' scale and background are fixed at 1 and 0 (the studio has its own); polydispersity is done
+  by the studio (size distribution over any parameter), not by sasmodels; vector parameters become numbered ones
+  (`sld1` … `sld10`, `thickness1` …); orientation and magnetic parameters are left out; models with more than 50
+  parameters are skipped (82 of 83 in sasmodels 1.1.0).
+- **Size distributions of SasView** (`sasmodels.weights`): `sd_sv_gaussian`, `sd_sv_lognormal`, `sd_sv_schulz`,
+  `sd_sv_rectangle`, `sd_sv_uniform`, `sd_sv_boltzmann` (menu "SasView: polydispersity"), usable with every form factor
+  (SASfit or SasView). Parameters as in SasView: `center` (the value of the distributed parameter), `width` = σ/center
+  (SasView's relative PD), `nsigmas` (SasView's cut, 0 = its default: 3, 8, 8, √3, 1, 3), plus the amplitude `N`
+  (number density: ∫ N(x) dx = N, as SASfit's distributions; variable projection solves for it). The formulas are those
+  of sasmodels.weights, cut at center ± nsigmas σ and x > 0 like SasView and normalised there (closed forms). The
+  studio integrates with its own settings over exactly that range (the distribution tells the integrator its cut), so
+  SasView's `npts` is not needed. With the SASfit convention, I = N ⟨P⟩ = N ⟨V⟩ · I_SasView(scale = 1): tested against
+  SasView (gaussian, 1001 points) to 3·10⁻⁴; lognormal and Schulz agree with an independent quadrature to 10⁻¹¹ (SasView's
+  own sums for them depend on its npts at the 10⁻³ level). `array` (an empirical table) is not offered. These six need
+  no sasmodels package (the formulas are in the bridge).
+- **Speed:** a model's C kernel is compiled on first use (~0.2 s; needs gcc or the `tinycc` package); kernels for a q
+  array are cached; one call evaluates all q.
+- Tests: `tests/studio/test_sasmodels_bridge.py` (skipped without sasmodels): convention against the analytic sphere,
+  nm/Å consistency, amplitude and volume, vector parameters, hard-sphere S(0), size distribution with decoupling, a fit,
+  the explorer.
+
 ## SESANS and multiple small-angle scattering
 
 The **Transform** box of the Model panel is SASfit's *transform* menu (`sasfit.c`: `Gztransform`, `imMSAStransform`):

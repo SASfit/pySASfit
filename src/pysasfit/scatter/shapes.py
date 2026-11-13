@@ -199,8 +199,11 @@ class _Factorised(Shape):
 
     def _ymax(self, q):
         """Largest argument of the size integrand: q R times the largest extent (cylinder: sqrt(1 + nu^2))."""
-        e = max(1.0, getattr(self, "nu", 1.0), getattr(self, "b", 1.0), getattr(self, "c", 1.0))
-        k = np.sqrt(3.0) if isinstance(self, Parallelepiped) else np.sqrt(2.0)    # sum of the block arguments
+        box = isinstance(self, Parallelepiped)       # (b, c are edge ratios only there: the core+shell cylinder
+        e = max(1.0, getattr(self, "nu", 1.0))       # keeps its contrasts in ``c``)
+        if box:
+            e = max(e, float(getattr(self, "b", 1.0)), float(getattr(self, "c", 1.0)))
+        k = np.sqrt(3.0) if box else np.sqrt(2.0)    # sum of the block arguments
         return 2.0 * float(np.max(np.abs(q))) * self.R * e * k
 
     def _ang_avg(self, q, sq, s_kind):

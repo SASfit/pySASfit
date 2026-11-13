@@ -11,11 +11,15 @@ from . import (Sphere, Ellipsoid, TriaxialEllipsoid, Cylinder, Disk, Cube, Super
                 CoreShellSphere, CoreShellEllipsoid, CoreShellCylinder, ExcludedVolumeChain, Crystal,
                 zone_axis_rotation)
 from . import detector, orient, oriented
-from .lattices import domain_width
+from .lattices import domain_width, _DIM
 from .coreshell import multilayer_sphere, myelin_sphere
 from .models_ext import (KratkyPorodChain, TeubnerStrey, powerlaw_shell_sphere, make_structure_factor, CylinderRL,
                          VesicleRD)
-from .params import LTYPE_KIND, PARTICLES, ORDIS
+from .params import LTYPE_KIND, PARTICLES, ORDIS, PEAKS, CUBIC
+
+
+#: points of the P(q) table from which the pixels of an isotropic 2D pattern are interpolated
+P_TABLE_POINTS = 600
 
 
 class CalcError(Exception):
@@ -121,11 +125,20 @@ def make_lattice(p, M_hint=None):
     k = domain_width(4.0, peak[0])                    # width parameter of Crystal per unit of Foerster's delta
     kw = dict(width=k * delta, peak=peak[0], dw=0.0, hmax=int(p["HKLmax"]),          # |h|,|k|,|l| <= HKLmax as in CrystalScatter
               para=k * para, **peak[1])
-    c = Crystal(kind, p["uca"], p["ucb"], p["ucc"], p["ucalpha"], p["ucbeta"], p["ucgamma"],
-                **{k: v for k, v in kw.items() if k != "hmax"}, hmax=kw["hmax"], powder_mode="radial_g") \
-        if kind not in ("hcp", "hexcyl") else \
-        Crystal(kind, p["uca"], None, p["ucc"] if p["ucc"] != p["uca"] else None, 90, 90, None,
-                **{k: v for k, v in kw.items() if k != "hmax"}, hmax=kw["hmax"], powder_mode="radial_g")
+    kw = {k: v for k, v in kw.items() if k != "hmax"}
+    kw.update(hmax=int(p["HKLmax"]), powder_mode="radial_g")
+    # only the cell parameters that define the lattice (params.CELL_KEYS): lamellae a; hexagonal a (, c);
+    # cubic a; tetragonal a, c; 2D lattices a, b, gamma; 'orthorhombic' all six (any cell)
+    if kind in ("lamellae", "hexcyl") or kind in CUBIC:
+        c = Crystal(kind, p["uca"], **kw)
+    elif kind == "bct":
+        c = Crystal(kind, p["uca"], None, p["ucc"], **kw)
+    elif kind == "hcp":
+        c = Crystal(kind, p["uca"], None, p["ucc"] if p["ucc"] != p["uca"] else None, 90, 90, None, **kw)
+    elif _DIM.get(kind, 3) == 2:
+        c = Crystal(kind, p["uca"], p["ucb"], None, 90, 90, p["ucgamma"], **kw)
+    else:
+        c = Crystal(kind, p["uca"], p["ucb"], p["ucc"], p["ucalpha"], p["ucbeta"], p["ucgamma"], **kw)
     return c
 
 
@@ -326,12 +339,13 @@ def _uses_cpp_lattice(p):
 
 
 def _oriented_lattice(p, c):
-    if c.dim == 3:
-        R = zone_axis_rotation(c.M, (p["ucn1"], p["ucn2"], p["ucn3"]), to=(1, 0, 0), psi=np.radians(p["ucpsi"]))
-        return Crystal(kind=c.kind, a=c.cellpar[0], b=c.cellpar[1], c=c.cellpar[2], alpha=c.cellpar[3],
-                       beta=c.cellpar[4], gamma=c.cellpar[5], Rot=R, width=c.width, peak=c.peak_shape,
-                       m=c.m, eta=c.eta, nu=c.nu, dw=c.dw, hmax=c.hmax, para=c.para)
-    return c
+    """The lattice with the zone axis [ucn1 ucn2 ucn3] along the beam (x), rotated by ucpsi about it.  Lamellae
+    and rod lattices too: their cell is a (layer normal), b, c (rod axis), e.g. zone axis [001] of hexagonally
+    packed cylinders: rods along the beam; [010] of lamellae: layers edge-on, normal horizontal."""
+    R = zone_axis_rotation(c.M, (p["ucn1"], p["ucn2"], p["ucn3"]), to=(1, 0, 0), psi=np.radians(p["ucpsi"]))
+    return Crystal(kind=c.kind, a=c.cellpar[0], b=c.cellpar[1], c=c.cellpar[2], alpha=c.cellpar[3],
+                   beta=c.cellpar[4], gamma=c.cellpar[5], Rot=R, width=c.width, peak=c.peak_shape,
+                   m=c.m, eta=c.eta, nu=c.nu, dw=c.dw, hmax=c.hmax, para=c.para, powder_mode=c.powder_mode)
 
 
 def director_lab(p):
@@ -360,11 +374,13 @@ def _particle_P(shape, qx, qy, qz, p, ctx=None):
     if iso:
         qq = np.sqrt(ctx["qfull"][0] ** 2 + ctx["qfull"][1] ** 2 + ctx["qfull"][2] ** 2) if ctx else q
         if ctx is not None and "Pg" not in ctx:
-            ctx["qg"] = np.linspace(0, float(qq.max()) * 1.001 + 1e-9, 600)
+            ctx["qg"] = np.linspace(0, float(qq.max()) * 1.001 + 1e-9, P_TABLE_POINTS)
             ctx["Pg"] = shape.P(np.maximum(ctx["qg"], 1e-9))
         P = np.interp(q, ctx["qg"], ctx["Pg"]) if ctx is not None else shape.P(q.ravel()).reshape(q.shape)
         return P, _LazyBeta(shape, q, ctx)
     director = director_lab(p)
+    if ordis != 6 and isinstance(shape, Cube):
+        raise CalcError("cube: only 'isotropic' and 'z-dir' orientations are calculated")
     if ordis == 6:               # 'z-dir': perfect orientation along the director (theta, phi)
         P = oriented.perfect(shape, qx, qy, qz, rot=_frame_with_axis(director))
     elif ordis == 13:            # fiber pattern: uniform rotation about the beam (CrystalScatter z)
@@ -574,10 +590,11 @@ def intensity_2d(p, qx, qy, qz, progress=None, should_abort=None):
                 Z = cpp_lattice_factor(p, cc, QX, QY, QZ)
             elif int(p["Ordis"]) == 7:
                 Z = cc.Z_powder(q.ravel()).reshape(q.shape)
-            elif int(p["Ordis"]) == 13:
-                Z = cc.Z_fiber(QX, QY, QZ, npsi=240)
-            else:
-                Z = cc.Z(QX, QY, QZ)
+            else:                          # peak shapes of the Crystal class (Gamma, anisotropic Gaussian, fibre)
+                try:
+                    Z = cc.Z_fiber(QX, QY, QZ, npsi=240) if int(p["Ordis"]) == 13 else cc.Z(QX, QY, QZ)
+                except ValueError as e:    # e.g. a peak shape that cannot be normalised in this dimension
+                    raise CalcError(f"{PEAKS[int(p['ComboBoxPeak'])]} peak, {ORDIS[int(p['Ordis'])]}: {e}") from e
             I = P * (1 + beta * (Z - 1) * debye_waller(p, q))
         out[sl] = I
         if progress:

@@ -298,8 +298,6 @@ def build_scene(p, ncell=2, axes_mode="model", seed=3):
         sc.rings = True
         sc.notes.append("isotropic: powder of crystallites (rings); one crystallite is drawn in the zone-axis "
                         "orientation")
-    elif oc.dim < 3:
-        sc.notes.append("rods / lamellae are not rotated by the zone axis (as in the engine)")
     return sc
 
 

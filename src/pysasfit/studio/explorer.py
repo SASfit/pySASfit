@@ -85,7 +85,23 @@ MODES = [("P*S", "PS"), ("P  (no structure factor)", "P"), ("S  (structure facto
 Q_UNITS = ["1/nm", "1/Å", "1/m"]
 
 
+def sasview_enabled():
+    """The SasView models (sasmodels) are offered in the menus (setting ``sasmodels``, default on)."""
+    v = paths.get_setting("sasmodels")
+    return True if v is None else bool(v)
+
+
 def _entries():
+    if sasview_enabled():
+        from . import sasmodels_bridge
+
+        try:
+            sasmodels_bridge.register_all()
+        except Exception:  # noqa: BLE001 -- sasmodels broken: the SASfit functions alone
+            pass
+    else:
+        for name in [n for n in _PYTHON_FUNCTIONS if n.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))]:
+            _PYTHON_FUNCTIONS.pop(name, None)
     cat = dict(headers.catalogue())
     for name, impl in _PYTHON_FUNCTIONS.items():  # functions registered at run time
         cat[name] = impl[0]
@@ -204,6 +220,10 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.setWindowTitle("pySASfit model explorer")
         self.setWindowIcon(tool_icon("pySASstudio"))
         self.resize(1180, 920)
+        from . import sasmodels_bridge
+
+        sasmodels_bridge.set_length_unit("nm")  # the q unit shown first (Q_UNITS[0]); _units_changed follows the combo
+        self._sv_unit = "nm"
         self._entries = _entries()
         self._defs = groups.load_groups()
         self.integration = integration.load_settings()  # size-distribution integral (scipy / Gauss-Legendre)
@@ -253,6 +273,17 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         act = menu.addAction("SASfit &installation…")
         act.setShortcut("Ctrl+L")
         act.triggered.connect(self._choose_installation)
+        from . import sasmodels_bridge
+
+        act = menu.addAction("SasView models (sasmodels)")
+        act.setCheckable(True)
+        act.setChecked(sasview_enabled())
+        act.setEnabled(sasmodels_bridge.available())
+        act.setToolTip("offer the models of SasView (pip install sasmodels) next to the SASfit functions, in the "
+                       "SASfit convention P = (Δρ V F)²" if sasmodels_bridge.available() else
+                       "pip install sasmodels to get the SasView models")  # fmt: skip
+        act.toggled.connect(self._sasview_toggled)
+        self.sasview_action = act
         act = menu.addAction("&Integration…")
         act.setShortcut("Ctrl+I")
         act.setToolTip("integration strategy of the SASfit library and of the size-distribution integral (scipy)")
@@ -374,6 +405,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.units.addItems(Q_UNITS)
         self.units.setToolTip("Label only: SASfit functions are unit-agnostic, use consistent units.")
         self.units.currentIndexChanged.connect(self._update_labels)
+        self.units.currentIndexChanged.connect(self._units_changed)
         self.units.currentIndexChanged.connect(
             lambda *_: self.transform_box.set_length_unit(LENGTH_OF_Q_UNIT.get(self.units.currentText(), "")))
         self.npoints = QtWidgets.QSpinBox()
@@ -669,6 +701,42 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self._last = None
         self._clear_held()
         self._update_installation_label()
+
+    def _refresh_menus(self):
+        """New function lists in the menus (SasView models on/off, other length unit); the contributions stay."""
+        self._entries = _entries()
+        for p in self.panels():
+            for role in ROLES:
+                p.picker[role].set_menu(self._menu_tree(role))
+        for name, f in list(self._cache.items()):  # parameter texts and defaults of the SasView models
+            if name in _PYTHON_FUNCTIONS:
+                f.info = _PYTHON_FUNCTIONS[name][0]
+
+    def _sasview_toggled(self, on):
+        paths.set_setting("sasmodels", bool(on))
+        used = [p for p in self.panels() for f in p.funcs.values() if f is not None and f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))]
+        if not on and used:
+            self._status("SasView models are used in the model: they stay until replaced; the menus no longer offer them")
+        self._refresh_menus()
+
+    def _units_changed(self, *_):
+        """The q unit changed: the SasView models take q and their length parameters in that unit from now on.
+        Values already entered are kept as numbers (as for the SASfit functions, whose units are not known)."""
+        from . import sasmodels_bridge
+
+        new = LENGTH_OF_Q_UNIT.get(self.units.currentText(), "nm")
+        new = {"Å": "A"}.get(new, new)
+        if new == getattr(self, "_sv_unit", "nm"):
+            return
+        sasmodels_bridge.set_length_unit(new)
+        self._sv_unit = new
+        if sasview_enabled():
+            self._refresh_menus()
+        used = any(f is not None and f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_")) for p in self.panels() for f in p.funcs.values())
+        if used:
+            self._status(f"SasView models: q and length parameters are now read in {self.units.currentText()} / "
+                         f"{LENGTH_OF_Q_UNIT.get(self.units.currentText(), '')}; the values entered are not converted")
+        self._schedule()
 
     def _resolve(self, name):
         return name if name in self._entries else headers.info(name).name
@@ -1814,7 +1882,14 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         body = [ln for ln in body if not ln.startswith(("model = ModelFunction(", "I = model(q)"))]
         from .functions import _PYTHON_FUNCTIONS
 
-        pyf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None and f.name in _PYTHON_FUNCTIONS})
+        svf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None and f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))})
+        if svf:
+            sc.imp("from pysasfit.studio import sasmodels_bridge")
+            sc.comment(f"{', '.join(svf)}: SasView models (pip install sasmodels), SASfit convention P = (Δρ V F)²; "
+                       "q and lengths in the unit below")
+            sc.add(f"sasmodels_bridge.set_length_unit({self._sv_unit!r})")
+        pyf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None and f.name in _PYTHON_FUNCTIONS
+                      and not f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))})
         if pyf:
             sc.comment(f"{', '.join(pyf)}: Python function(s) of this session; register them first with "
                        "pysasfit.studio.register_python_function (or put the plugin file in a python plugin folder)")
