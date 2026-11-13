@@ -14,7 +14,7 @@ the installed package) and, in a source checkout, in the logo bundle itself. Wit
 nothing breaks.
 
 Tools: ``pySASfit`` (the suite, launcher), ``pySLDprofile``, ``pyINVersion``, ``pyOZsolver``, ``pySASstudio``
-(model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``, ``pySEBpolymers``. The former names pyInversion and pySASbox are accepted
+(model explorer), ``pySASred``, ``pyTOOLbox``, ``pySCAtter``, ``pySASmorph``, ``pySEBpolymers``, ``pySLDcalculator``. The former names pyInversion and pySASbox are accepted
 (:data:`ALIASES`).
 
 ``pyATsas`` (the ATSAS panel) has no logo in the bundle: its icon is the original ATSAS icon, read at run time
@@ -37,10 +37,10 @@ __all__ = ["TOOLS", "EXTERNAL_TOOLS", "WORDMARKS", "COLOURS", "TOOL_COLOURS", "A
            "icon_path", "menu_icon_path", "wordmark"]
 
 TOOLS = ("pySASfit", "pySLDprofile", "pyINVersion", "pyOZsolver", "pySASstudio", "pySASred", "pyTOOLbox", "pySCAtter",
-         "pySASmorph", "pySEBpolymers")
+         "pySASmorph", "pySEBpolymers", "pySLDcalculator")
 
 #: tools whose icon comes from an external program's installation, not from the logo bundle
-EXTERNAL_TOOLS = ("pyATsas", "pyDENsity", "pyDENSSmulti")
+EXTERNAL_TOOLS = ("pyATsas", "pyDENsity", "pyDENSSmulti", "pySASscout")
 
 #: wordmark of every tool as in the logos: grey "py", bold core in the tool's colour, word ending in the grey of "py"
 WORDMARKS = {
@@ -54,9 +54,11 @@ WORDMARKS = {
     "pySASmorph": ("py", "SAS", "morph"),
     "pySCAtter": ("py", "SCA", "tter"),
     "pySEBpolymers": ("py", "SEB", "polymers"),
+    "pySLDcalculator": ("py", "SLD", "calculator"),
     "pyATsas": ("py", "AT", "sas"),
     "pyDENsity": ("py", "DEN", "sity"),
     "pyDENSSmulti": ("py", "DENSS", "multi"),
+    "pySASscout": ("py", "SAS", "scout"),
 }
 
 #: wordmark colours of the logo bundle (README.txt): part -> (on light, on dark background); the core takes the
@@ -76,9 +78,11 @@ TOOL_COLOURS = {
     "pySASmorph": ("#0E2740", "#FFFFFF"),      # marine: tile #0E2740, navy/white wordmark core as in its logo
     "pySCAtter": ("#A0522D", "#C78A6B"),       # sienna: menu icon and tile in the logo bundle
     "pySEBpolymers": ("#6B8E23", "#9CB46C"),   # olive: core with grafted chains on the menu icon
+    "pySLDcalculator": ("#8E24AA", "#BB7CCB"),  # purple: calculator with the periodic table as keypad
     "pyATsas": ("#0B6666", "#5FA8A8"),         # teal of the ATSAS icon tile
     "pyDENsity": ("#2B4C9B", "#8FA6D9"),       # deep blue (own icon: contour lines of a density map)
     "pyDENSSmulti": ("#1F7A8C", "#6FB3C0"),    # teal blue (own icon: two coloured lobes, one per component)
+    "pySASscout": ("#9A6A00", "#D2A84A"),      # dark amber (own icon: a magnifier on a scattering curve)
 }
 
 #: old tool names -> current ones
@@ -154,6 +158,10 @@ def external_icon(tool, atsas_dir=None):
         icon = _multi_icon(TOOL_COLOURS[tool][0])
         _EXTERNAL_CACHE[key] = icon
         return icon
+    if tool == "pySASscout":
+        icon = _scout_icon(TOOL_COLOURS[tool][0])
+        _EXTERNAL_CACHE[key] = icon
+        return icon
     if tool == "pyDENsity":
         for path in _denss_logo_files():
             icon.addFile(str(path))
@@ -162,8 +170,11 @@ def external_icon(tool, atsas_dir=None):
         _EXTERNAL_CACHE[key] = icon
         return icon
     try:
-        from ..atsas.core import icon_files
-        for size, path in icon_files("atsas", atsas_dir):
+        from ..atsas.core import cached_atsas, icon_files
+        # only an installation already known (preferences, last search): drawing an icon does not search
+        atsas_dir = atsas_dir or _atsas_pref()
+        known = atsas_dir or cached_atsas() is not None
+        for size, path in (icon_files("atsas", atsas_dir) if known else []):
             icon.addFile(str(path), QtCore.QSize(size, size))
     except Exception:  # noqa: BLE001 -- no ATSAS: placeholder
         pass
@@ -171,6 +182,14 @@ def external_icon(tool, atsas_dir=None):
         icon = _placeholder_icon(TOOL_COLOURS.get(tool, COLOURS["core"])[0])
     _EXTERNAL_CACHE[key] = icon
     return icon
+
+
+def _atsas_pref():
+    try:
+        from ..core import settings as prefs
+        return (prefs.get("atsas.dir") or "").strip() or None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _denss_logo_files():
@@ -266,6 +285,46 @@ def _multi_icon(colour):
         p.end()
         icon.addPixmap(pm)
     return icon
+
+def _scout_icon(colour):
+    """pySASscout's own icon: a scattering curve with a magnifier on it, on the tool's tile."""
+    from PySide6 import QtCore, QtGui
+
+    icon = QtGui.QIcon()
+    for s in (16, 24, 32, 48, 64, 128, 256):
+        pm = QtGui.QPixmap(s, s)
+        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        p = QtGui.QPainter(pm)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setBrush(QtGui.QColor(colour))
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
+        p.drawRoundedRect(QtCore.QRectF(0, 0, s, s), s * 0.16, s * 0.16)
+        white = QtGui.QColor("white")
+        pen = QtGui.QPen(white, max(1.1, s / 20))
+        pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+        p.setPen(pen)
+        p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
+        path = QtGui.QPainterPath()                  # plateau, then a falling curve with one shoulder
+        n = 28
+        for i in range(n + 1):
+            x = i / n
+            y = 1.0 / (1.0 + (2.6 * x) ** 4) + 0.05 * (1 - x)
+            px, py = s * (0.12 + 0.76 * x), s * (0.80 - 0.56 * min(y, 1.0))
+            path.moveTo(px, py) if i == 0 else path.lineTo(px, py)
+        p.drawPath(path)
+        r = 0.17 * s                                 # magnifier on the knee of the curve
+        c = QtCore.QPointF(0.56 * s, 0.42 * s)
+        p.setBrush(QtGui.QColor(255, 255, 255, 70))
+        p.setPen(QtGui.QPen(white, max(1.3, s / 14)))
+        p.drawEllipse(c, r, r)
+        handle = QtGui.QPen(white, max(1.6, s / 10))
+        handle.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+        p.setPen(handle)
+        p.drawLine(QtCore.QPointF(c.x() + 0.72 * r, c.y() + 0.72 * r), QtCore.QPointF(0.86 * s, 0.72 * s))
+        p.end()
+        icon.addPixmap(pm)
+    return icon
+
 
 def _placeholder_icon(colour):
     from PySide6 import QtCore, QtGui

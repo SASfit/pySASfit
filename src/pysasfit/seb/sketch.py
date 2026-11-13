@@ -46,6 +46,19 @@ def _on_sphere(rng, R):
     return R * _unit(rng)
 
 
+def _fbm_walk(n, nu, rng, closed=False):
+    """n + 1 points with Gaussian distances <r_ij^2> ~ |i - j|^(2 nu) (fractional Brownian motion, Hurst nu);
+    closed: conditioned to return to the start (a bridge)."""
+    i = np.arange(1, n + 1, dtype=float)
+    H2 = 2 * nu
+    C = 0.5 * (i[:, None] ** H2 + i[None, :] ** H2 - np.abs(i[:, None] - i[None, :]) ** H2)
+    Lc = np.linalg.cholesky(C + 1e-12 * np.eye(n))
+    X = Lc @ rng.normal(size=(n, 3))
+    if closed:
+        X = X - np.outer(C[:, -1] / C[-1, -1], X[-1])
+    return np.vstack([np.zeros(3), X])
+
+
 def _geometry(kind, p, rng, steps):
     """(shapes in the local frame, sampler(ref) -> local position)."""
     R3 = _rot(rng)
@@ -54,6 +67,30 @@ def _geometry(kind, p, rng, steps):
         n = steps
         b = p["Rg"] * np.sqrt(6.0 / n)
         pts = np.vstack([np.zeros(3), np.cumsum(rng.normal(0, b / np.sqrt(3), (n, 3)), axis=0)])
+        refs = {"end1": pts[0], "end2": pts[-1], "middle": pts[n // 2]}
+        return [Shape("line", None, None, pts=pts)], lambda r: refs.get(r, pts[rng.integers(0, n + 1)])
+    if kind in ("WormLikeChain", "WormLikeChainEV"):
+        n = max(steps, 60)
+        L, P = p["L"], p["b"] / 2.0
+        ds = L / n
+        t = np.empty((n, 3))
+        t[0] = ez
+        sd = np.sqrt(2.0 * ds / P) if P > 0 else 0.0
+        for i in range(1, n):                       # persistent random walk of the tangent
+            v = t[i - 1] + sd * rng.normal(size=3) / np.sqrt(2.0)
+            t[i] = v / np.linalg.norm(v)
+        pts = np.vstack([np.zeros(3), np.cumsum(t * ds, axis=0)])
+        refs = {"end1": pts[0], "end2": pts[-1], "middle": pts[n // 2]}
+        return [Shape("line", None, None, pts=pts)], lambda r: refs.get(r, pts[rng.integers(0, n + 1)])
+    if kind == "ExcludedVolumePolymer":
+        kind = "FloryPolymer"
+    if kind in ("FloryPolymer", "FloryLoop"):
+        n = steps
+        pts = _fbm_walk(n, p["nu"], rng, closed=kind == "FloryLoop")
+        rg = np.sqrt(np.mean(np.sum((pts - pts.mean(axis=0)) ** 2, axis=1)))
+        pts = pts * (p["Rg"] / rg if rg > 0 else 1.0)          # this realisation scaled to the model's Rg
+        if kind == "FloryLoop":
+            return [Shape("line", None, None, pts=pts)], lambda r: pts[rng.integers(0, n)]
         refs = {"end1": pts[0], "end2": pts[-1], "middle": pts[n // 2]}
         return [Shape("line", None, None, pts=pts)], lambda r: refs.get(r, pts[rng.integers(0, n + 1)])
     if kind == "GaussianLoop":
@@ -149,7 +186,18 @@ def realise(structure, params, seed=None, steps=40, max_units=3000):
         name, entry_vid, entry_pos = dq.popleft()
         e = units[name]
         p = {k: float(params.get(f"{k}_{e.tag}", 1.0)) for k in e.model.size_params}
+        if getattr(e, "poly", False):
+            from .structure import MASS_SCALING
+            sig = float(params.get(f"sigma_{e.tag}", 0.0))
+            if sig > 0:
+                kk = 1.0 / sig**2
+                m = rng.gamma(kk, 1.0 / kk)              # this sub-unit's mass (mean 1)
+                for k2, ex in MASS_SCALING.get(e.kind, {}).items():
+                    p[k2] = p[k2] * m ** (p.get("nu", 0.5) if ex == "nu" else ex)
         geo, sampler = _geometry(e.kind, p, rng, steps)
+        if getattr(e, "thick", False):
+            for sh in geo:
+                sh.geo["lw"] = 3.0
         local = {}
         for vid, ref in uv[name]:
             local[vid] = sampler(ref)
@@ -215,7 +263,7 @@ def draw(ax, shapes, colours=None):
         col = colours[sh.tag]
         g = sh.geo
         if sh.kind == "line":
-            ax.plot(*g["pts"].T, color=col, lw=1.0)
+            ax.plot(*g["pts"].T, color=col, lw=g.get("lw", 1.0))
             allpts.append(g["pts"])
         elif sh.kind == "point":
             ax.scatter(*g["centre"], color=col, s=20)

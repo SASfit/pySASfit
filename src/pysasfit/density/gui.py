@@ -130,7 +130,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.resize(1500, 920)
         self._sized = False
         self.hide_stray_tab_bars()
-        self.refresh_installation()
+        self.refresh_installation(search=False)      # no search at start: the last result (button: search)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -262,6 +262,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         lay.addWidget(self.inst)
         row = QtWidgets.QHBoxLayout()
         b = QtWidgets.QPushButton("Search again")
+        b.setToolTip("Search for the DENSS installation (starts the candidate Pythons; the result is kept "
+                     "for the next start)")
         b.clicked.connect(lambda: self.refresh_installation(force=True))
         row.addWidget(b)
         self.selftest_button = QtWidgets.QPushButton("Self test")
@@ -385,9 +387,29 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def python_path(self):
         return (prefs.get("density.python") or "").strip() or None
 
-    def refresh_installation(self, force=False):
+    def refresh_installation(self, force=False, search=True):
+        """Show the DENSS installation. ``search=False``: only the result of the last search (no Python is
+        started); ``force``: search again."""
+        if not search and not force:
+            info = D.cached_denss(self.python_path())
+            if info is None:
+                self.inst.setText("DENSS installation not checked yet: press <b>Search again</b> "
+                                  "(or start a run; it searches then).")
+                self.installed = None              # unknown: the runs search themselves
+            else:
+                from ..core import installcache
+                when = (installcache.get("denss:" + (self.python_path() or "")) or {}).get("checked", "")
+                self.inst.setText(f"<b>DENSS {info.version}</b><br>{info.python}"
+                                  + (f"<br><i>found {when}; Search again to check</i>" if when else ""))
+                self.installed = True
+            self._update_buttons()
+            return
         try:
-            info = D.find_denss(self.python_path(), refresh=force)
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+            try:
+                info = D.find_denss(self.python_path(), refresh=force)
+            finally:
+                QtWidgets.QApplication.restoreOverrideCursor()
             self.inst.setText(f"<b>DENSS {info.version}</b><br>{info.python}")
             self.installed = True
         except D.DenssError as e:
@@ -397,7 +419,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._update_buttons()
 
     def _update_buttons(self):
-        ok = getattr(self, "installed", False) and not self._busy
+        ok = getattr(self, "installed", None) is not False and not self._busy
         for b in (self.run_one, self.run_all, self.selftest_button):
             b.setEnabled(ok)
 
@@ -588,6 +610,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def _start(self, tag, fn, text):
         if self._busy:
             return
+        if getattr(self, "installed", None) is None:   # not searched yet in this session: now
+            self.refresh_installation()
+            if not self.installed:
+                return
         self._busy = True
         self._update_buttons()
         self.progress.setRange(0, 0)

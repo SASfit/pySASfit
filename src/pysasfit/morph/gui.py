@@ -1223,7 +1223,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 self.set_phases(self._phase_names(), self._fractions(), sld)
             self._fill_curve_table()
             self._set_sld_headers()
-            self.on_correlations()
+            # not calculated at the start: the Correlations button
+            self.statusBar().showMessage("last session restored: press Correlations to calculate", 15000)
         try:
             self.view3d.set_state(s.get("view3d", {}))
         except Exception:  # noqa: BLE001

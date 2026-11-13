@@ -149,6 +149,11 @@ linear in the number of sub-units (a 1533-unit dendrimer: 0.3 s for 2000 q value
 | Point | – | point | – |
 | GaussianPolymer | Rg | end1, middle, end2 | contour |
 | GaussianLoop | Rg | – | contour |
+| FloryPolymer | Rg, nu | end1, middle, end2 | contour |
+| FloryLoop | Rg, nu | – | contour |
+| ExcludedVolumePolymer | Rg, nu | end1, middle, end2 | contour |
+| WormLikeChain | L, b | end1, middle, end2 | contour |
+| WormLikeChainEV | L, b | end1, middle, end2 | contour |
 | ThinRod | L | end1, middle, end2 | contour |
 | SolidSphere | R | center | surface |
 | ThinSphericalShell | R | center | surface |
@@ -163,6 +168,111 @@ over orientations by Gauss–Legendre quadrature, with $F=\langle\Phi^2\rangle$,
 $A_r=\langle\Phi g_r^*\rangle$, $\Psi_{rs}=\langle g_r g_s^*\rangle$. `Point` is a massless junction
 (F = A = 0) as in SEB. The spheroid surface point is uniform per area by default;
 `Spheroid(surface_measure="parametric")` reproduces pyseb (uniform in cos θ).
+
+## Chains with a Flory exponent
+
+`FloryPolymer` and `FloryLoop` are Hammouda's generalised Gaussian chain (B. Hammouda, Macromol. Theory Simul. 2
+(1993) 1; Benoit 1957): Gaussian statistics with ⟨r²ᵢⱼ⟩ = b²|i − j|^{2ν}, so ν = 1/2 is the ideal chain
+(`GaussianPolymer`, `GaussianLoop` exactly), ν ≈ 0.588 a chain in good solvent and ν = 1/3 a collapsed one. With
+U = q²⟨R²⟩/6 = q²Rg²(2ν + 1)(2ν + 2)/6 and a = 1/(2ν) (γ the lower incomplete gamma function):
+
+| quantity | expression |
+|---|---|
+| form factor | F = [U^{−a} γ(a, U) − U^{−2a} γ(2a, U)] / ν |
+| amplitude about an end | A_end = ∫₀¹ e^{−U t^{2ν}} dt = a U^{−a} γ(a, U) |
+| amplitude about the middle | A_end with U → U 2^{−2ν} |
+| phase end – end, end – middle | e^{−U}, e^{−U 2^{−2ν}} |
+| phase contour – end / middle / contour | A_end, A_middle, F |
+| ring | F = ∫₀¹ e^{−W [s(1−s)]^{2ν}} ds, W = q²Rg² / (3 B(2ν+1, 2ν+1)) (Gauss–Legendre) |
+
+Two approximations: the excluded volume acts only **within** a sub-unit (chains joined in a structure do not see
+each other, nor the core — four joined FloryPolymer blocks are not one long swollen chain), and distances keep a
+Gaussian distribution (the end-to-end phase factor of a real self-avoiding walk differs). `tools/seb/check_flory_mc.py`
+compares with Monte Carlo: chains with exactly the model's statistics (fractional Brownian motion, 128 bonds)
+agree within the discreteness of the walk (F within 0.003, end amplitude 0.005 for qRg < 6); self-avoiding walks on
+the cubic lattice (pivot algorithm, 128 bonds) differ from the ν = 0.588 model by up to 0.05 in F around qRg ≈ 2–6
+(lattice chains of this length are still in the crossover) and up to 0.03 in the end-to-end phase factor.
+ν is fitted between 0.3 and 1 by default.
+
+## Further chain models
+
+All chains below are described by their two-point function G(q, s) (the average of sin(qr)/(qr) over two
+contour points a distance s apart, contour length L): F = 2∫₀¹(1 − t) G(tL) dt, A_end = ∫₀¹ G(tL) dt,
+A_middle = 2∫₀^{1/2} G(tL) dt, Ψ_end–end = G(L), Ψ_end–middle = G(L/2); contour points use A and F as for the
+Gaussian chain. The integrals use a grid adapted to the oscillations of G (fine panels up to 13 b, geometric
+beyond).
+
+**WormLikeChain** (L, b; b = Kuhn length = 2 × persistence length) — Kholodenko's worm (A. L. Kholodenko,
+Macromolecules 26 (1993) 4179): G = sinh(E z)/(E sinh z) for qb < 3 and sin(F z)/(F sinh z) above, z = 3s/b,
+E = √(1 − (qb/3)²), F = √((qb/3)² − 1). It goes from the rod (L ≪ b) to the Gaussian chain (L ≫ b, Rg² = Lb/6).
+Note: its ⟨R²(s)⟩ = (b²/3)(z coth z − 1) is Kholodenko's, not the exact worm-like chain value
+b s − (b²/2)(1 − e^{−2s/b}): it is up to 20 % larger around s ≈ 0.7 b and within 1 % beyond s ≈ 20 b, so Rg of short
+worms comes out up to ~9 % larger (L ≈ b; 2 % at L = 10 b) than for the exact worm-like chain.
+
+**WormLikeChainEV** (L, b) — worm-like chain with excluded volume: the form factor of Pedersen & Schurtenberger
+(Macromolecules 29 (1996) 7602, method 3 with excluded volume) with the corrections of Chen, Butler & Magid
+(J. Chem. Phys. 124 (2006) 144903), a NumPy port of `wrc_cyl.c` of sasmodels (public domain; `pysasfit.seb.ps_worm`,
+equal to sasmodels' flexible_cylinder with radius → 0 to 1e-9). Only F(q; L) is known, not G. Since
+F = 2∫(1 − t)G(tL)dt, differentiating in L gives the other quantities exactly:
+
+| quantity | from F(L) |
+|---|---|
+| A_end | F + (L/2) F′ |
+| A_middle | F(L/2) + (L/4) F′(L/2) |
+| Ψ_end–end | F + 2L F′ + (L²/2) F″ |
+| Ψ_end–middle | the same at L/2 |
+
+(central differences, step 0.2 % of L; the branches of the piecewise PS formula are chosen at the reference
+length, so L ± h do not jump between branches). Checked on Kholodenko's worm, where the relations reproduce the
+direct G to 1e-5. The PS formula is not valid for L < b (F > 1); between L = b and 2.5 b it is blended smoothly
+(C² in L) into Kholodenko's worm, which is used alone below b (excluded volume is negligible for such stiff
+pieces). The PS formula itself has small kinks where its branches meet (relative steps of up to ~4e-4 in F),
+visible in very smooth data only.
+
+**ExcludedVolumePolymer** (Rg, nu) — self-avoiding chain with the des Cloizeaux distance distribution
+(des Cloizeaux 1980; Förster & Burger, Macromolecules 31 (1998) 879): P(r) ∝ r^{2+θ} exp(−(Dr)^δ),
+δ = 1/(1 − ν), with D fixed by ⟨r²⟩ ∝ s^{2ν}. Unlike FloryPolymer, the distance distribution is not Gaussian
+(correlation hole at short r, compressed tail). The exponent θ depends on where the two points are:
+θ₀ = 0.275 (end – end), θ₁ = 0.46 (end – interior), θ₂ = 0.71 (interior – interior), scaled by
+(ν − ½)/(0.588 − ½), so ν = ½ is the Gaussian chain exactly; F and A_middle use θ₂, A_end and Ψ_end–middle θ₁,
+Ψ_end–end θ₀. Valid for 0.34 ≤ ν ≤ 0.95. Against self-avoiding walks (pivot algorithm, 128 bonds,
+`tools/seb/check_flory_mc.py`): F within 0.011, A within 0.017, Ψ within 0.038 — four times closer in F than
+FloryPolymer with the same ν (0.046).
+
+### Templates for single chains
+
+*Freely jointed chain*: n ThinRods of length b joined end to end (a structure, not a sub-unit — the
+segments are rigid, the joints free). *Worm-like chain*: one WormLikeChain or WormLikeChainEV. The chain
+choices in the micelle, star, linear, bottle-brush and dendrimer templates include all chain types.
+
+## Polydisperse and thick sub-units, crowded copies
+
+Three options per element in the designer (inspector), or as arguments of `Structure.add` / `link`:
+
+**Polydisperse** (`poly=True`, parameter `sigma_<tag>`): a Schulz–Zimm distribution of the mass m of each
+such sub-unit (mean 1, relative width σ). Sizes scale with m (`MASS_SCALING`: chain length ∝ m,
+Rg ∝ m^ν, sphere R ∝ m^{1/3}, …), the excess scattering length with m. Each sub-unit's F, A and Ψ are averaged
+independently, ⟨m²F⟩, ⟨mA⟩, ⟨Ψ⟩ — exact for independent polydispersity of the sub-units, because every term of
+the SEB sum contains each sub-unit at most once. The structure is normalised by (Σβ)² + Σβ²σ², so F(0) = 1.
+Quadrature: generalised Gauss–Laguerre (σ ≥ 0.1) or Gauss–Hermite (σ < 0.1), 32 nodes.
+
+**Thick** (`thick=True`, parameter `Rc_<tag>`): a cylindrical cross-section of radius Rc for chains, rods and
+rings, in the usual decoupling approximation: F × [2J₁(qRc)/(qRc)]², A × 2J₁(qRc)/(qRc), Ψ unchanged.
+
+**Copies see each other** (Array pattern, parameter `vex_<array>`, 0 ≤ φ < 1): the copies of an Array
+(e.g. the chains of a micelle) exclude each other's volume. The interference between two different copies I, J
+becomes
+
+β_I β_J [(1 + k) A_I Ψ…Ψ A_J − k F_c(q)],  k = φ/(n − 1),
+
+with F_c the normalised scattering of one copy, n the number of copies. The added −k F_c is a correlation hole:
+at q = 0 the term is unchanged (k cancels), so F(0) = 1 and the forward scattering stays that of the mass; at
+higher q it lowers the cross terms by up to φ of the self-scattering, as excluded volume does. With φ < 1 the
+intensity stays positive. This is a form in the spirit of Pedersen & Gerstenberg (Macromolecules 29 (1996)
+1363) for block copolymer micelles, applied to any Array; it is not the RPA form used there, and the tree
+algorithm and the pair sum agree to rounding (tests). Arrays nested in arrays work (innermost groups first).
+In code: `s.interact('vex_name')` and `copy=[(group, index, 'vex_name'), ...]` on each sub-unit of a copy; the
+designer writes this.
 
 ## Validation against pyseb 0.4.0
 

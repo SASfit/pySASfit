@@ -17,6 +17,18 @@ work without it are listed here.
    :members:
 ```
 
+## SESANS and multiple scattering (Hankel transforms)
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.hankel
+   :members: SESANSTransform, MSASTransform, make_transform, hankel_weights, log_grid, sphere_sesans
+```
+
+```{eval-rst}
+.. automodule:: pysasfit.core.sesans_io
+   :members: load_sesans, SESANSData, is_sesans_file
+```
+
 ## Integration of size distributions
 
 ```{eval-rst}

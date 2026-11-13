@@ -79,6 +79,10 @@ class OZWidget(QtWidgets.QTabWidget):
                 print(f"[oz gui] optional tab '{tabLabel}' unavailable:\n{tb}", file=sys.stderr)
                 self.addTab(_error_widget(tabLabel, tb), f"{tabLabel} (error)")
 
+        from ...core.scrolling import scroll_inside
+        for i in range(self.count()):            # scroll bars instead of a minimum window size
+            scroll_inside(self.widget(i))
+
         from ...core import pycode
         pycode.install(self)
 

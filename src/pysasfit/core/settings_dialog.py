@@ -60,6 +60,21 @@ class _Row:
             browse.clicked.connect(self._browse)
             bl.addWidget(w, 1)
             bl.addWidget(browse)
+        elif s.kind == "colour":
+            # #RRGGBB with a button that shows the colour and opens the colour chooser
+            self.box = QtWidgets.QWidget(parent)
+            bl = QtWidgets.QHBoxLayout(self.box)
+            bl.setContentsMargins(0, 0, 0, 0)
+            w = QtWidgets.QLineEdit(self.box)
+            w.setMaximumWidth(90)
+            self.swatch = QtWidgets.QToolButton(self.box)
+            self.swatch.setFixedSize(44, 22)
+            self.swatch.setToolTip("choose the colour")
+            self.swatch.clicked.connect(self._pick_colour)
+            w.textChanged.connect(lambda _t: self._show_colour())
+            bl.addWidget(w)
+            bl.addWidget(self.swatch)
+            bl.addStretch(1)
         else:
             w = QtWidgets.QLineEdit(parent)
             w.setMaximumWidth(140)
@@ -86,6 +101,23 @@ class _Row:
     def editor(self):
         """The widget placed in the grid (the line edit, or its box with the browse button)."""
         return getattr(self, "box", self.w)
+
+    def _show_colour(self):
+        try:
+            c = self.s.coerce(self.w.text().strip())
+        except ValueError:
+            c = "transparent"
+        self.swatch.setStyleSheet(f"QToolButton {{ background: {c}; border: 1px solid #808080; }}")
+
+    def _pick_colour(self):
+        from PySide6 import QtGui
+        try:
+            start = QtGui.QColor(self.s.coerce(self.w.text().strip()))
+        except ValueError:
+            start = QtGui.QColor(self.s.default)
+        c = QtWidgets.QColorDialog.getColor(start, self.w, self.s.label)
+        if c.isValid():
+            self.w.setText(c.name().upper())
 
     def _browse(self):
         start = self.w.text().strip() or self.s.effective_placeholder()
@@ -128,7 +160,7 @@ class _Row:
         f = self.label.font()
         f.setBold(ok and v != self.s.default)
         self.label.setFont(f)
-        if self.s.kind in ("float", "str", "file"):
+        if self.s.kind in ("float", "str", "file", "colour"):
             self.w.setStyleSheet("" if ok else "background: #ffd0d0")
 
 

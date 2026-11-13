@@ -127,3 +127,44 @@ def test_unknown_optimiser_keeps_the_default(explorer, tmp_path):
     d["fit"]["backend"] = "not-installed-here"
     project.load_dict(explorer, d)
     assert explorer.fit_panel.backend.currentData() in explorer.fit_panel.available
+
+
+def test_last_session_keeps_model_and_data_without_calculating(explorer, tmp_path, monkeypatch):
+    """Closing and starting again: the model, its parameters and the data sets are back; the curve is not
+    calculated until Calculate is pressed."""
+    from PySide6 import QtWidgets
+
+    from pysasfit.studio import explorer as E
+
+    monkeypatch.setattr(E.ModelExplorer, "_session_path", staticmethod(lambda: str(tmp_path / "s.sasstudio")))
+    monkeypatch.setattr(E.ModelExplorer, "_layout_path", staticmethod(lambda: str(tmp_path / "layout.json")))
+    q = _session(explorer)
+    before = explorer.fit_selection()
+    explorer.save_session()                      # what closing the launcher does
+
+    other = E.ModelExplorer("ff_sphere")
+    try:
+        calls = []
+        monkeypatch.setattr(other, "_compute", lambda *a, **k: calls.append(1) or (_ for _ in ()).throw(AssertionError))
+        assert other.restore_session()
+        for _ in range(5):
+            QtWidgets.QApplication.processEvents()
+        assert not calls and not other._timer.isActive()             # nothing calculated
+        assert other._pending and other.calc_btn.text() == "Calculate *"
+        assert [p.label() for p in other.panels()] == [p.label() for p in explorer.panels()]
+        assert other.panels()[0].scale_row.value == 1.7 and other.bg_row.value == 0.01
+        assert other.fit_selection() == before
+        assert len(other.datasets) == 1 and other.datasets[0]["name"] == "x.dat"
+        np.testing.assert_allclose(other.datasets[0]["q"], q)
+        assert other.datasets[0].get("artist") is not None           # the data are shown
+        assert other.fit_panel.constraints.toPlainText() == "c1_scale < 5"
+        monkeypatch.undo()
+        monkeypatch.setattr(E.ModelExplorer, "_session_path", staticmethod(lambda: str(tmp_path / "s.sasstudio")))
+        monkeypatch.setattr(E.ModelExplorer, "_layout_path", staticmethod(lambda: str(tmp_path / "layout.json")))
+        other.calc_btn.click()                                        # the user asks: now it is calculated
+        assert other._last is not None and other.calc_btn.text() == "Calculate"
+        other.forget_session()
+        assert not (tmp_path / "s.sasstudio").exists()
+    finally:
+        other.close()
+        other.deleteLater()

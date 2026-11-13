@@ -658,6 +658,29 @@ Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
 - **denss-all: cores (start value)** — `density.cores` · factory: **4** · range: 1 … 256  
   Start value of the number of maps that denss-all computes in parallel (its -j option). Each map needs one core and its own memory (grids of 64³ and more need several hundred MB).
 
+### pyDENSSmulti
+
+#### Runs
+
+- **folder for the runs** — `densitymulti.workdir` · factory: **denssmulti_runs next to the preferences file** (the dialog shows the full path) · text  
+  Every run of the pyDENSSmulti panel gets its own sub-folder here (date, time, scheme, number of contrasts) with the maps (one MRC file per component, per contrast, the support; the SLD map of the averaging scheme), the fits of every curve and a summary (multi_summary.json); several maps: the average and every single map in map_xx. File → Open a result folder reads them back. Empty: denssmulti_runs next to the pySASfit preferences file.
+
+- **maps computed at the same time (start value)** — `densitymulti.threads` · factory: **4** · range: 1 … 256  
+  Start value of the number of maps computed at the same time when several maps are averaged. Each map needs its own memory (a 64³ grid with four contrasts: about 100 MB).
+
+### pySASscout
+
+#### Results store
+
+- **folder of the results store** — `scout.store` · factory: **scout_store next to the preferences file** (the dialog shows the full path) · text  
+  Folder of the results store of pySASscout. Every fitted candidate and every search is written there (one small file per fit, grouped by curve), and fits found there are reused: repeating a search, continuing one that was stopped, or adding models only fits what is new. The folder has relative paths only, so it can be copied or moved (also to a network drive or a cluster) and then named here; two stores are merged by copying one into the other. Empty: scout_store next to the pySASfit preferences file.
+
+- **reuse stored fits (start value)** — `scout.reuse` · factory: **on** · switch  
+  Take a candidate from the results store instead of fitting it again when the curve, the candidate, the fit options (starts, seed, background, error scale) and the SASfit build are the same. Off: every candidate is fitted again and the stored fit is replaced. Start value of the check box on the pySASscout panel.
+
+- **searches kept per curve** — `scout.keep_runs` · factory: **20** · range: 1 … 10000  
+  Number of searches kept per curve in the results store (the newest ones; the fits themselves are kept independently of this). A stored search is the complete ranking with all curves, a few 10 kB.
+
 ### Appearance
 
 #### Title bars of the panels (label … hide cross)
@@ -667,6 +690,16 @@ Formerly pySASbox: values saved under `sasbox.…` are read as `toolbox.…`.
 
 - **colour (#rrggbb or name)** — `appearance.panel_title.colour` · factory: **#0078d7** · text  
   Colour of the panel title bars: #rrggbb (e.g. #0078d7 Windows 10/11 blue, #2b579a Word blue, #1e3a5f dark blue) or a colour name (steelblue). The text turns white on dark colours, dark on light ones. An invalid value falls back to #0078d7.
+
+### pySASfit window
+
+#### Side bar (the column of tool icons)
+
+- **background of the tool in front** — `launcher.sidebar.selected` · factory: **#FFF8C5** · colour #RRGGBB  
+  Background of the entry of the tool in front in the side bar (light system theme), as #RRGGBB; the button next to the field opens the colour chooser. The tool names are written in the colours of the logos (grey py and ending, the core in the tool's colour), so the background has to be light: the factory value, a pale yellow, keeps every name at a contrast of at least 3 : 1 (the grey parts 4.5 : 1), within a few per cent of what white gives. Pale green (#EAF7EA) and pale orange are slightly lower (orange pyTOOLbox about 2.9 : 1); medium and saturated colours such as the blue selection colour of Windows make the names unreadable. Applied when the preferences are saved.
+
+- **… on a dark system theme** — `launcher.sidebar.selected_dark` · factory: **#2B2B2B** · colour #RRGGBB  
+  The same for a dark system theme, where the names use the lighter colour set: the background has to be dark. With the factory value every name has a contrast of at least 4.5 : 1. Applied when the preferences are saved.
 
 ### Shared numerics
 

@@ -405,11 +405,16 @@ register(T, TT, "Calculation and fit (pySEBpolymers)", [
 # pyATsas (ATSAS programs)
 # ---------------------------------------------------------------------------
 def _atsas_found():
+    # the result of the last search only (no search when the preferences open; pyATsas: Search again)
     try:
-        from ..atsas.core import atsas_root
-        return f"{atsas_root()} (found automatically)"
+        from ..atsas.core import cached_atsas
+        b = cached_atsas()
     except Exception:  # noqa: BLE001
-        return "not found automatically"
+        b = None
+    if b is None:
+        return "not found yet (pyATsas: Search again)"
+    root = b.parent if b.name.lower() == "bin" else b
+    return f"{root} (found automatically)"
 
 
 T, TT = "atsas", "pyATsas"
@@ -427,12 +432,15 @@ register(T, TT, "ATSAS installation and runs", [
 # pyDENsity (DENSS)
 # ---------------------------------------------------------------------------
 def _denss_found():
+    # the result of the last search only (no Python is started; pyDENsity: Search again)
     try:
-        from ..density.core import find_denss
-        i = find_denss()
-        return f"{i.python} (DENSS {i.version})"
+        from ..density.core import cached_denss
+        i = cached_denss()
     except Exception:  # noqa: BLE001
-        return "DENSS not found for this Python"
+        i = None
+    if i is None:
+        return "not found yet (pyDENsity: Search again)"
+    return f"{i.python} (DENSS {i.version})"
 
 
 T, TT = "density", "pyDENsity"
@@ -452,6 +460,17 @@ register(T, TT, "Runs", [
     S("densitymulti.workdir", "", "folder for the runs", "Empty: denssmulti_runs next to the preferences file.",
       kind="str", placeholder=lambda: _next_to_preferences("denssmulti_runs")),
     S("densitymulti.threads", 4, "maps computed at the same time (start value)", "", kind="int", lo=1, hi=256),
+])
+
+# ---------------------------------------------------------------------------
+# pySASscout (model search)
+# ---------------------------------------------------------------------------
+T, TT = "scout", "pySASscout"
+register(T, TT, "Results store", [
+    S("scout.store", "", "folder of the results store", "Empty: scout_store next to the preferences file.",
+      kind="str", placeholder=lambda: _next_to_preferences("scout_store")),
+    S("scout.reuse", True, "reuse stored fits (start value)", "", kind="bool"),
+    S("scout.keep_runs", 20, "searches kept per curve", "", kind="int", lo=1, hi=10000),
 ])
 
 # ---------------------------------------------------------------------------
@@ -504,4 +523,14 @@ register(T, TT, "Background models: start values of fitted terms (SLD profile)",
     S("numerics.background.powerlaw_level", 0.05, "power law A q^-n: A = level × I(q_min) q_min^n", "",
       lo=1e-6, hi=10, log=True),
     S("numerics.background.oz_level", 0.05, "Ornstein–Zernike: I_L = level × max I", "", lo=1e-6, hi=10, log=True),
+])
+
+
+# ---------------------------------------------------------------------------
+# pySASfit window (the launcher)
+# ---------------------------------------------------------------------------
+T, TT = "launcher", "pySASfit window"
+register(T, TT, "Side bar (the column of tool icons)", [
+    S("launcher.sidebar.selected", "#FFF8C5", "background of the tool in front", "", kind="colour"),
+    S("launcher.sidebar.selected_dark", "#2B2B2B", "… on a dark system theme", "", kind="colour"),
 ])

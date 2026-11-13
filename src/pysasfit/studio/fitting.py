@@ -17,7 +17,10 @@ table of fit parameters:
   term ``2 ln x`` that the least-squares backends (``scipy``, ``dfols``) cannot use.
 
 Parameters are addressed like in :class:`~pysasfit.studio.Pipeline`: ``"background"``, ``"scale.<i>"`` and
-``"<i>.<ff|sd|sq>.<name>"`` for contribution ``i`` of a model.
+``"<i>.<ff|sd|sq>.<name>"`` for contribution ``i`` of a model; ``"transform.thickness"`` and ``"transform.wavelength"``
+for a model with a SESANS or MSAS transform (:mod:`pysasfit.studio.hankel`). A data set of a SESANS model has the
+spin-echo lengths in place of q. Variable projection leaves the parameters of data sets whose model is not linear in
+the scales (SESANS P/P0, MSAS) to the optimiser.
 
     prob = FitProblem()
     prob.add_dataset("a.dat", model_a, name="a")
@@ -113,6 +116,12 @@ def locate(model, address):
     if address in ("bg.A", "bg.alpha"):  # power-law background  A * q**(-alpha)
         attr = "bg_" + address[3:]
         return (lambda: float(getattr(model, attr)), lambda v: setattr(model, attr, float(v)))
+    if address in ("transform.thickness", "transform.wavelength"):  # SESANS / MSAS: sample thickness, wavelength
+        attr = address.split(".", 1)[1]
+        t = getattr(model, "transform", None)
+        if t is None or np.ndim(getattr(t, attr, None)) != 0:
+            raise KeyError(f"'{address}': the model has no transform with a single {attr}")
+        return (lambda: float(getattr(t, attr)), lambda v: setattr(t, attr, float(v)))
     parts = address.split(".")
     if parts[0] == "scale":
         i = int(parts[1])
@@ -682,11 +691,15 @@ class FitProblem:
 
         if not p.address or p.links:            # global parameters stay with the optimiser
             return None
+        if any(not getattr(self.datasets[k].model, "is_linear", True) for k in p.datasets):
+            return None                         # SESANS P/P0, MSAS: not linear in scales and amplitudes
         parts = p.address.split(".")
         try:
             if p.address == "background":
                 return ("bg", None)
             if p.address == "bg.A":
+                if any(getattr(self.datasets[k].model, "domain", "q") != "q" for k in p.datasets):
+                    return None                 # not used by SESANS
                 return ("bgA", None)
             if parts[0] == "scale":
                 return ("scale", int(parts[1]))
@@ -735,6 +748,19 @@ class FitProblem:
                         pw_col = j
                     else:
                         bg_col = j
+            if not getattr(d.model, "is_linear", True):  # P/P0, MSAS: no linear parameter here (see _linear_kind)
+                try:
+                    I = np.asarray(d.model.intensity(d.q), float)
+                    if not np.all(np.isfinite(I)):
+                        raise FloatingPointError("non-finite model values")
+                except FitCancelled:
+                    raise
+                except Exception as exc:  # noqa: BLE001
+                    self.last_error = f"{type(exc).__name__}: {exc}"
+                    return np.full(total, BIG)
+                Ms.append(np.zeros((d.q.size, nl)))
+                bs.append((d.I - I) * wt)
+                continue
             try:
                 parts, bg = d.model.components(d.q, set(n_cols))
                 scales = d.model.scales
@@ -993,7 +1019,8 @@ class _Context:
         hi = np.array([ps[i].upper for i in idx], float)
         x0 = np.clip(self.vals0[idx], lo, hi)
         width = np.where(np.isfinite(hi - lo), hi - lo, 1.0)
-        scale = np.where(np.abs(x0) > 1e-12, np.abs(x0), np.where(width > 0, width, 1.0))
+        # the start value is the scale (also a tiny one: N of a SASfit distribution in 1/Å³, scales in absolute units)
+        scale = np.where(np.abs(x0) > 1e-300, np.abs(x0), np.where(width > 0, width, 1.0))
         return x0, scale, lo, hi
 
     def final_vals(self, u):

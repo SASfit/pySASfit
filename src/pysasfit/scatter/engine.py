@@ -245,19 +245,25 @@ def _cpp_norm(shape, g, phiw, peakpar):
     return float(np.sum(wq * f * np.sin(psi)))
 
 
-def cpp_lattice_factor(p, c, qx, qy, qz, delta=None, para=None):
+def cpp_lattice_factor(p, c, qx, qy, qz, delta=None, para=None, powder=None):
     """Z(q) of crystal ``c`` (reflections in the lab frame of the q vectors) in the CrystalScatter form above.
     delta / para: peak width and paracrystal coefficient (default: from :func:`peak_delta`).
 
     Reflections of equal |G| share the radial factor and the normalisation; the angles to all reflections of a
     shell come from one matrix product.  Gaussian factors are evaluated only where they exceed ~1e-20 of their
-    maximum (exact to that level); Lorentzian-type factors everywhere (long tails)."""
+    maximum (exact to that level); Lorentzian-type factors everywhere (long tails).
+
+    powder: no azimuthal factor (every reflection spread uniformly over its sphere |q| = g: Debye-Scherrer
+    rings, exact orientation average of this form).  Default: True for Ordis = isotropic, where EditAzi does
+    not apply."""
     shape = int(p["ComboBoxPeak"])
     peakpar = float(p.get("EditPeakPar", 0.0) or 0.0)
     if delta is None:
         delta, para = peak_delta(p, c.kind)
     azi = float(p.get("EditAzi", 0.0) or 0.0)
-    phiw = 4.0 / azi if azi > 0 else np.inf
+    if powder is None:
+        powder = int(p.get("Ordis", 7)) == 7
+    phiw = 4.0 / azi if azi > 0 and not powder else np.inf
     qx, qy, qz = (np.asarray(a, float) for a in (qx, qy, qz))
     shp = np.broadcast(qx, qy, qz).shape
     Q = np.stack([np.broadcast_to(a, shp).ravel() for a in (qx, qy, qz)], 1)
@@ -472,7 +478,7 @@ def intensity_1d(p, q):
         I = _with_sf(p, shape, qq, P)
     else:
         beta = shape.beta(qq) if hasattr(shape, "beta") else 1.0
-        Z = cpp_lattice_factor(p, c, qq, 0 * qq, 0 * qq) if _uses_cpp_lattice(p) else c.Z_powder(qq)
+        Z = cpp_lattice_factor(p, c, qq, 0 * qq, 0 * qq, powder=True) if _uses_cpp_lattice(p) else c.Z_powder(qq)
         I = P * (1 + beta * (Z - 1) * debye_waller(p, qq))
     return p["I0"] * I + p["Base"]
 

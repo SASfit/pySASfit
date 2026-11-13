@@ -43,6 +43,8 @@ def test_every_template_builds_in_the_panel(win):
     for name in T.TEMPLATES:
         win.template.setCurrentText(name)
         assert win.structure is not None and win.code_built == win.editor.toPlainText(), name
+        if win.curve[0] is None:              # the start template is built, not calculated (Calculate button)
+            win.recalc()
         q, I = win.curve
         assert np.all(np.isfinite(I)) and I[0] > 0.9, name
         names = [win.table.item(r, 0).text() for r in range(win.table.rowCount())]

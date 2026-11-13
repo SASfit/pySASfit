@@ -16,8 +16,10 @@ __all__ = ["TEMPLATES", "Option", "design_for", "code_for", "build", "default_va
 CORE_REF = {"SolidSphere": "surface", "ThinSphericalShell": "surface", "SolidSphericalShell": "surfaceo",
             "Spheroid": "surface", "SolidCylinder": "surface", "ThinDisk": "surface"}
 #: reference point of a chain at which it is grafted
-CHAIN_REF = {"GaussianPolymer": "end1", "ThinRod": "end1", "GaussianLoop": "contour"}
-LINEAR = ("GaussianPolymer", "ThinRod")
+CHAIN_REF = {"GaussianPolymer": "end1", "FloryPolymer": "end1", "ExcludedVolumePolymer": "end1",
+             "WormLikeChain": "end1", "WormLikeChainEV": "end1", "ThinRod": "end1", "GaussianLoop": "contour",
+             "FloryLoop": "contour"}
+LINEAR = ("GaussianPolymer", "FloryPolymer", "ExcludedVolumePolymer", "WormLikeChain", "WormLikeChainEV", "ThinRod")
 
 
 class Option:
@@ -33,7 +35,8 @@ def _micelle(o):
     d = Design("micelle")
     core = d.add_unit(o["core"], "core", tag="core")
     arr = d.add_pattern("Array", o["chain"], name="chains", tag="chain", n=o["n"],
-                        mode="same" if o["same_point"] else "independent", in_ref=CHAIN_REF[o["chain"]])
+                        mode="same" if o["same_point"] else "independent", in_ref=CHAIN_REF[o["chain"]],
+                        poly=o.get("poly", False), vex=o.get("vex", False))
     d.link(core.id, CORE_REF[o["core"]], arr.id, "anchor", "a")
     return d
 
@@ -84,6 +87,22 @@ def _brush(o):
     return d
 
 
+def _fjc(o):
+    from .graph import Design
+    d = Design("fjc")
+    d.add_pattern("Chain", "ThinRod", name="segments", tag="seg", n=o["n"], in_ref="end1", out_ref="end2",
+                  poly=o["poly"])
+    return d
+
+
+def _worm(o):
+    from .graph import Design
+    d = Design("worm")
+    d.add_unit(o["kind"], "worm", tag="worm").poly = o["poly"]
+    d.by_name("worm").thick = o["thick"]
+    return d
+
+
 def _rodcoil(o):
     from .graph import Design
     d = Design("rodcoil")
@@ -124,7 +143,10 @@ TEMPLATES = {
         Option("n", "chains", 20, lo=1, hi=5000),
         Option("core", "core", "SolidSphere", "choice", choices=_CORES),
         Option("chain", "chains are", "GaussianPolymer", "choice", choices=tuple(CHAIN_REF)),
-        Option("same_point", "all chains at one point", False, "bool")]),
+        Option("same_point", "all chains at one point", False, "bool"),
+        Option("poly", "polydisperse chains", False, "bool"),
+        Option("vex", "chains see each other", False, "bool",
+               tip="excluded volume between the chains (RPA-type, parameter vex_chains)")]),
     "Star polymer": (_star, [
         Option("n", "arms", 6, lo=1, hi=5000),
         Option("arm", "arms are", "GaussianPolymer", "choice", choices=LINEAR)]),
@@ -140,6 +162,13 @@ TEMPLATES = {
         Option("n", "backbone segments", 30, lo=1, hi=5000),
         Option("backbone", "backbone", "GaussianPolymer", "choice", choices=LINEAR),
         Option("side", "side chains", "GaussianPolymer", "choice", choices=LINEAR)]),
+    "Freely jointed chain": (_fjc, [
+        Option("n", "segments", 20, lo=1, hi=5000),
+        Option("poly", "polydisperse segments", False, "bool")]),
+    "Worm-like chain": (_worm, [
+        Option("kind", "model", "WormLikeChainEV", "choice", choices=("WormLikeChainEV", "WormLikeChain")),
+        Option("poly", "polydisperse (length)", False, "bool"),
+        Option("thick", "thick (cross-section)", False, "bool")]),
     "Rod–coil block copolymer": (_rodcoil, [Option("n", "coils", 1, lo=1, hi=2)]),
     "Vesicle with loops": (_vesicle, [Option("n", "loops", 10, lo=1, hi=5000)]),
     "Custom": (_custom, []),
@@ -174,7 +203,8 @@ def build(code):
     return s
 
 
-_DEFAULTS = {"beta": 1.0, "Rg": 20.0, "R": 40.0, "L": 100.0, "Ri": 30.0, "Ro": 40.0, "a": 30.0, "c": 60.0}
+_DEFAULTS = {"beta": 1.0, "nu": 0.588, "sigma": 0.2, "Rc": 2.0, "vex": 0.5, "b": 20.0, "Rg": 20.0, "R": 40.0,
+             "L": 100.0, "Ri": 30.0, "Ro": 40.0, "a": 30.0, "c": 60.0}
 
 
 def default_value(name):

@@ -23,6 +23,20 @@ optional background (a :class:`pysasfit.core.background.Background` or a
 constant), and optionally applies an instrumental resolution from
 :mod:`pysasfit.core.resolution` (Rician pinhole, slit, ...).
 
+``transform`` (SASfit's transform menu, :mod:`pysasfit.studio.hankel`) turns the
+scattering of the particles into what an instrument measures:
+
+* ``None`` -- I(q) itself;
+* a :class:`~pysasfit.studio.hankel.SESANSTransform` -- the model is evaluated at
+  spin-echo lengths δ (passed instead of q) and gives G(δ) - G(0) or P/P0; the
+  constant background is an offset of G(δ) - G(0), the power-law term is unused;
+* a :class:`~pysasfit.studio.hankel.MSASTransform` -- multiple small-angle
+  scattering of a sample of the given thickness, before resolution and background.
+
+A transform may also be given as a dictionary or name for
+:func:`~pysasfit.studio.hankel.make_transform`, e.g.
+``transform={"kind": "msas", "thickness": 0.1, "wavelength": 0.6}``.
+
 :class:`Pipeline` holds data sets and model functions and fits named
 parameters with ``scipy.optimize.least_squares``::
 
@@ -144,7 +158,12 @@ class ScatteringContribution:
             if p > 0:
                 x0 = max(x0, p)
         x = np.geomspace(x0 * 1e-4, x0 * 1e3, 1400)
-        w = np.abs(self.sd.evaluate_p(x, self.sd_p)) * x**self.x_power
+        sd_p = self.sd_p
+        k = self.amplitude_index()
+        if k is not None and sd_p[k] == 0:  # N = 0 (a fit switched the contribution off): the support is that of N = 1
+            sd_p = sd_p.copy()
+            sd_p[k] = 1.0
+        w = np.abs(self.sd.evaluate_p(x, sd_p)) * x**self.x_power
         if not np.any(w > 0):
             raise ValueError("size distribution is zero everywhere; give x_range")
         keep = np.nonzero(w > self.tail * w.max())[0]
@@ -237,7 +256,7 @@ class ScatteringContribution:
 
 class ModelFunction:
     def __init__(self, contributions=(), scales=None, background=0.0, resolution=None, bg_A=0.0, bg_alpha=4.0,
-                 active=None):
+                 active=None, transform=None):
         self.contributions = list(contributions)
         self.scales = list(scales) if scales is not None else [1.0] * len(self.contributions)
         # several data sets (SASfit): a contribution counts only where it is active; the others keep their place so
@@ -248,6 +267,31 @@ class ModelFunction:
         self.bg_alpha = float(bg_alpha)
         self.resolution = resolution
         self._bg_z = None
+        self.transform = transform
+
+    @property
+    def transform(self):
+        """SESANS / MSAS transform (see the module docstring) or None."""
+        return self._transform
+
+    @transform.setter
+    def transform(self, t):
+        if t is not None and not hasattr(t, "kind"):
+            from .hankel import make_transform
+
+            t = make_transform(t) if isinstance(t, (dict, str)) else t
+        self._transform = t
+
+    @property
+    def is_linear(self):
+        """True if the model is linear in the scales, the amplitudes N and the background (variable projection)."""
+        t = self._transform
+        return t is None or bool(getattr(t, "linear", False))
+
+    @property
+    def domain(self):
+        """``"q"`` or ``"delta"`` (SESANS: the model is evaluated at spin-echo lengths)."""
+        return getattr(self._transform, "domain", "q")
 
     def include(self, contribution, scale=1.0, active=True):
         self.contributions.append(contribution)
@@ -259,8 +303,8 @@ class ModelFunction:
         return i >= len(self.active) or bool(self.active[i])
 
     def power_term(self, q):
-        """The power-law part of the background, ``bg_A * q**(-bg_alpha)`` (0 while ``bg_A`` is 0)."""
-        if not self.bg_A:
+        """The power-law part of the background, ``bg_A * q**(-bg_alpha)`` (0 while ``bg_A`` is 0, and with SESANS)."""
+        if not self.bg_A or self.domain == "delta":
             return 0.0
         return self.bg_A * np.asarray(q, dtype=float) ** (-self.bg_alpha)
 
@@ -281,18 +325,35 @@ class ModelFunction:
             return b.value(q, self._bg_z)
         return b(q)
 
+    def _offset(self):
+        """The constant background as a number (the SESANS offset)."""
+        return float(self.background) if np.isscalar(self.background) else 0.0
+
     def components(self, q, unit_amplitude=()):
         """``([I_i(q)], background)``: every contribution without its scale factor, resolution applied.
 
         For the contributions in ``unit_amplitude`` the size-distribution amplitude N is set to 1 while
         evaluating (variable projection solves for it). The background is a scalar or an array like q.
+        With a linear transform (SESANS G(δ) - G(0)) the parts are the transformed contributions; a non-linear
+        transform (P/P0, MSAS) has no such decomposition (ValueError).
         """
         q = np.asarray(q, dtype=float)
+        t = self._transform
+        if t is not None and not self.is_linear:
+            raise ValueError(f"{t.kind}: the model is not a sum of its contributions")
+        if t is not None:  # SESANS G(δ) - G(0): each contribution on the Q grid, then transformed
+            k, Wt = t.weights(q)
+            raw, _bg = self._raw_components(k, unit_amplitude, None)
+            return [Wt @ v for v in raw], self._offset()
         qe, W = (q, None) if self.resolution is None else self.resolution.setup(q)
+        return self._raw_components(qe, unit_amplitude, W)[0], self._background(q)
+
+    def _raw_components(self, qe, unit_amplitude, W):
+        shape = qe.shape if W is None else (W.shape[0],)
         parts = []
         for i, c in enumerate(self.contributions):
             if not self.is_active(i):
-                parts.append(np.zeros(q.shape))
+                parts.append(np.zeros(shape))
                 continue
             k = c.amplitude_index() if i in unit_amplitude else None
             if k is not None:
@@ -304,7 +365,7 @@ class ModelFunction:
                 if k is not None:
                     c.sd_p[k] = old
             parts.append(v if W is None else W @ v)
-        return parts, self._background(q)
+        return parts, None
 
     def particles(self, q):
         q = np.asarray(q, dtype=float)
@@ -316,6 +377,17 @@ class ModelFunction:
 
     def intensity(self, q):
         q = np.asarray(q, dtype=float)
+        t = self._transform
+        if t is not None:
+            if t.domain == "delta":  # SESANS: q are spin-echo lengths
+                k, W = t.weights(q)
+                G = W @ np.asarray(self.particles(k), dtype=float) + self._offset()
+                return t.finish(q, G)
+            # MSAS: multiple scattering of the particles, then resolution and background
+            qe, Wr = (q, None) if self.resolution is None else self.resolution.setup(q)
+            k, _r, _w = t.weights(qe)
+            Ims = t.multiple(qe, np.asarray(self.particles(k), dtype=float), np.asarray(self.particles(qe), dtype=float))
+            return (Ims if Wr is None else Wr @ Ims) + self._background(q)
         if self.resolution is not None:
             qe, W = self.resolution.setup(q)
             Ip = W @ self.particles(qe)

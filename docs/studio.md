@@ -476,6 +476,30 @@ Background model: `background + A * q^(-alpha)`, alpha starts at 4 (Porod). Rows
 
 In the plot the background (constant + power law) is drawn as a dashed grey line; it is hidden when the background is zero and in the S(q) view.
 
+## SESANS and multiple small-angle scattering
+
+The **Transform** box of the Model panel is SASfit's *transform* menu (`sasfit.c`: `Gztransform`, `imMSAStransform`):
+`1` (I(Q)), `H{…}/2π` (SESANS G(δ) − G(0)), `Exp(λ²t·H{…}/2π)` (SESANS P/P0) and `MSAS` (multiple small-angle
+scattering of a slab). Units as in SASfit: I in 1/cm, thickness t in cm, wavelength λ in the reciprocal unit of Q.
+Every data set has its own transform settings; `.ses` files are read by `pysasfit.core.sesans_io.load_sesans` (SasView
+and Delft formats) and bring thickness, wavelength per point and Q acceptance. SESANS data sets are plotted against the
+spin-echo length; the plot shows the data sets on the axis of the current one. SESANS resolution: both Q integrals end
+at the acceptance Q_max, fixed (`q_accept`, z-acceptance) or 2π sin(θ_max)/λ per spin-echo length (`theta_max`,
+Theta_zmax). Hankel method: exact on linear pieces (default), FFTLog (`scipy.fft.fht`) or QDHT (zeros of J0), as
+SASfit's HANKEL_FFTLOG / HANKEL_QDHT and MSAS_FFTLOG / MSAS_QDHT; all cached as matrices. Defaults (method, grids,
+N points) in Settings → Integration… → "Hankel transform (SESANS, MSAS)", saved as setting `hankel`.
+
+Engine: `ModelFunction(…, transform=…)` with a `SESANSTransform` / `MSASTransform` of `pysasfit.studio.hankel` (or
+`make_transform("sesans" | "sesans_p" | "msas", …)`). The Hankel transforms integrate a piecewise-linear I(Q)·Q
+exactly against J0 (Filon-type), so the weights are one matrix per data set. MSAS splits off the single scattering and
+transforms only exp(φ) − 1 − φ; normalisation `incident` (× exp(−Σt), SASfit) or `transmission`. Fit addresses
+`transform.thickness`, `transform.wavelength`. Variable projection is used for SESANS G(δ) − G(0) (linear) and left out
+for P/P0 and MSAS. Project files store the transform and the SESANS data (additions to format version 1). Details,
+accuracy and examples: {doc}`studio_manual/sesans_msas`.
+
+The start value of a parameter is now its scale in the optimiser also when it is tiny (before: below 1e-12 the bound
+width was used, so a scale of 1e-18 in Å units could not be fitted without variable projection).
+
 ## Windows, background curve, size distributions
 
 - **Docks:** Model (left), Fit (bottom/right), Size distributions (right). The plot is the central widget.
@@ -586,9 +610,10 @@ Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not insta
 
 ## To do
 
-- **Hankel / SESANS:** wrap `sasfit_hankel` and `sasfit_integrate_ctm` with correctly typed strategy setters
-  (`N_Ogata` is an `int`), compute G(z) for any form factor, and port the Hankel-strategy benchmark from
-  sasfit-collab.
+- **Hankel / SESANS:** ~~compute G(z) for any form factor~~ (done in Python, `pysasfit.studio.hankel`: SESANS and MSAS,
+  see {doc}`studio_manual/sesans_msas`); FFTLog and QDHT added as methods; still open:
+  BESTLIME and the adaptive `sasfit_hankel` strategies, the Hankel-strategy benchmark from sasfit-collab, a thickness
+  fit box in the explorer.
 - **Parameter names:** take the names of the remaining built-in libsasfit functions from the SASfit Tcl GUI
   (`sasfit.vfs`). Today only `ff_sphere`, `sd_LogNorm` and `sq_HardSphere` have names; the others are addressed as
   `p0`, `p1`, ...

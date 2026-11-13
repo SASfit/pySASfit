@@ -10,6 +10,8 @@ inversion   Fredholm inversion: size distributions and p(r) (EM, maxent,
             Tikhonov, Bayesian evidence, ...)
 studio      the SASfit plugin functions (form factors, structure factors,
             size distributions) via ctypes, models and fitting (from SASstudio)
+scout       pySASscout: model search -- proposes and ranks form factor, size
+            distribution and structure factor for a measured curve
 oz          Ornstein-Zernike solvers, closures, polydisperse structure
             factors and SAS models, with a Qt GUI (from pyOZgui)
 sasred      SANS data reduction for SINQ SANS-I with exact error propagation,
@@ -36,7 +38,7 @@ import importlib
 
 __version__ = "0.2.0"
 
-_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "oz", "sasred", "morph", "toolbox", "atsas", "density", "densitymulti", "seb", "gui")
+_SUBPACKAGES = ("core", "sldprofile", "inversion", "studio", "scout", "oz", "sasred", "morph", "toolbox", "atsas", "density", "densitymulti", "seb", "gui")
 
 __all__ = list(_SUBPACKAGES)
 

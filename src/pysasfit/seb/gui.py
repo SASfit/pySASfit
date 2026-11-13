@@ -110,13 +110,19 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.docks["designer"].raise_()
         self.docks["iq"].raise_()
         self.docks["components"].raise_()
-        self.docks["sketch"].visibilityChanged.connect(lambda v: v and self._sketch_stale and self.draw_sketch())
+        self.docks["sketch"].visibilityChanged.connect(
+            lambda v: v and self._sketch_stale and getattr(self, "curve", (None,))[0] is not None
+            and self.draw_sketch())
         self._finish_docks()
         self.resize(1450, 900)
         self._sized = False
         self.hide_stray_tab_bars()
         self.on_template(self.template.currentText(), build=False)
-        self.build()
+        self._quiet = True                   # built, not calculated, at the start: Calculate
+        try:
+            self.build()
+        finally:
+            self._quiet = False
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -464,6 +470,12 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 d = {"value": 1.0, "fit": True, "lo": 0.0, "hi": np.inf}
             elif n == "background":
                 d = {"value": 0.0, "fit": False, "lo": -np.inf, "hi": np.inf}
+            elif n.startswith("nu_"):
+                d = {"value": T.default_value(n), "fit": False, "lo": 0.3, "hi": 1.0}
+            elif n.startswith("sigma_"):
+                d = {"value": T.default_value(n), "fit": False, "lo": 0.0, "hi": 3.0}
+            elif n.startswith("vex_"):
+                d = {"value": T.default_value(n), "fit": False, "lo": 0.0, "hi": 0.99}
             else:
                 d = {"value": T.default_value(n), "fit": False,
                      "lo": -np.inf if n.startswith("beta_") else 0.0, "hi": np.inf}
@@ -523,6 +535,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def recalc(self):
         if self.structure is None:
             return
+        if getattr(self, "_quiet", False):       # start / last session: shown, calculated on request only
+            self.curve = (None, None)
+            self.draw()
+            return
         try:
             q = self.q_model()
             I = self.model(q)
@@ -551,7 +567,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_ylabel("I(q)")
-        ax.legend(loc="best", fontsize="small")
+        if ax.get_legend_handles_labels()[0]:
+            ax.legend(loc="best", fontsize="small")
+        if q is None:
+            ax.text(0.5, 0.5, "press Calculate to compute I(q)" if self.structure is not None else "",
+                    transform=ax.transAxes, ha="center", va="center", color="0.5")
         ax.grid(True, which="both", alpha=0.25)
         if axr is not None and q is not None:
             try:
@@ -800,7 +820,16 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 "nq": self.nq.value(), "data": self.data["path"] if self.data else None,
                 "dock_state": self.dock_state()}
 
-    def apply_state(self, st):
+    def apply_state(self, st, calculate=True):
+        """Put back a saved state; ``calculate=False`` (last session at the start): no calculation."""
+        quiet = getattr(self, "_quiet", False)
+        self._quiet = not calculate
+        try:
+            self._apply_state(st)
+        finally:
+            self._quiet = quiet
+
+    def _apply_state(self, st):
         self.template.blockSignals(True)
         self.template.setCurrentText(st.get("template") or "Custom")
         self.template.blockSignals(False)
@@ -846,7 +875,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         except (OSError, ValueError):
             return False
         try:
-            self.apply_state(st)
+            self.apply_state(st, calculate=False)     # Calculate (button) computes the curve
             self._session_layout = bool(self.restore_dock_state(st.get("dock_state")))
         except Exception:  # noqa: BLE001 -- a broken session must not stop the tool
             self.log("last session could not be restored:\n" + traceback.format_exc())

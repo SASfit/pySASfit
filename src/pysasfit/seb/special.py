@@ -85,3 +85,65 @@ def disk_center_amp(x):
     """<sin(q r)/(q r)> over a uniform disk relative to its centre: 2(1-cos x)/x^2."""
     return _blend(x, lambda x: 2.0 * (1.0 - np.cos(x)) / x**2,
                   lambda x: 1 - x**2 / 12 + x**4 / 360, 1e-2)
+
+
+# ---------------------------------------------------------------------- chains with a Flory exponent
+def _series_E(U, nu, kmax=60):
+    """sum_k (-U)^k / (k! (2 nu k + 1))  -- small U."""
+    out = np.zeros_like(U)
+    term = np.ones_like(U)
+    for k in range(kmax):
+        out += term / (2 * nu * k + 1)
+        term = term * (-U) / (k + 1)
+        if np.all(np.abs(term) < 1e-17):
+            break
+    return out
+
+
+def _series_F(U, nu, kmax=60):
+    """sum_k (-U)^k / k! * 2 / ((2 nu k + 1)(2 nu k + 2))  -- small U."""
+    out = np.zeros_like(U)
+    term = np.ones_like(U)
+    for k in range(kmax):
+        out += term * 2.0 / ((2 * nu * k + 1) * (2 * nu * k + 2))
+        term = term * (-U) / (k + 1)
+        if np.all(np.abs(term) < 1e-17):
+            break
+    return out
+
+
+def flory_end(U, nu):
+    """int_0^1 exp(-U t^(2 nu)) dt = Gamma(a+1) P(a, U) / U^a, a = 1/(2 nu): the form-factor amplitude of a chain
+    with Flory exponent nu relative to an end (Hammouda's generalised Gaussian chain), U = q^2 <R^2>/6."""
+    a = 1.0 / (2.0 * nu)
+    lg = sp.gammaln(a + 1)
+    return _blend(U, lambda U: np.exp(lg + np.log(sp.gammainc(a, U)) - a * np.log(U)),
+                  lambda U: _series_E(U, nu), 0.5)
+
+
+def flory_ff(U, nu):
+    """Form factor of a chain with Flory exponent nu (Hammouda 1993):
+    (1/nu) [U^-a gamma(a, U) - U^-2a gamma(2a, U)], a = 1/(2 nu), gamma the lower incomplete gamma function."""
+    a = 1.0 / (2.0 * nu)
+    l1, l2 = sp.gammaln(a), sp.gammaln(2 * a)
+
+    def exact(U):
+        g1 = np.exp(l1 + np.log(sp.gammainc(a, U)) - a * np.log(U))
+        g2 = np.exp(l2 + np.log(sp.gammainc(2 * a, U)) - 2 * a * np.log(U))
+        return (g1 - g2) / nu
+    return _blend(U, exact, lambda U: _series_F(U, nu), 0.5)
+
+
+_LOOP_T, _LOOP_W = np.polynomial.legendre.leggauss(128)
+_LOOP_T = 0.5 * (_LOOP_T + 1.0)
+_LOOP_W = 0.5 * _LOOP_W
+
+
+def flory_loop_ff(W, nu):
+    """Form factor of a ring with Flory exponent nu: int_0^1 exp(-W [s(1-s)]^(2 nu)) ds (= 2 int_0^1/2),
+    W = q^2 b^2 N^(2 nu)/6. Gauss-Legendre in t with s = t^3/2 (points crowd at the contact s -> 0)."""
+    W = np.asarray(W, dtype=float)
+    s = 0.5 * _LOOP_T ** 3
+    jac = 1.5 * _LOOP_T ** 2
+    g = (s * (1 - s)) ** (2 * nu)
+    return 2.0 * (np.exp(-W[..., None] * g) * jac) @ _LOOP_W

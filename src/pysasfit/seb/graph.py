@@ -41,7 +41,7 @@ PATTERNS = ("Array", "Chain", "Generations")
 UNIT_KINDS = tuple(k for k in REGISTRY)
 PATTERN_PORTS = {"Array": ("anchor",), "Chain": ("start", "end"), "Generations": ("root",)}
 NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-_SHORT = {"GaussianPolymer": "chain", "GaussianLoop": "loop", "ThinRod": "rod", "SolidSphere": "sphere",
+_SHORT = {"GaussianPolymer": "chain", "GaussianLoop": "loop", "FloryPolymer": "fchain", "FloryLoop": "floop", "ThinRod": "rod", "SolidSphere": "sphere",
           "ThinSphericalShell": "shell", "SolidSphericalShell": "shell", "ThinCircle": "ring", "ThinDisk": "disk",
           "SolidCylinder": "cyl", "Spheroid": "spheroid", "Point": "point", "Array": "array", "Chain": "chainof",
           "Generations": "dendron"}
@@ -71,15 +71,17 @@ class Node:
     node or of the copies of a sub-unit element."""
 
     FIELDS = ("id", "type", "name", "kind", "tag", "x", "y", "element", "element_is_component", "n", "mode",
-              "in_ref", "out_ref", "f", "g", "gen_tags")
+              "in_ref", "out_ref", "f", "g", "gen_tags", "poly", "thick", "vex")
 
     def __init__(self, id, type, name, kind="", tag="", x=0.0, y=0.0, element="", element_is_component=False, n=10,
-                 mode="independent", in_ref="", out_ref="", f=3, g=3, gen_tags=True):
+                 mode="independent", in_ref="", out_ref="", f=3, g=3, gen_tags=True, poly=False, thick=False,
+                 vex=False):
         self.id, self.type, self.name, self.kind, self.tag = int(id), type, name, kind, tag
         self.x, self.y = float(x), float(y)
         self.element, self.element_is_component = element, bool(element_is_component)
         self.n, self.mode, self.in_ref, self.out_ref = int(n), mode, in_ref, out_ref
         self.f, self.g, self.gen_tags = int(f), int(g), bool(gen_tags)
+        self.poly, self.thick, self.vex = bool(poly), bool(thick), bool(vex)   # polydisperse, cross-section, EV
 
     @property
     def is_unit(self):
@@ -88,7 +90,7 @@ class Node:
     def to_dict(self):
         d = {k: getattr(self, k) for k in self.FIELDS}
         if self.is_unit:
-            for k in ("element", "element_is_component", "n", "mode", "in_ref", "out_ref", "f", "g", "gen_tags"):
+            for k in ("element", "element_is_component", "n", "mode", "in_ref", "out_ref", "f", "g", "gen_tags", "vex"):
                 d.pop(k)
         return d
 
@@ -347,7 +349,13 @@ class Design:
         if len(seen) != len(self.nodes):
             loose = [self.nodes[i].name for i in self.nodes if i not in seen]
             out.append("not connected: " + ", ".join(loose[:6]) + (" …" if len(loose) > 6 else ""))
+        from .structure import MASS_SCALING, THICK_KINDS
         for nd in self.nodes.values():
+            kind = nd.kind if nd.is_unit else (None if nd.element_is_component else nd.element)
+            if kind is not None and nd.thick and kind not in THICK_KINDS:
+                out.append(f"'{nd.name}': {kind} cannot be thick")
+            if kind is not None and nd.poly and kind not in MASS_SCALING:
+                out.append(f"'{nd.name}': {kind} cannot be polydisperse")
             if nd.is_unit:
                 continue
             if nd.element_is_component:
@@ -405,19 +413,21 @@ class Design:
         if probs:
             raise ValueError("; ".join(probs))
         used = self._uses(self.name)
+        labels = any(nd.type == "Array" and nd.vex for d in [self] + [self.components[c] for c in used]
+                     for nd in d.nodes.values())
         lines = [f"# design '{self.name}' (pySEBpolymers designer): {len(self.nodes)} nodes, "
                  f"{self.count_units()} sub-units"]
         if used:
-            lines += ["", "def attach(s, kind, new, at, tag):",
+            lines += ["", "def attach(s, kind, new, at, tag, **kw):",
                       "    \"\"\"add a sub-unit as new = 'name.ref[#label]', joined at the point at (None: not joined)\"\"\"",
                       "    if at is None:",
-                      "        s.add(kind, new.split('.')[0], tag=tag)",
+                      "        s.add(kind, new.split('.')[0], tag=tag, **kw)",
                       "    else:",
-                      "        s.link(kind, new, at, tag=tag)", ""]
+                      "        s.link(kind, new, at, tag=tag, **kw)", ""]
             for cname in _component_order(self, used):
-                lines += _component_function(self.components[cname]) + [""]
+                lines += _component_function(self.components[cname], labels) + [""]
         lines.append(f"s = Structure({self.name!r})")
-        lines += _Emitter(self, prefix="", sfx="").emit(entry=None)
+        lines += _Emitter(self, prefix="", sfx="", labels=labels, cp="[]").emit(entry=None)
         return "\n".join(lines) + "\n"
 
     def to_structure(self):
@@ -543,14 +553,14 @@ def _component_order(design, used):
     return out
 
 
-def _component_function(comp):
-    lines = [f"def {comp.name}(s, p, at, sfx='', via='in'):",
+def _component_function(comp, labels=False):
+    lines = [f"def {comp.name}(s, p, at, sfx='', via='in'" + (", cp=()" if labels else "") + "):",
              f"    \"\"\"component '{comp.name}': {_port_text(comp, 'in')}"
              + (f", out {_port_text(comp, 'out')}" if "out" in comp.ports else "")
              + " (names prefixed by p, tags suffixed by sfx)\"\"\""]
     vias = ["in"] + (["out"] if "out" in comp.ports else [])
     for k, via in enumerate(vias):
-        body = _Emitter(comp, prefix="{p}", sfx="{sfx}").emit(entry=(comp.ports[via], "at"))
+        body = _Emitter(comp, prefix="{p}", sfx="{sfx}", labels=labels, cp="list(cp)").emit(entry=(comp.ports[via], "at"))
         if len(vias) == 1:
             lines += ["    " + ln if ln else "" for ln in body]
         else:
@@ -569,8 +579,9 @@ class _Emitter:
 
     VARS = "ijkmn"
 
-    def __init__(self, design, prefix, sfx):
+    def __init__(self, design, prefix, sfx, labels=False, cp="[]"):
         self.d, self.P, self.S = design, prefix, sfx
+        self.labels, self.cp = labels, cp       # copy labels (only when an Array has excluded volume)
         self.addr = {}          # node id -> {port: address content (without label) , distributed}
         self.lines = []
         self.var = 0
@@ -582,6 +593,19 @@ class _Emitter:
 
     def tag(self, t):
         return t + self.S
+
+    def kw(self, nd, copy=None):
+        """Keyword arguments for the options of a sub-unit (node nd) and its copy labels."""
+        out = ""
+        if nd.poly:
+            out += ", poly=True"
+        if nd.thick:
+            out += ", thick=True"
+        if self.labels:
+            c = copy or self.cp
+            if c != "[]":
+                out += f", copy={c}"
+        return out
 
     # address of a port of a placed node, as an expression (string literal or variable)
     def address(self, nid, port, label):
@@ -631,31 +655,34 @@ class _Emitter:
         if nd.is_unit:
             cls = REGISTRY[nd.kind]
             add(f"# {nd.name}: {nd.kind}")
+            kw = self.kw(nd)
             if at is None:
-                add(f"s.add({nd.kind!r}, {_lit(P + nd.name)}, tag={_lit(self.tag(nd.tag))})")
+                add(f"s.add({nd.kind!r}, {_lit(P + nd.name)}, tag={_lit(self.tag(nd.tag))}{kw})")
             elif at == "at":            # entry of a component function: at may be None
                 new = P + nd.name + "." + port + (f"#{label}" if cls.is_distributed(port) else "")
-                add(f"attach(s, {nd.kind!r}, {_lit(new)}, at, {_lit(self.tag(nd.tag))})")
+                add(f"attach(s, {nd.kind!r}, {_lit(new)}, at, {_lit(self.tag(nd.tag))}{kw})")
             else:
                 new = P + nd.name + "." + port + (f"#{label}" if cls.is_distributed(port) else "")
-                add(f"s.link({nd.kind!r}, {_lit(new)}, {at}, tag={_lit(self.tag(nd.tag))})")
+                add(f"s.link({nd.kind!r}, {_lit(new)}, {at}, tag={_lit(self.tag(nd.tag))}{kw})")
             self.addr[nd.id] = {r: (P + nd.name + "." + r, cls.is_distributed(r)) for r in cls.references()}
             return
         getattr(self, "_" + nd.type.lower())(nd, port, at, host)
 
-    def _element(self, nd, name_content, at, sfx_extra="", via="in"):
+    def _element(self, nd, name_content, at, sfx_extra="", via="in", copy=None):
         """Code that adds one element copy named name_content (f-string content) at the expression at."""
         if nd.element_is_component:
             sfx = self.S + sfx_extra
             return [f"{nd.element}(s, {_lit(name_content + '_')}, {at}, sfx={_lit(sfx)}"
-                    + (f", via={via!r})" if via != "in" else ")")]
+                    + (f", via={via!r}" if via != "in" else "")
+                    + (f", cp={copy or self.cp}" if self.labels else "") + ")"]
         ref = nd.in_ref if via == "in" else nd.out_ref
         dist = REGISTRY[nd.element].is_distributed(ref)
         new = name_content + "." + ref + ("#c" if dist else "")
         tag = _lit(self.tag(nd.tag) + sfx_extra)
+        kw = self.kw(nd, copy)
         if at == "None":
-            return [f"s.add({nd.element!r}, {_lit(name_content)}, tag={tag})"]
-        return [f"s.link({nd.element!r}, {_lit(new)}, {at}, tag={tag})"]
+            return [f"s.add({nd.element!r}, {_lit(name_content)}, tag={tag}{kw})"]
+        return [f"s.link({nd.element!r}, {_lit(new)}, {at}, tag={tag}{kw})"]
 
     def _elem_port(self, nd, name_content, which):
         """(address content, distributed) of the element's in/out point."""
@@ -681,9 +708,14 @@ class _Emitter:
         else:
             target = at
             how = "all at the same point"
-        self.lines.append(f"# {nd.name}: {nd.n} x {what}, {how}")
+        self.lines.append(f"# {nd.name}: {nd.n} x {what}, {how}"
+                          + (f"; excluded volume between the copies (vex_{nd.name})" if nd.vex else ""))
+        copy = None
+        if nd.vex:
+            self.lines.append(f"s.interact({nd.name!r})")
+            copy = f"{self.cp} + [({_lit(self.P + nd.name)}, {i}, {nd.name!r})]"
         self.lines.append(f"for {i} in range({nd.n}):")
-        self.lines += ["    " + c for c in self._element(nd, self.P + nd.name + "{" + i + "}", target)]
+        self.lines += ["    " + c for c in self._element(nd, self.P + nd.name + "{" + i + "}", target, copy=copy)]
         self.addr[nd.id] = {"anchor": (base, dist)}
 
     def _chain(self, nd, port, at, host):

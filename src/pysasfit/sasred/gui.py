@@ -1229,6 +1229,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         if prefs.get("sasred.table.autofill"):
             self.table_panel.on_fill()
         self.check_all_geometries()
+        if getattr(self, "_unread", None):
+            self._restore_session_tables()
         bad = sum(e.raw is None for e in self.entries)
         self.statusBar().showMessage(f"{len(self.entries)} runs in {folder}" + (f", {bad} unreadable" if bad else ""),
                                      10000)
@@ -2448,7 +2450,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
 
     # ------------------------------------------------------------------ session (launcher hooks)
     def _session(self):
-        return {"folder": self.folder, "xc": self.xc.value(), "yc": self.yc.value(),
+        out = {"folder": self.folder, "xc": self.xc.value(), "yc": self.yc.value(),
                 "beamstop_radius_px": self.bs_radius.value(), "beamstop_shape": self.bs_shape.currentData(),
                 "nbins": self.nbins.value(),
                 "prefs_at_save": {k: prefs.get(k) for k in self._PANEL_PREFS},
@@ -2469,6 +2471,10 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 "tables": dict(self.table_panel.to_dict(), folder=self.folder),
                 "table_tab": self.table_panel.tabs.currentIndex(),
                 "dock_state": self.dock_state(), "layout_version": LAYOUT_VERSION}
+        u = getattr(self, "_unread", None)
+        if u and not self.folder:           # the last folder was not read in this session: keep it as it was
+            out.update(folder=u["folder"], tables=u["tables"], table_tab=u.get("table_tab"))
+        return out
 
     @staticmethod
     def _session_mask_path():
@@ -2608,19 +2614,32 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 self.centres[k] = GeometryCentre(k, float(x), float(y), 0.0, 0.0, [], str(src))
             except (TypeError, ValueError):
                 pass
-        if s.get("folder") and os.path.isdir(s["folder"]):
-            self.set_folder(s["folder"])
-            tb = s.get("tables") or {}
-            if tb.get("geometries") and os.path.normpath(tb.get("folder") or "") == os.path.normpath(self.folder):
-                try:                        # the reduction tables as they were, with every change by hand
-                    self.table_panel.from_dict(tb)
-                    i = s.get("table_tab")
-                    if isinstance(i, int) and 0 <= i < self.table_panel.tabs.count():
-                        self.table_panel.tabs.setCurrentIndex(i)
-                    self.log("reduction tables of the last session restored")
-                except Exception as exc:  # noqa: BLE001 -- the session is a convenience
-                    self.log(f"reduction tables of the last session not restored: {exc}")
+        if s.get("folder"):
+            # the folder is not read now (reading the headers of every run takes long): Rescan reads it, and
+            # then the reduction tables of the last session are put back
+            self.folder_edit.setText(s["folder"])
+            self._unread = {"folder": s["folder"], "tables": s.get("tables") or {}, "table_tab": s.get("table_tab")}
+            self.log(f"last raw-data folder: {s['folder']} -- press Rescan to read its runs "
+                     "(the reduction tables of the last session are restored then)")
+            self.statusBar().showMessage("last folder not read yet: press Rescan", 15000)
         return True
+
+    def _restore_session_tables(self):
+        """After the folder of the last session was read: its reduction tables, with every change by hand."""
+        u = getattr(self, "_unread", None)
+        self._unread = None
+        if not u or os.path.normpath(u["folder"]) != os.path.normpath(self.folder):
+            return
+        tb = u["tables"]
+        if tb.get("geometries") and os.path.normpath(tb.get("folder") or "") == os.path.normpath(self.folder):
+            try:
+                self.table_panel.from_dict(tb)
+                i = u.get("table_tab")
+                if isinstance(i, int) and 0 <= i < self.table_panel.tabs.count():
+                    self.table_panel.tabs.setCurrentIndex(i)
+                self.log("reduction tables of the last session restored")
+            except Exception as exc:  # noqa: BLE001 -- the session is a convenience
+                self.log(f"reduction tables of the last session not restored: {exc}")
 
     def forget_session(self):
         for p in (_session_path(), self._session_mask_path()):

@@ -125,6 +125,11 @@ def find_denss(python: Optional[str] = None, refresh: bool = False) -> DenssInfo
     key = python or ""
     if key in _INFO and not refresh:
         return _INFO[key]
+    if not refresh:
+        info = cached_denss(python)
+        if info is not None:
+            _INFO[key] = info
+            return info
     cands = [python] if python else [sys.executable]
     if not python:
         for name in ("python3", "python", "py"):
@@ -155,11 +160,32 @@ def find_denss(python: Optional[str] = None, refresh: bool = False) -> DenssInfo
             lines = p.stdout.strip().splitlines()
             info = DenssInfo(py, lines[0] if lines else "?", lines[1] if len(lines) > 1 else "")
             _INFO[key] = info
+            from ..core import installcache
+            installcache.put("denss:" + key, {"python": info.python, "version": info.version,
+                                              "location": info.location})
             return info
         errors.append(f"{py}: {(p.stderr or p.stdout).strip().splitlines()[-1:] or ['import failed']}")
+    from ..core import installcache
+    installcache.forget("denss:" + key)
     raise DenssError("DENSS not found. Install it for the Python that runs pySASfit:\n"
                      f'    "{sys.executable}" -m pip install denss\n'
                      "or set Settings → Preferences → pyDENsity → Python with DENSS.\n" + "\n".join(errors))
+
+
+def cached_denss(python: Optional[str] = None) -> Optional[DenssInfo]:
+    """The installation found by the last search (kept between sessions), without starting a Python; None if
+    there was none or its interpreter / package file is gone."""
+    from ..core import installcache
+    c = installcache.get("denss:" + (python or ""))
+    if not c or not c.get("python"):
+        return None
+    py = c["python"]
+    if os.path.isabs(py) and not os.path.isfile(py):
+        return None
+    loc = c.get("location") or ""
+    if loc and not os.path.exists(loc):
+        return None
+    return DenssInfo(py, c.get("version") or "?", loc)
 
 
 def _no_window():

@@ -34,6 +34,11 @@ all functions by label, name or group.
 SASfit functions carry no units: use consistent ones (radius in nm <-> q in
 1/nm). The unit selector only changes the axis label.
 
+The "Transform" box is SASfit's transform menu: the curve and the fit can be the intensity I(q), the SESANS signal
+G(δ)-G(0) or P/P0 at spin-echo lengths δ (``.ses`` files), or the intensity with multiple small-angle scattering
+(MSAS) of a sample of given thickness (:mod:`pysasfit.studio.hankel`). Every data set has its own transform settings
+(SESANS files bring theirs); the box shows those of the current data set.
+
 Requires PySide6 and matplotlib (``pip install pysasfit[gui]``).
 """
 
@@ -69,6 +74,7 @@ from .library import (  # noqa: E402
 from .param_row import ParameterRow, clear_layout, slider_range  # noqa: E402,F401
 from .model import ModelFunction  # noqa: E402
 from . import multidata  # noqa: E402
+from .transform_panel import LENGTH_OF_Q_UNIT, TransformBox, build_transform, default_settings, domain_of  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
 from ..core.docking import DockMixin  # noqa: E402
 
@@ -205,6 +211,11 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.datasets = []  # data sets shown with the model and fitted: dicts q, I, sigma, name, bg, artists
         self.current_ds = 0  # the data set whose background the rows show (and whose contributions are drawn dotted)
         self.overrides = {}  # data set -> {address: value}: values of parameters fitted separately per data set
+        self._tr_global = default_settings()  # transform settings without data (with data: per data set)
+        self._tr_objs = {}  # data set (or "g") -> (settings key, transform object): keeps the weight matrices
+        self._ranges = {}  # domain ("q" / "delta") -> (min text, max text) of the curve
+        self._shown_domain = "q"
+        self._single = None  # MSAS: (x, single-scattering curve) of the last redraw
         self._linked_rows = []  # parameter rows set by a link to a global parameter (not editable)
         self.show_sliders = False
         self._busy = False  # a fit is running: the parameters must not change
@@ -307,6 +318,9 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             w.setVisible(False)
         gl.addLayout(dsrow)
         lv.addWidget(gbox)
+        self.transform_box = TransformBox()
+        self.transform_box.changed.connect(self._transform_edited)
+        lv.addWidget(self.transform_box)
 
         self.tabs = QtWidgets.QTabWidget()
         self.tabs.currentChanged.connect(self._schedule)
@@ -342,6 +356,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         (self.line,) = self.ax.plot([qmin, qmax], [1.0, 1.0], lw=1.8)  # placeholder: a log axis needs data to draw
         (self.bg_line,) = self.ax.plot([], [], ls="--", lw=1.2, color="0.45", zorder=2, label="background")
         self.bg_line.set_visible(False)
+        (self.single_line,) = self.ax.plot([], [], ls="-.", lw=1.2, color="0.35", zorder=2, label="single scattering")
+        self.single_line.set_visible(False)
         self.ax.grid(True, which="both", alpha=0.25)
         (self.res_line,) = self.ax_res.plot([], [], "o", ms=2.5, color="C0")
         self.ax_res.axhline(0.0, color="0.5", lw=0.8)
@@ -358,6 +374,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.units.addItems(Q_UNITS)
         self.units.setToolTip("Label only: SASfit functions are unit-agnostic, use consistent units.")
         self.units.currentIndexChanged.connect(self._update_labels)
+        self.units.currentIndexChanged.connect(
+            lambda *_: self.transform_box.set_length_unit(LENGTH_OF_Q_UNIT.get(self.units.currentText(), "")))
         self.npoints = QtWidgets.QSpinBox()
         self.npoints.setRange(10, 5000)
         self.npoints.setValue(200)
@@ -512,7 +530,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
     def _update_background(self, q):
         """Dashed grey line: constant background + A q^-alpha (only when there is one; of the current data set)."""
         bg = self.bg_row.value + self._power_term(q)
-        show = self.mode_combo.currentData() != "S" and bool(np.any(np.asarray(bg) != 0))
+        show = (self.mode_combo.currentData() != "S" and bool(np.any(np.asarray(bg) != 0))
+                and self._shown_domain == "q")
         if show:
             self.bg_line.set_data(q, np.broadcast_to(bg, np.shape(q)))
         self.bg_line.set_visible(show)
@@ -606,17 +625,29 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
 
     # ------------------------------------------------------- integration
     def _choose_integration(self):
-        dlg = IntegrationDialog({**DEFAULT_PRECISION, **user_precision()}, self.integration, self)
+        from . import hankel
+
+        dlg = IntegrationDialog({**DEFAULT_PRECISION, **user_precision()}, self.integration, self, hankel=hankel.defaults())
         if dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted:
             return
-        self._apply_integration(dlg.sasfit_result(), dlg.scipy_result(), save=dlg.remember.isChecked())
+        self._apply_integration(dlg.sasfit_result(), dlg.scipy_result(), save=dlg.remember.isChecked(),
+                                hankel_settings=dlg.hankel_result())
 
-    def _apply_integration(self, sasfit, scipy_settings, save=False):
-        """Use these libsasfit settings and size-distribution integration settings and redraw."""
+    def _apply_integration(self, sasfit, scipy_settings, save=False, hankel_settings=None):
+        """Use these libsasfit settings, size-distribution integration settings and Hankel-transform defaults and
+        redraw."""
+        from . import hankel
+
         try:
             configure_precision(save=save, **sasfit)
+            if hankel_settings:
+                hankel.set_defaults(**hankel_settings)
+                self._tr_objs = {}  # the transforms are rebuilt with the new defaults
+                self.transform_box._update_visible()
             if save:
                 integration.save_settings(scipy_settings)
+                if hankel_settings:
+                    hankel.save_settings(hankel.defaults())
         except OSError as exc:
             QtWidgets.QMessageBox.warning(
                 self, "Integration", f"The settings could not be saved ({exc}).\nThey are used for this session only."
@@ -663,9 +694,13 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
 
     def _initial(self, ff, sd, sq, extra=()):
         self._update_installation_label()
-        self.add_contribution(ff, sd, sq)
-        for item in extra:
-            self.add_contribution(*item)
+        auto, self._autocalc = getattr(self, "_autocalc", True), False   # nothing calculated at the start:
+        try:                                                              # Calculate (marked "Calculate *")
+            self.add_contribution(ff, sd, sq)
+            for item in extra:
+                self.add_contribution(*item)
+        finally:
+            self._autocalc = auto
         if not self._entries:
             self._status("No SASfit functions found. Run 'pysasfit-studio status' to check the installation.", True)
 
@@ -733,33 +768,89 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         from ..core import settings as prefs
         return os.path.join(os.path.dirname(prefs.settings_path()), "studio_layout.json")
 
+    @staticmethod
+    def _session_path():
+        from ..core import settings as prefs
+        return os.path.join(os.path.dirname(prefs.settings_path()), "studio_session" + project.SUFFIX)
+
     def save_session(self):
-        """Keep the panel arrangement (moved, stacked, detached, hidden panels) for the next start."""
+        """Keep the panel arrangement (moved, stacked, detached, hidden panels) and the work itself -- the
+        model with its parameters, the data sets, the fit settings -- for the next start."""
+        import json
         try:
-            import json
             p = self._layout_path()
             os.makedirs(os.path.dirname(p), exist_ok=True)
             with open(p, "w", encoding="utf-8") as fh:
                 json.dump({"dock_state": self.dock_state()}, fh)
         except (OSError, TypeError, ValueError):
             pass
-
-    def restore_session(self):
-        """Panel arrangement of the last session (the model itself is kept in project files)."""
+        if self._busy or not self.panels():      # a fit is running / nothing to keep: keep the last session
+            return
         try:
-            import json
+            d = project.to_dict(self)
+            d["project_path"] = self.project_path
+            tmp = self._session_path() + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(d, fh)
+            os.replace(tmp, self._session_path())        # never a half-written session
+        except Exception:  # noqa: BLE001 -- the session is a convenience
+            pass
+
+    def restore_session(self, content=True):
+        """The last session: panel arrangement, model, parameters, data sets and fit settings. Nothing is
+        calculated: the curve is computed when Calculate is pressed (the button shows ``Calculate *``).
+        ``content=False``: the panel arrangement only (a model or project was asked for)."""
+        import json
+        ok = False
+        d = None
+        if content:
+            try:
+                with open(self._session_path(), encoding="utf-8") as fh:
+                    d = json.load(fh)
+            except (OSError, ValueError):
+                d = None
+        if d:
+            auto, self._autocalc = getattr(self, "_autocalc", True), False     # restored, not calculated
+            try:
+                project.load_dict(self, d)
+                self.project_path = d.get("project_path") or None
+                if self.project_path:
+                    self.setWindowTitle(f"pySASfit model explorer - {os.path.basename(self.project_path)}")
+                self._status("last session restored (model and data); press Calculate to compute the curve")
+                ok = True
+            except Exception as exc:  # noqa: BLE001 -- e.g. functions missing in this SASfit installation
+                self._status(f"last session not restored: {type(exc).__name__}: {exc}", error=True)
+            finally:
+                self._autocalc = auto
+            self._timer.stop()
+            self._pending = True
+            if hasattr(self, "calc_btn"):
+                self.calc_btn.setText("Calculate *")
+            self._show_data_only()
+        try:
             with open(self._layout_path(), encoding="utf-8") as fh:
                 st = json.load(fh).get("dock_state")
         except (OSError, ValueError, AttributeError):
-            return False
+            return ok
         self._sized = True                    # no default sizes over the restored arrangement
-        return self.restore_dock_state(st)
+        return bool(self.restore_dock_state(st)) or ok
+
+    def _show_data_only(self):
+        """Scale the plot to the data of the restored session (the model curve is not calculated yet)."""
+        try:
+            if self.datasets:
+                self.ax.relim()
+                self.ax.autoscale_view()
+            self.canvas.draw_idle()
+        except Exception:  # noqa: BLE001 -- a drawing nicety
+            pass
 
     def forget_session(self):
-        try:
-            os.remove(self._layout_path())
-        except OSError:
-            pass
+        for p in (self._layout_path(), self._session_path()):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
     def shutdown(self):
         """Called by the pySASfit launcher when it closes."""
@@ -791,11 +882,17 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self._schedule()
 
     def _update_labels(self, *_):
-        label = f"q ({self.units.currentText()})"
+        unit = self.units.currentText()
+        kind = self._tr_settings(None).get("kind", "none") if hasattr(self, "transform_box") else "none"
+        if getattr(self, "_shown_domain", "q") == "delta":
+            label = f"spin-echo length δ ({LENGTH_OF_Q_UNIT.get(unit, unit)})"
+        else:
+            label = f"q ({unit})"
         shown, hidden = (self.ax_res, self.ax) if self._res_visible else (self.ax, self.ax_res)
         shown.set_xlabel(label)
         hidden.set_xlabel("")
-        self.ax.set_ylabel("I(q)")
+        self.ax.set_ylabel({"sesans": "G(δ) − G(0)", "sesans_p": "P/P0", "msas": "I(q)  [MSAS]"}
+                           .get(kind, "I(q)"))
         titles = []
         for p in self.panels():
             parts = [p.funcs[r].info.label for r in ("sd", "ff", "sq") if p.funcs[r] is not None]
@@ -871,43 +968,50 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             if c is None or c.sq is None:
                 raise ValueError("the current contribution has no structure factor")
             return np.asarray(c.sq.evaluate_p(q, c.sq_p), dtype=float), []
-        parts = []
-        for p in self.models():
-            c = p.contrib
-            if mode == "P" and c.sq is not None:
-                sq, c.sq = c.sq, None
-                try:
-                    particles = c.intensity(q)
-                finally:
-                    c.sq = sq
-            else:
-                particles = c.intensity(q)
-            parts.append(p.scale_row.value * np.asarray(particles, dtype=float))
-        return sum(parts) + self.bg_row.value + self._power_term(q), parts
+        return self._compute_model(q, self.model_for(None))
 
     def _compute_model(self, q, model):
+        """``(total, parts)`` of ``model`` at ``q``: P*S or P (structure factors left out), with its transform.
+
+        The parts are scale_i * I_i(q) (MSAS: the single scattering of each contribution; SESANS G(δ)-G(0): the
+        transform of each contribution; SESANS P/P0: none)."""
         mode = self.mode_combo.currentData()
         if mode == "S":
             return self._compute(q)
-        parts = []
-        for i, (sc, c) in enumerate(zip(model.scales, model.contributions)):
-            if not model.is_active(i):
-                parts.append(None)
-                continue
-            if mode == "P" and c.sq is not None:
-                sq, c.sq = c.sq, None
-                try:
-                    particles = c.intensity(q)
-                finally:
-                    c.sq = sq
-            else:
-                particles = c.intensity(q)
-            parts.append(sc * np.asarray(particles, dtype=float))
-        total = np.zeros(np.shape(q)) + model._background(q)
-        for pt in parts:
-            if pt is not None:
-                total = total + pt
-        return total, parts
+        removed = []
+        if mode == "P":  # without the structure factors
+            for c in model.contributions:
+                if getattr(c, "sq", None) is not None:
+                    removed.append((c, c.sq))
+                    c.sq = None
+        try:
+            t = model.transform
+            n = len(model.contributions)
+            if t is not None and t.domain == "delta":
+                total = np.asarray(model.intensity(q), dtype=float)
+                if model.is_linear:
+                    comps, _bg = model.components(q)
+                    parts = [sc * v if model.is_active(i) else None
+                             for i, (sc, v) in enumerate(zip(model.scales, comps))]  # fmt: skip
+                else:
+                    parts = [None] * n
+                return total, parts
+            parts = []
+            for i, (sc, c) in enumerate(zip(model.scales, model.contributions)):
+                if not model.is_active(i):
+                    parts.append(None)
+                    continue
+                parts.append(sc * np.asarray(c.intensity(q), dtype=float))
+            if t is not None:  # MSAS: the total with multiple scattering, the parts are single scattering
+                return np.asarray(model.intensity(q), dtype=float), parts
+            total = np.zeros(np.shape(q)) + model._background(q)
+            for pt in parts:
+                if pt is not None:
+                    total = total + pt
+            return total, parts
+        finally:
+            for c, sq in removed:
+                c.sq = sq
 
     def _power_term(self, q):
         A = self.bgA_row.value
@@ -929,11 +1033,17 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                     I, parts = self._compute(q)
                 else:  # per data set: one call for the curve and its data points
                     Id = []
+                    dom = self._shown_domain
                     for k, d in enumerate(self.datasets):
-                        qq = np.concatenate([q, d["q"]]) if full else q
-                        both, pk = self._compute(qq, k)
-                        curves[k] = both[: q.size]
-                        Id.append(both[q.size:] if full else None)
+                        if d.get("domain", "q") == dom:
+                            qq = np.concatenate([q, d["q"]]) if full else q
+                            both, pk = self._compute(qq, k)
+                            curves[k] = both[: q.size]
+                            Id.append(both[q.size:] if full else None)
+                        else:  # a data set on the other axis (q or δ): only its points, for chi²
+                            curves[k] = None
+                            Id.append(self._compute(d["q"], k)[0] if full else None)
+                            pk = []
                         if k == self.current_ds:
                             parts = [None if p is None else p[: q.size] for p in pk]
                     I = curves[self.current_ds]
@@ -944,19 +1054,25 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             self._status("no positive values to show on the logarithmic I axis (switch 'log I' off)", error=True)
             return
         self._last = (q, I)
-        multi = len(self.datasets) > 1
+        shown = [k for k, d in enumerate(self.datasets) if d.get("domain", "q") == self._shown_domain]
+        multi = len(shown) > 1
         self.line.set_data(q, I)
         self.line.set_visible(not multi)
         for k, d in enumerate(self.datasets):
-            if multi:
+            self._set_points_visible(d, k in shown)
+            if multi and curves.get(k) is not None:
                 if d.get("line") is None:
                     (d["line"],) = self.ax.plot([], [], lw=1.6, color=self._colour(k), zorder=3)
                 d["line"].set_data(q, curves[k])
                 d["line"].set_visible(True)
             elif d.get("line") is not None:
                 d["line"].set_visible(False)
-        if multi:
-            self.ax.legend(fontsize=8, loc="best")
+        self._update_single(q, parts)
+        if multi or self.single_line.get_visible():
+            hs = [h for h in self.ax.get_lines() + [d["artist"] for d in self.datasets if d.get("artist") is not None]
+                  if self._artist_visible(h) and not str(h.get_label()).startswith("_")]
+            if hs:
+                self.ax.legend(handles=hs, fontsize=8, loc="best")
         elif self.ax.get_legend() is not None:
             self.ax.get_legend().remove()
         self._update_parts(q, parts)
@@ -974,6 +1090,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             msg += f" ({infos[0]['method']}, {sum(i['neval'] for i in infos)} evaluations of the form factor)"
         if fit_note:
             msg += f" - {fit_note}"
+        msg += self._transform_note()
         bad = int(np.count_nonzero(~np.isfinite(I)))
         if bad:
             msg += f" - {bad} non-finite values"
@@ -995,6 +1112,164 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             else:
                 ln.set_visible(False)
 
+    # ------------------------------------------------------------- transform (SASfit: I(Q), SESANS, MSAS)
+    def _tr_settings(self, k=None):
+        """Transform settings of data set ``k`` (None: the current one; without data those of the box)."""
+        if k is None:
+            k = self.current_ds if self.datasets else None
+        if k is None or not 0 <= k < len(self.datasets):
+            return self._tr_global
+        return self.datasets[k].setdefault("transform", default_settings())
+
+    def domain(self, k=None):
+        """``"q"`` or ``"delta"`` (SESANS) of data set ``k`` (None: the current one / the box without data)."""
+        return domain_of(self._tr_settings(k))
+
+    def transform_for(self, k=None):
+        """The :mod:`~pysasfit.studio.hankel` transform of data set ``k`` (None: current / box), or None for I(q).
+        The object is kept while the settings stay the same, so its weight matrices are reused."""
+        if k is None and self.datasets:
+            k = self.current_ds
+        d = self.datasets[k] if k is not None and 0 <= k < len(self.datasets) else None
+        s = self._tr_settings(k)
+        ses = d.get("sesans") if d is not None else None
+        lam = ses.get("lam") if ses else None
+        key = repr(sorted(s.items())) + (f"|{id(lam)}|{d['q'].size}" if lam is not None else "")
+        slot = "g" if d is None else id(d)
+        old = self._tr_objs.get(slot)
+        if old is not None and old[0] == key:
+            return old[1]
+        t = build_transform(s, lam, d["q"] if lam is not None else None)
+        self._tr_objs[slot] = (key, t)
+        return t
+
+    @staticmethod
+    def _file_lambda(d):
+        lam = (d or {}).get("sesans", {}) or {}
+        lam = lam.get("lam") if isinstance(lam, dict) else None
+        if lam is None or not np.size(lam) or not np.all(np.isfinite(lam)):
+            return None
+        return float(np.min(lam)), float(np.max(lam))
+
+    def set_transform(self, kind=None, k=None, **settings):
+        """Set the transform of data set ``k`` (None: current / without data): ``kind`` (``"none"``, ``"sesans"``,
+        ``"sesans_p"``, ``"msas"``) and settings (``thickness``, ``wavelength``, ``norm``, ...)."""
+        if k is not None and k != self.current_ds:
+            s = self._tr_settings(k)
+            new = {**s, **settings, **({"kind": kind} if kind else {})}
+            if domain_of(new) != self.datasets[k].get("domain", "q"):
+                raise ValueError(f"data set {k + 1}: the transform does not fit its data (q or spin-echo lengths)")
+            s.update(new)
+            if self.datasets[k].get("sesans"):
+                self._apply_observable(k)
+            self._schedule()
+            return
+        cur = {**self._tr_settings(None), **settings, **({"kind": kind} if kind else {})}
+        self.transform_box.set_settings(cur, self._file_lambda(self.datasets[self.current_ds] if self.datasets else None))
+        if not self._transform_edited():
+            raise ValueError(self.status.text())
+
+    def _transform_edited(self, *_):
+        """The transform box changed: store its settings (current data set / without data), switch the axis."""
+        try:
+            new = self.transform_box.settings()
+        except ValueError as exc:
+            self._status(str(exc), error=True)
+            return False
+        old = self._tr_settings(None)
+        d = self.datasets[self.current_ds] if self.datasets else None
+        if d is not None and domain_of(new) != d.get("domain", "q"):
+            what = "SESANS data (spin-echo lengths)" if d.get("domain") == "delta" else "q-dependent data"
+            self.transform_box.set_settings(old, self._file_lambda(d))
+            self._status(f"data set {self.current_ds + 1} holds {what}: its transform must be "
+                         + ("H{…}/2π or Exp(λ²t·H{…}/2π)" if d.get("domain") == "delta" else "1 or MSAS"), error=True)
+            return False
+        old.clear()
+        old.update(new)
+        if d is not None and d.get("sesans"):
+            self._apply_observable(self.current_ds)
+        if domain_of(new) != self._shown_domain:
+            self._set_domain(domain_of(new))
+        self._update_labels()
+        self._schedule()
+        return True
+
+    def _apply_observable(self, k):
+        """A SESANS data set shows G(δ)-G(0) or P/P0, as its transform asks."""
+        d = self.datasets[k]
+        obs = "P" if self._tr_settings(k).get("kind") == "sesans_p" else "G"
+        y, sig = d["sesans"][obs]
+        if d.get("observable") != obs:
+            d["I"], d["sigma"], d["observable"] = np.asarray(y, float), np.asarray(sig, float), obs
+            self._draw_dataset_points(k)
+
+    def _load_tr(self, k=None):
+        """Show the transform of data set ``k`` (None: without data) in the box; switch the axis if needed."""
+        d = self.datasets[k] if k is not None and 0 <= k < len(self.datasets) else None
+        s = self._tr_settings(k) if d is not None else self._tr_global
+        self.transform_box.set_settings(s, self._file_lambda(d))
+        if domain_of(s) != self._shown_domain:
+            self._set_domain(domain_of(s))
+        self._update_labels()
+
+    def _set_domain(self, new):
+        """The x axis changes between q and the spin-echo length δ: each keeps its own range (and log I)."""
+        old = self._shown_domain
+        self._ranges[old] = (self.qmin.text(), self.qmax.text(), self.logy.isChecked())
+        self._shown_domain = new
+        xs = [d["q"] for d in self.datasets if d.get("domain", "q") == new]
+        if new in self._ranges:
+            lo, hi, logy = self._ranges[new]
+        elif xs:
+            allx = np.concatenate(xs)
+            lo, hi, logy = f"{allx.min() * 0.9:.3g}", f"{allx.max() * 1.1:.3g}", new == "q"
+        else:
+            lo, hi, logy = ("0.01", "1", True) if new == "q" else ("10", "1e4", False)
+        self.qmin.setText(lo)
+        self.qmax.setText(hi)
+        self.logy.blockSignals(True)
+        self.logy.setChecked(bool(logy))
+        self.logy.blockSignals(False)
+        self._on_scales()
+
+    @staticmethod
+    def _artist_visible(a):
+        if hasattr(a, "get_children") and not hasattr(a, "get_visible"):
+            return any(c.get_visible() for c in a.get_children())
+        if hasattr(a, "lines") and isinstance(getattr(a, "lines"), tuple):  # ErrorbarContainer
+            line = a.lines[0]
+            return line is not None and line.get_visible()
+        return a.get_visible()
+
+    @staticmethod
+    def _set_points_visible(d, visible):
+        a = d.get("artist")
+        if a is None:
+            return
+        for c in a.get_children():
+            c.set_visible(visible)
+
+    def _update_single(self, q, parts):
+        """MSAS: the single-scattering curve (dash-dotted) next to the one with multiple scattering."""
+        kind = self._tr_settings(None).get("kind")
+        show = kind == "msas" and self.mode_combo.currentData() != "S" and any(p is not None for p in parts)
+        if show:
+            single = sum(p for p in parts if p is not None) + self.bg_row.value + self._power_term(q)
+            self.single_line.set_data(q, single)
+        self.single_line.set_visible(bool(show))
+
+    def _transform_note(self):
+        """Status text of the transform of the current data set (Σt of MSAS)."""
+        t = self.transform_for(None)
+        if t is None:
+            return ""
+        if t.kind == "msas" and t.last_tau is not None:
+            tau = t.last_tau
+            self.transform_box.show_info(f"Σt = λ²t·G(0) = {tau:.4g}:  single scattering {tau * np.exp(-tau):.3g}, "
+                                         f"multiple {1 - np.exp(-tau) - tau * np.exp(-tau):.3g} of the beam")
+            return f" - MSAS: Σt = {tau:.3g}"
+        return ""
+
     # ------------------------------------------------------------ data, fit
     @property
     def data(self):
@@ -1006,14 +1281,36 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.clear_data()
         return self.add_dataset(q, I, sigma, name)
 
-    def add_dataset(self, q, I, sigma, name="data", bg=None):
-        """Add a data set (shown with its model curve and fitted together with the others); returns its index."""
+    def add_dataset(self, q, I, sigma, name="data", bg=None, transform=None, sesans=None):
+        """Add a data set (shown with its model curve and fitted together with the others); returns its index.
+
+        ``transform``: its transform settings (see :mod:`pysasfit.studio.transform_panel`; default: those shown,
+        if they fit the data). ``sesans``: a SESANS data set -- ``q`` are spin-echo lengths and the dictionary holds
+        ``{"G": (y, sigma), "P": (y, sigma), "lam": wavelengths}`` (I, sigma are those of the transform's observable).
+        """
         q, I = np.asarray(q, float), np.asarray(I, float)
         sigma = np.full(q.shape, np.nan) if sigma is None else np.asarray(sigma, float)
         ok = np.isfinite(q) & np.isfinite(I) & (q > 0)
         if not ok.any():
             raise ValueError("no data points with q > 0")
         q, I, sigma = q[ok], I[ok], sigma[ok]
+        domain = "delta" if sesans else "q"
+        if sesans:
+            sesans = dict(sesans)
+            for key in ("G", "P"):
+                if sesans.get(key) is not None:
+                    sesans[key] = tuple(np.asarray(v, float)[ok] for v in sesans[key])
+            if sesans.get("lam") is not None:
+                sesans["lam"] = np.asarray(sesans["lam"], float)[ok]
+        if transform is not None:
+            tr = {**default_settings(), **dict(transform)}
+        elif domain == "delta":
+            tr = default_settings("sesans")
+        else:
+            cur = self._tr_settings(None)
+            tr = dict(cur) if domain_of(cur) == "q" else default_settings()
+        if domain_of(tr) != domain:
+            raise ValueError("the transform does not fit the data (SESANS needs spin-echo lengths, I(q) and MSAS q)")
         k = len(self.datasets)
         if k == 0:
             first = {"background": self.bg_row.value, "bg_A": self.bgA_row.value, "bg_alpha": self.bgalpha_row.value}
@@ -1025,13 +1322,25 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             self.bgA_row.set_value(bg["bg_A"], emit=False)
             self.bgalpha_row.set_value(bg["bg_alpha"], emit=False)
         d = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name)), "bg": dict(bg or first), "path": str(name),
-             "artist": None, "line": None, "res": None}  # fmt: skip
+             "artist": None, "line": None, "res": None, "domain": domain, "transform": tr, "sesans": sesans}  # fmt: skip
+        if sesans:
+            d["observable"] = "P" if tr["kind"] == "sesans_p" else "G"
         self.datasets.append(d)
         for j in range(len(self.datasets)):  # colours and legend labels depend on the number of data sets
             self._draw_dataset_points(j)
-        all_q = np.concatenate([x["q"] for x in self.datasets])
-        self.qmin.setText(f"{all_q.min() * 0.9:.3g}")  # the curve covers the data
-        self.qmax.setText(f"{all_q.max() * 1.1:.3g}")
+        all_q = np.concatenate([x["q"] for x in self.datasets if x.get("domain", "q") == domain])
+        rng = (f"{all_q.min() * 0.9:.3g}", f"{all_q.max() * 1.1:.3g}")  # the curve covers the data
+        if domain == self._shown_domain:
+            self.qmin.setText(rng[0])
+            self.qmax.setText(rng[1])
+        else:
+            self._ranges[domain] = (*rng, domain == "q")
+        if k == 0 or domain != self._shown_domain:  # show the new data set (its axis, its transform)
+            if k != self.current_ds:
+                self._store_bg()
+                self.current_ds = k
+                self._load_bg(k)
+            self._load_tr(k)
         self._refresh_ds_combo()
         self.fit_panel.refresh_datasets()
         self._structure_changed()
@@ -1057,6 +1366,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             return
         self._store_bg()
         d = self.datasets.pop(k)
+        self._tr_objs.pop(id(d), None)
         for key in ("artist", "line", "res"):
             if d.get(key) is not None:
                 d[key].remove()
@@ -1070,8 +1380,10 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.current_ds = min(self.current_ds, max(len(self.datasets) - 1, 0))
         if self.datasets:
             self._load_bg(self.current_ds)
+            self._load_tr(self.current_ds)
         else:
             self._show_residuals(False)
+            self._load_tr(None)
         self._refresh_ds_combo()
         self.fit_panel.refresh_datasets()
         self.canvas.draw_idle()
@@ -1120,6 +1432,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self._store_bg()
         self.current_ds = i
         self._load_bg(i)
+        self._load_tr(i)
         self._schedule()
 
     # model of a data set
@@ -1132,7 +1445,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         bg = self.background_of(k)
         return ModelFunction(
             [p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=bg["background"],
-            bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"], active=active,
+            bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"], active=active, transform=self.transform_for(k),
         )  # fmt: skip
 
     def overrides_for(self, k):
@@ -1252,11 +1565,12 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             if d.get("res") is None:
                 (d["res"],) = self.ax_res.plot([], [], "o", ms=2.5, color=self._colour(k) if len(self.datasets) > 1 else "C0")
             d["res"].set_data(d["q"], r)
+            d["res"].set_visible(d.get("domain", "q") == self._shown_domain)
             inside = np.isfinite(r) & ((d["q"] >= rng[0]) & (d["q"] <= rng[1]) if rng else True)
             tot += float(np.sum(r[inside] ** 2))
             n += int(np.count_nonzero(inside))
         self._show_residuals(True)
-        self.ax_res.relim()
+        self.ax_res.relim(visible_only=True)
         self.ax_res.autoscale_view(scalex=False)
         if not n:
             return ""
@@ -1413,6 +1727,38 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.canvas.draw_idle()
 
     # ----------------------------------------------------------- export, code
+    def _transform_code(self, k=None, lam=None, delta=None):
+        """``make_transform(...)`` of the transform of data set ``k`` (None: current / box) as code, or None.
+        ``lam``/``delta``: names of the variables with λ per spin-echo length (λ from a SESANS file)."""
+        from ..core.pycode import call, Code
+
+        s = self._tr_settings(k)
+        kind = s.get("kind", "none")
+        if kind == "none":
+            return None
+        kw = {"thickness": float(s["thickness"])}
+        if kind in ("sesans", "sesans_p"):
+            d = self.datasets[k if k is not None else self.current_ds] if self.datasets else None
+            if s.get("lambda_from_file", True) and lam and self._file_lambda(d) is not None:
+                kw["wavelength"], kw["wavelength_delta"] = Code(lam), Code(delta)
+            else:
+                kw["wavelength"] = float(s["wavelength"])
+            mode = s.get("accept") or ("q" if s.get("q_accept") else "none")
+            if mode == "q" and s.get("q_accept"):
+                kw["q_accept"] = float(s["q_accept"])
+            elif mode == "theta" and s.get("theta_max"):
+                kw["theta_max"] = float(s["theta_max"])
+        else:
+            kw["wavelength"] = float(s["wavelength"])
+            kw["norm"] = s.get("norm", "incident")
+        if s.get("method"):  # otherwise the default of Settings → Integration… → Hankel transform
+            kw["method"] = s["method"]
+        if s.get("n_points"):
+            kw["n_points"] = int(s["n_points"])
+        if s.get("per_decade"):
+            kw["per_decade"] = int(s["per_decade"])
+        return call("make_transform", kind, **kw)
+
     def _python_snippet(self):
         ms = self.models()
         lines = ["from pysasfit.studio import ModelFunction, ScatteringContribution"]
@@ -1438,6 +1784,10 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         bg = f"background={self.bg_row.value!r}"
         if self.bgA_row.value:
             bg += f", bg_A={self.bgA_row.value!r}, bg_alpha={self.bgalpha_row.value!r}"
+        tr = self._transform_code(None)
+        if tr is not None:
+            lines[0:0] = ["from pysasfit.studio.hankel import make_transform"]
+            bg += f", transform={tr}"
         lines += ["", f"model = ModelFunction([{names}], scales=[{scales}], {bg})", "I = model(q)"]
         return "\n".join(lines)
 
@@ -1475,12 +1825,26 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         # the curve of the plot
         lo, hi = float(self.qmin.text()), float(self.qmax.text())
         n = self.npoints.value()
-        sc.comment(f"the curve of the plot (q in {self.units.currentText()})")
+        if self._shown_domain == "delta":
+            sc.comment(f"the curve of the plot (spin-echo lengths in {LENGTH_OF_Q_UNIT.get(self.units.currentText(), '')})")
+        else:
+            sc.comment(f"the curve of the plot (q in {self.units.currentText()})")
         sc.add(f"q = np.{'geomspace' if self.logx.isChecked() else 'linspace'}({lit(lo)}, {lit(hi)}, {n})")
         bg = self.background_of(None)
         mkw = dict(scales=[p.scale_row.value for p in ms], background=bg["background"])
         if bg["bg_A"]:
             mkw.update(bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"])
+        lam_vars = {}  # data set -> (λ, δ) variable names of a SESANS file
+        for k, d in enumerate(self.datasets):
+            if d.get("sesans") and self._file_lambda(d) is not None:
+                lam_vars[k] = (f"lam{k + 1}", f"q{k + 1}")
+        cur = self.current_ds if self.datasets else None
+        tr = self._transform_code(None, *(lam_vars.get(cur, (None, None))))
+        if tr is not None:
+            sc.imp("from pysasfit.studio.hankel import make_transform")
+            if cur in lam_vars:  # the curve uses the λ of a file: the data come first
+                tr = self._transform_code(None)
+            mkw["transform"] = Code(tr)
         sc.add(call("model = ModelFunction", Code("[" + ", ".join(names) + "]"), **mkw))
         mode = self.mode_combo.currentData()
         if mode == "S":
@@ -1513,7 +1877,17 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             for k, d in enumerate(self.datasets):
                 v = f"d{k + 1}"
                 dnames.append(v)
-                if d.get("path") and os.path.isfile(d["path"]):
+                if d.get("sesans") and d.get("path") and os.path.isfile(d["path"]):
+                    sc.imp("from pysasfit.core.sesans_io import load_sesans")
+                    opts = dict((d["sesans"].get("options") or {}))
+                    obs = opts.pop("observable", d.get("observable", "G"))
+                    obs = "P" if self._tr_settings(k).get("kind") == "sesans_p" else "G"
+                    j = k + 1
+                    sc.add(call(f"ses{j} = load_sesans", d["path"], **{a: b for a, b in opts.items() if b not in (None, "")}),
+                           f"q{j}, (I{j}, s{j}), lam{j} = ses{j}.delta, ses{j}.observable({obs!r}), ses{j}.wavelength",
+                           f"ok = np.isfinite(q{j}) & np.isfinite(I{j}) & (q{j} > 0)",
+                           f"q{j}, I{j}, s{j}, lam{j} = q{j}[ok], I{j}[ok], s{j}[ok], lam{j}[ok]")
+                elif d.get("path") and os.path.isfile(d["path"]) and not d.get("sesans"):
                     qs = d.get("q_scale", 1.0)
                     sc.add(f"q{k + 1}, I{k + 1}, s{k + 1}, *_ = load_data({path_lit(d['path'])}"
                            + (f", q_scale={lit(qs)})" if qs != 1.0 else ")"))
@@ -1522,6 +1896,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 else:
                     sc.add(f"# {d['name']}: no file (from a project); the values as stored",
                            f"q{k + 1} = {lit(d['q'])}", f"I{k + 1} = {lit(d['I'])}", f"s{k + 1} = {lit(d['sigma'])}")
+                    if k in lam_vars:
+                        sc.add(f"lam{k + 1} = {lit(np.asarray(d['sesans']['lam'], float))}")
                 bgk = self.background_of(k)
                 kw = dict(scales=[p.scale_row.value for p in ms], background=bgk["background"])
                 if bgk["bg_A"]:
@@ -1529,6 +1905,10 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 active = [p.applies_to(k, len(self.datasets)) for p in ms]
                 if not all(active):
                     kw["active"] = active
+                trk = self._transform_code(k, *(lam_vars.get(k, (None, None))))
+                if trk is not None:
+                    sc.imp("from pysasfit.studio.hankel import make_transform")
+                    kw["transform"] = Code(trk)
                 sc.add(call(f"model{k + 1} = ModelFunction", Code("[" + ", ".join(names) + "]"), **kw))
                 plot.append(f"ax.errorbar(q{k + 1}, I{k + 1}, s{k + 1}, fmt='o', ms=3, label={d['name']!r})")
             self.fit_panel.python_fit_code(sc, len(self.datasets))
@@ -1538,7 +1918,13 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             plot.append("ax.set_xscale('log')")
         if self.logy.isChecked():
             plot.append("ax.set_yscale('log')")
-        plot += [f"ax.set_xlabel('q ({self.units.currentText()})')", f"ax.set_ylabel({ylabel!r})", "ax.legend()"]
+        if self._shown_domain == "delta":
+            xl = f"spin-echo length ({LENGTH_OF_Q_UNIT.get(self.units.currentText(), '')})"
+            ylabel = {"sesans": "G(δ) - G(0)", "sesans_p": "P/P0"}.get(self._tr_settings(None).get("kind"), ylabel)
+            plot = [ln.replace("label='I(q)'", f"label={ylabel!r}") for ln in plot]
+        else:
+            xl = f"q ({self.units.currentText()})"
+        plot += [f"ax.set_xlabel({xl!r})", f"ax.set_ylabel({ylabel!r})", "ax.legend()"]
         sc.add_plot(*plot)
         return sc.text()
 
@@ -1566,7 +1952,8 @@ def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), pro
 
     ``extra``: more contributions of the mixture, each ``(form factor, size distribution, structure factor)``.
     ``project``: a ``.sasstudio`` file to open (File > Open project).
-    ``restore_layout``: arrange the panels as in the last session (the stand-alone program does).
+    ``restore_layout``: the last session (the stand-alone program does): the panel arrangement and, when no
+    model or project is asked for, the model and data sets (not calculated: Calculate).
     """
     app = QtWidgets.QApplication.instance()
     own = app is None
@@ -1575,8 +1962,8 @@ def explore(ff="ff_sphere", sd=None, sq=None, qmin=0.01, qmax=1.0, extra=(), pro
     win = ModelExplorer(ff, sd=sd, sq=sq, qmin=qmin, qmax=qmax, extra=extra)
     if project:
         win.open_project(project)
-    if restore_layout:
-        win.restore_session()
+    if restore_layout:      # with the model and data of the last session, unless a model / project was asked for
+        win.restore_session(content=not project and (ff, sd, sq) == ("ff_sphere", None, None) and not extra)
     win.show()
     if own:
         app.exec()

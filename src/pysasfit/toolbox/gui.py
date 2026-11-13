@@ -60,6 +60,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data1d.status.connect(lambda t: self.statusBar().showMessage(t, 10000))
         self.images.data_produced.connect(self.show_data1d)
         self.viewer.to_2d.connect(lambda img: self.show_images([img]))
+        from ..core.scrolling import scroll_inside
+        for i in range(self.tabs.count()):       # scroll bars, not a minimum window size (the widest page
+            scroll_inside(self.tabs.widget(i))   # would fix the smallest size of the whole pySASfit window)
         self.setCentralWidget(self.tabs)
         self.viewer.status.connect(lambda t: self.statusBar().showMessage(t, 10000))
         self.lister.open_file_requested.connect(self.open_in_viewer)

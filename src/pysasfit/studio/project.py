@@ -75,17 +75,38 @@ def to_dict(ex):
             "links": fp.links_edit.toPlainText(), "local": sorted(fp.local_addresses()),
         },
         "datasets": [], "current_ds": ex.current_ds,
+        "transform": _tr(getattr(ex, "_tr_global", None)),
         "overrides": {str(k): v for k, v in ex.overrides.items()},
     }  # fmt: skip
     ex._store_bg()
     for dt in ex.datasets:
-        d["datasets"].append({
+        item = {
             "name": dt["name"], "q": [_num(v) for v in dt["q"]], "I": [_num(v) for v in dt["I"]],
             "sigma": [_num(v) for v in dt["sigma"]], "bg": dict(dt["bg"]),
-        })  # fmt: skip
+        }  # fmt: skip
+        if dt.get("transform") is not None:  # SESANS / MSAS (additions: older versions ignore them)
+            item["transform"] = _tr(dt["transform"])
+        ses = dt.get("sesans")
+        if ses:
+            item["domain"] = "delta"
+            item["sesans"] = {
+                key: [[_num(v) for v in ses[key][0]], [_num(v) for v in ses[key][1]]] for key in ("G", "P") if ses.get(key)
+            }  # fmt: skip
+            if ses.get("lam") is not None:
+                item["sesans"]["lam"] = [_num(v) for v in ses["lam"]]
+            if ses.get("options"):
+                item["sesans"]["options"] = dict(ses["options"])
+        d["datasets"].append(item)
     if d["datasets"]:
         d["data"] = d["datasets"][0]  # read by version 1
     return d
+
+
+def _tr(s):
+    """Transform settings as JSON (numbers, strings, None)."""
+    if not s:
+        return None
+    return {k: (_num(v) if isinstance(v, float) else v) for k, v in s.items()}
 
 
 def save(ex, path):
@@ -137,8 +158,18 @@ def load_dict(ex, d):
         ex.bg_row.set_value(b0["background"], emit=False)
         ex.bgA_row.set_value(b0["bg_A"], emit=False)
         ex.bgalpha_row.set_value(b0["bg_alpha"], emit=False)
+    if d.get("transform") and hasattr(ex, "_tr_global"):
+        ex._tr_global.update(d["transform"])
     for dt in sets:
-        ex.add_dataset(nan(dt["q"]), nan(dt["I"]), nan(dt["sigma"]), dt.get("name", "data"), bg=dt.get("bg"))
+        ses = None
+        if dt.get("sesans"):
+            ses = {key: tuple(nan(v) for v in dt["sesans"][key]) for key in ("G", "P") if dt["sesans"].get(key)}
+            ses["lam"] = nan(dt["sesans"]["lam"]) if dt["sesans"].get("lam") else None
+            ses["options"] = dt["sesans"].get("options")
+        kw = {}
+        if dt.get("transform") is not None or ses is not None:
+            kw = {"transform": dt.get("transform"), "sesans": ses}
+        ex.add_dataset(nan(dt["q"]), nan(dt["I"]), nan(dt["sigma"]), dt.get("name", "data"), bg=dt.get("bg"), **kw)
     if sets:
         ex.current_ds = 0
         if sets[0].get("bg") is None:      # version 1: the background rows hold that of the one data set
@@ -148,6 +179,10 @@ def load_dict(ex, d):
             ex.current_ds = cur
             ex._load_bg(cur)
             ex._refresh_ds_combo()
+        if hasattr(ex, "_load_tr"):
+            ex._load_tr(ex.current_ds)
+    elif hasattr(ex, "_load_tr"):
+        ex._load_tr(None)
     ex.overrides = {int(k): {a: float(v) for a, v in ov.items()} for k, ov in (d.get("overrides") or {}).items()}
     ex.fit_panel.refresh_datasets()
     ex.fit_panel._update_buttons()

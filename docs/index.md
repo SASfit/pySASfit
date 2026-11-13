@@ -181,6 +181,20 @@ maps and averages with FSC resolution, isosurfaces and slices.
 (match points, H/D exchange), or a DENSS-Multiple-type averaged SLD map; own DENSS-type iteration.
 :::
 
+:::{grid-item-card} pySLDcalculator: scattering length densities
+:link: sld/index
+:link-type: doc
+
+```{image} pySASfit-logo-bundle/menu-icons/pySLDcalculator/pySLDcalculator-menu.svg
+:alt: pySLDcalculator
+:height: 40px
+:class: card-icon
+```
+
+SLD of materials and biomolecules for neutrons and X-rays (energy dependent across absorption edges): molecular
+volume, contrast, excess scattering length, H/D exchange and match points.
+:::
+
 :::{grid-item-card} The launcher
 :link: launcher
 :link-type: doc
@@ -237,6 +251,7 @@ pySEBpolymers <seb/index>
 pyATsas <atsas/index>
 pyDENsity <density/index>
 pyDENSSmulti <densitymulti/index>
+pySLDcalculator <sld/index>
 pyTOOLbox <toolbox/index>
 Preferences <preferences>
 Copy Python code <python_code>

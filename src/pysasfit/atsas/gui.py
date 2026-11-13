@@ -154,7 +154,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.resize(1500, 920)
         self._sized = False
         self.hide_stray_tab_bars()
-        self.refresh_installation()
+        self.refresh_installation(search=False)      # no search at start: the last result (button: search)
         self._update_buttons()
 
     def showEvent(self, event):
@@ -638,7 +638,16 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def atsas_dir(self):
         return (prefs.get("atsas.dir") or "").strip() or None
 
-    def refresh_installation(self, force=False):
+    def refresh_installation(self, force=False, search=True):
+        """Show the ATSAS installation. ``search=False`` (start): only the folder from the preferences or the
+        one found by the last search, no search of the install locations; ``force``: search again."""
+        if not search and not force and self.atsas_dir() is None and A.cached_atsas() is None:
+            self.installed = None                  # unknown: a run searches itself
+            self.inst_label.setText("ATSAS installation not checked yet: press <b>Search again</b> "
+                                    "(or start a program; it searches then).")
+            self._has_sasha = False
+            self._update_buttons()
+            return
         if force:
             A._ATSAS_BIN = None
             from .. import resources
@@ -646,7 +655,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.setWindowIcon(tool_icon("pyATsas"))
         d = self.atsas_dir()
         try:
-            b = A.find_atsas(d)
+            b = A.find_atsas(d, refresh=force)
             lic = A.license_file(d)
             txt = (f"<b>ATSAS</b>: {A.atsas_root(d)}<br>licence: "
                    + (str(lic) if lic else "<span style='color:#c00'>atsas.lic not found</span>"))
@@ -775,6 +784,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def _start(self, tag, fn, text):
         if self._busy:
             return
+        if getattr(self, "installed", None) is None:   # not searched yet in this session: now
+            self.refresh_installation()
+            if not self.installed:
+                return
         self._busy = True
         self._update_buttons()
         self.progress.setRange(0, 0)
@@ -1281,7 +1294,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._start(("selftest", ""), fn, "self test (synthetic sphere)")
 
     def _update_buttons(self):
-        ok = getattr(self, "installed", False) and not self._busy
+        ok = getattr(self, "installed", None) is not False and not self._busy
         for b in getattr(self, "_run_buttons", []):
             b.setEnabled(ok)
         if hasattr(self, "sh_button"):
@@ -1289,6 +1302,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 
     # ------------------------------------------------------------------ launching ATSAS programs
     def on_launch(self, exe, with_data=False):
+        if getattr(self, "installed", None) is None:   # not searched yet in this session: now
+            self.refresh_installation()
+            if not self.installed:
+                return
         args = []
         c = self.current()
         if with_data and c is not None:

@@ -727,6 +727,22 @@ HELP = {
     "densitymulti.threads":
         "Start value of the number of maps computed at the same time when several maps are averaged. Each map "
         "needs its own memory (a 64³ grid with four contrasts: about 100 MB).",
+    # =================================================================== pySASscout
+    "scout.store":
+        'Folder of the results store of pySASscout. Every fitted candidate and every search is written there '
+        '(one small file per fit, grouped by curve), and fits found there are reused: repeating a search, '
+        'continuing one that was stopped, or adding models only fits what is new. The folder has relative '
+        'paths only, so it can be copied or moved (also to a network drive or a cluster) and then named here; '
+        'two stores are merged by copying one into the other. Empty: scout_store next to the pySASfit '
+        'preferences file.',
+    "scout.reuse":
+        'Take a candidate from the results store instead of fitting it again when the curve, the candidate, '
+        'the fit options (starts, seed, background, error scale) and the SASfit build are the same. Off: '
+        'every candidate is fitted again and the stored fit is replaced. Start value of the check box on the '
+        'pySASscout panel.',
+    "scout.keep_runs":
+        'Number of searches kept per curve in the results store (the newest ones; the fits themselves are '
+        'kept independently of this). A stored search is the complete ranking with all curves, a few 10 kB.',
     # =================================================================== appearance
     "appearance.panel_title.mode":
         "Title bars of the docked panels coloured like window title bars under Windows. 'active panel in "
@@ -746,4 +762,17 @@ HELP = {
     "toolbox.lister.float_digits":
         "Floating-point values in the metadata listing are rounded to this many digits after the "
         "decimal point (as shown, copied and exported).",
+    # =================================================================== pySASfit window
+    "launcher.sidebar.selected":
+        "Background of the entry of the tool in front in the side bar (light system theme), as #RRGGBB; the "
+        "button next to the field opens the colour chooser. The tool names are written in the colours of "
+        "the logos (grey py and ending, the core in the tool's colour), so the background has to be light: "
+        "the factory value, a pale yellow, keeps every name at a contrast of at least 3 : 1 (the grey parts "
+        "4.5 : 1), within a few per cent of what white gives. Pale green (#EAF7EA) and pale orange are "
+        "slightly lower (orange pyTOOLbox about 2.9 : 1); medium and saturated colours such as the blue "
+        "selection colour of Windows make the names unreadable. Applied when the preferences are saved.",
+    "launcher.sidebar.selected_dark":
+        "The same for a dark system theme, where the names use the lighter colour set: the background has to "
+        "be dark. With the factory value every name has a contrast of at least 4.5 : 1. Applied when the "
+        "preferences are saved.",
 }

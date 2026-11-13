@@ -29,14 +29,20 @@ __all__ = ["DesignerWidget", "DesignView", "DesignScene"]
 MIME = "application/x-pysebpolymers-item"
 MIME_NODES = "application/x-pysebpolymers-nodes"
 
-CATEGORY = {"GaussianPolymer": "polymer", "GaussianLoop": "polymer", "ThinRod": "thin", "ThinCircle": "thin",
+CATEGORY = {"GaussianPolymer": "polymer", "GaussianLoop": "polymer", "FloryPolymer": "polymer", "FloryLoop": "polymer",
+            "ExcludedVolumePolymer": "polymer", "WormLikeChain": "worm", "WormLikeChainEV": "worm", "ThinRod": "thin", "ThinCircle": "thin",
             "ThinDisk": "thin", "ThinSphericalShell": "thin", "SolidSphere": "solid", "SolidSphericalShell": "solid",
             "SolidCylinder": "solid", "Spheroid": "solid", "Point": "point"}
-COLOURS = {"polymer": "#6B8E23", "thin": "#2A8C82", "solid": "#3A6EA5", "point": "#6E7781", "pattern": "#B7791F",
+COLOURS = {"polymer": "#6B8E23", "worm": "#4F7A3A", "thin": "#2A8C82", "solid": "#3A6EA5", "point": "#6E7781", "pattern": "#B7791F",
            "component": "#8E5BB5"}
 TIPS = {
     "Point": "massless junction point (no scattering)", "GaussianPolymer": "Gaussian chain (Rg)",
-    "GaussianLoop": "Gaussian ring (Rg)", "ThinRod": "infinitely thin rod (L)", "SolidSphere": "solid sphere (R)",
+    "GaussianLoop": "Gaussian ring (Rg)",
+    "FloryPolymer": "chain with Flory exponent nu (Rg, nu): 0.5 ideal, 0.588 good solvent, 1/3 collapsed",
+    "FloryLoop": "ring with Flory exponent nu (Rg, nu)",
+    "ExcludedVolumePolymer": "excluded-volume chain with non-Gaussian (des Cloizeaux) distances (Rg, nu)",
+    "WormLikeChain": "semiflexible chain, Kholodenko's worm (contour length L, Kuhn length b)",
+    "WormLikeChainEV": "semiflexible chain with excluded volume, Pedersen-Schurtenberger (L, Kuhn length b)", "ThinRod": "infinitely thin rod (L)", "SolidSphere": "solid sphere (R)",
     "ThinSphericalShell": "infinitely thin spherical shell (R)", "SolidSphericalShell": "solid shell (Ri, Ro)",
     "ThinCircle": "thin circular ring (R)", "ThinDisk": "infinitely thin disk (R)",
     "SolidCylinder": "solid cylinder (R, L)", "Spheroid": "ellipsoid of revolution (a, c)",
@@ -61,18 +67,25 @@ def _glyph(p, kind, rect, colour):
     p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
     c = rect.center()
     r = min(rect.width(), rect.height()) / 2 - 1
-    if kind == "GaussianPolymer":
+    if kind in ("WormLikeChain", "WormLikeChainEV"):
+        path = QtGui.QPainterPath(QtCore.QPointF(rect.left(), rect.bottom() - 1))
+        path.cubicTo(rect.left() + rect.width() * 0.4, rect.top() - r * 0.6, rect.left() + rect.width() * 0.6,
+                     rect.bottom() + r * 0.6, rect.right(), rect.top() + 1)
+        p.drawPath(path)
+    elif kind in ("GaussianPolymer", "FloryPolymer", "ExcludedVolumePolymer"):
+        amp, n = (0.6, 8) if kind == "GaussianPolymer" else (0.95, 5)        # swollen: fewer, wider swings
         path = QtGui.QPainterPath(QtCore.QPointF(rect.left(), c.y()))
-        for i in range(1, 9):
-            x = rect.left() + rect.width() * i / 8
-            y = c.y() + (r * 0.6 if i % 2 else -r * 0.6)
+        for i in range(1, n + 1):
+            x = rect.left() + rect.width() * i / n
+            y = c.y() + (r * amp if i % 2 else -r * amp)
             path.lineTo(x, y)
         p.drawPath(path)
-    elif kind == "GaussianLoop":
+    elif kind in ("GaussianLoop", "FloryLoop"):
         path = QtGui.QPainterPath()
+        wig = 0.18 if kind == "GaussianLoop" else 0.08
         for i in range(25):
             t = 2 * math.pi * i / 24
-            rr = r * (0.75 + 0.18 * math.sin(5 * t))
+            rr = r * (0.75 + wig * math.sin(5 * t))
             pt = QtCore.QPointF(c.x() + rr * math.cos(t), c.y() + rr * math.sin(t))
             path.moveTo(pt) if i == 0 else path.lineTo(pt)
         p.drawPath(path)
@@ -237,6 +250,9 @@ class NodeItem(QtWidgets.QGraphicsObject):
         p.setPen(pal.color(QtGui.QPalette.ColorRole.Text))
         if nd.is_unit:
             line = f"{nd.kind}   tag {nd.tag}"
+            flags = [w for w, f in (("polydisperse", nd.poly), ("thick", nd.thick)) if f]
+            if flags:
+                line += "\n" + ", ".join(flags)
         else:
             elem = nd.element + (" ⟨component⟩" if nd.element_is_component else "")
             if nd.type == "Array":
@@ -249,6 +265,9 @@ class NodeItem(QtWidgets.QGraphicsObject):
                 line = f"{nd.g} generations, f = {nd.f}\n{elem}"
             if not nd.element_is_component:
                 line += f"   tag {nd.tag}" + ("+gen" if nd.type == "Generations" and nd.gen_tags else "")
+            flags = [w for w, f in (("poly", nd.poly), ("thick", nd.thick), ("excl. vol.", nd.vex)) if f]
+            if flags:
+                line += "   [" + ", ".join(flags) + "]"
         p.drawText(QtCore.QRectF(8, 24, self.w - 16, 30), QtCore.Qt.AlignmentFlag.AlignLeft, line)
         if nd.is_unit:                      # port names above the ports
             f.setPointSizeF(max(6.0, f.pointSizeF() - 0.5))
@@ -533,16 +552,19 @@ class Palette(QtWidgets.QTreeWidget):
             self.comps.addChild(it)
         self.comps.setExpanded(True)
 
-    def mimeData(self, items):
+    def startDrag(self, actions):
+        # own QDrag (it takes the mime data); a Python override of mimeData() would hand Qt an object that
+        # PySide6 may delete a second time
+        it = self.currentItem()
+        v = it.data(0, QtCore.Qt.ItemDataRole.UserRole) if it is not None else None
+        if not v:
+            return
         md = QtCore.QMimeData()
-        if items:
-            v = items[0].data(0, QtCore.Qt.ItemDataRole.UserRole)
-            if v:
-                md.setData(MIME, QtCore.QByteArray(v.encode()))
-        return md
-
-    def mimeTypes(self):
-        return [MIME]
+        md.setData(MIME, QtCore.QByteArray(v.encode()))
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(md)
+        drag.setPixmap(it.icon(0).pixmap(20, 20))
+        drag.exec(QtCore.Qt.DropAction.CopyAction)
 
 
 # ====================================================================== inspector
@@ -642,9 +664,13 @@ class Inspector(QtWidgets.QScrollArea):
             tag.setToolTip("sub-units with the same tag share their parameters (beta_<tag>, Rg_<tag>, …)")
             tag.editingFinished.connect(lambda: tag.text() != nd.tag and o.edit(lambda: o.set_tag(nd, tag.text())))
             form.addRow("tag", tag)
+            self._options(form, nd, nd.kind)
             params = [f"beta_{nd.tag}"] + [f"{p}_{nd.tag}" for p in REGISTRY[nd.kind].size_params] \
                 if nd.kind != "Point" else []
-            form.addRow("parameters", QtWidgets.QLabel(", ".join(params) or "—"))
+            params += ([f"sigma_{nd.tag}"] if nd.poly else []) + ([f"Rc_{nd.tag}"] if nd.thick else [])
+            lab_p = QtWidgets.QLabel(", ".join(params) or "—")
+            lab_p.setWordWrap(True)
+            form.addRow("parameters", lab_p)
             lab = QtWidgets.QLabel(TIPS.get(nd.kind, ""))
             lab.setWordWrap(True)
             lab.setStyleSheet("color: gray;")
@@ -685,6 +711,7 @@ class Inspector(QtWidgets.QScrollArea):
                     cout.setCurrentText(nd.out_ref)
                     cout.currentTextChanged.connect(lambda r: o.edit(lambda: setattr(nd, "out_ref", r)))
                     form.addRow("out point", cout)
+                self._options(form, nd, nd.element)
             if nd.type in ("Array", "Chain"):
                 n = QtWidgets.QSpinBox()
                 n.setRange(1, 100000)
@@ -701,6 +728,13 @@ class Inspector(QtWidgets.QScrollArea):
                                 "point, or all at one; at a specific point always the same")
                 mode.currentIndexChanged.connect(lambda _i: o.edit(lambda: setattr(nd, "mode", mode.currentData())))
                 form.addRow("where", mode)
+                vex = QtWidgets.QCheckBox(f"excluded volume between the copies (vex_{nd.name})")
+                vex.setChecked(nd.vex)
+                vex.setToolTip("correlation hole between the copies (crowded coronas): their interference terms "
+                               "become (1 + k) A..A - k F_copy(q), k = vex/(n - 1), 0 <= vex < 1; the forward "
+                               "scattering is unchanged")
+                vex.toggled.connect(lambda v: o.edit(lambda: setattr(nd, "vex", v)))
+                form.addRow("", vex)
             if nd.type == "Generations":
                 f = QtWidgets.QSpinBox()
                 f.setRange(1, 20)
@@ -731,6 +765,24 @@ class Inspector(QtWidgets.QScrollArea):
             lab.setStyleSheet("color: gray;")
             lay.addWidget(lab)
         lay.addStretch(1)
+
+    def _options(self, form, nd, kind):
+        """Check boxes: polydisperse (Schulz-Zimm in mass) and thick (cross-section) where the type allows it."""
+        from .structure import MASS_SCALING, THICK_KINDS
+        o = self.owner
+        if kind in MASS_SCALING:
+            cb = QtWidgets.QCheckBox(f"polydisperse (sigma_{nd.tag})")
+            cb.setChecked(nd.poly)
+            cb.setToolTip("Schulz-Zimm distribution of the mass, relative width sigma; sizes scale with the mass, "
+                          "beta is proportional to it")
+            cb.toggled.connect(lambda v: o.edit(lambda: setattr(nd, "poly", v)))
+            form.addRow("", cb)
+        if kind in THICK_KINDS:
+            cb = QtWidgets.QCheckBox(f"thick (cross-section radius Rc_{nd.tag})")
+            cb.setChecked(nd.thick)
+            cb.setToolTip("cylindrical cross-section: F x [2 J1(q Rc)/(q Rc)]^2, amplitudes x 2 J1(q Rc)/(q Rc)")
+            cb.toggled.connect(lambda v: o.edit(lambda: setattr(nd, "thick", v)))
+            form.addRow("", cb)
 
     def _link(self, ln):
         o, d = self.owner, self.owner.design
@@ -1012,23 +1064,23 @@ class DesignerWidget(QtWidgets.QWidget):
         sel = self._selection_dict()
         if sel is None:
             return
-        md = QtCore.QMimeData()
-        txt = json.dumps(sel)
-        md.setData(MIME_NODES, QtCore.QByteArray(txt.encode()))
-        md.setText(txt)
-        QtWidgets.QApplication.clipboard().setMimeData(md)
+        # plain text on the clipboard: a QMimeData made in Python and owned by the clipboard crashes the
+        # interpreter at exit (PySide6 deletes it twice)
+        txt = json.dumps({"format": MIME_NODES, **sel})
+        QtWidgets.QApplication.clipboard().setText(txt)
         self._clip = txt
 
     def paste(self, txt=None):
         if txt is None:
-            md = QtWidgets.QApplication.clipboard().mimeData()
-            if md is not None and md.hasFormat(MIME_NODES):
-                txt = bytes(md.data(MIME_NODES)).decode()
-            else:
+            txt = QtWidgets.QApplication.clipboard().text()
+            if f'"{MIME_NODES}"' not in (txt or "")[:80]:
                 txt = getattr(self, "_clip", None)
         if not txt:
             return
-        sel = json.loads(txt)
+        try:
+            sel = json.loads(txt)
+        except ValueError:
+            return
         d = self.design
         new_ids = {}
 

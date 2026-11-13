@@ -25,8 +25,15 @@ Generated from the docstrings.
    :members: MainWindow
 
 .. automodule:: pysasfit.seb.subunits
-   :members: SubUnit, TableSubUnit, OrientedBody, Point, GaussianPolymer, GaussianLoop, ThinRod, SolidSphere,
+   :members: SubUnit, TableSubUnit, OrientedBody, Point, GaussianPolymer, GaussianLoop, FloryPolymer, FloryLoop, ThinRod, SolidSphere,
              ThinSphericalShell, SolidSphericalShell, ThinCircle, ThinDisk, SolidCylinder, Spheroid
+
+.. automodule:: pysasfit.seb.chains
+   :members: TwoPointChain, ChainFromF, WormLikeChain, WormLikeChainEV, ExcludedVolumePolymer, kholodenko_g,
+             kholodenko_r2, kholodenko_rg2, wlc_r2, wlc_rg2, des_cloizeaux_g
+
+.. automodule:: pysasfit.seb.ps_worm
+   :members: sk_wr, rg2_ev
 
 .. automodule:: pysasfit.seb.special
    :members:

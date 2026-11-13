@@ -154,6 +154,11 @@ def find_atsas(atsas_dir: Optional[str | os.PathLike] = None,
     global _ATSAS_BIN
     if _ATSAS_BIN is not None and not refresh and atsas_dir is None:
         return _ATSAS_BIN
+    if not refresh and atsas_dir is None:
+        b = cached_atsas()                         # found by an earlier session: no search
+        if b is not None:
+            _ATSAS_BIN = b
+            return b
     exe = "autorg" + EXE_SUFFIX
     cands: list[Path] = [Path(atsas_dir)] if atsas_dir else []
     cands += _env_roots()
@@ -166,10 +171,26 @@ def find_atsas(atsas_dir: Optional[str | os.PathLike] = None,
             if (b / exe).is_file():
                 if atsas_dir is None:
                     _ATSAS_BIN = b
+                    from ..core import installcache
+                    installcache.put("atsas", {"bin": str(b)})
                 return b
+    if atsas_dir is None:
+        from ..core import installcache
+        installcache.forget("atsas")
     raise AtsasError(
         "ATSAS not found. Pass atsas_dir=..., or set PYATSAS_DIR / ATSAS to the "
         "installation folder (e.g. C:\\Program Files\\ATSAS-4.1.4 or ~/ATSAS-4.1.4).")
+
+
+def cached_atsas() -> Optional[Path]:
+    """The ATSAS *bin* folder found by the last search (kept between sessions), checked with one file test
+    only; None if there was none or it is gone."""
+    from ..core import installcache
+    c = installcache.get("atsas")
+    if not c or not c.get("bin"):
+        return None
+    b = Path(c["bin"])
+    return b if (b / ("autorg" + EXE_SUFFIX)).is_file() else None
 
 
 def atsas_root(atsas_dir=None) -> Path:

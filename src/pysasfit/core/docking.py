@@ -295,11 +295,12 @@ class DockMixin:
 
     def _add_dock(self, name, title, widget, area=QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
                   scrollable=False):
-        if scrollable and not isinstance(widget, QtWidgets.QScrollArea):
-            sc = QtWidgets.QScrollArea()
-            sc.setWidget(widget)
-            sc.setWidgetResizable(True)
-            widget = sc
+        # every panel scrolls: otherwise the widest / tallest panel content fixes the smallest size of the
+        # tool, and one tool that of the whole pySASfit window (pysasfit.core.scrolling). Text boxes, tables
+        # and trees scroll themselves. ``scrollable`` is kept for existing callers.
+        if not isinstance(widget, QtWidgets.QAbstractScrollArea):
+            from .scrolling import scrolled
+            widget = scrolled(widget)
         if isinstance(widget, QtWidgets.QScrollArea):
             widget.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)     # the panel border replaces it
         frame = QtWidgets.QFrame()

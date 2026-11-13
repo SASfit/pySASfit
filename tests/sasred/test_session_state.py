@@ -86,6 +86,10 @@ def test_session_restores_tables_and_centres(win):
     w.close()                                           # writes the session
     w2 = win()
     assert w2.restore_session()
+    # the folder is not read at the start: named, read on Rescan
+    assert w2.folder == "" and not w2.entries and w2.folder_edit.text() == RAW
+    assert w2._session()["folder"] == RAW              # closing now keeps the last session as it was
+    w2.set_folder(w2.folder_edit.text())               # = Rescan
     assert w2.folder == RAW and (w2.centres[K8].x, w2.centres[K8].y) == (59.5, 62.5)
     t2 = {p.table.config: p.table for p in w2.table_panel.pages()}[C8]
     assert t2.scale == "direct_beam"

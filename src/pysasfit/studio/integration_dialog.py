@@ -1,15 +1,17 @@
 """Qt dialog for the integration settings of the explorer.
 
-Two tabs:
+Three tabs:
 
 * "SASfit library": strategy, accuracy and number of points of the integrals inside the SASfit functions
   (global settings of libsasfit, see :func:`pysasfit.studio.library.configure_precision`);
 * "Size distribution (scipy)": the method for the integral over the size distribution
-  (:mod:`pysasfit.studio.integration`).
+  (:mod:`pysasfit.studio.integration`);
+* "Hankel transform (SESANS, MSAS)": method and grids of the transforms of :mod:`pysasfit.studio.hankel`
+  (:data:`~pysasfit.studio.hankel.DEFAULTS`).
 
-    dlg = IntegrationDialog(sasfit_values, scipy_values)      # dicts; missing entries: defaults
+    dlg = IntegrationDialog(sasfit_values, scipy_values, hankel=hankel_values)   # dicts; missing entries: defaults
     if dlg.exec():
-        dlg.sasfit_result(), dlg.scipy_result(), dlg.remember.isChecked()
+        dlg.sasfit_result(), dlg.scipy_result(), dlg.hankel_result(), dlg.remember.isChecked()
 """
 
 from __future__ import annotations
@@ -18,10 +20,31 @@ import math
 
 from PySide6 import QtCore, QtWidgets
 
+from . import hankel as hk
 from . import integration
 from .library import DEFAULT_PRECISION, HANKEL, QUADRATURE, ROOTALG, SPHAVG
 
-__all__ = ["IntegrationDialog", "SASFIT_CHOICES", "SASFIT_FLOATS", "SASFIT_INTS"]
+__all__ = ["IntegrationDialog", "SASFIT_CHOICES", "SASFIT_FLOATS", "SASFIT_INTS", "HANKEL_FIELDS"]
+
+HANKEL_FIELDS = (  # (key, label, tooltip) of the numbers in the Hankel tab (the method is a combo box)
+    ("sesans_per_decade", "SESANS: Q points / decade", "exact method: points per decade of the Q grid of SESANS"),
+    ("sesans_q_min_factor", "SESANS: Q_min · δ_max", "the Q grid starts at this value / δ_max"),
+    ("sesans_q_max_factor", "SESANS: Q_max · δ_min", "the Q grid ends at this value / δ_min (unless a resolution Q_max is set)"),
+    ("msas_per_decade", "MSAS: Q points / decade", "exact method: points per decade of the Q grid of MSAS (evaluations of I(Q))"),
+    ("msas_r_per_decade", "MSAS: r points / decade", "exact method: points per decade of the r grid (cheap; the back "
+                                                     "transform needs a fine grid for a large dynamic range of I(Q))"),
+    ("msas_q_min_factor", "MSAS: Q grid from Q_min ×", "the Q grid starts at this factor × the smallest q of the data"),
+    ("msas_q_max_factor", "MSAS: Q grid to Q_max ×", "the Q grid ends at this factor × the largest q of the data"),
+    ("msas_r_min_factor", "MSAS: r grid from … / k_max", "the r grid starts at this value / the end of the Q grid"),
+    ("msas_r_max_factor", "MSAS: r grid to … / k_min", "the r grid ends at this value / the start of the Q grid"),
+    ("tail_power", "Porod tail exponent (0: none)", "I(Q) ∝ Q^-p above the Q grid completes G(0) (exact method; 4 = Porod)"),
+    ("n_points", "FFTLog / QDHT: N points", "grid points of FFTLog and QDHT = evaluations of I(Q) (SASfit: 2048)"),
+    ("fft_low", "FFTLog: Q grid from … / δ_max (× Q_min)", "start of the FFTLog grid: this value / δ_max (SESANS) or × Q_min (MSAS)"),
+    ("sesans_fft_high", "FFTLog SESANS: to … / δ_min", "end of the FFTLog grid of SESANS: this value / δ_min"),
+    ("msas_fft_high", "FFTLog MSAS: to Q_max ×", "end of the FFTLog grid of MSAS: this factor × Q_max"),
+    ("qdht_margin", "QDHT SESANS: support × δ_max", "QDHT assumes G(r) = 0 beyond this factor × δ_max"),
+    ("qdht_r_factor", "QDHT MSAS: support … / Q_min", "QDHT assumes G(r) = 0 beyond this value / Q_min of the data"),
+)
 
 SASFIT_CHOICES = (  # (setting, label, {name: value}) of the libsasfit settings that choose a strategy
     ("int_strategy", "integration strategy", QUADRATURE),
@@ -46,11 +69,11 @@ def _name_of(table, value):
 class IntegrationDialog(QtWidgets.QDialog):
     """Integration settings: libsasfit (strategies, accuracy, points) and the scipy method for the size distribution."""
 
-    def __init__(self, sasfit, scipy_settings, parent=None):
+    def __init__(self, sasfit, scipy_settings, parent=None, hankel=None):
         super().__init__(parent)
         self.setWindowTitle("Integration")
         self.setMinimumWidth(620)
-        self._sasfit, self._scipy = {}, {}
+        self._sasfit, self._scipy, self._hankel = {}, {}, {}
         lay = QtWidgets.QVBoxLayout(self)
         tabs = QtWidgets.QTabWidget()
         lay.addWidget(tabs, 1)
@@ -139,6 +162,49 @@ class IntegrationDialog(QtWidgets.QDialog):
         tabs.addTab(page2, "Size distribution (scipy)")
         self.method.currentIndexChanged.connect(self._method_changed)
 
+        # ---- Hankel transforms of SESANS and MSAS (Python)
+        page3 = QtWidgets.QWidget()
+        p3 = QtWidgets.QVBoxLayout(page3)
+        note3 = QtWidgets.QLabel(
+            "Hankel transforms of the SESANS and multiple-scattering (MSAS) transforms of the model explorer (Transform "
+            "box), done in Python. These are the defaults; a data set can choose another method and number of points in "
+            "its Transform box. The 'Hankel transform' strategy of the SASfit library tab applies only inside the SASfit "
+            "functions."
+        )
+        note3.setWordWrap(True)
+        p3.addWidget(note3)
+        form3 = QtWidgets.QFormLayout()
+        self.h_method = QtWidgets.QComboBox()
+        for m in hk.METHODS:
+            self.h_method.addItem(hk.METHOD_LABELS[m], m)
+        self.h_method.setToolTip(
+            "exact on linear pieces: I(Q)·Q linear between the points of a log grid, every piece integrated exactly "
+            "against J0 (~300 evaluations of I(Q), exact resolution cut).\nFFTLog: Hamilton's fast Hankel transform "
+            "(scipy.fft.fht), as SASfit's HANKEL_FFTLOG.\nQDHT: quasi-discrete Hankel transform on the zeros of J0, as "
+            "SASfit's HANKEL_QDHT."
+        )
+        form3.addRow("method", self.h_method)
+        self.h_fields = {}
+        for key, label, tip in HANKEL_FIELDS:
+            edit = QtWidgets.QLineEdit()
+            edit.setToolTip(f"{tip} (built in {hk.DEFAULTS[key]!r})")
+            self.h_fields[key] = edit
+            form3.addRow(label, edit)
+            if key == "n_points":  # FFTLog: a suggestion only, the value entered is used
+                self.h_nhint = QtWidgets.QLabel("")
+                self.h_nhint.setWordWrap(True)
+                self.h_nhint.setStyleSheet("color: #8a5a00;")
+                form3.addRow("", self.h_nhint)
+                edit.textChanged.connect(self._n_hint)
+        p3.addLayout(form3)
+        p3.addStretch(1)
+        scroll3 = QtWidgets.QScrollArea()
+        scroll3.setWidgetResizable(True)
+        scroll3.setWidget(page3)
+        tabs.addTab(scroll3, "Hankel transform (SESANS, MSAS)")
+        self.tabs = tabs
+        self._hankel_in = dict(hankel) if hankel is not None else hk.defaults()
+
         self.error = QtWidgets.QLabel()
         self.error.setStyleSheet("color: #b00020;")
         self.error.setWordWrap(True)
@@ -154,13 +220,13 @@ class IntegrationDialog(QtWidgets.QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         defaults = buttons.button(QtWidgets.QDialogButtonBox.StandardButton.RestoreDefaults)
-        defaults.setToolTip("SASfit and scipy defaults")
-        defaults.clicked.connect(lambda: self._load(DEFAULT_PRECISION, integration.DEFAULTS))
+        defaults.setToolTip("SASfit, scipy and Hankel-transform defaults")
+        defaults.clicked.connect(lambda: self._load(DEFAULT_PRECISION, integration.DEFAULTS, hk.DEFAULTS))
         lay.addWidget(buttons)
-        self._load(sasfit, scipy_settings)
+        self._load(sasfit, scipy_settings, self._hankel_in)
 
     # ------------------------------------------------------------------ values
-    def _load(self, sasfit, scipy_settings):
+    def _load(self, sasfit, scipy_settings, hankel=None):
         """Show the settings (dicts; missing entries: defaults)."""
         for key, _label, table in SASFIT_CHOICES:
             value = sasfit.get(key, DEFAULT_PRECISION[key])
@@ -183,6 +249,11 @@ class IntegrationDialog(QtWidgets.QDialog):
         self.limit.setValue(int(s["limit"]))
         self.x_power.setValue(float(s["x_power"]))
         self.tail.setText(repr(float(s["tail"])))
+        h = {**hk.DEFAULTS, **(hankel or {})}
+        self.h_method.setCurrentIndex(max(self.h_method.findData(h["method"]), 0))
+        for key, edit in self.h_fields.items():
+            v = h[key]
+            edit.setText(str(int(v)) if isinstance(hk.DEFAULTS[key], int) else f"{float(v):g}")
         self.error.clear()
         self._method_changed()
 
@@ -218,11 +289,39 @@ class IntegrationDialog(QtWidgets.QDialog):
                 "x_power": self.x_power.value(),
                 "tail": self._number(self.tail, "tail cut-off", positive=True),
             }
+            hankel = {"method": self.h_method.currentData()}
+            for key, edit in self.h_fields.items():
+                v = self._number(edit, key, positive=key != "tail_power")
+                if isinstance(hk.DEFAULTS[key], int):
+                    if v != int(v) or v < 2:
+                        raise ValueError(f"{key}: a whole number >= 2")
+                    v = int(v)
+                hankel[key] = v
+            if 0 < hankel["tail_power"] <= 2:
+                raise ValueError("tail_power: must be 0 (no tail) or > 2")
         except ValueError as exc:
             self.error.setText(f"✘ {exc}")
             return  # stay open
-        self._sasfit, self._scipy = sasfit, scipy_settings
+        self._sasfit, self._scipy, self._hankel = sasfit, scipy_settings, hankel
         super().accept()
+
+    def _n_hint(self, *_):
+        """Suggest the nearest fast FFT lengths when N is a slow one for FFTLog (the value itself is kept)."""
+        try:
+            n = int(float(self.h_fields["n_points"].text()))
+        except ValueError:
+            self.h_nhint.setText("")
+            return
+        if n < 2 or hk.is_fast_length(n):
+            self.h_nhint.setText("")
+            return
+        prev, nxt = hk.fast_lengths(n)
+        self.h_nhint.setText(f"{n} is a slow FFT length for FFTLog (factors other than 2, 3, 5); faster: {prev} or "
+                             f"{nxt}. Used as entered. (QDHT does not use an FFT: any N.)")
+
+    def hankel_result(self):
+        """Hankel-transform defaults (keys of :data:`pysasfit.studio.hankel.DEFAULTS`)."""
+        return dict(self._hankel)
 
     def sasfit_result(self):
         """libsasfit settings: strategy names (or numbers), floats and ints, ready for ``configure_precision``."""

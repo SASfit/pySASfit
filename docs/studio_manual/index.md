@@ -22,6 +22,7 @@ complete description of every option is in the {doc}`reference <../studio>` and 
 - {doc}`explorer`: windows and docks, parameter rows, sliders, data, saving a session.
 - {doc}`models`: mixtures, size distributions, structure factors, background, integration.
 - {doc}`fitting`: bounds, constraints, priors, optimisers, global search, speed-ups.
+- {doc}`sesans_msas`: SESANS data (`.ses`) and multiple small-angle scattering (SASfit's transform).
 - {doc}`results`: Result tab, correlations, Excel, CSV, summary figure, size distributions.
 - {doc}`scripting`: Python examples for functions, models, the fitting engine and the export.
 - {doc}`extending`: own functions, SasView adapter, where things are found.
@@ -33,6 +34,7 @@ getting_started
 explorer
 models
 fitting
+sesans_msas
 results
 scripting
 extending

@@ -5,7 +5,7 @@ from pysasfit.seb import special as sf
 from pysasfit.seb.subunits import REGISTRY, ThinDisk, Spheroid, SolidSphere, OrientedBody
 
 q = np.logspace(-4, 0, 150)
-SIZES = {"Rg": 9.0, "R": 12.0, "L": 40.0, "Ri": 8.0, "Ro": 15.0, "a": 10.0, "c": 22.0}
+SIZES = {"nu": 0.588, "b": 15.0, "Rg": 9.0, "R": 12.0, "L": 40.0, "Ri": 8.0, "Ro": 15.0, "a": 10.0, "c": 22.0}
 
 
 @pytest.mark.parametrize("kind", [k for k in REGISTRY if k != "Point"])

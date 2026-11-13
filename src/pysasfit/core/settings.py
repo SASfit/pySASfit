@@ -34,7 +34,7 @@ class Setting:
     default: object
     label: str
     help: str = ""
-    kind: str = "float"         # float | int | bool | choice | str | file
+    kind: str = "float"         # float | int | bool | choice | str | file | colour (#RRGGBB)
     lo: float | None = None
     hi: float | None = None
     choices: list = field(default_factory=list)   # [(value, label), ...] for kind="choice"
@@ -58,6 +58,12 @@ class Setting:
             return v
         if self.kind in ("str", "file"):
             return str(v)
+        if self.kind == "colour":
+            import re
+            t = str(v).strip()
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", t):
+                raise ValueError(f"{self.label}: {v!r} is not a colour of the form #RRGGBB")
+            return t.upper()
         x = int(round(float(v))) if self.kind == "int" else float(v)
         if self.lo is not None and x < self.lo:
             raise ValueError(f"{self.label}: {x} < {self.lo}")

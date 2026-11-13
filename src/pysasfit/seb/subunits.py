@@ -132,6 +132,82 @@ class GaussianLoop(TableSubUnit):
     _P = {("contour", "contour"): lambda q, p: sf.ring_debye(_xg(q, p))}
 
 
+def _uf(q, p):
+    """U = q^2 <R^2>/6 of a chain with Flory exponent nu: <R^2> = (2 nu + 1)(2 nu + 2) Rg^2."""
+    nu = p["nu"]
+    return (q * p["Rg"]) ** 2 * (2 * nu + 1) * (2 * nu + 2) / 6.0
+
+
+def _check_nu(p):
+    if not 0.2 <= p["nu"] <= 1.0:
+        raise ValueError(f"Flory exponent nu = {p['nu']} outside 0.2 … 1")
+
+
+class FloryPolymer(TableSubUnit):
+    """Chain with Flory exponent nu (Hammouda's generalised Gaussian chain, Macromol. Theory Simul. 2, 1993):
+    Gaussian statistics with <r_ij^2> = b^2 |i - j|^(2 nu). nu = 1/2: GaussianPolymer; nu = 0.588: good solvent,
+    nu = 1/3: collapsed. Excluded volume acts only within the chain, and distances keep a Gaussian distribution."""
+    kind = "FloryPolymer"
+    size_params = ("Rg", "nu")
+    specific = ("end1", "middle", "end2")
+    distributed = ("contour",)
+
+    def ff(self, q, p):
+        _check_nu(p)
+        return sf.flory_ff(_uf(q, p), p["nu"])
+
+    def _mid(self, q, p):
+        return _uf(q, p) * 2.0 ** (-2 * p["nu"])
+
+    def amp(self, q, p, ref):
+        self.check_ref(ref)
+        _check_nu(p)
+        if ref in ("end1", "end2"):
+            return sf.flory_end(_uf(q, p), p["nu"])
+        if ref == "middle":
+            return sf.flory_end(self._mid(q, p), p["nu"])
+        return self.ff(q, p)
+
+    def psi(self, q, p, r1, r2):
+        _check_nu(p)
+        a, b = sorted((r1, r2))
+        if r1 == r2 and r1 not in self.distributed:
+            return np.ones_like(np.asarray(q, dtype=float))
+        if (a, b) == ("end1", "end2"):
+            return np.exp(-_uf(q, p))
+        if b == "middle" and a in ("end1", "end2"):
+            return np.exp(-self._mid(q, p))
+        if a == "contour" and b == "contour":
+            return self.ff(q, p)
+        other = b if a == "contour" else a
+        return self.amp(q, p, other)
+
+
+class FloryLoop(TableSubUnit):
+    """Ring with Flory exponent nu: <r^2(s)> = b^2 N^(2 nu) [s (1 - s)]^(2 nu) along the contour fraction s;
+    Rg^2 = b^2 N^(2 nu) B(2 nu + 1, 2 nu + 1) / 2. nu = 1/2: GaussianLoop."""
+    kind = "FloryLoop"
+    size_params = ("Rg", "nu")
+    distributed = ("contour",)
+
+    @staticmethod
+    def _w(q, p):
+        nu = p["nu"]
+        B = np.exp(sp.betaln(2 * nu + 1, 2 * nu + 1))
+        return (q * p["Rg"]) ** 2 / (3.0 * B)
+
+    def ff(self, q, p):
+        _check_nu(p)
+        return sf.flory_loop_ff(self._w(q, p), p["nu"])
+
+    def amp(self, q, p, ref):
+        self.check_ref(ref)
+        return self.ff(q, p)
+
+    def psi(self, q, p, r1, r2):
+        return self.ff(q, p)
+
+
 def _xl(q, p):
     return q * p["L"]
 
@@ -439,7 +515,13 @@ class Spheroid(OrientedBody):
         return None
 
 
+def _registry():
+    from .chains import ExcludedVolumePolymer, WormLikeChain, WormLikeChainEV
+    return (WormLikeChain, WormLikeChainEV, ExcludedVolumePolymer)
+
+
 REGISTRY = {cls.kind: cls for cls in (
-    Point, GaussianPolymer, GaussianLoop, ThinRod, SolidSphere,
+    Point, GaussianPolymer, GaussianLoop, FloryPolymer, FloryLoop, ThinRod, SolidSphere,
     ThinSphericalShell, SolidSphericalShell, ThinCircle, ThinDisk,
     SolidCylinder, Spheroid)}
+REGISTRY.update({cls.kind: cls for cls in _registry()})

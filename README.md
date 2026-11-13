@@ -17,7 +17,8 @@ from the raw detector data (reduction with exact error propagation) to models, f
 | `pysasfit.atsas` | **pyATsas**: the programs of an ATSAS installation (EMBL Hamburg / BIOSAXS, installed separately with its own licence) on pySASfit curves: AUTORG, DATGNOM, GNOM, CRYSOL / CRYSON, DAMMIF with plots and a results table; starts PRIMUS, CHROMIXS, PEAK, …; finds ATSAS on Windows, Linux and macOS; see `docs/atsas/` | `pysasfit-atsas` |
 | `pysasfit.density` | **pyDENsity**: electron-density maps from SAXS/SANS curves with DENSS (T. D. Grant 2018; GPL-3.0, installed separately with `pip install denss`, run as a separate process; NumPy-2 shim for DENSS 1.8.7): single and averaged maps (denss-all, FSC resolution), isosurfaces, slices; see `docs/density/` | `pysasfit-density` |
 | `pysasfit.densitymulti` | **pyDENSSmulti**: 3D maps from several contrasts (SANS contrast variation, SANS + SAXS) with pySASfit's own DENSS-type iteration (no DENSS installation): volume fractions of the components with a per-voxel bounded least-squares combination through the contrast matrix (match points, H/D exchange, identifiability check), or a DENSS-Multiple-type averaged SLD map (Sumner & Qian 2022) for comparison; several maps aligned and averaged; see `docs/densitymulti/` | `pysasfit-densitymulti` |
-| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pySCAtter, pySEBpolymers, pyATsas, pyDENsity, pyDENSSmulti, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
+| `pysasfit.sld` | **pySLDcalculator**: scattering length densities for neutrons (per isotope, absorption with the wavelength) and X-rays (f′, f″ against the energy, Chantler or Henke table, absorption edges) from a formula with density or molecular volume, or from a protein / DNA / RNA sequence (residue volumes, exchange of the labile hydrogen with the solvent); molecular volume, electron density, cross sections, transmissions, contrast and excess scattering length to a matrix, D₂O match points; see `docs/sld/` | `pysasfit-sld` |
+| `pysasfit.gui` | one launcher window with every tool as a tab (pySASred, pySASstudio, pySLDprofile, pyINVersion, pyOZsolver, pySASmorph, pySCAtter, pySEBpolymers, pyATsas, pyDENsity, pyDENSSmulti, pySLDcalculator, pyTOOLbox); every tab can be detached into its own window and attached again | `pysasfit-gui` |
 
 Every tool copies a Python script that repeats its current calculation to the clipboard (*Copy Python* button,
 File → *Copy Python code*, Ctrl+Shift+C): data files, all settings and the preference values used; see
@@ -53,6 +54,7 @@ pysasfit-sldprofile [datafile]
 pysasfit-inversion
 pysasfit-oz
 pysasfit-morph [datafile]        # 3D two-phase morphology from I(q)
+pysasfit-sld [formula -d density] # SLD calculator: window, or values on the command line with arguments
 pysasfit-explorer [ff_sphere]   # studio: plot, adjust and fit SASfit models (docs/studio.md)
 python run_gui.py [datafile]     # without installing (finds ./src itself)
 ```
@@ -176,6 +178,7 @@ src/pysasfit/
                         librmsa.dll); oz/gui/ Qt GUI (main_window, oz_solver_tab, the polydisperse tabs, qtkit)
     density/            core.py (running DENSS, MRC maps, isosurfaces), gui.py (pyDENsity)
     densitymulti/       core.py (contrasts, components, the multi-contrast iteration, averaging, files), gui.py (pyDENSSmulti)
+    sld/                core.py (Material, Probe, contrast, scans), bio.py (sequences), entries.py, cli.py, gui.py (pySLDcalculator)
     atsas/              core.py (finding ATSAS, running and parsing its programs), gui.py (pyATsas)
     gui/launcher.py
     resources/          tool icons and logos (copied from docs/pySASfit-logo-bundle by tools/sync_logos.py)

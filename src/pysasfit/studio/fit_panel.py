@@ -18,6 +18,7 @@ The model is a mixture of contributions; with several contributions the paramete
 from __future__ import annotations
 
 import math
+import os
 import re
 import threading
 import time
@@ -234,7 +235,8 @@ class FitPanel(QtWidgets.QWidget):
         row = QtWidgets.QHBoxLayout()
         self.load_btn = QtWidgets.QPushButton("Add data…")
         self.load_btn.setToolTip(
-            "q, I(q), sigma(q) columns (pysasfit.core.io.load_data); one or several files. Several data sets are fitted "
+            "q, I(q), sigma(q) columns (pysasfit.core.io.load_data) or SESANS files (.ses: spin-echo length, "
+            "depolarisation / polarisation, wavelength); one or several files. Several data sets are fitted "
             "together: every contribution belongs to the data sets given in its tab ('contributes to data sets'), every "
             "data set has its own background"
         )
@@ -253,7 +255,7 @@ class FitPanel(QtWidgets.QWidget):
         for e in (self.fit_qmin, self.fit_qmax):
             e.setFixedWidth(70)
             e.setPlaceholderText("all")
-            e.setToolTip("only data points inside this q range are fitted (empty: all)")
+            e.setToolTip("only data points inside this q range are fitted (empty: all); not applied to SESANS data")
         for w in (self.load_btn, QtWidgets.QLabel("q ×"), self.q_scale, self.remove_btn, self.clear_btn, self.data_label):
             row.addWidget(w, 1 if w is self.data_label else 0)
         row.addWidget(QtWidgets.QLabel("fit q range"))
@@ -654,17 +656,25 @@ class FitPanel(QtWidgets.QWidget):
         if fns:
             self.load_files(fns)
 
-    def load_files(self, fns):
-        """Add data files (each a data set)."""
+    def load_files(self, fns, sesans_options=None):
+        """Add data files (each a data set). SESANS files (:func:`pysasfit.core.sesans_io.is_sesans_file`) are read with
+        :func:`load_sesans_file`; ``sesans_options`` (dict, see there) skips the dialog that asks for their units."""
         from ..core.io import load_data
+        from ..core.sesans_io import is_sesans_file
 
         try:
             scale = float(self.q_scale.text().replace(",", "."))
         except ValueError:
             self._message("q × must be a number", error=True)
             return
+        note = ""
         for fn in fns:
             try:
+                if is_sesans_file(fn) and hasattr(self.explorer, "add_dataset"):
+                    if not self.load_sesans_file(fn, sesans_options):
+                        return
+                    note = self.status.text()
+                    continue
                 q, I, s, *_ = load_data(fn, q_scale=scale)
                 if hasattr(self.explorer, "add_dataset"):
                     self.explorer.add_dataset(q, I, s, fn)
@@ -675,8 +685,46 @@ class FitPanel(QtWidgets.QWidget):
                 self._message(f"{fn}: {type(exc).__name__}: {exc}", error=True)
                 return
         self.data_label.setToolTip("\n".join(fns))
-        self._message("")
+        self._message(note)
         self._update_buttons()
+
+    def load_sesans_file(self, fn, options=None):
+        """Add a SESANS file as a data set. ``options``: ``length_unit`` (default: that of the explorer's q unit),
+        ``delta_unit`` / ``wavelength_unit`` (override the file), ``thickness_cm``, ``observable`` ("G" or "P");
+        None asks with a dialog. Returns False if cancelled."""
+        from ..core.sesans_io import load_sesans
+        from .transform_panel import LENGTH_OF_Q_UNIT, default_settings
+
+        e = self.explorer
+        unit = LENGTH_OF_Q_UNIT.get(e.units.currentText(), "nm") if hasattr(e, "units") else "nm"
+        unit = {"Å": "A"}.get(unit, unit)
+        if options is None:
+            options = sesans_dialog(self, fn, unit)
+            if options is None:
+                return False
+        opts = {"length_unit": unit, **options}
+        obs = opts.pop("observable", "G")
+        data = load_sesans(fn, **{k: v for k, v in opts.items() if v not in (None, "")})
+        if not np.isfinite(data.thickness) and obs == "P":
+            raise ValueError("the file gives no sample thickness: enter it")
+        tr = default_settings("sesans" if obs == "G" else "sesans_p")
+        tr["thickness"] = float(data.thickness) if np.isfinite(data.thickness) else 0.1
+        lam = data.wavelength
+        if np.all(np.isfinite(lam)):
+            tr["wavelength"] = float(np.median(lam))
+        else:
+            lam = None
+        if data.q_accept:  # SESANS resolution: z-acceptance in Q, or the acceptance angle (Q_max per λ)
+            tr["accept"], tr["q_accept"] = "q", float(data.q_accept)
+        elif data.theta_max:
+            tr["accept"], tr["theta_max"] = "theta", float(data.theta_max)
+        y, sig = data.observable(obs)
+        e.add_dataset(data.delta, y, sig, fn, transform=tr,
+                      sesans={"G": (data.G, data.dG), "P": (data.P, data.dP), "lam": lam,
+                              "options": {**opts, "observable": obs}})  # fmt: skip
+        self._message(f"{os.path.basename(fn)}: SESANS, {data.delta.size} spin-echo lengths "
+                      f"{data.delta.min():.4g} … {data.delta.max():.4g} {data.length_unit}, t = {data.thickness:g} cm")
+        return True
 
     def _remove(self):
         rows = sorted({i.row() for i in self.data_list.selectedIndexes()}, reverse=True)
@@ -758,7 +806,8 @@ class FitPanel(QtWidgets.QWidget):
             m = self._model_for(k)
             if not any(m.is_active(i) for i in range(len(m.contributions))):
                 raise ValueError(f"data set {k + 1} ({d['name']}) has no contribution: see 'contributes to data sets'")
-            problem.add_dataset((d["q"], d["I"], d["sigma"]), m, name=names[k], q_range=self.q_range())
+            rng = self.q_range() if d.get("domain", "q") == "q" else None     # the fit q range is not one of δ
+            problem.add_dataset((d["q"], d["I"], d["sigma"]), m, name=names[k], q_range=rng)
         model = problem.datasets[0].model
         self.refresh_table()
         links = self.links()
@@ -840,8 +889,9 @@ class FitPanel(QtWidgets.QWidget):
             names = [f"{k + 1}" for k in range(n)]
         rng = self.q_range()
         for k in range(n):
+            rk = rng if sets[k].get("domain", "q") == "q" else None
             sc.add(call("problem.add_dataset", Code(f"(q{k + 1}, I{k + 1}, s{k + 1})"), Code(f"model{k + 1}"),
-                        name=names[k], q_range=rng))
+                        name=names[k], q_range=rk))
         links = self.links()
         amap = e.label_map() if hasattr(e, "label_map") else {lab: a for a, lab, *_ in e.parameter_entries()}
         linked = {}
@@ -1085,8 +1135,9 @@ class FitPanel(QtWidgets.QWidget):
     def _model_q(self):
         """q values used for timing and for the node check: the data (inside the fit range) or the curve shown."""
         d = self.explorer.data
-        if d is not None:
-            q = np.concatenate([np.asarray(x["q"], float) for x in self._datasets()])
+        qs = [np.asarray(x["q"], float) for x in self._datasets() if x.get("domain", "q") == "q"]
+        if d is not None and qs:
+            q = np.concatenate(qs)
             rng = self.q_range()
             if rng is not None:
                 q = q[(q >= rng[0]) & (q <= rng[1])]
@@ -1221,3 +1272,68 @@ class FitPanel(QtWidgets.QWidget):
         self.undo_btn.setEnabled(False)
         self._message("parameters restored")
 
+
+
+def sesans_dialog(parent, fn, length_unit="nm"):
+    """Ask how to read a SESANS file: units (as printed in it or corrected), thickness, quantity to fit.
+    Returns the options of :meth:`FitPanel.load_sesans_file` or None (cancelled)."""
+    from ..core.sesans_io import load_sesans
+
+    try:
+        info = load_sesans(fn, length_unit=length_unit)
+    except Exception as exc:  # noqa: BLE001 -- shown in the dialog
+        info, err = None, f"{type(exc).__name__}: {exc}"
+    else:
+        err = ""
+    dlg = QtWidgets.QDialog(parent)
+    dlg.setWindowTitle(f"SESANS data: {os.path.basename(fn)}")
+    form = QtWidgets.QFormLayout(dlg)
+    units = ["A", "nm", "um", "m"]
+    shown = {"A": "Å", "nm": "nm", "um": "µm", "m": "m"}
+
+    def unit_combo(found):
+        cb = QtWidgets.QComboBox()
+        for u in units:
+            cb.addItem(shown[u] + ("   (as in the file)" if found and u == _norm_unit(found) else ""), u)
+        i = cb.findData(_norm_unit(found)) if found else -1
+        cb.setCurrentIndex(max(i, 0))
+        return cb
+
+    fu = info.file_units if info is not None else {}
+    d_unit, l_unit = unit_combo(fu.get("delta")), unit_combo(fu.get("wavelength"))
+    d_unit.setToolTip("unit of the spin-echo lengths in the file (some files print a wrong one)")
+    l_unit.setToolTip("unit of the wavelengths in the file")
+    thick = QtWidgets.QLineEdit("" if info is None or not np.isfinite(info.thickness) else f"{info.thickness:g}")
+    thick.setToolTip("sample thickness in cm (needed for P/P0)")
+    obs = QtWidgets.QComboBox()
+    obs.addItem("G(δ) − G(0) = ln(P/P0)/(λ²t)   (SASfit H{…}/2π)", "G")
+    obs.addItem("P/P0   (SASfit Exp(H{…}/2π) with λ²t)", "P")
+    if info is not None:
+        cols = ", ".join(f"{r}: {t}" for r, t in info.columns.items())
+        form.addRow(QtWidgets.QLabel(f"{info.delta.size} points; columns {cols}"))
+        lam = info.wavelength
+        if np.all(np.isfinite(lam)):
+            form.addRow("wavelengths", QtWidgets.QLabel(f"{lam.min():g} … {lam.max():g} {shown.get(length_unit, length_unit)}"))
+    if err:
+        form.addRow(QtWidgets.QLabel(err))
+    form.addRow("spin-echo length unit in the file", d_unit)
+    form.addRow("wavelength unit in the file", l_unit)
+    form.addRow("thickness [cm]", thick)
+    form.addRow("fit and show", obs)
+    form.addRow(QtWidgets.QLabel(f"lengths are converted to {shown.get(length_unit, length_unit)} "
+                                 "(the unit of the q axis of the explorer)"))
+    bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
+                                    | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+    bb.accepted.connect(dlg.accept)
+    bb.rejected.connect(dlg.reject)
+    form.addRow(bb)
+    if dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted:
+        return None
+    t = thick.text().strip().replace(",", ".")
+    return {"delta_unit": d_unit.currentData(), "wavelength_unit": l_unit.currentData(),
+            "thickness_cm": float(t) if t else None, "observable": obs.currentData()}
+
+
+def _norm_unit(u):
+    u = (u or "").strip().lower()
+    return {"å": "A", "a": "A", "ang": "A", "angstrom": "A", "µm": "um", "μm": "um", "micron": "um"}.get(u, u)

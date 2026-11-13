@@ -275,7 +275,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._recalc_timer = QtCore.QTimer(self, singleShot=True, interval=350)
         self._recalc_timer.timeout.connect(self._auto_calculate)
         self.resize(1500, 920)
+        self._quiet = True               # nothing is calculated when the tool starts: Calculate 2D
         self._on_params_changed()
+        self._quiet = False
 
     # ------------------------------------------------------------------ construction
     def _build_menus(self):
@@ -461,7 +463,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.lattice_view.set_params(self.params())
             if self.hkl2d.isChecked():
                 self.draw_2d()
-        if self.auto_1d.isChecked() or self.auto_2d.isChecked():
+        if (self.auto_1d.isChecked() or self.auto_2d.isChecked()) and not getattr(self, "_quiet", False):
             self._recalc_timer.start()
 
     def _auto_calculate(self):
@@ -751,6 +753,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 
     def _on_data_selected(self, _row):
         self.data_model = None
+        if getattr(self, "_quiet", False):     # last session: show the data, calculate on request only
+            self.draw_1d()
+            return
         self.calculate(two_d=False)
 
     # ------------------------------------------------------------------ Python code
@@ -939,6 +944,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 s = json.load(fh)
         except (OSError, ValueError):
             return False
+        self._quiet = True                     # the last session is shown, not calculated (Calculate 2D)
         try:
             self.ini_path = s.get("ini")
             self.params_panel.set_params(s.get("params") or {}, s.get("flags") or {})
@@ -965,7 +971,12 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                     self.on_load_2d(path)
         except Exception:  # noqa: BLE001 -- an old or broken session must not stop the tool
             pass
-        self.calculate(two_d=True)
+        finally:
+            self._quiet = False
+        self._recalc_timer.stop()
+        self.draw_1d()
+        self.draw_2d()
+        self.log("last session restored; press Calculate 2D (or change a parameter) to calculate")
         return True
 
     def forget_session(self):

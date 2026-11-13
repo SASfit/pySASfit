@@ -466,9 +466,9 @@ class MainWindow(ProjectMixin, DockMixin, QtWidgets.QMainWindow):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidget(ctrl)
         scroll.setWidgetResizable(True)
-        # wide enough for the controls: no horizontal scroll bar
-        scroll.setMinimumWidth(max(410, ctrl.minimumSizeHint().width()
-                                   + scroll.verticalScrollBar().sizeHint().width() + 4))
+        # no minimum width: the panel starts wide enough for its controls (resizeDocks below) and gets a
+        # horizontal scroll bar when the window is made smaller (a minimum here was the smallest width of
+        # the whole pySASfit window)
 
         # ---------------- plots + text: every panel is a detachable dock (View menu)
         self.figs, self.canvases = {}, {}

@@ -173,6 +173,9 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
         self._closing = False
         self._buttons = {}        # page -> its Attach button (Python must keep a reference)
         self._marks = {}          # page -> wordmark segments of its tab label
+        #: optional callable page -> page: a placeholder page is turned into its real page before it is
+        #: detached or brought to the front (the launcher builds its tools only when they are first needed)
+        self.resolve_page = None
 
     # ---------------------------------------------------------------- bookkeeping
     def tabInserted(self, index):
@@ -220,8 +223,40 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
     def is_detached(self, page):
         return page in self.detached
 
+    def _resolve(self, page):
+        if self.resolve_page is not None and page is not None:
+            return self.resolve_page(page) or page
+        return page
+
+    def replace_page(self, old, new):
+        """Put ``new`` in the place of the attached page ``old`` (same title, icon, tooltip, wordmark and place
+        in the tab order); ``old`` is removed from the tab widget, not deleted."""
+        i = self.indexOf(old)
+        if i < 0:
+            return False
+        title, icon, tip = self.tabText(i), self.tabIcon(i), self.tabToolTip(i)
+        mark = self._marks.pop(old, None)
+        cur = self.currentIndex() == i
+        k = self._order.index(old)
+        self._order[k] = new
+        self._info.pop(old, None)
+        if mark:
+            self._marks[new] = mark
+        self.blockSignals(True)
+        try:
+            self.removeTab(i)
+            self.insertTab(i, new, icon, title)
+            if cur:
+                self.setCurrentIndex(i)
+        finally:
+            self.blockSignals(False)
+        self.setTabToolTip(i, tip)
+        self._info[new] = (title, icon, tip)
+        return True
+
     def show_page(self, page):
         """Bring ``page`` to the front: select its tab, or raise its window."""
+        page = self._resolve(page)
         if page in self.detached:
             win = self.detached[page]
             win.showNormal() if win.isMinimized() else win.show()
@@ -237,6 +272,7 @@ class DetachableTabWidget(QtWidgets.QTabWidget):
     def detach(self, index_or_page, pos=None, geometry=None):
         """Move a tab (index or page widget) into its own window; returns the window."""
         page = self.widget(index_or_page) if isinstance(index_or_page, int) else index_or_page
+        page = self._resolve(page)
         if page is None:
             return None
         if page in self.detached:
