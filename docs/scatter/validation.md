@@ -12,6 +12,10 @@ of the C++ image.
     parameter check, which otherwise aborts some runs.
 * **Images.** 128 × 128 pixels in preset mode (q_max = 2 nm⁻¹, `GridPoints` = 64). The C++ (q_x, q_y, q_z) maps to
   the engine's (q_y, q_z, q_x).
+* **Orientation.** The lattice cases of the table are isotropic. pySCAtter then uses the powder form of the
+  lattice factor, without the azimuthal factor. Until 13 November 2026 the azimuthal factor was applied for the
+  isotropic orientation too whenever `EditAzi` > 0, which gave single-crystal spots. The lattice rows below were
+  obtained before that correction and have not been re-run since.
 * **Statistics.** For every case:
   * the median ratio C++/pySCAtter, which is the scale;
   * the median, 95th percentile and maximum of |ratio/scale − 1|;
@@ -74,6 +78,10 @@ The tests in `tests/scatter/test_cpp_lattice.py` check the width modes:
 * **Director.** The director (θ, φ) is defined in the C++ frame: θ = 90°, φ = 90° is vertical on the detector.
 * **Narrow distributions.** A Schulz average on a uniform grid replaces the Gauss–Laguerre rule for narrow
   distributions (z > 140). The Laguerre rule gave NaN there.
+* **Isotropic lattices.** The azimuthal factor is left out for the isotropic orientation (powder rings), and
+  I(q) is always the powder average.
+* **Cell parameters.** Cubic lattices use a only, bct and hcp a and c, the cylinder packings a (hexagonal) or
+  a, b, γ, and lamellae a.
 
 ## Defects and approximations found in the C++ code
 
@@ -106,8 +114,13 @@ physics where it is an approximation or a defect.
 * **Inhomogeneous shell.** The C++ definition differs (probably a power-law profile); the median difference is 60 %.
 * **Core + shell cylinder.** It differs by 44 %, because of the length convention in the shell branch.
 * **Superball.** The C++ run takes more than 10 min per image.
-* **Oriented lattices.** The zone-axis and ψ rotation conventions are not compared yet.
+* **Oriented lattices.** The zone-axis and ψ rotation conventions are not compared yet. Rod and lamellar
+  lattices are rotated by the zone axis and ψ since November 2026; how the C++ code orients them has not been
+  checked.
 * **Hexagonal cylinders and lamellae on a lattice.** The diffuse part differs by a smooth factor of 0.2–0.6.
-  The C++ code probably uses a different particle term in the 2D-lattice branch; this is not resolved.
+  The C++ code probably uses a different particle term in the 2D-lattice branch; this is not resolved. The
+  comparison was made before the rotation of these lattices was introduced and has to be repeated with it.
+* **Wiring.** Whether every parameter and combo entry reaches the calculation is checked by
+  `tests/scatter/test_wiring.py` within pySCAtter (see the main page); it is not a comparison with the C++ code.
 * **Kratky–Porod chain, Teubner–Strey and the structure factors.** These exist only in pySCAtter. They are
   checked against their analytic limits (see the main page).

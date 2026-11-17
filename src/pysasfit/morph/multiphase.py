@@ -56,6 +56,20 @@ __all__ = ["DataSet", "PhaseSystem", "MultiCut", "MultiParameters", "CurveResult
 Q_FACTOR = {"A": 1e-4, "nm": 1e-1}
 
 
+def _weights2d(weights, M, nr):
+    """Weights per curve (M,) or per curve and r (M, nr) -> (M, nr)."""
+    if weights is None:
+        return np.ones((M, nr))
+    w = np.asarray(weights, float)
+    return np.broadcast_to(w[:, None], (M, nr)) if w.ndim == 1 else w
+
+
+def _wrms(x, w):
+    """rms of x over the points with w > 0."""
+    m = w > 0
+    return float(np.sqrt(np.mean(x[m] ** 2))) if np.any(m) else 0.0
+
+
 @dataclass
 class DataSet:
     """One measured curve (background subtracted) and the SLDs of all phases for it."""
@@ -69,7 +83,12 @@ class DataSet:
     weight: float = 1.0
     fit_background: bool | None = None   # None: as MultiParameters.fit_background
     background: float | None = None      # fixed flat background (when not fitted), subtracted
+    kind: str = "sas"                    # "sas" (q, I, sigma) or "sesans" (q = delta, I = G - G(0), sigma = dG)
+    meta: dict = dc_field(default_factory=dict)   # SESANS: wavelength, thickness, P, dP, length unit ...
 
+    @property
+    def is_sesans(self):
+        return self.kind == "sesans"
 
 @dataclass
 class PhaseSystem:
@@ -161,7 +180,7 @@ class MultiCut:
         """
         gammas = np.atleast_2d(gammas)
         M, nr = gammas.shape
-        w = np.ones(M) if weights is None else np.asarray(weights, float)
+        w = _weights2d(weights, M, nr)
         Gt = np.array([self.G(s) for s in slds])                  # (M, n_table)
         best = np.full(nr, np.inf)
         idx = np.zeros(nr, int)
@@ -170,7 +189,7 @@ class MultiCut:
             sl = slice(i0, i0 + chunk)
             obj = np.zeros((min(chunk, nr - i0), Gt.shape[1]))
             for m in range(M):
-                obj += w[m] * (gammas[m, sl, None] - Gt[m][None, :]) ** 2
+                obj += w[m, sl, None] * (gammas[m, sl, None] - Gt[m][None, :]) ** 2
             j = np.argmin(obj, axis=1)
             idx[sl] = j
             best[sl] = obj[np.arange(obj.shape[0]), j]
@@ -187,7 +206,7 @@ class MultiCut:
         theta = th[j] + np.clip(shift, -1, 1) * (th[1] - th[0])
         theta = np.where((idx == 0) | (idx == Gt.shape[1] - 1), th[idx], theta)
         g = np.sin(theta)
-        misfit = np.array([np.sqrt(np.mean((gammas[m] - self.G(slds[m], g)) ** 2)) for m in range(M)])
+        misfit = np.array([_wrms(gammas[m] - self.G(slds[m], g), w[m]) for m in range(M)])
         return g, misfit
 
 
@@ -237,8 +256,11 @@ class MultiParameters:
 
 @dataclass
 class CurveResult:
+    """Result for one curve. For a SESANS curve: ``curve`` is None, ``q_data`` are the spin-echo lengths,
+    ``I_data``/``I_model`` are G(delta) - G(0), ``scale`` multiplies the projected SLD covariance,
+    ``inversion`` is the Abel inversion (:class:`pysasfit.morph.sesans.SESANSInversion`)."""
     data: DataSet
-    curve: ExtrapolatedCurve
+    curve: ExtrapolatedCurve | None
     invariant: float
     gamma: np.ndarray
     G: np.ndarray                     # model gamma with the common g
@@ -254,6 +276,9 @@ class CurveResult:
     I_voxel: np.ndarray | None = None
     Q_model_abs: float = np.nan       # 2 pi^2 C(0) in data units (sld_absolute)
     norm: float = 1.0                 # lambda: gamma rescaled by it in the joint fit (invariant / lambda)
+    kind: str = "sas"
+    inversion: object = None          # SESANS: Abel inversion of G(delta)
+    r_range: tuple = (0.0, np.inf)    # r range in which gamma enters the joint fit
 
 
 @dataclass
@@ -273,6 +298,7 @@ class MultiResult:
     warnings: list = dc_field(default_factory=list)
     timings: dict = dc_field(default_factory=dict)
     fit_info: dict = dc_field(default_factory=dict)
+    tail_info: dict = dc_field(default_factory=dict)   # SESANS: g(r) set to 0 beyond R
 
     @property
     def voxel_size(self):
@@ -295,6 +321,15 @@ class MultiResult:
         lines.append(f"  box                    L = {p.box_size:.5g}, n = {p.n}, voxel a = {self.voxel_size:.4g}, "
                      f"method = {p.method}")
         for c in self.curves:
+            if c.kind == "sesans":
+                lines.append(f"  [{c.data.name}]  SESANS, SLD " + ", ".join(f"{s:.4g}" for s in c.data.sld)
+                             + f"; delta = {c.q_data[0]:.4g} ... {c.q_data[-1]:.4g}, gamma used for r = "
+                             f"{c.r_range[0]:.4g} ... {c.r_range[1]:.4g}; normalisation x {1 / c.norm:.3f}; "
+                             f"rms(gamma - model) = {c.misfit:.3g}; chi2_red = {c.chi2:.4g}")
+                lines.append(f"      scale {c.scale:.5g} (data units per SLD unit^2)"
+                             + (f", absolute check: scale / expected = {c.scale / c.Q_model_abs:.4g}"
+                                if p.sld_absolute and np.isfinite(c.Q_model_abs) else ""))
+                continue
             lines.append(f"  [{c.data.name}]  SLD " + ", ".join(f"{s:.4g}" for s in c.data.sld)
                          + f"; Q = {c.invariant:.5g}" + (f" (x {1 / c.norm:.3f})" if c.norm != 1 else "")
                          + f", K = {c.curve.K:.4g} (Porod q = {c.curve.porod_range[0]:.4g} ... {c.curve.porod_range[1]:.4g}, "
@@ -325,11 +360,11 @@ class MultiResult:
         return "\n".join(lines)
 
 
-def _r_grid(p, q_max):
+def _r_grid(p, q_max, r_extra=0.0):
     a = p.box_size / p.n
-    rmax = max(np.sqrt(3) * 0.5 * p.box_size * 1.02, 2 * a)
+    rmax = max(np.sqrt(3) * 0.5 * p.box_size * 1.02, 2 * a, r_extra)
     dr = min(a / 4.0, np.pi / (16.0 * q_max))      # q_max r steps of pi/16: accurate model I(q) at q_max
-    nr = p.nr or int(np.clip(np.ceil(rmax / dr), 200, 20000))
+    nr = p.nr or int(np.clip(np.ceil(rmax / dr), 200, 40000 if r_extra else 20000))
     return np.linspace(0.0, rmax, nr + 1)
 
 
@@ -342,29 +377,40 @@ def _suggest_box(curves, n):
     return float(max(Ls))
 
 
-def joint_g(mc, gammas, slds, weights=None, renormalise=True, iterations=8, bounds=(0.8, 1.25)):
+def joint_g(mc, gammas, slds, weights=None, renormalise=True, iterations=8, bounds=(0.8, 1.25), free=None):
     """Common g(r) of several curves and, for two or more curves, a normalisation factor lambda_m per
     curve (gamma_m -> lambda_m gamma_m): the invariant of a curve whose Porod regime is not reached is
-    a few per cent off, and that error would bias the common g. Returns (g, misfit, lambdas)."""
+    a few per cent off, and that error would bias the common g. ``free`` (bool per curve) marks curves whose
+    normalisation is only roughly known (SESANS: C(0) of the Abel inversion); their lambda may lie between
+    0.05 and 20. Weights per curve or per curve and r. Returns (g, misfit, lambdas)."""
     gammas = np.atleast_2d(gammas)
-    lam = np.ones(gammas.shape[0])
-    g, mis = mc.g_from_gammas(gammas, slds, weights)
-    if not renormalise or gammas.shape[0] < 2:
+    M, nr = gammas.shape
+    w = _weights2d(weights, M, nr)
+    lam = np.ones(M)
+    g, mis = mc.g_from_gammas(gammas, slds, w)
+    if not renormalise or M < 2:
         return g, mis, lam
+    free = np.zeros(M, bool) if free is None else np.asarray(free, bool)
+    lo = np.where(free, 0.05, bounds[0])
+    hi = np.where(free, 20.0, bounds[1])
     for _ in range(iterations):
         G = np.array([mc.G(s, g) for s in slds])
-        new = np.clip(np.sum(G * gammas, axis=1) / np.sum(gammas * gammas, axis=1), *bounds)
+        den = np.sum(w * gammas * gammas, axis=1)
+        new = np.where(den > 0, np.clip(np.sum(w * G * gammas, axis=1) / np.where(den > 0, den, 1.0), lo, hi),
+                       1.0)                    # a curve without weight keeps its normalisation
         if np.allclose(new, lam, rtol=1e-5):
             break
         lam = new
-        g, mis = mc.g_from_gammas(gammas * lam[:, None], slds, weights)
+        g, mis = mc.g_from_gammas(gammas * lam[:, None], slds, w)
     return g, mis, lam
 
 
-def _profile_misfit(phases, gammas, slds, weights, renormalise=True):  # noqa: D103
+def _profile_misfit(phases, gammas, slds, weights, renormalise=True, free=None):  # noqa: D103
     mc = MultiCut(phases, n=1201)
-    _, mis, _ = joint_g(mc, gammas, slds, weights, renormalise, iterations=4)
-    return float(np.sum(np.asarray(weights) * mis ** 2)), mc
+    _, mis, _ = joint_g(mc, gammas, slds, weights, renormalise, iterations=4, free=free)
+    wc = np.asarray(weights, float)
+    wc = wc.max(axis=1) if wc.ndim == 2 else wc
+    return float(np.sum(wc * mis ** 2)), mc
 
 
 #: weight of the invariant term in the fraction fit: a 10 % invariant mismatch counts as an rms
@@ -373,21 +419,26 @@ INVARIANT_WEIGHT = 1e-2
 
 
 def fit_fractions(phases, gammas, slds, weights=None, invariants=None, q_unit="A", absolute=False,
-                  common_scale=True, renormalise=True):
+                  common_scale=True, renormalise=True, free=None):
     """Volume fractions minimising the joint misfit of the gamma_m and of the invariants.
 
     The shapes gamma_m alone determine the fractions only weakly. The invariants Q_m = s 2 pi^2 C_m(0)
     add the information: with ``common_scale`` (all curves on one intensity scale) their ratios, with
     ``absolute`` (SLDs in 1e-6/A^2, I in 1/cm) their values (s known). Returns (PhaseSystem, info)."""
     M = len(slds)
-    w = np.ones(M) if weights is None else np.asarray(weights, float)
     from scipy.optimize import minimize
 
     # the fit only needs the correlated range of r, and not every point of it
     gammas = np.atleast_2d(gammas)
+    w2 = _weights2d(weights, M, gammas.shape[1])
     live = np.flatnonzero(np.max(np.abs(gammas), axis=0) > 5e-3)
     last = live[-1] + 1 if live.size else gammas.shape[1]
-    gammas = gammas[:, :last:max(1, last // 500)]
+    step = max(1, last // 500)
+    gammas = gammas[:, :last:step]
+    w2 = np.ascontiguousarray(w2[:, :last:step])
+    w = w2.max(axis=1)
+    inv = None if invariants is None else np.asarray(invariants, float)
+    has_q = np.ones(M, bool) if inv is None else np.isfinite(inv)
 
     def unpack(x):
         e = np.exp(np.concatenate([[0.0], x]))
@@ -396,12 +447,13 @@ def fit_fractions(phases, gammas, slds, weights=None, invariants=None, q_unit="A
     def obj(x):
         fr = unpack(x)
         ps = PhaseSystem(phases.names, fr)
-        val, mc = _profile_misfit(ps, gammas, slds, w, renormalise)
-        if invariants is not None and (absolute or (common_scale and M > 1)):
-            model = np.array([2 * np.pi ** 2 * mc.variance(s) for s in slds])
-            lr = np.log(np.asarray(invariants) / model)
-            lr = lr - (np.log(Q_FACTOR[q_unit]) if absolute else np.average(lr, weights=w))
-            val += INVARIANT_WEIGHT * float(np.sum(w * lr ** 2))
+        val, mc = _profile_misfit(ps, gammas, slds, w2, renormalise, free)
+        k = np.flatnonzero(has_q)                         # SESANS curves have no invariant
+        if inv is not None and (absolute or (common_scale and k.size > 1)):
+            model = np.array([2 * np.pi ** 2 * mc.variance(slds[i]) for i in k])
+            lr = np.log(inv[k] / model)
+            lr = lr - (np.log(Q_FACTOR[q_unit]) if absolute else np.average(lr, weights=w[k]))
+            val += INVARIANT_WEIGHT * float(np.sum(w[k] * lr ** 2))
         return val
 
     x0 = np.log(phases.fractions[1:] / phases.fractions[0])
@@ -412,8 +464,51 @@ def fit_fractions(phases, gammas, slds, weights=None, invariants=None, q_unit="A
                                            "converged" if res.success else "not converged", "nfev": res.nfev}
 
 
+def _ramp(r, a, b):
+    """0 below a, 1 above b, cosine in between."""
+    x = np.clip((r - a) / max(b - a, 1e-30), 0.0, 1.0)
+    return 0.5 * (1 - np.cos(np.pi * x))
+
+
+def _taper(r, R):
+    """1 up to R, cosine to 0 at 1.25 R."""
+    x = np.clip((r - R) / (0.25 * R), 0.0, 1.0)
+    return 0.5 * (1 + np.cos(np.pi * x))
+
+
+def _model_low_q(c, r, cov, n_match=8, nodes=80, R=None):
+    """A copy of the extrapolated curve ``c`` whose part below the first data point is the level-cut model
+    of the current g(r) (covariance ``cov`` on r), scaled to the first ``n_match`` data nodes: the low-q
+    extrapolation then carries the large-scale structure that SESANS has measured."""
+    from dataclasses import replace
+
+    q0 = c.q_data[0]
+    data = c.q >= q0
+    qd, Id = c.q[data], c.I[data]
+    k = min(n_match, qd.size)
+    M = levelcut_intensity(qd[:k], r, cov, 1.0)
+    s = float(np.sum(M * Id[:k]) / max(np.sum(M * M), 1e-300))
+    q_lo = np.concatenate([[0.0], np.geomspace(min(0.5 / (R or r[-1]), 0.1 * q0), q0, nodes)[:-1]])
+    I_lo = s * levelcut_intensity(q_lo, r, cov, 1.0)
+    return replace(c, q=np.concatenate([q_lo, qd]), I=np.concatenate([I_lo, Id]), low_q="model (SESANS)",
+                   low_q_info={"scale": s})
+
+
+def _correlation_range(inv, floor=2e-3, nsig=2.0):
+    """Largest r up to which the Abel-inverted gamma of a SESANS curve differs from 0 by more than its
+    uncertainty (``nsig`` sigma + ``floor``): beyond, g(r) is set smoothly to 0 (no information, and the
+    r^2-weighted volume of a noisy tail would dominate the model intensity at low q)."""
+    gam = inv.C / inv.C0
+    sig = nsig * inv.dC / abs(inv.C0) + floor
+    big = np.flatnonzero(np.abs(gam) > sig)
+    return float(inv.r[big[-1] + 1]) if big.size and big[-1] + 1 < inv.r.size else float(inv.r[-1])
+
+
 def correlations_multi(datasets, params=None):
-    """Steps 1-4 for one or several curves: extrapolation, gamma_m(r), common g(r), f(k), model I_m(q)."""
+    """Steps 1-4 for one or several curves (scattering and SESANS): extrapolation or Abel inversion,
+    gamma_m(r), common g(r), f(k), model I_m(q) and G_m(delta)."""
+    from .sesans import invert_sesans, projection_matrix
+
     p = MultiParameters() if params is None else params
     t0 = time.perf_counter()
     w = []
@@ -421,47 +516,138 @@ def correlations_multi(datasets, params=None):
     for d in datasets:
         if len(d.sld) != len(phases):
             raise ValueError(f"{d.name}: {len(d.sld)} SLD values for {len(phases)} phases")
-    curves = [extrapolate(d.q, d.I, d.sigma, qmin=p.qmin, qmax=p.qmax, low_q=p.low_q,
-                          low_q_points=p.low_q_points, porod_points=p.porod_points, porod_qmin=p.porod_qmin,
-                          fit_background=p.fit_background if d.fit_background is None else d.fit_background,
-                          background=d.background, refine=p.refine, porod_auto=p.porod_auto) for d in datasets]
+    if not datasets:
+        raise ValueError("no data")
+    is_ses = [d.is_sesans for d in datasets]
+    curves, inversions = [], []
+    for d, ses in zip(datasets, is_ses):
+        if ses:
+            curves.append(None)
+            inversions.append(invert_sesans(d.q, d.I, d.sigma))
+        else:
+            curves.append(extrapolate(d.q, d.I, d.sigma, qmin=p.qmin, qmax=p.qmax, low_q=p.low_q,
+                                      low_q_points=p.low_q_points, porod_points=p.porod_points,
+                                      porod_qmin=p.porod_qmin,
+                                      fit_background=p.fit_background if d.fit_background is None else
+                                      d.fit_background, background=d.background, refine=p.refine,
+                                      porod_auto=p.porod_auto))
+            inversions.append(None)
+    sas_curves = [c for c in curves if c is not None]
     for d, c in zip(datasets, curves):
-        if c.porod_info.get("message"):
+        if c is not None and c.porod_info.get("message"):
             w.append(f"{d.name}: Porod range: {c.porod_info['message']}")
+    for d, inv in zip(datasets, inversions):
+        if inv is not None and not inv.saturated:
+            w.append(f"{d.name}: G(delta) has not levelled off at the largest spin-echo length: structure larger "
+                     "than the delta range, C(r) beyond it is not determined")
     if p.box_size is None:
-        p.box_size = _suggest_box(curves, p.n)
+        if sas_curves:
+            p.box_size = _suggest_box(sas_curves, p.n)
+        else:                      # SESANS only: a few correlation lengths of the inverted C(r)
+            inv = inversions[0]
+            g1 = np.flatnonzero(inv.C < inv.C0 / np.e)
+            p.box_size = float(8 * inv.r[g1[0]]) if g1.size else float(inv.r[-1])
         w.append(f"box size not given: using L = {p.box_size:.4g}")
-    qmax = max(c.q_data[1] for c in curves)
-    r = _r_grid(p, qmax)
-    gammas = np.array([c.gamma(r) for c in curves])
+    ses_delta = [d.q for d in datasets if d.is_sesans]
+    if sas_curves:
+        qmax = max(c.q_data[1] for c in sas_curves)
+        qmin = min(c.q_data[0] for c in sas_curves)
+    else:
+        qmax = 2 * np.pi / max(1e-30, min(np.min(dl[dl > 0]) for dl in ses_delta))
+        qmin = 2 * np.pi / max(np.max(dl) for dl in ses_delta)
+    r_extra = 1.5 * max((np.max(dl) for dl in ses_delta), default=0.0)
+    r = _r_grid(p, qmax, r_extra)
+    M = len(datasets)
+    gammas = np.zeros((M, r.size))
+    W = np.zeros((M, r.size))
+    r_ranges = []
+    R_sas = max((np.pi / c.q_data[0] for c in sas_curves), default=0.0)
+    for m, (d, c, inv) in enumerate(zip(datasets, curves, inversions)):
+        if inv is not None:
+            gammas[m] = inv.gamma(r)
+            lo, hi = float(inv.delta[0]), float(inv.delta[-1])
+            # with scattering curves, a SESANS curve enters through their low-q extension (below), not through
+            # its own gamma: a pointwise compromise between curves is no transform pair of either, and the
+            # intensity at high q is very sensitive to that
+            W[m] = 0.0 if sas_curves else d.weight * (1.0 - _ramp(r, hi, 1.25 * hi))
+        else:
+            gammas[m] = c.gamma(r)
+            lo, hi = 0.0, np.inf
+            W[m] = d.weight
+        r_ranges.append((lo, hi))
+    # every r needs some weight (else g there is arbitrary): SESANS only, below delta_min and beyond 1.25
+    # delta_max the inversion (extrapolated, resp. zero) is the only information
+    none = W.sum(axis=0) <= 0
+    if np.any(none):
+        W[:, none] = np.array([d.weight if d.is_sesans else 0.0 for d in datasets])[:, None]
     slds = [np.asarray(d.sld, float) for d in datasets]
-    weights = np.array([d.weight for d in datasets], float)
-    Qs = np.array([c.invariant for c in curves])
+    Qs = np.array([np.nan if c is None else c.invariant for c in curves])
+    free = np.array(is_ses, bool)
     fit_info = {}
     if p.fit_fractions:
-        if len(datasets) < 2 and not p.sld_absolute:
+        nsas = len(sas_curves)
+        if M < 2 and not p.sld_absolute:
             w.append("fitting fractions needs a contrast series on a common scale or absolute data; "
                      "fractions kept")
         else:
-            phases, fit_info = fit_fractions(phases, gammas, slds, weights, Qs, p.q_unit, p.sld_absolute,
-                                             p.common_scale, p.renormalise)
+            if nsas == 0:
+                w.append("fractions from SESANS only rest on the shapes of gamma(r): weakly determined")
+            phases, fit_info = fit_fractions(phases, gammas, slds, W, Qs, p.q_unit, p.sld_absolute,
+                                             p.common_scale, p.renormalise, free)
             p.fractions = [float(x) for x in phases.fractions]
     mc = MultiCut(phases)
-    g, misfit, lam = joint_g(mc, gammas, slds, weights, p.renormalise)
-    k = np.geomspace(min(c.q_data[0] for c in curves) / 10, qmax * 10, p.nk)
+    tail_info = {}
+    if ses_delta and sas_curves:
+        # The scattering curves are extended below q_min by the level-cut model of the g(r) of the SESANS curves
+        # alone (for the contrast of each curve, matched to its first points) instead of a Guinier/constant
+        # extrapolation, which misses the large structures SESANS sees. g(r) then follows from the extended
+        # scattering curves; the SESANS curves are compared with it (chi2).
+        ks = [m for m in range(M) if is_ses[m]]
+        Ws = np.array([np.full(r.size, datasets[m].weight) for m in ks])
+        g_ses, _mis, _lam = joint_g(mc, gammas[ks], [slds[m] for m in ks], Ws, p.renormalise)
+        R = max(max(_correlation_range(inv) for inv in inversions if inv is not None), R_sas)
+        g_ses = g_ses * _taper(r, R)
+        for m, c in enumerate(curves):
+            if c is not None:
+                curves[m] = _model_low_q(c, r, mc.covariance(slds[m], g_ses), R=R)
+                gammas[m] = curves[m].gamma(r)
+        tail_info = {"R": R, "low_q": "model of the SESANS g(r)"}
+    g, misfit, lam = joint_g(mc, gammas, slds, W, p.renormalise, free=free)
+    for m, inv in enumerate(inversions):     # SESANS: misfit of its gamma on the spin-echo range
+        if inv is not None:
+            rng = (r >= inv.delta[0]) & (r <= inv.delta[-1])
+            misfit[m] = _wrms(gammas[m] * lam[m] - mc.G(slds[m], g), rng.astype(float))
+    k = np.geomspace(qmin / 10, qmax * 10, p.nk)
     f = spectral_function(r, g, k)
     Pk = wavevector_distribution(k, f)
     results = []
-    for d, c, gam, mis, lm in zip(datasets, curves, gammas, misfit, lam):
+    for m, (d, c, inv) in enumerate(zip(datasets, curves, inversions)):
+        lm, mis, gam = lam[m], misfit[m], gammas[m]
         var = mc.variance(d.sld)
+        cov = mc.covariance(d.sld, g)
+        if inv is not None:
+            A = projection_matrix(inv.delta, r)
+            model = A @ cov
+            sw = 1.0 / inv.dG
+            scale = float(np.sum(sw ** 2 * model * inv.G) / max(np.sum((sw * model) ** 2), 1e-300))
+            G_model = scale * model
+            chi2 = float(np.mean(((G_model - inv.G) / inv.dG) ** 2))
+            results.append(CurveResult(data=d, curve=None, invariant=np.nan, gamma=gam * lm, G=mc.G(d.sld, g),
+                                       misfit=float(mis), norm=float(lm), variance=var, scale=scale,
+                                       q_data=inv.delta, I_data=inv.G, sigma_data=inv.dG, I_model=G_model,
+                                       chi2=chi2, kind="sesans", inversion=inv, r_range=r_ranges[m],
+                                       Q_model_abs=Q_FACTOR[p.q_unit] if p.sld_absolute else np.nan))
+            if mis > 0.05:
+                w.append(f"{d.name}: SESANS gamma(r) differs from the model by {mis:.3f} rms")
+            continue
         Q = c.invariant
         scale = Q / (lm * 2 * np.pi ** 2 * var)
         qq = np.asarray(d.q, float)
-        m = np.isfinite(qq) & np.isfinite(d.I) & (qq >= c.q_data[0]) & (qq <= c.q_data[1])
-        o = np.argsort(qq[m])
-        q_data, I_data = qq[m][o], (np.asarray(d.I, float)[m] - c.B)[o]
-        s_data = None if d.sigma is None else np.asarray(d.sigma, float)[m][o]
-        I_model = levelcut_intensity(q_data, r, mc.covariance(d.sld, g), scale)
+        msk = np.isfinite(qq) & np.isfinite(d.I) & (qq >= c.q_data[0]) & (qq <= c.q_data[1])
+        o = np.argsort(qq[msk])
+        q_data, I_data = qq[msk][o], (np.asarray(d.I, float)[msk] - c.B)[o]
+        s_data = None if d.sigma is None else np.asarray(d.sigma, float)[msk][o]
+        I_model = levelcut_intensity(q_data, r, cov, scale)
         chi2 = np.nan
         if s_data is not None and np.all(s_data > 0):
             chi2 = float(np.mean(((I_model - I_data) / s_data) ** 2))
@@ -471,7 +657,7 @@ def correlations_multi(datasets, params=None):
         results.append(CurveResult(data=d, curve=c, invariant=Q, gamma=gam * lm, G=mc.G(d.sld, g), misfit=float(mis),
                                    norm=float(lm),
                                    variance=var, scale=scale, q_data=q_data, I_data=I_data, sigma_data=s_data,
-                                   I_model=I_model, chi2=chi2,
+                                   I_model=I_model, chi2=chi2, r_range=r_ranges[m],
                                    Q_model_abs=Q_FACTOR[p.q_unit] * 2 * np.pi ** 2 * var if p.sld_absolute
                                    else np.nan))
         if mis > 0.05:
@@ -480,10 +666,13 @@ def correlations_multi(datasets, params=None):
         if c.K <= 0:
             w.append(f"{d.name}: Porod constant K <= 0 (no q^-4 regime)")
     a = p.box_size / p.n
-    if np.pi / a < qmax:
+    if np.pi / a < qmax and sas_curves:
         w.append(f"voxel size a = {a:.4g} does not resolve q_max (pi/a = {np.pi / a:.4g} < {qmax:.4g})")
+    if ses_delta and max(np.max(dl) for dl in ses_delta) > 0.5 * p.box_size:
+        w.append("the box is smaller than twice the largest spin-echo length: the SESANS curve of the voxel "
+                 "structure is only computed up to L/2")
     res = MultiResult(params=p, multicut=mc, r=r, g=g, k=k, f=f, Pk=Pk, curves=results, warnings=w,
-                      fit_info=fit_info)
+                      fit_info=fit_info, tail_info=tail_info)
     res.timings["correlations"] = time.perf_counter() - t0
     return res
 
@@ -552,6 +741,13 @@ def reconstruct_multi(datasets, params=None, keep_field=True, statistics=True, p
     t0 = time.perf_counter()
     for c in res.curves:
         sld_map = np.asarray(c.data.sld, float)[res.labels]
+        if c.kind == "sesans":
+            from .sesans import projection_matrix, voxel_correlation
+            rv, Cv = voxel_correlation(sld_map, a)
+            dl = c.q_data[c.q_data <= rv[-1]]
+            c.q_voxel = dl
+            c.I_voxel = c.scale * (projection_matrix(dl, rv) @ Cv) if dl.size else dl
+            continue
         c.q_voxel, c.I_voxel, _ = voxel_intensity(sld_map, a, c.scale, periodic=periodic)
     res.timings["scattering"] = time.perf_counter() - t0
     if statistics:

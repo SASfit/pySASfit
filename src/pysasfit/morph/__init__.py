@@ -10,7 +10,8 @@ voxel grid and cut at the porosity.
 Multi-phase (:mod:`.multiphase`): the same field cut at several levels gives ordered phases
 (a middle phase is a layer between its neighbours: Berk 1991, Teubner 1991, Roberts 1997,
 Arleth, Marcelja & Zemb 2001); one or several curves (contrast series) determine one common g(r),
-optionally the volume fractions.
+optionally the volume fractions. SESANS curves (:mod:`.sesans`, ``DataSet(kind="sesans")``) add
+the projected correlation function up to µm distances.
 
 Modules
 -------
@@ -22,6 +23,7 @@ statistics     S/V, clusters, percolation, bicontinuity
 scattering     back-calculated I(q) of the voxel structure and of the level-cut model
 pipeline       two-phase: MorphParameters, reconstruct(), correlations()
 multiphase     N phases, contrast series: MultiParameters, DataSet, reconstruct_multi(), correlations_multi()
+sesans         SESANS curves: exact Abel projection G(delta), regularised inversion, voxel SESANS curve
 export         curves (text), voxel matrix (VTK, HDF5, TIFF stack, npy)
 surface        interface meshes (marching cubes), largest cluster, STL
 view3d_gl      3D panel (pyqtgraph / OpenGL) of the GUI

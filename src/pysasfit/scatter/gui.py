@@ -160,7 +160,16 @@ class ParamPanel(QtWidgets.QWidget):
             self.page_index[g] = self.toolbox.addItem(page, GROUP_TITLES.get(g, g))
         lay.addWidget(self.toolbox, 1)
         self._building = False
+        self.apply_preferences()
         self.set_params(P.defaults(), {})
+
+    def apply_preferences(self):
+        """Limits taken from the preferences (at the start and when the Preferences dialog closes)."""
+        sp = self.spin["HKLmax"]
+        limit = int(prefs.get("scatter.calc.hklmax_limit"))
+        if sp.maximum() != limit:
+            sp.setMaximum(limit)             # a larger value is reduced; valueChanged then recalculates
+        sp.setToolTip(f"{P.NUM['HKLmax'][6]}\n(at most {limit}: Preferences → pySCAtter)")
 
     def show_page(self, group):
         """Open the toolbox page of ``group`` (after the user picked an entry of the combo box it belongs to)."""
@@ -316,7 +325,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         from ..core import pycode
         pycode.install(self, self.python_code, menu=m)
         from ..core.settings_dialog import add_preferences_menu
-        add_preferences_menu(self, "scatter")
+        act = add_preferences_menu(self, "scatter")
+        act.triggered.connect(lambda *_a: self.params_panel.apply_preferences())     # after the modal dialog
         self.menuBar().addMenu("&View")
 
     def _build_model_dock(self):

@@ -10,6 +10,9 @@ Generated from the docstrings.
    :members: DataSet, PhaseSystem, MultiCut, MultiParameters, CurveResult, MultiResult, correlations_multi,
              reconstruct_multi, fit_fractions, joint_g, interface_areas, multiphase_statistics
 
+.. automodule:: pysasfit.morph.sesans
+   :members: projection_matrix, project, invert_sesans, SESANSInversion, voxel_correlation, dab_sesans
+
 .. automodule:: pysasfit.morph.extrapolation
    :members: ExtrapolatedCurve, extrapolate, fit_porod, fit_low_q, auto_porod_range
 

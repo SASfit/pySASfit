@@ -51,8 +51,13 @@ title bars are coloured; their colour can be changed under Preferences → Appea
   * the shell profile.
 
   Below the combo boxes the numeric parameters are grouped on pages (Particle, Interior, Orientation, Lattice, …).
-  A parameter is fitted when the box next to it is ticked. Parameters that the current settings do not use are
-  greyed out.
+  Picking an entry in a combo box opens the page with its parameters. A parameter is fitted when the box next to
+  it is ticked. Parameters that the current settings do not use are greyed out: a parameter is enabled exactly
+  when changing it changes the result. Lattice entries that pySCAtter does not calculate (CP-Layers, LDQ12) are
+  listed for old `.ini` files but cannot be picked.
+
+  The buttons, the two *follows* boxes and the progress bar stay at the top of the panel; only the parameters
+  below them scroll.
 
   *Calculate 2D* computes the 2D pattern and I(q). *I(q) follows* recalculates the 1D curve after every change.
   *2D follows* does the same for the image; it is off by default, because oriented anisometric particles take
@@ -101,8 +106,8 @@ title bars are coloured; their colour can be changed under Preferences → Appea
     orientation, the powder rings with the strongest hkl are shown instead.
 
   The crystal orientation comes from the zone axis [uvw] (`ucn1`–`ucn3`), which is put along the beam, and the
-  rotation ψ about it. The engine does not rotate rods and lamellae: the rods are vertical and the lamellar normal
-  is along the beam.
+  rotation ψ about it. Rod and lamellar lattices are oriented in the same way (see
+  [Lattices](#lattices)).
 
   *particle axes* draws the particles either as the model treats them (along the director, or at random for an
   isotropic orientation, as the decoupling approximation assumes) or along the lattice axes. *hkl* in the 2D
@@ -146,14 +151,14 @@ The parameters, fit flags, loaded files and the panel arrangement are kept in a 
 | particle | parameters | notes |
 |---|---|---|
 | sphere | R, σ_R | closed form, all regimes |
-| cylinder | R, L (**half-length**), σ_R, σ_L | exact orientation average of P_cs·P_rod |
-| disk | R = **half-thickness**, L = **disk radius**, σ, σ_L | C++ convention; needs L > R |
-| vesicle | R = **inner radius**, L = **outer radius**, σ, σ_L | exact shell, Schulz on mean radius and thickness |
-| cube, parallelepiped | R (half edge) | |
-| ellipsoid | R, L (semi-axis along the symmetry axis) | |
-| triaxial ellipsoid | R, L, R₂ | |
-| super ellipsoid (barrel) | R, L, exponent p | |
-| superball | R, exponent p | p = 1 octahedron, 2 sphere, ∞ cube |
+| cylinder | R, L (**half-length**), σ_R, σ_L | exact orientation average of P_cs·P_rod; all orientations |
+| disk | R = **half-thickness**, L = **disk radius**, σ, σ_L | C++ convention; needs L > R; all orientations |
+| vesicle | R = **inner radius**, L = **outer radius**, σ, σ_L | exact shell, Schulz on mean radius and thickness; R₂ and ρ shell are not used |
+| cube, parallelepiped | R (half edge) | isotropic and *z-dir* only |
+| ellipsoid | R, L (semi-axis along the symmetry axis) | all orientations |
+| triaxial ellipsoid | R, L, R₂ | always orientation averaged |
+| super ellipsoid (barrel) | R, L, exponent p | always orientation averaged; more than a minute per curve |
+| superball | R, exponent p | p = 1 octahedron, 2 sphere, ∞ cube; always orientation averaged |
 | excluded volume chain | R = Rg, σ | Regime I series in arbitrary precision (mpmath), Regime II q^(−1/ν) |
 | **Kratky-Porod chain** | R = Kuhn length b, L = contour length, σ_L | Kholodenko approximation; new |
 | **Teubner-Strey** | R = correlation length ξ, L = repeat distance d | microemulsion model; new |
@@ -162,11 +167,14 @@ The parameters, fit flags, loaded files and the panel arrangement are kept in a 
 
 | interior | parameters | notes |
 |---|---|---|
-| core + shell | R = core, R₂ = outer radius, ρ shell (core = 1) | sphere, cylinder, disk, ellipsoid |
+| core + shell | R = core, R₂ = outer radius, ρ shell (core = 1) | sphere, cylinder, disk, ellipsoid; for cylinder and disk σ_L is not used (one σ on all lengths) |
 | inhomogeneous shell, linear | as core + shell | the shell density falls linearly to 0 |
 | **inhomogeneous shell, power law** | as core + shell, exponent α | ρ ∝ (r/R)^α for star polymers and micelle coronas; α = −4/3 in a good solvent (Förster & Burger, Macromolecules 31, 879 (1998)); new in the GUI |
 | **multi-shell** | R = core, n shells of the given thickness | contrasts alternate between ρ shell and ρ 2nd shell; new in the GUI |
-| **myelin** | R = water core, n bilayers of R₂ (lipid, ρ shell) + shell thickness (water) | onion vesicles; new in the GUI |
+| **myelin** | R = water core, n bilayers of R₂ (lipid) + shell thickness (water) | onion vesicles; new in the GUI. The lipid is the only contrast, so ρ shell would only scale the intensity and is not used |
+
+Multi-shell and myelin interiors are available for the sphere and the vesicle. A core + shell interior with
+another particle than those listed ends with a message in the Log.
 
 ### Structure factors (no lattice)
 
@@ -187,8 +195,23 @@ The lattices are:
 * sc, bcc, fcc, hcp and bct;
 * Fd3m;
 * orthorhombic;
-* gyroid (Ia3d), OBDD (Pn3m) and Plumber's Nightmare (Im3m), with the extinction rules of CrystalScatter;
-* the 2D and 1D GISAXS lattices.
+* gyroid (Ia3d), OBDD (Pn3m) and Plumber's Nightmare (Im3m), with the extinction rules of CrystalScatter.
+  Plumber's Nightmare has the reflections of bcc;
+* the 2D and 1D GISAXS entries, which are calculated as the same lattice in transmission.
+
+Each lattice uses only the cell parameters that define it; the others are greyed out:
+
+| lattice | cell parameters |
+|---|---|
+| sc, bcc, fcc, Fd3m, gyroid, OBDD, Plumber's Nightmare | a |
+| bct, hcp | a, c (hcp with c = a: the ideal ratio c = 1.633 a) |
+| lamellae | a (the repeat distance) |
+| hexagonally packed cylinders | a |
+| square and centred-rectangular cylinder packings | a, b, γ |
+| orthorhombic | a, b, c, α, β, γ (any cell) |
+
+Before November 2026 the cubic lattices also used b, c and the angles. A parameter file with a cubic lattice and
+b or c different from a therefore gives a different pattern now; use bct or orthorhombic for such cells.
 
 The peak shapes are Lorentzian, Gaussian, modified Lorentzians, pseudo-Voigt, Pearson VII and the generalised
 Gamma shape of Förster et al. (J. Phys. Chem. B 109, 1347 (2005)).
@@ -200,16 +223,52 @@ The peak width is set by the *peak width* combo, as by the two radio buttons of 
 * **fixed 1**: δ = 1 nm⁻¹.
 
 The intensity is I = P (1 + β (Z − 1) G(q)), with the Debye–Waller factor G = exp(−σ_DW² q²/3).
-`EditBFactor` is not used, as in the C++ code. Only reflections with |h|, |k|, |l| ≤ HKLmax enter. Z is:
-* the powder average for an isotropic orientation;
+`EditBFactor` is not used, as in the C++ code. Only reflections with |h|, |k|, |l| ≤ HKLmax enter (*hkl max* on
+the Calculation page; it should reach beyond q max, for a cubic cell hkl max ≥ q max·a/(2π)). Z is:
+* the powder average for an isotropic orientation: Debye–Scherrer rings in the 2D pattern, whatever the
+  azimuthal domain D_ψ is. The I(q) panel always shows this powder average, also when the 2D pattern is oriented;
 * an oriented single crystal (zone axis u v w, rotation ψ) otherwise;
-* the fibre average for *fiber pattern*.
+* the fibre average for *fiber pattern*. It is not available for the modified Lorentzian II, which cannot be
+  normalised in 3D; the Log says so.
+
+**Orientation of a lattice.** The zone axis [uvw] is the real-space direction u**a** + v**b** + w**c** of the
+cell that is put along the beam; ψ rotates the crystal about the beam. The orientational spread of the crystal is
+the *lattice: azimuthal domain D_ψ* on the Orientation page (`EditAzi`, in nm): every reflection is spread over an
+arc of width 4/D_ψ on the sphere |q| = g, with the profile of the peak shape. D_ψ = 0 spreads it over the whole
+sphere. The kind of orientation distribution (Gaussian, Onsager, …) and its width act on the particle axis only,
+not on the lattice.
+
+Rod and lamellar lattices are oriented in the same way. Their cell is **a** (lamellae: the layer normal),
+**b**, and **c** (cylinder packings: the rod axis):
+
+| setting | orientation |
+|---|---|
+| cylinder packing, zone axis [001] | rods along the beam: the 2D lattice of spots |
+| cylinder packing, zone axis [100], ψ = 0 | rods vertical, **a** along the beam: reflections on the horizontal axis |
+| lamellae, zone axis [010], ψ = 0 | layers edge-on, layer normal horizontal: reflections h00 on the horizontal axis |
+| lamellae, zone axis [001], ψ = 0 | layers edge-on, layer normal vertical: reflections on the vertical axis |
+| lamellae, edge-on, ψ ≠ 0 | the layer normal and the reflections turn by ψ in the detector plane |
+| lamellae, zone axis [100] | layer normal along the beam: no reflection reaches the detector |
+
+Before November 2026 rods and lamellae ignored the zone axis and ψ: the rods were always vertical and the
+lamellar normal always along the beam.
 
 ### Orientation distributions
 
-The particle axis can follow Gaussian, exponential, Onsager, Maier-Saupe, cut-off or Laguerre distributions about
-the director (θ, φ) with the given width. *z-dir* aligns all particles perfectly along z, *fiber pattern* rotates
-them uniformly about z, and *isotropic* is the powder.
+The particle axis can follow Gaussian, exponential, Onsager, Maier-Saupe or cut-off distributions about
+the director (θ, φ). Their width is *particle axis: width (°)* on the Orientation page (`EditDbeta`). The default
+is 0.4°, which is almost perfect alignment; values below 0.5° are calculated as 0.5°. *z-dir* aligns all particles
+perfectly along the director, *fiber pattern* rotates them uniformly about the beam, and *isotropic* is the powder.
+
+* The distributions are calculated for the cylinder, the disk and the ellipsoid (also with a core + shell
+  interior). The cube has *isotropic* and *z-dir* only; any other choice ends with a message in the Log. The
+  triaxial ellipsoid, the super ellipsoid and the superball are always orientation averaged, and their director
+  and width are greyed out.
+* *Laguerre* is calculated as the exponential distribution.
+* The *mirrored* distributions give the same pattern as the plain ones, because all particles have a centre of
+  symmetry.
+* With a lattice, the distribution acts on the particles only; the spread of the lattice is D_ψ (see
+  [Lattices](#lattices)).
 
 The director (θ, φ) is defined as in CrystalScatter: n = (sin θ cos φ, sin θ sin φ, cos θ) in the frame
 (q_h, q_v, beam). θ = 0 points along the beam, θ = 90°, φ = 0 is horizontal, and θ = 90°, φ = 90° is vertical.
@@ -230,8 +289,10 @@ The streak of long cylinders lies perpendicular to the director.
 * **Relative residuals** (ln I) weight all decades alike. This is useful when the statistical errors are too small
   at low q.
 
-Preferences → pySCAtter sets three things:
+Preferences → pySCAtter sets four things:
 * whether I(q) follows parameter changes;
+* the largest value that *hkl max* accepts (9 as in SasScatter2, up to 30). A change applies when the dialog is
+  closed; a larger *hkl max* in the panel or in a parameter file is reduced to the limit;
 * the largest number of evaluations;
 * the start value of the 2D thinning.
 
@@ -255,6 +316,20 @@ The tests are in `tests/scatter`:
   * the power-law shell with α = 0 equals the homogeneous core/shell sphere.
 * The fits recover synthetic parameters: a 1D fit with resolution recovers R, σ, I₀ and background; a 2D fit
   recovers the orientation width of cylinders to 0.3 %.
+* The wiring of the parameters is checked over a matrix of about 150 settings (particle × interior ×
+  orientation × lattice × peak shape × structure factor), in `test_wiring.py`:
+  * every parameter the GUI enables changes I(q) or the 2D pattern when it is changed;
+  * the parameters it greys out change nothing;
+  * every entry of a combo box gives a result of its own, apart from the aliases named on this page;
+  * settings that are not calculated end with a message, not with another result.
+
+  The default run takes the fast part of the matrix. `PYSASFIT_WIRING_FULL=1` adds the slow settings (oriented
+  cylinders, disks and ellipsoids, cube, superball, the fibre average of every lattice); the whole of
+  `tests/scatter` then takes about 40 minutes instead of 5. `python tests/scatter/test_wiring.py full` lists all
+  findings instead of stopping at the first.
+* `test_wiring_gui.py` checks the Model panel: one widget per parameter that reaches the calculation, enabled
+  widgets equal to the used parameters, and the round trip of every parameter through the panel and the `.ini`
+  file. `test_iso_rings.py` checks that an isotropic lattice gives rings and that I(q) equals the ring intensity.
 
 ## Calculation speed
 
@@ -295,9 +370,13 @@ GPU libraries (CuPy, PyOpenCL) are not used. Their wheels do not install into th
 * **Not reproduced**:
   * the Data/FFT/AI/ChatBot tabs;
   * GPU kernels and the quadrant shortcuts;
-  * CP layers and quasicrystals;
+  * CP layers and quasicrystals (LDQ12): the entries are disabled, and a file that selects one is calculated
+    without a lattice;
+  * the GISAXS geometry: the GISAXS lattice entries are calculated in transmission;
   * the anisotropic Gaussian peak for oriented lattices (treated as Gaussian; isotropic orientation as in C++);
-  * oriented patterns of the tabulated superball and octahedron.
+  * oriented patterns of the triaxial ellipsoid, the super ellipsoid, the superball and the octahedron, and
+    orientation distributions of the cube;
+  * the Laguerre orientation distribution (calculated as the exponential one).
 * **Unused parameters**: parameters of SasScatter `.ini` files that pySCAtter does not use (Ceff, stacking
   probabilities, VAx …) are kept in the files but not shown.
 * **Power-law shell**: the profile is built from 20–120 thin homogeneous shells (exact multi-shell formula), so it

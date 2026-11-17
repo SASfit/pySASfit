@@ -182,6 +182,7 @@ def test_background_in_gui(app, tmp_path):
     w.save_session()
     w2 = MainWindow()
     w2.restore_session()
+    w2.on_correlations()                     # a restored session is not calculated at the start
     assert w2.datasets[0]["fit_bg"] and w2.result.curves[0].curve.B_mode == "fitted"
     w.close()
     w2.close()

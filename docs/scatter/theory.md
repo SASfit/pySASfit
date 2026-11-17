@@ -141,11 +141,18 @@ The particle axis n makes the angle δ with the director n₀. The distributions
 | Onsager | cosh(cos δ /(2w²)) |
 | Maier–Saupe | exp(cos²δ / w²) |
 | cut-off | 1 for δ < w (smoothed edge) |
+| mirrored … | h(δ) + h(π − δ): the same pattern, since all particles have a centre of symmetry |
 | z-dir | δ = 0 (perfect alignment) |
 | isotropic | 1 (powder average) |
-| fiber pattern | uniform rotation about the fibre axis |
+| fiber pattern | uniform rotation about the fibre axis (the beam) |
 
-The width w is `EditDbeta` in degrees.
+The width w is `EditDbeta` in degrees; values below 0.5° are taken as 0.5°.
+
+The distributions h(δ) are calculated for particles with one axis: cylinder, disk and ellipsoid, with or without
+a core + shell interior. The cube is calculated for the isotropic and the perfectly aligned case only. The
+triaxial ellipsoid, the super ellipsoid and the superball are orientation averaged whatever `Ordis` is. With a
+lattice, h(δ) acts on the particle term ⟨P⟩ only; the orientation of the lattice is described under
+[Lattices](#lattices).
 
 The oriented pattern is
 $$
@@ -217,6 +224,9 @@ $$
   width.
 * N(g) = ∫₀^π A(ψ) sin ψ dψ normalises A over the sphere. It is computed with Gauss–Legendre quadrature.
 * With `EditAzi` = 0 there is no azimuthal dependence, A = 1 and N = 2, which gives the powder pattern.
+* For the isotropic orientation (`Ordis` = isotropic) the same holds whatever `EditAzi` is: the average of
+  A(ψ)/N(g) over all orientations of the crystal is 1/2, so every reflection is spread uniformly over its sphere
+  |q| = g and the 2D pattern shows Debye–Scherrer rings. The 1D curve I(q) is always this powder average.
 
 The factor g₃ = 2π/g² is evaluated at the reflection, not at q (the 1/q² of the textbook powder average). Near a
 peak the two agree. In the tails, the C++ form keeps the peak symmetric in q.
@@ -274,16 +284,51 @@ The width grows as q², so higher orders broaden (Hosemann's paracrystal, cumula
 
 ### Lattices
 
-pySCAtter generates the reflections from the lattice type, the cell parameters (a, b, c, α, β, γ) and hkl up to
+pySCAtter generates the reflections from the lattice type, its cell parameters and hkl up to
 `HKLmax`. It applies the structure factor of the motif and the extinction rules of CrystalScatter:
 
 * sc, bcc, fcc, hcp, bct, Fd3m and orthorhombic;
 * lamellae and the 2D cylinder packings (hexagonal, square, centred rectangular);
 * gyroid (Ia3d), OBDD (Pn3m) and Plumber's Nightmare (Im3m), with the reflection conditions of the bicontinuous
   phases;
-* the GISAXS lattices.
+* the GISAXS entries, calculated as the same lattices in transmission.
 
-The cell is oriented by a zone axis [uvw] and a rotation ψ about it (Förster 2011, section 3).
+Each lattice type takes only the cell parameters that define it:
+
+| lattice | cell |
+|---|---|
+| sc, bcc, fcc, Fd3m, Ia3d, Pn3m, Im3m | a = b = c, α = β = γ = 90° |
+| bct | a = b, c; angles 90° |
+| hcp | a = b, c (c = a in the file: c = 1.633 a), γ = 120° |
+| lamellae | a (1D lattice along **a**) |
+| hexagonally packed cylinders | a = b, γ = 120° (2D lattice in the **a**, **b** plane, rods along **c**) |
+| square, centred-rectangular cylinders | a, b, γ (rods along **c**) |
+| orthorhombic | a, b, c, α, β, γ (any cell) |
+
+The cell is built in its own frame with **a** along x, **b** in the x–y plane and **c** completing it; without
+a rotation this frame is the laboratory frame (x along the beam, y horizontal, z vertical).
+
+**Orientation.** The cell is oriented by a zone axis [uvw] and a rotation ψ about it (Förster 2011, section 3).
+The real-space direction **v** = u**a** + v**b** + w**c** is turned onto the beam by the rotation about
+**v** × **x̂** through the angle between them; the crystal is then rotated by ψ about the beam:
+
+$$
+\mathsf R = \mathsf R_{\hat{\mathbf x}}(\psi)\;\mathsf R_{\mathbf v\times\hat{\mathbf x}}\bigl(\angle(\mathbf v, \hat{\mathbf x})\bigr),
+\qquad \mathbf G_\mathrm{lab} = \mathsf R\,\mathbf G .
+$$
+
+The same rotation applies to the 1D and 2D lattices, for which **b** and **c** (lamellae) or **c** (rods) are
+the non-periodic directions:
+
+* cylinder packings with the zone axis [001] have the rods along the beam, and the reflections hk0 lie in the
+  detector plane; with [100] and ψ = 0 the rods are vertical;
+* lamellae with the zone axis [010] (layer normal horizontal at ψ = 0) or [001] (vertical) are edge-on, and
+  the reflections h00 lie in the detector plane, turned by ψ; with [100] the layer normal is along the beam and
+  no reflection reaches the detector.
+
+For the isotropic orientation the rotation drops out, and for the fibre pattern the lattice is averaged over
+240 rotations about the beam after it. The fibre average uses point-like 3D peaks; the modified Lorentzian II
+(exponent 3/2) cannot be normalised in 3D and is not available there.
 
 ## Fitting
 

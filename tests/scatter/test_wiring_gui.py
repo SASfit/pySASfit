@@ -18,9 +18,13 @@ def app():
 
 
 @pytest.fixture
-def panel(app):
+def panel(app, tmp_path, monkeypatch):
+    monkeypatch.setenv("PYSASFIT_SETTINGS", str(tmp_path / "settings.json"))
+    from pysasfit.core import settings as prefs
+    prefs.reset("scatter")
     from pysasfit.scatter import gui as g
-    return g.ParamPanel()
+    yield g.ParamPanel()
+    prefs.reset("scatter")
 
 
 @pytest.fixture
@@ -231,3 +235,31 @@ def test_entries_that_are_not_calculated_cannot_be_picked(panel):
             assert cb.model().item(i).isEnabled() == (i not in items), cb.itemText(i)
     panel.set_params(dict(P.defaults(), LType=13), {})          # an old .ini file can still carry it
     assert panel.params()["LType"] == 13
+
+
+def test_hkl_max_limit_from_the_preferences(panel):
+    from pysasfit.core import settings as prefs
+    sp = panel.spin["HKLmax"]
+    assert sp.maximum() == 9 == prefs.get("scatter.calc.hklmax_limit")       # SasScatter2
+    prefs.set_value("scatter.calc.hklmax_limit", 14)
+    panel.apply_preferences()
+    panel.set_params(dict(P.defaults(), LType=5, HKLmax=12), {})
+    assert sp.maximum() == 14 and panel.params()["HKLmax"] == 12
+    seen = []
+    panel.changed.connect(lambda: seen.append(panel.params()["HKLmax"]))
+    prefs.set_value("scatter.calc.hklmax_limit", 6)                          # a lower limit reduces the value
+    panel.apply_preferences()
+    assert sp.maximum() == 6 and seen[-1] == 6
+    panel.set_params(dict(P.defaults(), LType=5, HKLmax=20), {})             # e.g. from a parameter file
+    assert panel.params()["HKLmax"] == 6
+
+
+def test_hkl_max_above_9_is_calculated():
+    from pysasfit.scatter import engine
+    import numpy as np
+    p = dict(P.defaults(), LType=5, uca=60.0, EditRadius=3.0, EditQmax=2.0, GridPoints=24, EditQsteps=400)
+    q, lo = engine.calc_1d(dict(p, HKLmax=9))
+    q, hi = engine.calc_1d(dict(p, HKLmax=14))
+    far = q > 1.7                                # beyond the reflections with |h|, |k|, |l| <= 9 ... 2 pi 9 / 60
+    assert np.isfinite(hi).all() and not np.allclose(lo[far], hi[far], rtol=1e-3)
+    assert engine.make_lattice(dict(p, HKLmax=14)).hkl.max() == 14

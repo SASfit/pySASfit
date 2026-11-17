@@ -450,6 +450,51 @@ $\lambda_m$ is clipped to $[0.8, 1.25]$, and $g$ and $\lambda$ are iterated. Cor
 **Interfaces between phases.** $S_{ij}/V$ is found by the face count of §8, for every pair of phases $i<j$.
 Non-neighbouring phases touch only where a layer is thinner than a voxel.
 
+### SESANS curves
+
+Spin-echo SANS (Rekveldt 1996; Andersson et al. 2008) measures the projection of the same SLD correlation function
+$C(r)$ (with $I(Q) = 4\pi\int r^2 C(r)\,\frac{\sin Qr}{Qr}\,\mathrm dr$) along the beam:
+
+$$
+G(\delta) - G(0) = \frac{1}{2\pi}\int_0^\infty I(Q)\,[J_0(Q\delta) - 1]\,Q\,\mathrm dQ
+ = 2\int_\delta^\infty C(r)\,\frac{r\,\mathrm dr}{\sqrt{r^2-\delta^2}} - 2\int_0^\infty C(r)\,\mathrm dr ,
+$$
+
+in $[\text{length}]^{-2}\,\text{cm}^{-1}$ for $I$ in cm⁻¹, as the `.ses` files give it ($P/P_0 = e^{\lambda^2 t\,[G(\delta)-G(0)]}$).
+
+**Forward model** ({func}`~pysasfit.morph.sesans.projection_matrix`). For $C$ piecewise linear on the r grid
+the Abel integrals are elementary,
+$\int \frac{r\,\mathrm dr}{\sqrt{r^2-\delta^2}} = \sqrt{r^2-\delta^2}$ and
+$\int \frac{r^2\,\mathrm dr}{\sqrt{r^2-\delta^2}} = \tfrac12\bigl[r\sqrt{r^2-\delta^2} + \delta^2\ln(r+\sqrt{r^2-\delta^2})\bigr]$,
+so $G = A\,C$ is exact, square-root singularity included (DAB: $2\delta K_1(\delta/\xi) - 2\xi$ to $10^{-5}$; the
+Hankel transform of pySASstudio agrees to its own accuracy, $3\cdot10^{-4}$).
+
+**Inversion** ({func}`~pysasfit.morph.sesans.invert_sesans`). $C$ on $r=0$ and 59 geometric nodes from
+$\delta_{\min}/3$ to $1.2\,\delta_{\max}$ ($C = 0$ beyond) solves
+$\min\,\lVert W(AC-G)\rVert^2 + \alpha\lVert DC\rVert^2$ ($W = 1/\sigma_G$, $D$ second differences, plus a pin of the
+last node), $\alpha$ by the discrepancy principle (the largest $\alpha$ with $\chi^2 \le 1$; GCV without errors).
+$\gamma_\text{SESANS}(r) = C(r)/C(0)$ is interpolated monotonically (PCHIP): kinks in $\gamma$ would become kinks in
+$g$ and spurious intensity at high $q$.
+
+**Use in the reconstruction.**
+- *SESANS only:* the $\gamma$ of the SESANS curves enter the joint fit of §9 like scattering curves (their
+  normalisation $\lambda_m$ may lie between 0.05 and 20, as $C(0)$ is extrapolated below $\delta_{\min}$).
+- *With scattering curves:* a pointwise compromise between a SESANS $\gamma$ and a scattering $\gamma$ is no
+  transform pair of either, and the intensity at high $q$ reacts strongly to that (tests: $\chi^2 \sim 10^3$).
+  Instead, $g_\text{SESANS}$ is found from the SESANS curves alone, set smoothly to 0 beyond the largest $r$ at which
+  their $\gamma$ exceeds its uncertainty, and every scattering curve is **extended below its $q_{\min}$ by the
+  level-cut model of $g_\text{SESANS}$** for its own SLD set, scaled to its first points. This replaces the Guinier
+  or constant extrapolation, which misses the invariant of structures larger than $\pi/q_{\min}$. $g(r)$ then follows
+  from the extended scattering curves (exactly a transform pair of each), and the SESANS curves are a check:
+  $G_\text{model} = s\,A\,C_m(g)$ with one scale $s$ fitted, $\chi^2$ reported (absolute data: $s$ against
+  $10^{-4}$ for Å, $10^{-1}$ for nm).
+- *Voxel structure:* {func}`~pysasfit.morph.sesans.voxel_correlation` (autocorrelation of the SLD map, radial
+  average up to $L/2$), projected with $A$.
+
+In the test (domains of 1500 Å, scattering data from $q = 0.01$ Å⁻¹, SESANS from 50 to 8000 Å) the scattering curve
+alone misses the invariant by 40 % and $g$ by 0.23; with the SESANS curve $g$ is right to 0.04,
+$\chi^2 = 0.07$ (scattering) and 1.9 (SESANS).
+
 ## 10. Surfaces
 
 The 3D panel and the STL export draw iso-surfaces by marching cubes (Lorensen and Cline 1987;
@@ -646,6 +691,11 @@ structure.
   62 – review of stochastic models.
 * S. Kronenberger et al., *Soft Matter* (2024), doi:10.1039/d4sm00721b – three-phase polymer structures from two
   independent fields, anisotropic 2D data.
+
+**SESANS**
+* M. T. Rekveldt, *Nucl. Instrum. Methods B* **114** (1996) 366 – spin-echo small-angle neutron scattering.
+* R. Andersson, L. F. van Heijkamp, I. M. de Schepper, W. G. Bouwman, *J. Appl. Cryst.* **41** (2008) 868 – the
+  SESANS correlation function and its relation to SANS.
 
 **Anisotropy (§12)**
 * The plane-wave (Rayleigh) expansion and the addition theorem of spherical harmonics: e.g. G. B. Arfken,

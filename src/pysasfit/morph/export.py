@@ -169,6 +169,20 @@ def write_curves_multi(res, base):
            _save(base + "_spec.txt", [res.k, res.f, res.Pk], ["k", "f(k)", "P(k)"])]
     for c in res.curves:
         tag = base + "_" + re.sub(r"[^\w.-]+", "_", c.data.name)
+        if getattr(c, "kind", "sas") == "sesans":     # SESANS: delta, G - G(0), model, voxel structure
+            cols, head = [c.q_data, c.I_data, c.I_model], ["delta", "G_data", "G_model"]
+            if c.sigma_data is not None:
+                cols.insert(2, c.sigma_data)
+                head.insert(2, "dG")
+            out.append(_save(tag + "_sesans.txt", cols, head))
+            inv = c.inversion
+            out.append(_save(tag + "_C_abel.txt", [inv.r, inv.C, inv.dC], ["r", "C_abel", "dC"]))
+            sel = (res.r >= c.r_range[0]) & (res.r <= c.r_range[1])
+            out.append(_save(tag + "_gamma.txt", [res.r[sel], c.gamma[sel], c.G[sel]],
+                             ["r", "gamma_abel", "gamma_model"]))
+            if c.I_voxel is not None and len(c.I_voxel):
+                out.append(_save(tag + "_sesans_voxel.txt", [c.q_voxel, c.I_voxel], ["delta", "G_voxel"]))
+            continue
         out.append(_save(tag + "_newiq.txt", [c.curve.q, c.curve.I], ["q", "I_extrapolated"]))
         out.append(_save(tag + "_gamma.txt", [res.r, c.gamma, c.G], ["r", "gamma_data", "gamma_model"]))
         cols, head = [c.q_data, c.I_data, c.I_model], ["q", "I_data", "I_model"]
@@ -181,6 +195,7 @@ def write_curves_multi(res, base):
     with open(base + "_log.txt", "w", encoding="utf-8") as fh:
         fh.write(res.report() + "\n\nparameters:\n" + json.dumps(res.params.to_dict(), indent=1) + "\n")
         fh.write("\ncurves:\n" + json.dumps([{"name": c.data.name, "path": c.data.path, "weight": c.data.weight,
+                                              "kind": getattr(c, "kind", "sas"),
                                               "sld": [float(x) for x in c.data.sld]} for c in res.curves],
                                             indent=1) + "\n")
     out.append(base + "_log.txt")

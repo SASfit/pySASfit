@@ -123,7 +123,7 @@ _g("Calculation", [
     ("EditQmin", "Qmin:", 0.01, 0, 1e4, 5, "Minimum q (1/nm), 1D calculation"),
     ("EditQsteps", "number of steps (q):", 200, 2, 100000, 0, "1D calculation: number of q values"),
     ("GridPoints", "Grid points:", 128, 16, 2048, 0, "Grid points of the (quadrant) image"),
-    ("HKLmax", "HKLmax:", 3, 1, 9, 0, "Maximum |h|,|k|,|l|"),
+    ("HKLmax", "HKLmax:", 3, 1, 9, 0, "Maximum |h|,|k|,|l| of the reflections of the lattice"),
     ("Editqz", "Editqz:", 0, -1e4, 1e4, 4, "qz of the detector plane"),
 ])
 _g("Experiment", [

@@ -136,6 +136,36 @@ print(res.report())
 The multi-phase relations (ordered cuts, Plackett's identity, joint g(r), fraction fit) are derived in
 {doc}`theory`, section 9, with the references (Berk, Teubner, Roberts, Arleth et al., Gommes, Kronenberger et al.).
 
+## SESANS data
+
+```{image} ../_static/morph/gui_sesans.png
+:alt: scattering curve and SESANS curve of the same sample
+```
+
+SESANS curves (`.ses`, SasView v1.0 and Delft formats, read as in pySASstudio) can be added next to the scattering
+curves: **SESANS…** below the Data table or **File → Add SESANS data (.ses)…**. A dialog shows what the file says
+and lets you override the units of the spin-echo length and wavelength and the thickness (some files label them
+wrongly). The curves are converted to the length unit of the panel (and read again when the q unit changes). They
+need an SLD column in the phase table like every curve.
+
+* **SESANS only:** G(δ) is inverted (Abel transform, regularised) to the correlation function, which enters the fit
+  of g(r) like a scattering curve.
+* **With scattering curves:** the SESANS curves fix the large-scale structure, i.e. what the scattering curves miss
+  below their q_min. Each scattering curve is extended to low q by the model of the SESANS g(r) (thick line "low q
+  from SESANS" in the I(q) plot) instead of a Guinier/constant extrapolation; g(r) then follows from the extended
+  curves and the SESANS curves are compared with it.
+* **SESANS panel:** measured G(δ) − G(0) (or P/P0 = exp(λ²t G) with λ and t of the file), the model of the common
+  g(r) with its χ², and the SESANS curve of the voxel structure (up to L/2 of the box).
+* The correlation plot shows the γ of a SESANS curve on its spin-echo range, on a logarithmic r axis.
+
+```python
+from pysasfit.core.sesans_io import load_sesans
+ses = load_sesans("sample.ses", length_unit="A")
+sets.append(DataSet(ses.delta, ses.G, ses.dG, sld=[1.0, 0.0], name="sesans", kind="sesans"))
+```
+
+Theory and the test case: {doc}`theory`, section 9 (SESANS curves).
+
 ## Differences from SAXSMorph 2.2
 
 | | SAXSMorph 2.2 | pySASmorph |
@@ -212,7 +242,9 @@ clipped points), the porosity or the background is probably wrong.
 * F(1) = φ(1−φ), F(−1) = −φ², F(g) = arcsin(g)/2π at φ = ½;
 * round trip: g(r) → exact level-cut I(q) → g(r) recovered to 2·10⁻⁴, contrast to 0.1 %;
 * the FFT field has the prescribed correlation; Parseval for the voxel intensity; S/V of a slab;
-* end to end (FFT and random waves): voxel porosity, voxel I(q) against the data.
+* end to end (FFT and random waves): voxel porosity, voxel I(q) against the data;
+* SESANS: exact Abel projection (DAB closed form, pySASstudio's Hankel transform), inversion, SESANS alone,
+  scattering curve + SESANS (g to 0.04 where the scattering curve alone is off by 0.23), voxel SESANS curve, GUI.
 
 ```{toctree}
 :maxdepth: 1

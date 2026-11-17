@@ -387,6 +387,8 @@ register(T, TT, "Metadata lister", [
 T, TT = "scatter", "pySCAtter"
 register(T, TT, "Calculation and fit (pySCAtter)", [
     S("scatter.calc.auto_1d", True, "I(q) follows every parameter change", "", kind="bool"),
+    S("scatter.calc.hklmax_limit", 9, "lattices: largest value that 'hkl max' accepts", "", kind="int", lo=1,
+      hi=30),
     S("scatter.fit.max_nfev", 200, "fit: largest number of model evaluations", "", kind="int", lo=5, hi=100000),
     S("scatter.fit.every_px", 2, "2D fit: use every n-th pixel (start value)", "", kind="int", lo=1, hi=32),
 ])

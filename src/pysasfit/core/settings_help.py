@@ -667,6 +667,13 @@ HELP = {
         "Start value of the 'I(q) follows' box of pySCAtter: the 1D curve (and the model at the loaded data) is "
         "recalculated 0.35 s after every parameter change. The 2D pattern follows only when '2D follows' is "
         "ticked, because oriented anisometric particles take seconds.",
+    "scatter.calc.hklmax_limit":
+        "Upper limit of the parameter 'hkl max' (page Calculation of the Model panel): all reflections with "
+        "|h|, |k|, |l| ≤ hkl max enter the lattice factor. 9 is the limit of SasScatter2. A larger value is "
+        "needed when the highest reflection has to lie beyond q max for a large cell: hkl max ≥ q max·a/(2π). "
+        "The number of reflections grows as (2·hkl max + 1)³, so the calculation time and the memory grow "
+        "quickly, above all for the fibre pattern and the Gamma and anisotropic Gaussian peaks. A value above "
+        "the limit in a parameter file is reduced to the limit.",
     "scatter.fit.max_nfev":
         "Largest number of model evaluations of a pySCAtter fit (Trust Region Reflective least squares; each "
         "fitted parameter costs one evaluation per iteration for the Jacobian).",

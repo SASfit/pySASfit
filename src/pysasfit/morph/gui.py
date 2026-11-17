@@ -91,6 +91,55 @@ def _item(text, editable=True, align_right=False):
     return it
 
 
+LENGTH_UNITS = {"as in the file": None, "Å": "A", "nm": "nm", "µm": "um"}
+
+
+class SESANSLoadDialog(QtWidgets.QDialog):
+    """Units of a SESANS file (as in pySASstudio): what the file says, with overrides for files that label them
+    wrongly; the data are converted to the length unit of pySASmorph (the inverse of its q unit)."""
+
+    def __init__(self, parent, path, length_unit):
+        super().__init__(parent)
+        from ..core.sesans_io import load_sesans
+
+        self.setWindowTitle(f"SESANS file – {os.path.basename(path)}")
+        self.path, self.length_unit = path, length_unit
+        f = QtWidgets.QFormLayout(self)
+        try:
+            ses = load_sesans(path, length_unit=length_unit)
+            fu = ses.file_units
+            info = (f"{ses.delta.size} points, spin-echo length {ses.delta.min():.4g} … {ses.delta.max():.4g} "
+                    f"{'Å' if length_unit == 'A' else length_unit} (file: {fu.get('delta', '?')}), "
+                    f"λ in file: {fu.get('wavelength', '?')}, thickness {ses.thickness:.4g} cm")
+        except Exception as e:  # noqa: BLE001
+            info = f"could not be read with the units of the file: {e}"
+        lab = QtWidgets.QLabel(info)
+        lab.setWordWrap(True)
+        f.addRow(lab)
+        self.delta_unit = QtWidgets.QComboBox()
+        self.delta_unit.addItems(list(LENGTH_UNITS))
+        self.delta_unit.setToolTip("Some files label the spin-echo length wrongly (e.g. 'um' for values in nm)")
+        f.addRow("spin-echo length unit", self.delta_unit)
+        self.wavelength_unit = QtWidgets.QComboBox()
+        self.wavelength_unit.addItems(list(LENGTH_UNITS))
+        f.addRow("wavelength unit", self.wavelength_unit)
+        self.thickness = QtWidgets.QLineEdit()
+        self.thickness.setPlaceholderText("as in the file")
+        self.thickness.setValidator(QtGui.QDoubleValidator(0, 1e6, 8))
+        f.addRow("thickness (cm)", self.thickness)
+        bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
+                                        | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        bb.accepted.connect(self.accept)
+        bb.rejected.connect(self.reject)
+        f.addRow(bb)
+
+    def options(self):
+        t = self.thickness.text().strip()
+        return {"delta_unit": LENGTH_UNITS[self.delta_unit.currentText()],
+                "wavelength_unit": LENGTH_UNITS[self.wavelength_unit.currentText()],
+                "thickness_cm": float(t) if t else None}
+
+
 class MainWindow(DockMixin, QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -108,6 +157,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.results_text.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont))
         self._add_dock("input", "Input", self.input_panel, Dock.LeftDockWidgetArea, scrollable=True)
         self._add_dock("iq", "I(q)", self.iq_panel, Dock.RightDockWidgetArea)
+        self._add_dock("sesans", "SESANS", self.sesans_panel, Dock.RightDockWidgetArea)
         self._add_dock("corr", "Correlation functions", self.corr_panel, Dock.RightDockWidgetArea)
         self._add_dock("spec", "Spectral function", self.spec_panel, Dock.RightDockWidgetArea)
         self._add_dock("struct", "Structure", self.struct_panel, Dock.RightDockWidgetArea)
@@ -120,6 +170,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.splitDockWidget(self.docks["iq"], self.docks["struct"], QtCore.Qt.Orientation.Vertical)
         self.splitDockWidget(self.docks["corr"], self.docks["results"], QtCore.Qt.Orientation.Vertical)
         self.tabifyDockWidget(self.docks["corr"], self.docks["spec"])
+        self.tabifyDockWidget(self.docks["iq"], self.docks["sesans"])
+        self.docks["iq"].raise_()
         self.tabifyDockWidget(self.docks["struct"], self.docks["view3d"])
         self.docks["struct"].raise_()
         self.docks["corr"].raise_()
@@ -136,6 +188,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         a = m.addAction("&Open data…", self.on_open)
         a.setShortcut(QtGui.QKeySequence.StandardKey.Open)
         m.addAction("&Add curve (contrast)…", self.on_add)
+        m.addAction("Add &SESANS data (.ses)…", self.on_add_sesans)
         m.addSeparator()
         self.act_export_curves = m.addAction("Export &curves…", self.on_export_curves)
         self.act_export_matrix = m.addAction("Export voxel &matrix…", self.on_export_matrix)
@@ -178,8 +231,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self.curve_table.itemChanged.connect(self._on_curve_item)
         v.addWidget(self.curve_table)
         row = QtWidgets.QHBoxLayout()
-        for text, slot, tip in (("Open…", self.on_open, "Replace all curves by one file"),
-                                ("Add…", self.on_add, "Add curves of the same sample (other contrasts)"),
+        for text, slot, tip in (("Open…", self.on_open, "Replace all curves by the selected files (SAS curves or SESANS .ses)"),
+                                ("Add…", self.on_add, "Add curves of the same sample (other contrasts, SESANS .ses)"),
+                                ("SESANS…", self.on_add_sesans, "Add SESANS curves (.ses) of the same sample: "
+                                 "G(δ) is the projected correlation function, it extends g(r) to µm distances"),
                                 ("Remove", self.on_remove, "Remove the selected curve")):
             b = QtWidgets.QPushButton(text)
             b.setToolTip(tip)
@@ -196,7 +251,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         f.addRow("q max", self.qmax)
         self.unit = QtWidgets.QComboBox()
         self.unit.addItems(["1/Å", "1/nm"])
-        self.unit.setToolTip("Axis labels and absolute invariant: lengths are in the inverse unit of q")
+        self.unit.setToolTip("Axis labels and absolute invariant: lengths are in the inverse unit of q (SESANS "
+                             "curves are converted to it)")
+        self.unit.currentIndexChanged.connect(lambda _i: self._reload_sesans())
         f.addRow("q unit", self.unit)
         v.addLayout(f)
         lay.addWidget(g)
@@ -379,6 +436,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         bar.addWidget(self.b_box)
         bar.addWidget(self.b_fit)
         self.iq_panel = plot_panel(self.canvas_iq, self, bars=(bar,))
+        self.fig_ses = Figure(figsize=(5, 4), layout="constrained")
+        self.canvas_ses = FigureCanvasQTAgg(self.fig_ses)
+        self.ax_ses = self.fig_ses.add_subplot(111)
+        self.ses_mode = QtWidgets.QComboBox()
+        self.ses_mode.addItem("G(δ) − G(0)", "G")
+        self.ses_mode.addItem("P/P0 = exp(λ²t [G(δ) − G(0)])", "P")
+        self.ses_mode.currentIndexChanged.connect(lambda _i: self._plot_sesans())
+        self.ses_logx = QtWidgets.QCheckBox("log δ")
+        self.ses_logx.setChecked(True)
+        self.ses_logx.toggled.connect(lambda _c: self._plot_sesans())
+        sbar = QtWidgets.QHBoxLayout()
+        sbar.addWidget(self.ses_mode)
+        sbar.addWidget(self.ses_logx)
+        sbar.addStretch(1)
+        self.sesans_panel = plot_panel(self.canvas_ses, self, bars=(sbar,))
         self.fig_corr = Figure(figsize=(5, 4), layout="constrained")
         self.canvas_corr = FigureCanvasQTAgg(self.fig_corr)
         self.ax_corr = self.fig_corr.add_subplot(111)
@@ -420,9 +492,15 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             it.setToolTip(d.get("path") or "")
             it.setForeground(QtGui.QBrush(QtGui.QColor(_mpl_colour(CURVE_COLOURS[i % len(CURVE_COLOURS)]))))
             self.curve_table.setItem(i, 0, it)
-            self.curve_table.setItem(i, 1, _item(f"{d['q'].size}" + ("" if d["sigma"] is not None else ", no σ"),
+            self.curve_table.setItem(i, 1, _item(f"{d['q'].size}" + (" SESANS" if d.get("kind") == "sesans" else
+                                                                     "" if d["sigma"] is not None else ", no σ"),
                                                  editable=False, align_right=True))
             self.curve_table.setItem(i, 2, _item(f"{d['weight']:g}", align_right=True))
+            if d.get("kind") == "sesans":
+                it.setToolTip((d.get("path") or "") + "\nSESANS: G(δ) − G(0); no background")
+                self.curve_table.setItem(i, 3, _item("", editable=False))
+                self.curve_table.setItem(i, 4, _item("–", editable=False, align_right=True))
+                continue
             chk = _item("", editable=False)
             chk.setFlags(chk.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
             chk.setCheckState(QtCore.Qt.CheckState.Checked if d["fit_bg"] else QtCore.Qt.CheckState.Unchecked)
@@ -437,8 +515,11 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         self._sync_b_box()
 
     def _current_curve(self):
+        """Selected scattering curve (SESANS curves have no background), or the first one, or -1."""
         i = self.curve_table.currentRow()
-        return i if 0 <= i < len(self.datasets) else (0 if self.datasets else -1)
+        if 0 <= i < len(self.datasets) and self.datasets[i].get("kind") != "sesans":
+            return i
+        return next((k for k, d in enumerate(self.datasets) if d.get("kind") != "sesans"), -1)
 
     def _sync_b_box(self):
         i = self._current_curve()
@@ -487,6 +568,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if c == 0 and it.text().strip():
             self.datasets[i]["name"] = it.text().strip()
             self._set_sld_headers()
+        elif self.datasets[i].get("kind") == "sesans" and c in (3, 4):
+            return
         elif c == 2:
             try:
                 self.datasets[i]["weight"] = max(0.0, float(it.text()))
@@ -653,7 +736,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         cols = self._sld_columns()
         return [DataSet(q=d["q"], I=d["I"], sigma=d["sigma"], sld=np.asarray(cols[m], float), name=d["name"],
                         path=d.get("path"), weight=d["weight"], fit_background=d["fit_bg"],
-                        background=None if d["fit_bg"] else d["B"]) for m, d in enumerate(self.datasets)]
+                        background=None if d["fit_bg"] else d["B"], kind=d.get("kind", "sas"),
+                        meta=d.get("meta", {})) for m, d in enumerate(self.datasets)]
 
     def _length_unit(self):
         return "Å" if self.unit.currentIndex() == 0 else "nm"
@@ -687,20 +771,35 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 
     def _ask_files(self, title):
         start = os.path.dirname(self.path) if self.path else ""
-        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(self, title, start,
-                                                          "Data (*.dat *.txt *.csv *.pdh *.xy);;All files (*)")
+        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            self, title, start, "Data (*.dat *.txt *.csv *.pdh *.xy *.ses);;SAS data (*.dat *.txt *.csv *.pdh *.xy)"
+            ";;SESANS (*.ses);;All files (*)")
         return paths
 
+    def _load_interactive(self, path, add, correlations):
+        """Load a file picked in a file dialog: SESANS files (by extension or header) go through the unit
+        dialog first, everything else as a SAS curve."""
+        from ..core.sesans_io import is_sesans_file
+        if path.lower().endswith(".ses") or is_sesans_file(path):
+            dlg = SESANSLoadDialog(self, path, self._ses_unit())
+            if dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted:
+                return False
+            return self.load_sesans_file(path, add=add, options=dlg.options(), correlations=correlations)
+        return self.load_file(path, add=add, correlations=correlations)
+
+    def _load_paths(self, paths, add):
+        loaded = False
+        for p in paths:
+            ok = self._load_interactive(p, add=add or loaded, correlations=False)
+            loaded = loaded or bool(ok)
+        if loaded:
+            self.on_correlations()
+
     def on_open(self):
-        paths = self._ask_files("Open SAS data (q, I [, σ])")
-        if paths:
-            self.load_file(paths[0])
-            for p in paths[1:]:
-                self.load_file(p, add=True)
+        self._load_paths(self._ask_files("Open data: SAS curves (q, I [, σ]) or SESANS (.ses)"), add=False)
 
     def on_add(self):
-        for p in self._ask_files("Add curves of the same sample (other contrasts)"):
-            self.load_file(p, add=True)
+        self._load_paths(self._ask_files("Add curves of the same sample (other contrasts, SESANS)"), add=True)
 
     def on_remove(self):
         i = self.curve_table.currentRow()
@@ -721,6 +820,9 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
 
     def load_file(self, path, add=False, correlations=True):
         path = os.fspath(path)
+        from ..core.sesans_io import is_sesans_file
+        if path.lower().endswith(".ses") or is_sesans_file(path):
+            return self.load_sesans_file(path, add=add, correlations=correlations)
         try:
             q, I, s = load_curve(path)
         except Exception as e:  # noqa: BLE001
@@ -747,6 +849,69 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if correlations:
             self.on_correlations()
         return True
+
+    def on_add_sesans(self):
+        start = os.path.dirname(self.path) if self.path else ""
+        paths, _ = QtWidgets.QFileDialog.getOpenFileNames(self, "Add SESANS data (G(δ) or P/P0)", start,
+                                                          "SESANS (*.ses *.dat *.txt);;All files (*)")
+        for p in paths:
+            dlg = SESANSLoadDialog(self, p, self._ses_unit())
+            if dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted:
+                continue
+            self.load_sesans_file(p, add=bool(self.datasets), options=dlg.options(),
+                                  correlations=p == paths[-1])
+
+    def _ses_unit(self):
+        return "A" if self.unit.currentIndex() == 0 else "nm"
+
+    def _read_sesans(self, path, options):
+        from ..core.sesans_io import load_sesans
+        ses = load_sesans(path, length_unit=self._ses_unit(), **(options or {}))
+        meta = {"options": dict(options or {}), "wavelength": ses.wavelength, "thickness": ses.thickness,
+                "P": ses.P, "dP": ses.dP, "length_unit": ses.length_unit}
+        return ses.delta, ses.G, ses.dG, meta
+
+    def load_sesans_file(self, path, add=True, options=None, correlations=True):
+        """A SESANS curve (G(δ) − G(0) in [length]⁻² cm⁻¹, δ in the length unit of the panel) as a data set."""
+        path = os.fspath(path)
+        try:
+            delta, G, dG, meta = self._read_sesans(path, options)
+        except Exception as e:  # noqa: BLE001
+            QtWidgets.QMessageBox.critical(self, "SESANS data", f"{path}:\n{e}")
+            return False
+        cols = self._sld_columns()
+        name = os.path.splitext(os.path.basename(path))[0]
+        names = self._curve_names()
+        base, k = name, 2
+        while name in names:
+            name, k = f"{base} ({k})", k + 1
+        entry = {"name": name, "path": path, "q": delta, "I": G, "sigma": dG, "weight": 1.0, "fit_bg": False,
+                 "B": 0.0, "dB": 0.0, "kind": "sesans", "meta": meta}
+        if add:
+            self.datasets.append(entry)
+            cols.append(list(cols[-1]) if cols else [1.0] + [0.0] * (self.phase_table.rowCount() - 1))
+        else:
+            self.datasets = [entry]
+            cols = cols[:1]
+        self.result = None
+        self._fill_curve_table()
+        self.set_phases(self._phase_names(), self._fractions(), cols)
+        self._update_enabled()
+        self.set_panel_visible("sesans", True)
+        if correlations:
+            self.on_correlations()
+        return True
+
+    def _reload_sesans(self):
+        """The q unit changed: SESANS curves are read again in the new length unit."""
+        for d in self.datasets:
+            if d.get("kind") == "sesans" and d.get("path") and os.path.isfile(d["path"]):
+                try:
+                    d["q"], d["I"], d["sigma"], d["meta"] = self._read_sesans(d["path"], d["meta"].get("options"))
+                except Exception:  # noqa: BLE001
+                    pass
+        self.result = None
+        self.refresh()
 
     # ------------------------------------------------------------------ runs
     def _set_progress(self, x, text):
@@ -781,7 +946,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.fit_fractions.blockSignals(False)
         self.result = res
         for d, c in zip(self.datasets, res.curves):        # fitted backgrounds into the table
-            if d["fit_bg"]:
+            if d["fit_bg"] and c.curve is not None:
                 d["B"], d["dB"] = float(c.curve.B), float(c.curve.dB)
         self._fill_curve_table()
         if res.labels is not None:
@@ -812,7 +977,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             sc.add(f"q, I, sigma = load_curve({path_lit(None)})",
                    call("sets.append(DataSet", Code("q"), Code("I"), Code("sigma"),
                         sld=np.asarray(self._sld_columns()[0] if self._sld_columns() else [1.0, 0.0], float)) + ")")
+        if any(d.is_sesans for d in sets):
+            sc.imp("from pysasfit.core.sesans_io import load_sesans")
         for d in sets:
+            if d.is_sesans:          # SESANS: spin-echo length, G(delta) - G(0), its error
+                opts = {k: v for k, v in (d.meta.get("options") or {}).items() if v is not None}
+                if d.path and os.path.isfile(d.path):
+                    sc.add(call("ses = load_sesans", Code(path_lit(d.path)), length_unit=self._ses_unit(), **opts))
+                    sc.add("delta, G, dG = ses.delta, ses.G, ses.dG")
+                else:
+                    sc.add(f"delta, G, dG = {lit(d.q)}, {lit(d.I)}, {lit(d.sigma)}")
+                kw = dict(sld=d.sld, name=d.name, kind="sesans")
+                if d.weight != 1.0:
+                    kw["weight"] = d.weight
+                sc.add(call("sets.append(DataSet", Code("delta"), Code("G"), Code("dG"), **kw) + ")")
+                continue
             if d.path and os.path.isfile(d.path):
                 sc.add(f"q, I, sigma = load_curve({path_lit(d.path)})")
                 q, I, sg = "q", "I", "sigma"
@@ -978,6 +1157,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
     # ------------------------------------------------------------------ plots
     def refresh(self):
         self._plot_iq()
+        self._plot_sesans()
         self._plot_corr()
         self._plot_spec()
         self._plot_structure()
@@ -997,10 +1177,15 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.canvas_iq.draw_idle()
             return
         res = self.result
-        n = len(self.datasets)
-        off = self._offsets(n)
+        sas = [m for m, d in enumerate(self.datasets) if d.get("kind") != "sesans"]
+        off_s = self._offsets(len(sas))
+        off = [1.0] * len(self.datasets)
+        for k, m in enumerate(sas):
+            off[m] = off_s[k]
         ymin, ymax = np.inf, 0.0
         for m, d in enumerate(self.datasets):
+            if m not in sas:
+                continue
             col = CURVE_COLOURS[m % len(CURVE_COLOURS)]
             label = d["name"] + (f" × {off[m]:g}" if off[m] != 1 else "")
             if d["sigma"] is not None:
@@ -1013,9 +1198,18 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 ymin, ymax = min(ymin, pos.min()), max(ymax, pos.max())
         if res is not None:
             for m, c in enumerate(res.curves):
+                if c.curve is None:
+                    continue
                 col = CURVE_COLOURS[m % len(CURVE_COLOURS)]
                 cv = c.curve
                 ax.plot(cv.q[cv.q > 0], cv.I[cv.q > 0] * off[m], "-", color=col, lw=0.8, alpha=0.6)
+                if cv.low_q == "model (SESANS)":          # low-q extension from the SESANS curves
+                    lo = (cv.q > 0) & (cv.q < cv.q_data[0])
+                    if np.any(lo) and np.all(np.isfinite(cv.I[lo])):
+                        ymax = max(ymax, float(cv.I[lo].max()) * off[m])
+                    ax.plot(cv.q[lo], cv.I[lo] * off[m], "-", color=col, lw=2.0, alpha=0.5,
+                            label="low q from SESANS" if m == min(k for k in range(len(res.curves))
+                                                                    if res.curves[k].curve is not None) else None)
                 qt = np.geomspace(cv.qN, cv.qN * 10, 50)
                 ax.plot(qt, cv.K * qt ** -4 * off[m], "--", color=col, lw=0.8, alpha=0.6)
                 ax.plot(c.q_data, c.I_model * off[m], "-", color="k", lw=1.0,
@@ -1041,9 +1235,13 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 qn = np.pi / res.voxel_size
                 ax.axvline(qn, color="0.4", lw=0.8, ls=":")
                 ax.text(qn, 0.98, " π/a", color="0.4", transform=ax.get_xaxis_transform(), va="top", fontsize=8)
-            qlo = min(c.curve.q_data[0] for c in res.curves)
-            qhi = max(c.curve.q_data[1] for c in res.curves)
-            ax.set_xlim(qlo / 5, qhi * 3)
+            sc = [c.curve for c in res.curves if c.curve is not None]
+            if sc:
+                lo = min(c.q_data[0] for c in sc) / 5
+                ext = [c.q[1] for c in sc if c.low_q == "model (SESANS)" and c.q.size > 1]
+                if ext:                           # show the extension from SESANS
+                    lo = min(lo, max(min(ext), lo / 50))
+                ax.set_xlim(lo, max(c.q_data[1] for c in sc) * 3)
         if np.isfinite(ymin) and ymax > 0:
             ax.set_ylim(ymin * 0.2, ymax * 5)
         ax.set_xscale("log")
@@ -1063,6 +1261,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             ax.text(0.5, 0.5, "no correlations yet", ha="center", va="center", transform=ax.transAxes, color="0.5")
             return
         for m, (d, c) in enumerate(zip(self.datasets, res.curves)):
+            if c.curve is None:
+                continue
             col = CURVE_COLOURS[m % len(CURVE_COLOURS)]
             cv = c.curve
             K = cv.K if cv.K > 0 else np.nanmax(d["I"] * d["q"] ** 4)
@@ -1081,6 +1281,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         # y range from the Porod ranges (the low-q points rise steeply and would squeeze the plot)
         ys = []
         for d, c in zip(self.datasets, res.curves):
+            if c.curve is None:
+                continue
             cv = c.curve
             K = cv.K if cv.K > 0 else np.nanmax(d["I"] * d["q"] ** 4)
             sel = (d["q"] >= cv.porod_range[0]) & (d["q"] <= cv.q_data[1])
@@ -1096,6 +1298,54 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         ax.set_title("o raw data, x data − B; shaded: Porod fit range", fontsize=8)
         ax.legend(fontsize=7)
 
+    def _plot_sesans(self):
+        """Measured SESANS curves with the model of the common g(r) and the curve of the voxel structure; G(δ) or
+        the polarisation P/P0 = exp(λ² t G) with λ and t of the file."""
+        ax = self.ax_ses
+        ax.clear()
+        mode = self.ses_mode.currentData()
+        res = self.result
+        lu = self._length_unit()
+        any_ses = False
+        for m, d in enumerate(self.datasets):
+            if d.get("kind") != "sesans":
+                continue
+            any_ses = True
+            col = CURVE_COLOURS[m % len(CURVE_COLOURS)]
+            meta = d.get("meta", {})
+            lam = np.asarray(meta.get("wavelength", np.ones_like(d["q"])), float)
+            t = float(meta.get("thickness", 1.0))
+
+            def to_p(x, dl):
+                lm = np.interp(dl, d["q"], lam) if lam.size == d["q"].size else lam
+                return np.exp(lm ** 2 * t * x)
+
+            y, e = (d["I"], d["sigma"]) if mode == "G" else (to_p(d["I"], d["q"]), to_p(d["I"], d["q"]) * lam ** 2 * t
+                                                             * (d["sigma"] if d["sigma"] is not None else 0))
+            ax.errorbar(d["q"], y, e, fmt="o", ms=3, mfc="none", color=col, lw=0.6, alpha=0.7, label=d["name"])
+            c = res.curves[m] if res is not None and m < len(res.curves) else None
+            if c is not None and c.kind == "sesans":
+                ax.plot(c.q_data, c.I_model if mode == "G" else to_p(c.I_model, c.q_data), "-", color="k", lw=1.1,
+                        label=f"model (χ² {c.chi2:.3g})")
+                if c.I_voxel is not None and len(c.I_voxel):
+                    ax.plot(c.q_voxel, c.I_voxel if mode == "G" else to_p(c.I_voxel, c.q_voxel), ".", color=col,
+                            ms=4, label="voxel structure")
+        if not any_ses:
+            ax.text(0.5, 0.5, "no SESANS data: File → Add SESANS data (.ses)…", ha="center", va="center",
+                    transform=ax.transAxes, color="0.5")
+        else:
+            if self.ses_logx.isChecked():
+                ax.set_xscale("log")
+            if res is not None and res.labels is not None:
+                ax.axvline(0.5 * res.params.box_size, color="0.4", lw=0.8, ls=":")
+                ax.text(0.5 * res.params.box_size, 0.02, " L/2", color="0.4", transform=ax.get_xaxis_transform(),
+                        fontsize=8)
+            ax.set_xlabel(f"spin-echo length δ ({lu})")
+            ax.set_ylabel(f"G(δ) − G(0) ({lu}⁻² cm⁻¹)" if mode == "G" else "P/P0")
+            ax.axhline(0 if mode == "G" else 1, color="0.6", lw=0.6)
+            ax.legend(fontsize=7)
+        self.canvas_ses.draw_idle()
+
     def _plot_corr(self):
         ax = self.ax_corr
         ax.clear()
@@ -1103,13 +1353,21 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if res is not None:
             for m, c in enumerate(res.curves):
                 col = CURVE_COLOURS[m % len(CURVE_COLOURS)]
-                ax.plot(res.r, c.gamma, color=col, lw=2.2, alpha=0.4, label=f"γ {c.data.name}")
+                if c.kind == "sesans":          # Abel inversion, on the spin-echo range only
+                    sel = (res.r >= c.r_range[0]) & (res.r <= c.r_range[1])
+                    ax.plot(res.r[sel], c.gamma[sel], color=col, lw=2.2, alpha=0.4, ls=(0, (4, 1.5)),
+                            label=f"γ {c.data.name} (SESANS)")
+                else:
+                    ax.plot(res.r, c.gamma, color=col, lw=2.2, alpha=0.4, label=f"γ {c.data.name}")
                 ax.plot(res.r, c.G, color=col, lw=0.9, ls="--")
             ax.plot(res.r, res.g, color="k", lw=1.3, label="g(r)  (Gaussian field)")
             ax.axhline(0, color="0.6", lw=0.6)
             below = np.flatnonzero(res.curves[0].gamma < np.exp(-1))
             rc = res.r[below[0]] if below.size else res.r[-1]
             ax.set_xlim(0, min(res.r[-1], 10 * rc))
+            if any(c.kind == "sesans" for c in res.curves):      # SESANS: up to µm, logarithmic r
+                ax.set_xscale("log")
+                ax.set_xlim(max(res.r[1], rc / 30), res.r[-1])
             ax.legend(fontsize=7, title="thick: data, dashed: model", title_fontsize=7)
         ax.set_xlabel(f"r ({self._length_unit()})")
         ax.set_ylabel("correlation")
@@ -1182,7 +1440,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 params = {}
             with open(p, "w", encoding="utf-8") as fh:
                 json.dump({"version": 2, "curves": [{"path": d["path"], "name": d["name"], "weight": d["weight"],
-                                                     "fit_bg": d["fit_bg"], "B": d["B"]} for d in self.datasets],
+                                                     "fit_bg": d["fit_bg"], "B": d["B"],
+                                                     "kind": d.get("kind", "sas"),
+                                                     "options": d.get("meta", {}).get("options", {})}
+                                                    for d in self.datasets],
                            "sld": self._sld_columns(), "params": params,
                            "unit": self.unit.currentIndex(), "dock_state": self.dock_state(),
                            "fit_bg_default": self.fit_bg_default.isChecked(),
@@ -1211,7 +1472,12 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         loaded = False
         for c in curves or []:
             if c.get("path") and os.path.isfile(c["path"]):
-                self.load_file(c["path"], add=loaded, correlations=False)
+                if c.get("kind") == "sesans":
+                    if not self.load_sesans_file(c["path"], add=loaded, options=c.get("options") or {},
+                                                 correlations=False):
+                        continue
+                else:
+                    self.load_file(c["path"], add=loaded, correlations=False)
                 d = self.datasets[-1]
                 d["name"], d["weight"] = c.get("name", d["name"]), float(c.get("weight", 1.0))
                 legacy = bool((s.get("params") or {}).get("fit_background", False))
