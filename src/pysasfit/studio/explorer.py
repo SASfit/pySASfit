@@ -102,6 +102,12 @@ def _entries():
     else:
         for name in [n for n in _PYTHON_FUNCTIONS if n.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))]:
             _PYTHON_FUNCTIONS.pop(name, None)
+    from . import ports
+
+    try:  # the Python ports of the SASfit plugins: menu tree "py plugin ports"
+        ports.register_aliases()
+    except Exception:  # noqa: BLE001 -- the SASfit functions alone
+        pass
     cat = dict(headers.catalogue())
     for name, impl in _PYTHON_FUNCTIONS.items():  # functions registered at run time
         cat[name] = impl[0]
@@ -445,6 +451,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             ("Hold", self._hold, "keep the current curve as a grey reference"),
             ("Clear held", self._clear_held, "remove the reference curves"),
             ("Reset parameters", self._reset, "current contribution: default parameters of its functions, scale 1; background 0"),
+            ("Suggest from data", self._suggest, "current contribution: lengths of the form factor scaled to the q range of "
+             "the data (largest length ~ 2/q_mid), then the scale (or I0) set so that the model meets the data at low q"),
             ("Export…", self._export, "save q, I(q) and the parameters as a text file"),
             ("Copy Python", self._copy_python, "copy code that reproduces the curve"),
         ):
@@ -468,6 +476,12 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.splitDockWidget(self.model_dock, self.plot_dock, H)
         self.splitDockWidget(self.plot_dock, self.fit_dock, V)      # first: the fit panel spans plot and distributions
         self.splitDockWidget(self.plot_dock, self.dist_dock, H)
+        from .map_panel import MapPanel
+
+        self.map_panel = MapPanel(self)
+        self.map_dock = self._add_dock("map", "2D map", self.map_panel, QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
+        self.tabifyDockWidget(self.plot_dock, self.map_dock)
+        self.plot_dock.raise_()
         view = self.menuBar().addMenu("&View")
         act = view.addAction("&Sliders")
         self.sliders_action = act
@@ -823,6 +837,58 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.bgalpha_row.set_value(4.0, emit=False)
         self._schedule()
 
+    def _suggest(self):
+        """Lengths of the current form factor scaled to the q range of the data, then the intensity matched at low q."""
+        from .ports.params import params_from_info, scale_lengths
+
+        p = self.current_panel()
+        if p is None or p.contrib is None:
+            return
+        d = self.datasets[self.current_ds] if self.datasets else None
+        if d is None or d.get("domain", "q") != "q":
+            try:
+                q = self._q()
+            except ValueError:
+                return
+            I = None
+        else:
+            q, I = np.asarray(d["q"], float), np.asarray(d["I"], float)
+        c = p.contrib
+        f = p.funcs["ff"]
+        try:
+            from . import ports
+
+            prm = ports.get(f.name).params
+        except KeyError:
+            prm = params_from_info(f.info)
+        vec = c.vector("ff")
+        skip = c.distributed if c.sd is not None else -1
+        old = vec[skip] if skip >= 0 else None
+        scale_lengths(prm, vec, q)
+        if skip >= 0:
+            vec[skip] = old  # integrated over the size distribution
+        msg = "lengths scaled to the q range"
+        if I is not None:
+            low = q <= np.quantile(q, 0.1)
+            try:
+                model = np.median(np.asarray(c.intensity(q[low]), float))
+            except Exception:  # noqa: BLE001
+                model = np.nan
+            target = np.median(I[low & np.isfinite(I)]) if np.any(low) else np.nan
+            if np.isfinite(model) and model > 0 and np.isfinite(target) and target > 0:
+                ratio = target / model
+                if c.sd is None:
+                    p.scale_row.set_value(ratio)  # c.intensity is without the scale
+                    msg += f", scale = {ratio:.3g}"
+                else:
+                    k = c.amplitude_index()
+                    if k is not None:
+                        c.sd_p[k] *= ratio
+                        msg += f", N x {ratio:.3g}"
+        p.sync_rows()
+        self._status(f"Suggested values for {f.name}: {msg}")
+        self._schedule()
+
     # ------------------------------------------------------------------ plot
     def showEvent(self, event):
         super().showEvent(event)
@@ -1152,6 +1218,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             self.ax.relim(visible_only=True)
             self.ax.autoscale_view()
         self.canvas.draw_idle()
+        if hasattr(self, "map_panel"):
+            self.map_panel.request()
         msg = f"{q.size} points in {(time.perf_counter() - t0) * 1e3:.0f} ms"
         infos = [p.contrib.last_integration for p in self.models() if p.contrib.sd is not None and p.contrib.last_integration]
         if infos:
@@ -1888,8 +1956,19 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             sc.comment(f"{', '.join(svf)}: SasView models (pip install sasmodels), SASfit convention P = (Δρ V F)²; "
                        "q and lengths in the unit below")
             sc.add(f"sasmodels_bridge.set_length_unit({self._sv_unit!r})")
+        from . import ports as _ports
+
+        portf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None
+                        and (f.name in _ports.enabled() or f.name.startswith(("ff_py_", "sq_py_", "sd_py_")))})  # fmt: skip
+        enabled = [n for n in portf if n in _ports.enabled()]
+        if enabled:
+            sc.imp("from pysasfit.studio import ports")
+            sc.comment("Python ports instead of the C plugins")
+            sc.add(f"ports.enable({enabled!r})")
+        if len(enabled) < len(portf):
+            sc.comment("ff_py_*: Python ports of SASfit plugins (pysasfit.studio.ports), found by name")
         pyf = sorted({f.name for p in ms for f in p.funcs.values() if f is not None and f.name in _PYTHON_FUNCTIONS
-                      and not f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))})
+                      and f.name not in portf and not f.name.startswith(("ff_sv_", "sq_sv_", "sd_sv_"))})
         if pyf:
             sc.comment(f"{', '.join(pyf)}: Python function(s) of this session; register them first with "
                        "pysasfit.studio.register_python_function (or put the plugin file in a python plugin folder)")

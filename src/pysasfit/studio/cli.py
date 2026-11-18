@@ -1,17 +1,17 @@
 """``pysasfit-studio`` command line (port of SASstudio_utilities_cli.py).
 
-    pysasfit-studio list [--type ff|sq|sd|peak]
-    pysasfit-studio search sphere shell
-    pysasfit-studio info ff_sphere
-    pysasfit-studio eval ff_sphere --q 0.01 0.1 0.5 --set R=50 eta=1
-    pysasfit-studio explore [ff_sphere] [--sq SQ] [--sd SD] [--add FF[,SD[,SQ]]] [--project FILE]   # needs PySide6
-    pysasfit-studio tree [ff|sq|sd]          # menu tree of the functions (groups from the .def files)
-    pysasfit-studio new-plugin my_gauss [--dir DIR]
-    pysasfit-studio sasview-adapter ff_sphere [--dir DIR]
-    pysasfit-studio profiles OUTDIR [--source SASfitGit/src/plugins]
-    pysasfit-studio install-binaries SOURCE [--dest DIR] [--frolov]
-    pysasfit-studio status
-    pysasfit-studio menu            # the interactive menu of the original tool
+pysasfit-studio list [--type ff|sq|sd|peak]
+pysasfit-studio search sphere shell
+pysasfit-studio info ff_sphere
+pysasfit-studio eval ff_sphere --q 0.01 0.1 0.5 --set R=50 eta=1
+pysasfit-studio explore [ff_sphere] [--sq SQ] [--sd SD] [--add FF[,SD[,SQ]]] [--project FILE]   # needs PySide6
+pysasfit-studio tree [ff|sq|sd]          # menu tree of the functions (groups from the .def files)
+pysasfit-studio new-plugin my_gauss [--dir DIR]
+pysasfit-studio sasview-adapter ff_sphere [--dir DIR]
+pysasfit-studio profiles OUTDIR [--source SASfitGit/src/plugins]
+pysasfit-studio install-binaries SOURCE [--dest DIR] [--frolov]
+pysasfit-studio status
+pysasfit-studio menu            # the interactive menu of the original tool
 """
 
 from __future__ import annotations
@@ -33,7 +33,9 @@ def _template(name):
 
 def new_plugin(name, directory=None):
     """Create ``sasstudio_<name>.py`` and a test file from the templates; returns both paths."""
-    directory = directory or os.path.join(os.path.expanduser("~"), ".pysasfit", "studio_plugins")
+    directory = directory or os.path.join(
+        os.path.expanduser("~"), ".pysasfit", "studio_plugins"
+    )
     os.makedirs(os.path.join(directory, "tests"), exist_ok=True)
     plugin = os.path.join(directory, f"sasstudio_{name}.py")
     test = os.path.join(directory, "tests", f"sasstudio_{name}_test.py")
@@ -64,7 +66,9 @@ def sasview_adapter(name, directory="."):
         .replace("NAME_STR", p.name)
         .replace("TITLE_STR", p.label)
         .replace("DESCRIPTION_STR", p.brief or p.label)
-        .replace("CATEGORY_STR", "structure-factor" if p.type == "sq" else "shape:sasfit")
+        .replace(
+            "CATEGORY_STR", "structure-factor" if p.type == "sq" else "shape:sasfit"
+        )
         .replace("STRUCTURE_FACTOR_BOOL", str(p.type == "sq"))
         .replace("    PARAMS", params)
     )
@@ -98,9 +102,16 @@ def _menu():
             if mode == "0":
                 return
             elif mode == "1":
-                print("created", *new_plugin(input("name (underscores instead of spaces): ").strip()))
+                print(
+                    "created",
+                    *new_plugin(
+                        input("name (underscores instead of spaces): ").strip()
+                    ),
+                )
             elif mode == "2":
-                print("created", sasview_adapter(input("SASfit function name: ").strip()))
+                print(
+                    "created", sasview_adapter(input("SASfit function name: ").strip())
+                )
             elif mode == "3":
                 from .explorer import explore
 
@@ -122,10 +133,14 @@ def main(argv=None):
         try:
             from .explorer import main as explore_main
         except ImportError as e:
-            print(f"the explorer needs PySide6 and matplotlib (pip install pysasfit[gui]): {e}")
+            print(
+                f"the explorer needs PySide6 and matplotlib (pip install pysasfit[gui]): {e}"
+            )
             return 1
         return explore_main(args[1:])
-    ap = argparse.ArgumentParser(prog="pysasfit-studio", description="Access to the SASfit plugin functions.")
+    ap = argparse.ArgumentParser(
+        prog="pysasfit-studio", description="Access to the SASfit plugin functions."
+    )
     sub = ap.add_subparsers(dest="cmd")
     s = sub.add_parser("list")
     s.add_argument("--type", choices=["ff", "sq", "sd", "peak"])
@@ -150,10 +165,30 @@ def main(argv=None):
     s = sub.add_parser("install-binaries")
     s.add_argument("source")
     s.add_argument("--dest")
-    s.add_argument("--frolov", action="store_true", help="also copy the FrolovPoints tables (~100 MB)")
-    sub.add_parser("explore", help="interactive model plot with sliders (pysasfit-studio explore -h)")
-    s = sub.add_parser("tree", help="menu tree of the functions, from the headers and the .def group files")
+    s.add_argument(
+        "--frolov",
+        action="store_true",
+        help="also copy the FrolovPoints tables (~100 MB)",
+    )
+    sub.add_parser(
+        "explore",
+        help="interactive model plot with sliders (pysasfit-studio explore -h)",
+    )
+    s = sub.add_parser(
+        "tree",
+        help="menu tree of the functions, from the headers and the .def group files",
+    )
     s.add_argument("type", nargs="?", choices=["ff", "sq", "sd"])
+    s = sub.add_parser(
+        "plugin-build-dir",
+        help="use the plugin libraries of a SASfit source tree, e.g. SASfitGit/src/plugins (saved)",
+    )
+    s.add_argument(
+        "path",
+        nargs="?",
+        help="the plugins folder of the source tree; omit to show the current one",
+    )
+    s.add_argument("--clear", action="store_true", help="forget the folder")
     sub.add_parser("status")
     sub.add_parser("menu")
     a = ap.parse_args(args)
@@ -177,7 +212,11 @@ def main(argv=None):
     elif a.cmd == "sasview-adapter":
         print("created", sasview_adapter(a.name, a.dir))
     elif a.cmd == "profiles":
-        print(len(headers.write_profiles(a.outdir, source_dir=a.source)), "profiles written to", a.outdir)
+        print(
+            len(headers.write_profiles(a.outdir, source_dir=a.source)),
+            "profiles written to",
+            a.outdir,
+        )
     elif a.cmd == "install-binaries":
         from .install import install_binaries
 
@@ -187,21 +226,51 @@ def main(argv=None):
 
         defs = groups.load_groups()
         entries = list(headers.catalogue().values())
-        for key, types in (("ff", ("ff", "peak", "peaks")), ("sq", ("sq",)), ("sd", ("sd",))):
+        for key, types in (
+            ("ff", ("ff", "peak", "peaks")),
+            ("sq", ("sq",)),
+            ("sd", ("sd",)),
+        ):
             if a.type in (None, key):
                 print(f"{headers.PLUGIN_TYPES[key]}s:")
-                print("\n".join("  " + s for s in groups.tree_lines(groups.build_menu(entries, types, defs))))
+                print(
+                    "\n".join(
+                        "  " + s
+                        for s in groups.tree_lines(
+                            groups.build_menu(entries, types, defs)
+                        )
+                    )
+                )
         if not defs.files:
             print("\n(no *.def files found in: " + ", ".join(paths.def_dirs()) + ")")
+    elif a.cmd == "plugin-build-dir":
+        if a.clear:
+            paths.set_plugin_build_dir(None, save=True)
+        elif a.path:
+            paths.set_plugin_build_dir(a.path, save=True)
+            if paths.plugin_build_dir() is None:
+                print(f"warning: {a.path} is not a folder")
+        d = paths.plugin_build_dir()
+        print(f"plugin build tree: {d or 'none'}")
+        if d:
+            libs = paths.plugin_build_lib_dirs()
+            print(
+                f"  {len(libs)} built plugin libraries, {len(paths.plugin_build_include_dirs())} header folders"
+            )
     elif a.cmd == "status":
         cat = headers.catalogue()
         print(f"header folders: {paths.header_dirs()}")
         print(f"functions documented: {len(cat)}")
-        print(f"SASfit libraries: {paths.lib_dir() or 'not installed (pysasfit-studio install-binaries SOURCE)'}")
+        print(
+            f"SASfit libraries: {paths.lib_dir() or 'not installed (pysasfit-studio install-binaries SOURCE)'}"
+        )
+        print(f"plugin build tree: {paths.plugin_build_dir() or 'none'}")
         print(f"Python plugin folders: {paths.python_plugin_dirs()}")
         from . import groups
 
-        print(f"group files (*.def): {len(groups.load_groups().files)}  (searched: {paths.def_dirs()})")
+        print(
+            f"group files (*.def): {len(groups.load_groups().files)}  (searched: {paths.def_dirs()})"
+        )
     elif a.cmd == "menu":
         _menu()
     else:

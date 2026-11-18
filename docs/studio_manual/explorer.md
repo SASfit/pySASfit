@@ -81,6 +81,28 @@ p = 3 gives the volume weight.
 
 The exponent p set here is also the one used when you save a result (see {doc}`results`).
 
+## Python ports of SASfit plugins
+
+The form-factor menu has a second tree, **py plugin ports**, right after *by plugins*. It is a copy of the group
+tree of the SASfit plugins, filled with the functions that have a Python port (see {doc}`python_ports`): the same
+groups and labels, marked "(py)". An entry of *by plugins* calls the compiled SASfit plugin, the corresponding
+entry of *py plugin ports* the Python port, with the same parameters. The ports are named `ff_py_<name>` (e.g.
+`ff_py_sheared_cylinders__maier_saupe_` for `ff_sheared_cylinders__maier_saupe_`); projects and *Copy Python code*
+store these names, so C and Python versions can be used side by side, even in one model.
+
+## 2D map
+
+The *2D map* panel (a tab next to *I(q)*) shows I(q_y, q_z) of the current model on the detector. ψ, the direction
+of q, is measured from q_y (horizontal) towards q_z. For every function with a ψ parameter (the anisotropic
+SASfit plugins and their Python ports, e.g. sheared cylinders/spheroids, polymers under shear flow, deformed
+polymers and networks) the model is evaluated at *ψ steps* directions in [0°, 180°) and interpolated onto
+*pixels* × *pixels* points in [-q max, q max]² (q max empty: that of the I(q) panel). Isotropic models need one
+evaluation. *log I* and the colour map change only the display. With *auto* the map follows every change of the
+model while the panel is visible; a map that takes more than 3 s switches *auto* off (press *Update*).
+
+From a script: `pysasfit.studio.map2d.detector_map(model, qmax)` returns `(qy, qz, I)`, `map2d.plot(qy, qz, I)`
+draws it.
+
 ## Settings
 
 - *Settings → Integration…*: how the size-distribution integral is computed (SASfit's integrators or scipy

@@ -280,6 +280,8 @@ class Launcher(QtWidgets.QMainWindow):
             self.tabs.replace_page(page, win)
             page.deleteLater()
             self._sync_sidebar()
+            # a tool that changes its icon (pyATsas: the ATSAS icon once the installation is found)
+            win.windowIconChanged.connect(lambda icon, t=title: self._tool_icon_changed(t, icon))
             if self._restore and title not in self._skip:
                 f = getattr(win, "restore_session", None)
                 if callable(f):
@@ -325,6 +327,20 @@ class Launcher(QtWidgets.QMainWindow):
                 return t
         t = self.tabs.title_of(page) if page is not None else ""
         return t[:-len(" (error)")] if t.endswith(" (error)") else t
+
+    def _tool_icon_changed(self, title, icon):
+        if icon is None or icon.isNull():
+            return
+        b = self.sidebar.buttons.get(title)
+        if b is not None:
+            b.setIcon(icon)
+        w = self.windows.get(title)
+        i = self.tabs.indexOf(w) if w is not None else -1
+        if i >= 0:
+            self.tabs.setTabIcon(i, icon)
+        for a in self.tool_actions:
+            if a.text() == title:
+                a.setIcon(icon)
 
     def _sync_sidebar(self):
         self.sidebar.set_current(self._title(self.tabs.currentWidget()) if self.tabs.count() else None)
@@ -617,6 +633,10 @@ class Launcher(QtWidgets.QMainWindow):
 
 def main(argv=None):
     argv = sys.argv if argv is None else argv
+    if QtWidgets.QApplication.instance() is None:
+        # OpenGL panels (pyqtgraph.opengl) that are detached into their own window get a new GL context:
+        # with shared contexts their shaders and buffers stay valid
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv)
     app.setWindowIcon(tool_icon("pySASfit"))
     from ..core.tabstyle import apply_tab_style

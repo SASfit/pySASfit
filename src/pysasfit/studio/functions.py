@@ -104,12 +104,20 @@ def _load_python_plugin(name, short):
 class SASfitFunction:
     """One SASfit model function (form factor, structure factor, size distribution or peak)."""
 
-    def __init__(self, name, library=None, errors="raise"):
-        if name not in _PYTHON_FUNCTIONS and name.startswith(("ff_sv_", "sq_sv_", "sd_sv_")):  # SasView (sasmodels)
-            from . import sasmodels_bridge
+    def __init__(self, name, library=None, errors="raise", language=None):
+        """``language``: None (Python plugins and enabled ports first, then C), "c" (the compiled plugin only, e.g.
+        as reference for a Python port) or "python"."""
+        if language not in (None, "c", "python"):
+            raise ValueError(f"language must be None, 'c' or 'python', not {language!r}")
+        if name not in _PYTHON_FUNCTIONS and name.startswith(("ff_py_", "sq_py_", "sd_py_")):
+            from . import ports  # Python ports of the SASfit plugins
+
+            ports.register_aliases()
+        if language != "c" and name not in _PYTHON_FUNCTIONS and name.startswith(("ff_sv_", "sq_sv_", "sd_sv_")):
+            from . import sasmodels_bridge  # SasView (sasmodels)
 
             sasmodels_bridge.register_all()
-        if name in _PYTHON_FUNCTIONS:
+        if language != "c" and name in _PYTHON_FUNCTIONS:
             impl = _PYTHON_FUNCTIONS[name]
         else:
             try:
@@ -117,9 +125,11 @@ class SASfitFunction:
             except KeyError:
                 cinfo = None
             short = cinfo.short_name if cinfo else name.split("_", 1)[-1]
-            impl = _load_python_plugin(cinfo.name if cinfo else name, short)
+            impl = None if language == "c" else _load_python_plugin(cinfo.name if cinfo else name, short)
             if impl is None and cinfo is None:
                 raise KeyError(f"no SASfit function '{name}' (try pysasfit.studio.search('{name}'))")
+            if impl is None and language == "python":
+                raise KeyError(f"no Python implementation of '{name}'")
         self.errors = errors
         if impl is not None:
             self.info, self._py_i, self._py_f, self._py_v = impl

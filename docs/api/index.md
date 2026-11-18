@@ -17,4 +17,5 @@ pySCAtter <../scatter/api>
 pySEBpolymers <../seb/api>
 pyATsas <../atsas/api>
 pyDENsity <../density/api>
+pyDENSSmulti <../densitymulti/api>
 ```

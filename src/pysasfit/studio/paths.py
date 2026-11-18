@@ -17,6 +17,12 @@ The plugin libraries are looked for in ``<lib>/plugins`` and in ``<lib>``.
 A folder that does not contain libsasfit is skipped, so a wrong entry falls
 through to the next one. Nothing depends on the current working directory.
 
+Plugin libraries can also come from a SASfit source/build tree (:func:`set_plugin_build_dir`, saved
+setting ``plugin_build_dir``, environment variable ``PYSASFIT_PLUGIN_BUILD_DIR``), e.g.
+``SASfitGit/src/plugins``: every ``<dir>/<plugin>/lib/libsasfit_<plugin>`` found there is used instead of
+the library of the same name in ``<lib>/plugins``, and ``<dir>/<plugin>/include/sasfit_<plugin>.h`` instead
+of the bundled header. libsasfit itself still comes from the library folder above.
+
 The menu structure of the functions comes from Doxygen group files ``*.def``, found by
 :func:`def_dirs` (``<lib>/plugins/def`` and the like); see :mod:`pysasfit.studio.groups`.
 """
@@ -45,6 +51,10 @@ __all__ = [
     "get_setting",
     "set_setting",
     "plugin_lib_dirs",
+    "plugin_build_dir",
+    "set_plugin_build_dir",
+    "plugin_build_lib_dirs",
+    "plugin_build_include_dirs",
     "header_dirs",
     "def_dirs",
     "python_plugin_dirs",
@@ -54,12 +64,15 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 BUNDLED_HEADERS = os.path.join(PACKAGE_DIR, "headers")
 TEMPLATES = os.path.join(PACKAGE_DIR, "templates")
 DEFAULT_LIB = os.path.join(PACKAGE_DIR, "sasfit_lib")
-SETTINGS_FILE = os.path.join(os.path.expanduser("~"), ".pysasfit", "studio_settings.json")
+SETTINGS_FILE = os.path.join(
+    os.path.expanduser("~"), ".pysasfit", "studio_settings.json"
+)
 
 _system = platform.system()
 LIB_EXT = "dll" if _system == "Windows" else ("dylib" if _system == "Darwin" else "so")
 
 _override = None
+_build_override = None
 _UNSET = object()
 
 
@@ -96,7 +109,17 @@ def set_setting(key, value):
 
 def _clean(path):
     path = (path or "").strip().strip('"').strip("'").strip()
-    return os.path.abspath(os.path.expanduser(path)) if path else None
+    if not path:
+        return None
+    if (
+        _system == "Windows"
+        and len(path) >= 3
+        and path[0] == "/"
+        and path[1].isalpha()
+        and path[2] == "/"
+    ):
+        path = f"{path[1].upper()}:{path[2:]}"  # MSYS/Git-Bash form /c/Users/... -> C:/Users/...
+    return os.path.abspath(os.path.expanduser(path))
 
 
 def saved_lib_dir():
@@ -130,13 +153,72 @@ def set_lib_dir(path, save=False):
         _write_settings(settings)
 
 
+# ------------------------------------------------------------------ plugin build tree
+def set_plugin_build_dir(path, save=False):
+    """Take the plugin libraries (and headers) from a SASfit plugin source tree, e.g. ``SASfitGit/src/plugins``.
+
+    Each ``<path>/<plugin>/lib/libsasfit_<plugin>`` replaces the library of the same name in the SASfit
+    installation. MSYS paths (``/c/Users/...``) are accepted. ``save=True`` stores the choice in
+    :data:`SETTINGS_FILE`; ``set_plugin_build_dir(None, save=True)`` forgets it. Call before the library
+    is loaded (or :func:`pysasfit.studio.library.reset_library` afterwards).
+    """
+    global _build_override
+    _build_override = _clean(path)
+    if save:
+        set_setting("plugin_build_dir", _build_override)
+
+
+def plugin_build_dir():
+    """The plugin source/build tree in use (session choice, saved setting, PYSASFIT_PLUGIN_BUILD_DIR), or None."""
+    for cand in (
+        _build_override,
+        get_setting("plugin_build_dir"),
+        os.environ.get("PYSASFIT_PLUGIN_BUILD_DIR"),
+    ):
+        d = _clean(cand) if isinstance(cand, str) else None
+        if d and os.path.isdir(d):
+            return d
+    return None
+
+
+def _build_subdirs(sub, accept):
+    root = plugin_build_dir()
+    if root is None:
+        return []
+    out = []
+    for name in sorted(os.listdir(root)):
+        d = os.path.join(root, name, sub)
+        try:
+            if os.path.isdir(d) and any(accept(f) for f in os.listdir(d)):
+                out.append(d)
+        except OSError:
+            continue
+    return out
+
+
+def plugin_build_lib_dirs():
+    """``<tree>/<plugin>/lib`` folders holding a ``libsasfit_*`` plugin library."""
+    return _build_subdirs(
+        "lib", lambda f: f.startswith("libsasfit_") and f.endswith("." + LIB_EXT)
+    )
+
+
+def plugin_build_include_dirs():
+    """``<tree>/<plugin>/include`` folders holding a ``sasfit_*.h`` header."""
+    return _build_subdirs(
+        "include", lambda f: f.startswith("sasfit_") and f.endswith(".h")
+    )
+
+
 # ------------------------------------------------------------------ library folder
 def find_lib_dir(path):
     """The folder at/below ``path`` that holds ``libsasfit``, or None."""
     path = _clean(path)
     if not path:
         return None
-    candidates = [path] + [os.path.join(path, sub) for sub in ("lib", "bin", "sasfit_lib")]
+    candidates = [path] + [
+        os.path.join(path, sub) for sub in ("lib", "bin", "sasfit_lib")
+    ]
     if os.path.basename(path).lower() == "plugins":
         candidates.insert(1, os.path.dirname(path))
     for d in candidates:
@@ -150,7 +232,11 @@ def count_plugin_libs(lib):
     n = 0
     for d in (os.path.join(lib, "plugins"), lib):
         if os.path.isdir(d):
-            n += sum(1 for f in os.listdir(d) if f.startswith("libsasfit_") and f.endswith("." + LIB_EXT))
+            n += sum(
+                1
+                for f in os.listdir(d)
+                if f.startswith("libsasfit_") and f.endswith("." + LIB_EXT)
+            )
     return n
 
 
@@ -163,9 +249,21 @@ def lib_dir_sources(chosen=_UNSET):
     first = chosen_lib_dir() if chosen is _UNSET else (chosen or None)
     rows = [
         ("gui", "folder chosen in the GUI", first),
-        ("PYSASFIT_SASFIT_LIB", "PYSASFIT_SASFIT_LIB", os.environ.get("PYSASFIT_SASFIT_LIB") or None),
-        ("SASFIT_LOCATION", "SASFIT_LOCATION", os.environ.get("SASFIT_LOCATION") or None),
-        ("bundled", "bundled sasfit_lib", DEFAULT_LIB if os.path.isdir(DEFAULT_LIB) else None),
+        (
+            "PYSASFIT_SASFIT_LIB",
+            "PYSASFIT_SASFIT_LIB",
+            os.environ.get("PYSASFIT_SASFIT_LIB") or None,
+        ),
+        (
+            "SASFIT_LOCATION",
+            "SASFIT_LOCATION",
+            os.environ.get("SASFIT_LOCATION") or None,
+        ),
+        (
+            "bundled",
+            "bundled sasfit_lib",
+            DEFAULT_LIB if os.path.isdir(DEFAULT_LIB) else None,
+        ),
     ]
     return [(key, label, raw, find_lib_dir(raw)) for key, label, raw in rows]
 
@@ -211,6 +309,9 @@ def header_dirs():
     for d in plugin_lib_dirs():
         if any(f.startswith("sasfit_") and f.endswith(".h") for f in os.listdir(d)):
             dirs.append(d)
+    dirs += (
+        plugin_build_include_dirs()
+    )  # the plugin source tree overrides the installed headers
     return dirs
 
 
@@ -223,7 +324,9 @@ def def_dirs():
     Existing folders only.
     """
     base = [BUNDLED_HEADERS] + plugin_lib_dirs()
-    base += [d for d in os.environ.get("PYSASFIT_STUDIO_PLUGINS", "").split(os.pathsep) if d]
+    base += [
+        d for d in os.environ.get("PYSASFIT_STUDIO_PLUGINS", "").split(os.pathsep) if d
+    ]
     base.append(os.path.join(os.path.expanduser("~"), ".pysasfit", "studio_plugins"))
     out = []
     for d in base:
@@ -235,7 +338,9 @@ def def_dirs():
 
 def python_plugin_dirs():
     """Directories searched for Python plugins ``sasstudio_<name>.py``."""
-    dirs = [d for d in os.environ.get("PYSASFIT_STUDIO_PLUGINS", "").split(os.pathsep) if d]
+    dirs = [
+        d for d in os.environ.get("PYSASFIT_STUDIO_PLUGINS", "").split(os.pathsep) if d
+    ]
     dirs.append(os.path.join(os.path.expanduser("~"), ".pysasfit", "studio_plugins"))
     dirs += plugin_lib_dirs()
     return [d for d in dirs if os.path.isdir(d)]

@@ -57,7 +57,7 @@ class LevelCut:
 
     @property
     def variance(self):
-        """phi (1 - phi): F at g = 1."""
+        """F at g = 1, equal to phi (1 - phi)."""
         return self.phi * (1 - self.phi)
 
     @property

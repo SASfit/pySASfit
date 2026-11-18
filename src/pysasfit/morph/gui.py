@@ -1320,8 +1320,10 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 lm = np.interp(dl, d["q"], lam) if lam.size == d["q"].size else lam
                 return np.exp(lm ** 2 * t * x)
 
-            y, e = (d["I"], d["sigma"]) if mode == "G" else (to_p(d["I"], d["q"]), to_p(d["I"], d["q"]) * lam ** 2 * t
-                                                             * (d["sigma"] if d["sigma"] is not None else 0))
+            from .multiphase import sesans_sign
+            Gd = -np.asarray(d["I"], float) if sesans_sign(d["q"], d["I"]) > 0 else np.asarray(d["I"], float)
+            y, e = (Gd, d["sigma"]) if mode == "G" else (to_p(Gd, d["q"]), to_p(Gd, d["q"]) * lam ** 2 * t
+                                                         * (d["sigma"] if d["sigma"] is not None else 0))
             ax.errorbar(d["q"], y, e, fmt="o", ms=3, mfc="none", color=col, lw=0.6, alpha=0.7, label=d["name"])
             c = res.curves[m] if res is not None and m < len(res.curves) else None
             if c is not None and c.kind == "sesans":
@@ -1518,6 +1520,10 @@ def _mpl_colour(c):
 
 def main(argv=None):
     argv = sys.argv if argv is None else argv
+    if QtWidgets.QApplication.instance() is None:
+        # OpenGL panels (pyqtgraph.opengl) that are detached into their own window get a new GL context:
+        # with shared contexts their shaders and buffers stay valid
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(argv)
     from ..core.tabstyle import apply_tab_style
     apply_tab_style(app)

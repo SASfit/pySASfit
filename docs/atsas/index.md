@@ -1,5 +1,17 @@
 # pyATsas: the ATSAS programs in pySASfit
 
+```{image} ../pySASfit-logo-bundle/logos/pyATsas/svg/pyATsas-light.svg
+:alt: pyATsas
+:height: 70px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pyATsas/svg/pyATsas-dark.svg
+:alt: pyATsas
+:height: 70px
+:class: only-dark
+```
+
 pyATsas runs the programs of **ATSAS** (EMBL Hamburg / BIOSAXS GmbH) on the curves of pySASfit and shows their
 results next to the other tools: Guinier analysis (AUTORG), distance distributions (DATGNOM, GNOM), model curves of
 atomic structures (CRYSOL, CRYSON) and ab-initio bead models (DAMMIF). It also starts the interactive ATSAS programs
@@ -7,9 +19,10 @@ atomic structures (CRYSOL, CRYSON) and ab-initio bead models (DAMMIF). It also s
 
 ATSAS is **not** part of pySASfit. It has to be installed separately, with its own licence
 (<https://www.embl-hamburg.de/biosaxs/software.html>). pyATsas only calls its programs and reads the files they
-write. The icon of the pyATsas tab is the original ATSAS icon, read at run time from that installation
-(`share/icons/hicolor/<n>×<n>/apps/atsas.png`); pySASfit does not ship a copy. Without ATSAS the tab shows a plain
-placeholder, and the run buttons are disabled.
+write. pyATsas has its own logo and icon (a p(r) curve with a small bead model, in the logo style of pySASfit). The
+buttons of the ATSAS programs on its panel show the original icons of that installation
+(`share/icons/hicolor/<n>×<n>/apps/*.png`); pySASfit does not ship copies of them. Without ATSAS the run buttons
+are disabled.
 
 * launcher tab **pyATsas**, or stand-alone: `pysasfit-atsas [data files]`
 * scripts: `from pysasfit import atsas` (no Qt needed)

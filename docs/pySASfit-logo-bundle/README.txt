@@ -11,6 +11,10 @@ Tools (working names as agreed in the design chat)
   pySCAtter     scattering patterns of particles and lattices (glyph: diffraction spots; tile sienna #A0522D)
   pySEBpolymers structures of linked sub-units (glyph: core with grafted chains; tile olive #6B8E23)
   pySLDcalculator scattering length densities (glyph: calculator with the periodic table as keypad; tile purple #8E24AA)
+  pyDENsity     electron-density maps with DENSS (glyph: nested density contours; tile blue #2B4C9B)
+  pyDENSSmulti  3D maps from several contrasts (glyph: two overlapping lobes; tile teal #1F7A8C)
+  pySASscout    model search (glyph: scattering curve with a magnifier; tile amber #9A6A00)
+  pyATsas       the ATSAS programs (glyph: p(r) curve with a small bead model; tile teal #0B6666)
   pySASmorph    bicontinuous structures from clipped random waves (two phases + interface layer; multi-phase planned)
   pyTOOLbox     small helpful tools
 
@@ -74,9 +78,18 @@ Menu and toolbar icons (menu-icons/)
     pySCAtter     sienna #A0522D hexagonal diffraction spots around a gold centre
     pySEBpolymers olive #6B8E23  gold core with six grafted wavy chains
     pySLDcalculator purple #8E24AA calculator display over keys in the shape of the periodic table, one element in gold
+    pyDENsity     blue #2B4C9B   nested contour lines of a two-lobed electron density, innermost filled gold
+    pyDENSSmulti  teal #1F7A8C   two overlapping lobes (white, gold) with an inner contour: two components
+    pySASscout    amber #9A6A00  scattering curve (plateau, fall) with a magnifier on its knee
+    pyATsas       teal #0B6666   p(r) curve (GNOM) with the area below lightly filled, gold bead cluster (DAMMIF)
     pySASmorph    marine #0E2740 two bicontinuous phases (marine, amber) + white interface layer
     pyTOOLbox     orange #D9730D open box with small tools
   Files per tool: <tool>-menu.svg, png/ (16, 20, 24, 32, 40, 48, 64, 128, 256 px), <tool>-menu.ico,
   and glyph/ with transparent one-colour glyphs (black and white, SVG and 16/24/32 px PNG) for
   menu bars and toolbars that recolour icons themselves.
   The larger icons/ and logos/ keep the navy family tile; the menu icons are the small-size companion.
+
+Generated files
+  pyDENsity, pyDENSSmulti, pySASscout and pyATsas were made with tools/make_tool_logos.py (same layout, wordmark
+  outlined from Space Grotesk exactly as the other logos: size 120, letter spacing -0.023 em, core bold).
+  The script needs the Space Grotesk font files (--font-dir), cairosvg and Pillow.

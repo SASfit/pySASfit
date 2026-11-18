@@ -652,7 +652,6 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             A._ATSAS_BIN = None
             from .. import resources
             resources._EXTERNAL_CACHE.clear()
-            self.setWindowIcon(tool_icon("pyATsas"))
         d = self.atsas_dir()
         try:
             b = A.find_atsas(d, refresh=force)

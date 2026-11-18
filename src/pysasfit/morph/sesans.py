@@ -14,8 +14,9 @@ The real-space projection is the Abel transform
 
 :func:`projection_matrix` evaluates it *exactly* for C piecewise linear on an r grid (the integrals
 of (a + b r) r / sqrt(r^2 - delta^2) are elementary, the square-root singularity is handled
-analytically). :func:`invert_sesans` solves G = A C for C on a geometric r grid with a second-
-difference (Tikhonov) penalty, the regularisation chosen by generalised cross-validation; the
+analytically). :func:`invert_sesans` solves G = A C for C on an r grid with a second-
+difference (Tikhonov) penalty on nodes that follow the spacing of the data, the regularisation chosen by
+the discrepancy principle (generalised cross-validation without errors); the
 normalised gamma(r) = C(r)/C(0) of a SESANS curve then enters the joint fit of g(r) of
 :mod:`pysasfit.morph.multiphase` like the gamma of a scattering curve, on the r range the spin-echo
 lengths cover. The forward model of a SESANS curve is the projection of the level-cut covariance
@@ -113,11 +114,26 @@ class SESANSInversion:
         return bool(np.ptp(tail) < 0.1 * np.ptp(self.G) + 2 * np.median(self.dG[-n:]))
 
 
+def _nodes(d, n_nodes, r_max_factor):
+    """r = 0 and n_nodes - 1 nodes that follow the density of the spin-echo lengths: geometric for log-spaced
+    data, about uniform for linearly spaced data (instruments that scan delta linearly). Nodes much denser
+    than the data at small r leave C there undetermined (oscillating, even C(0) < 0) under a penalty on the
+    node index."""
+    m = n_nodes - 1
+    lo, hi = d[0] / 3.0, r_max_factor * d[-1]
+    # spin-echo lengths as a function of their rank, extended to lo and hi
+    t = np.concatenate([[lo], d, [hi]])
+    t = np.maximum.accumulate(t)
+    u = np.linspace(0.0, 1.0, t.size)
+    x = np.unique(np.interp(np.linspace(0.0, 1.0, m), u, t))
+    return np.concatenate([[0.0], x])
+
+
 def invert_sesans(delta, G, dG=None, n_nodes=60, alphas=None, r_max_factor=1.2):
     """C(r) from G(delta) - G(0) by Tikhonov-regularised Abel inversion.
 
-    Nodes: r = 0 and a geometric grid from delta_min/3 to ``r_max_factor`` * delta_max (C = 0 beyond).
-    Penalty: second differences of C over the nodes (smooth in ln r); alpha over ``alphas`` (default 10^-8 ...
+    Nodes: r = 0 and nodes from delta_min/3 to ``r_max_factor`` * delta_max that follow the spacing of the data
+    (:func:`_nodes`; C = 0 beyond). Penalty: second differences of C over the nodes; alpha over ``alphas`` (default 10^-8 ...
     10^4 relative to the scale of A^T W A) by the discrepancy principle (largest alpha with chi2 <= 1) when
     errors are given, else by generalised cross-validation.
     """
@@ -133,7 +149,7 @@ def invert_sesans(delta, G, dG=None, n_nodes=60, alphas=None, r_max_factor=1.2):
     d, G, s = d[m][o], G[m][o], s[m][o]
     if d.size < 5:
         raise ValueError("at least 5 SESANS points are needed")
-    r = np.concatenate([[0.0], np.geomspace(d[0] / 3.0, r_max_factor * d[-1], n_nodes - 1)])
+    r = _nodes(d, n_nodes, r_max_factor)
     A = projection_matrix(d, r)
     W = 1.0 / s
     Aw = A * W[:, None]

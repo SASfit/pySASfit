@@ -1,5 +1,17 @@
 # pyDENSSmulti: 3D maps from several contrasts
 
+```{image} ../pySASfit-logo-bundle/logos/pyDENSSmulti/svg/pyDENSSmulti-light.svg
+:alt: pyDENSSmulti
+:height: 70px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pyDENSSmulti/svg/pyDENSSmulti-dark.svg
+:alt: pyDENSSmulti
+:height: 70px
+:class: only-dark
+```
+
 pyDENSSmulti reconstructs a low-resolution 3D map of a particle from **several SAS curves of the same particle in
 different contrasts**: a SANS contrast-variation series (H2O/D2O mixtures, deuterated components) and/or SAXS. One
 curve leaves the internal structure of a DENSS map largely undetermined (Konarev & Svergun, *Nature Methods* **18**,

@@ -246,3 +246,18 @@ def test_selected_tool_background_is_a_preference_with_good_contrast():
         row.value()
     d.close()
     w.close()
+
+
+def test_tool_icon_change_reaches_the_side_bar():
+    """pyATsas shows the ATSAS icon once the installation is found: the side bar follows the tool's icon."""
+    from PySide6 import QtGui
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    w = Launcher(tools=[("pyATsas", "pysasfit.atsas.gui", "MainWindow")])
+    win = w.tool("pyATsas")
+    pm = QtGui.QPixmap(32, 32)
+    pm.fill(QtGui.QColor("#123456"))
+    win.setWindowIcon(QtGui.QIcon(pm))
+    app.processEvents()
+    img = w.sidebar.buttons["pyATsas"].icon().pixmap(32, 32).toImage()
+    assert img.pixelColor(5, 5).name() == "#123456"
+    w.close()

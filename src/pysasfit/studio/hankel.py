@@ -3,14 +3,14 @@ r"""Hankel transforms for SESANS and multiple small-angle scattering (MSAS) in p
 This is the Python counterpart of the ``transform`` menu of SASfit (``sasfit_old/sasfit.c``:
 ``Gztransform``, ``imMSAStransform``, ``integral_IQ_incl_Gztransform``):
 
-=================  =========================================================================================
-SASfit             here (:func:`make_transform`)
-=================  =========================================================================================
-``1``              ``None`` -- the scattering intensity I(Q)
-``H{...}/2pi``     ``"sesans"`` -- G(δ) - G(0) = 1/(2π) ∫ I(Q) [J0(Qδ) - 1] Q dQ
-``Exp(H{...}/2pi)`` ``"sesans_p"`` -- P/P0 = exp(λ² t [G(δ) - G(0)])  (λ = t = 1 gives SASfit's exp(G(δ) - G(0)))
-``MSAS``           ``"msas"`` -- intensity with multiple small-angle scattering
-=================  =========================================================================================
+===================  =========================================================================================
+SASfit               here (:func:`make_transform`)
+===================  =========================================================================================
+``1``                ``None`` -- the scattering intensity I(Q)
+``H{...}/2pi``       ``"sesans"`` -- G(δ) - G(0) = 1/(2π) ∫ I(Q) [J0(Qδ) - 1] Q dQ
+``Exp(H{...}/2pi)``  ``"sesans_p"`` -- P/P0 = exp(λ² t [G(δ) - G(0)])  (λ = t = 1 gives SASfit's exp(G(δ) - G(0)))
+``MSAS``             ``"msas"`` -- intensity with multiple small-angle scattering
+===================  =========================================================================================
 
 Units. SASfit functions carry none, so the user keeps them consistent (as in SASfit): with I(Q) in cm⁻¹ the sample
 thickness ``thickness`` is in cm and the wavelength ``wavelength`` is in the reciprocal unit of Q (nm for Q in nm⁻¹,

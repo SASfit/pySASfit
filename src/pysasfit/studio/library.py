@@ -31,10 +31,28 @@ import threading
 import numpy as np
 
 from . import paths
-from ._ctypes import DO_INIT_ARGS, FUNC_ONE, HANKEL_FUNC, P_PARAM, SASFIT_PLUGIN_DEP_ERR, SEARCH_T, SasfitParam, plugin_functions
+from ._ctypes import (
+    DO_INIT_ARGS,
+    FUNC_ONE,
+    HANKEL_FUNC,
+    P_PARAM,
+    SASFIT_PLUGIN_DEP_ERR,
+    SEARCH_T,
+    SasfitParam,
+    plugin_functions,
+)
 
-__all__ = ["SASfitLibrary", "SASfitLibraryNotFound", "get_library", "reset_library", "configure_precision", "reset_precision",
-           "user_precision", "DEFAULT_PRECISION", "QUADRATURE"]
+__all__ = [
+    "SASfitLibrary",
+    "SASfitLibraryNotFound",
+    "get_library",
+    "reset_library",
+    "configure_precision",
+    "reset_precision",
+    "user_precision",
+    "DEFAULT_PRECISION",
+    "QUADRATURE",
+]
 
 
 class SASfitLibraryNotFound(RuntimeError):
@@ -59,7 +77,14 @@ HANKEL = {
     "HANKEL_KEY_101": 9, "HANKEL_KEY_201": 10, "HANKEL_ANDERSON_801": 11, "HANKEL_QWE": 12, "HANKEL_CHAVE": 13,
     "HANKEL_SINC_SEO": 14, "HANKEL_BESTLIME": 15, "HANKEL_FFTLOG": 16, "HANKEL_QDHT": 17,
 }  # fmt: skip
-ROOTALG = {"BISECTION": 0, "FALSE_POSITION": 1, "BRENT": 2, "NEWTON": 3, "SECANT": 4, "STEFFENSON": 5}
+ROOTALG = {
+    "BISECTION": 0,
+    "FALSE_POSITION": 1,
+    "BRENT": 2,
+    "NEWTON": 3,
+    "SECANT": 4,
+    "STEFFENSON": 5,
+}
 
 # name: (setter, getter, ctype, SASfit default) -- defaults from SASstudio dev/sasfit_function_dict.ipynb
 _EPS = {
@@ -94,7 +119,9 @@ _USER_PRECISION = {}  # chosen by the user in this session (script or GUI); appl
 def user_precision():
     """The integration settings chosen by the user: the remembered ones (``paths``), updated by this session's."""
     saved = paths.get_setting("precision")
-    out = {k: v for k, v in saved.items() if k in _EPS} if isinstance(saved, dict) else {}
+    out = (
+        {k: v for k, v in saved.items() if k in _EPS} if isinstance(saved, dict) else {}
+    )
     out.update(_USER_PRECISION)
     return out
 
@@ -108,10 +135,17 @@ def configure_precision(save=False, **values):
     """
     unknown = [k for k in values if k not in _EPS]
     if unknown:
-        raise KeyError(f"unknown setting {', '.join(unknown)}; known: {', '.join(_EPS)}")
+        raise KeyError(
+            f"unknown setting {', '.join(unknown)}; known: {', '.join(_EPS)}"
+        )
     names = {**QUADRATURE, **SPHAVG, **HANKEL, **ROOTALG}
     clean = {}
-    for k, v in values.items():  # check everything first: a bad value stored here would break every later load
+    for (
+        k,
+        v,
+    ) in (
+        values.items()
+    ):  # check everything first: a bad value stored here would break every later load
         if isinstance(v, str):
             if v not in names:
                 raise KeyError(f"unknown value '{v}' for setting '{k}'")
@@ -145,7 +179,11 @@ class SASfitLibrary:
     """libsasfit plus the initialised plugin functions (use :func:`get_library`)."""
 
     def __init__(self, lib_dir=None, precision=None):
-        lib_dir = (paths.find_lib_dir(lib_dir) or os.path.abspath(lib_dir)) if lib_dir else paths.lib_dir()
+        lib_dir = (
+            (paths.find_lib_dir(lib_dir) or os.path.abspath(lib_dir))
+            if lib_dir
+            else paths.lib_dir()
+        )
         core = os.path.join(lib_dir, f"libsasfit.{paths.LIB_EXT}") if lib_dir else None
         if not core or not os.path.isfile(core):
             raise SASfitLibraryNotFound(
@@ -158,9 +196,15 @@ class SASfitLibrary:
                 "Places searched:\n" + paths.describe_lib_dir_sources()
             )
         self.lib_dir = lib_dir
-        self.plugin_dirs = [d for d in (os.path.join(lib_dir, "plugins"), lib_dir) if os.path.isdir(d)]
+        # plugin source/build tree first (paths.set_plugin_build_dir), then the installation
+        self.build_dirs = paths.plugin_build_lib_dirs()
+        self.plugin_dirs = self.build_dirs + [
+            d for d in (os.path.join(lib_dir, "plugins"), lib_dir) if os.path.isdir(d)
+        ]
         self._dll_dir_handles = []
-        if sys.platform == "win32":  # dependencies (gsl, fftw, mingw runtime) next to libsasfit
+        if (
+            sys.platform == "win32"
+        ):  # dependencies (gsl, fftw, mingw runtime) next to libsasfit
             for d in [lib_dir] + self.plugin_dirs:
                 self._dll_dir_handles.append(os.add_dll_directory(d))
         self.core = ctypes.CDLL(core)
@@ -200,7 +244,15 @@ class SASfitLibrary:
         re-raised here; a SASfit error is raised as RuntimeError.
         """
         fn = self.core.sasfit_integrate_ctm
-        fn.argtypes = [ctypes.c_double, ctypes.c_double, FUNC_ONE, P_PARAM, ctypes.c_int, ctypes.c_double, ctypes.c_double]
+        fn.argtypes = [
+            ctypes.c_double,
+            ctypes.c_double,
+            FUNC_ONE,
+            P_PARAM,
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+        ]
         fn.restype = ctypes.c_double
         if epsrel is None:
             epsrel = self.get_precision().get("aniso", DEFAULT_PRECISION["aniso"])
@@ -217,7 +269,15 @@ class SASfitLibrary:
 
         callback = FUNC_ONE(kernel)  # keep a reference during the call
         param = SasfitParam()
-        value = fn(float(a), float(b), callback, ctypes.pointer(param), int(limit), float(epsabs), float(epsrel))
+        value = fn(
+            float(a),
+            float(b),
+            callback,
+            ctypes.pointer(param),
+            int(limit),
+            float(epsabs),
+            float(epsrel),
+        )
         if errors:
             raise errors[0]
         if param.errStatus:
@@ -253,7 +313,12 @@ class SASfitLibrary:
         out = np.empty(x.shape)
         with self._lock:
             for i, xi in enumerate(x):
-                out[i] = fn(float(nu), callback, float(xi), ctypes.cast(ctypes.pointer(param), ctypes.c_void_p))
+                out[i] = fn(
+                    float(nu),
+                    callback,
+                    float(xi),
+                    ctypes.cast(ctypes.pointer(param), ctypes.c_void_p),
+                )
                 if errors:
                     raise errors[0]
                 if param.errStatus:
@@ -283,13 +348,17 @@ class SASfitLibrary:
         return 1
 
     def plugin_files(self):
-        out = []
+        """Plugin libraries; a library of the build tree hides the one of the same name in the installation."""
+        out, seen = [], set()
         for d in self.plugin_dirs:
-            out += [
-                os.path.join(d, f)
-                for f in sorted(os.listdir(d))
-                if f.startswith("libsasfit_") and f.endswith("." + paths.LIB_EXT)
-            ]
+            for f in sorted(os.listdir(d)):
+                if (
+                    f.startswith("libsasfit_")
+                    and f.endswith("." + paths.LIB_EXT)
+                    and f.lower() not in seen
+                ):
+                    seen.add(f.lower())
+                    out.append(os.path.join(d, f))
         return out
 
     def find_plugin_file(self, collection):
@@ -306,6 +375,12 @@ class SASfitLibrary:
             if filename in self.loaded:
                 return True
             dll = ctypes.CDLL(filename)
+            if not (hasattr(dll, "get_ver") and hasattr(dll, "do_init")):
+                # e.g. libsasfit_bigger.dll next to the plugins: a libsasfit build, not a plugin
+                self.failed[filename] = "not a SASfit plugin (no get_ver/do_init)"
+                raise RuntimeError(
+                    f"{filename} is not a SASfit plugin (no get_ver/do_init)"
+                )
             dll.get_ver.restype = ctypes.c_int
             dll.do_init.argtypes = DO_INIT_ARGS
             dll.do_init.restype = ctypes.c_int
@@ -315,7 +390,9 @@ class SASfitLibrary:
                 return False
             if res == 0 or not exp.value:
                 self.failed[filename] = f"do_init returned {res}"
-                raise RuntimeError(f"could not initialise {filename} (do_init returned {res})")
+                raise RuntimeError(
+                    f"could not initialise {filename} (do_init returned {res})"
+                )
             for rec in plugin_functions(exp.value):
                 name = ctypes.string_at(rec.name, rec.len).decode()
                 self.registry[name] = (rec.func, rec.func_f, rec.func_v)
@@ -371,7 +448,9 @@ class SASfitLibrary:
                     return self.core_pointers(name)
                 except KeyError:
                     pass
-                raise KeyError(f"SASfit function '{name}' not exported by any loaded plugin library")
+                raise KeyError(
+                    f"SASfit function '{name}' not exported by any loaded plugin library"
+                )
             return self.registry[name]
 
 

@@ -504,6 +504,37 @@ def _correlation_range(inv, floor=2e-3, nsig=2.0):
     return float(inv.r[big[-1] + 1]) if big.size and big[-1] + 1 < inv.r.size else float(inv.r[-1])
 
 
+def sesans_sign(delta, G):
+    """+1 if a SESANS curve is given with the opposite sign convention (G(0) - G(delta) or -ln P, positive),
+    -1 for the usual G(delta) - G(0) <= 0: the sign of the median of the larger spin-echo half."""
+    d = np.asarray(delta, float)
+    G = np.asarray(G, float)
+    m = np.isfinite(d) & np.isfinite(G)
+    if not np.any(m):
+        return -1
+    o = np.argsort(d[m])
+    tail = G[m][o][o.size // 2:]
+    return 1 if np.median(tail) > 0 else -1
+
+
+def _suggest_box_sesans(inversions, n):
+    """Box for SESANS-only data: it should hold twice the largest spin-echo length (the voxel SESANS curve is
+    computed up to L/2) and resolve the correlation length xi (C(xi) = C(0)/e) with about 4 voxels; if both
+    cannot be met with n voxels, the resolution wins."""
+    dmax = max(float(np.max(i.delta)) for i in inversions)
+    L = 2.2 * dmax
+    xis = []
+    for inv in inversions:
+        if inv.C0 > 0:
+            g1 = np.flatnonzero(inv.C < inv.C0 / np.e)
+            if g1.size and inv.r[g1[0]] > 0:
+                xis.append(float(inv.r[g1[0]]))
+    if xis:
+        L = max(L, 8 * max(xis))
+        L = min(L, n * min(xis) / 4)
+    return float(L)
+
+
 def correlations_multi(datasets, params=None):
     """Steps 1-4 for one or several curves (scattering and SESANS): extrapolation or Abel inversion,
     gamma_m(r), common g(r), f(k), model I_m(q) and G_m(delta)."""
@@ -523,7 +554,12 @@ def correlations_multi(datasets, params=None):
     for d, ses in zip(datasets, is_ses):
         if ses:
             curves.append(None)
-            inversions.append(invert_sesans(d.q, d.I, d.sigma))
+            G = np.asarray(d.I, float)
+            if sesans_sign(d.q, G) > 0:
+                G = -G
+                w.append(f"{d.name}: SESANS data are positive; G(delta) - G(0) <= 0 for any structure, so the "
+                         "sign was reversed (file convention G(0) - G(delta) or -ln P)")
+            inversions.append(invert_sesans(d.q, G, d.sigma))
         else:
             curves.append(extrapolate(d.q, d.I, d.sigma, qmin=p.qmin, qmax=p.qmax, low_q=p.low_q,
                                       low_q_points=p.low_q_points, porod_points=p.porod_points,
@@ -544,10 +580,10 @@ def correlations_multi(datasets, params=None):
         if sas_curves:
             p.box_size = _suggest_box(sas_curves, p.n)
         else:                      # SESANS only: a few correlation lengths of the inverted C(r)
-            inv = inversions[0]
-            g1 = np.flatnonzero(inv.C < inv.C0 / np.e)
-            p.box_size = float(8 * inv.r[g1[0]]) if g1.size else float(inv.r[-1])
+            p.box_size = _suggest_box_sesans([i for i in inversions if i is not None], p.n)
         w.append(f"box size not given: using L = {p.box_size:.4g}")
+    if not (p.box_size and np.isfinite(p.box_size) and p.box_size > 0):
+        raise ValueError(f"box size must be > 0 (got {p.box_size})")
     ses_delta = [d.q for d in datasets if d.is_sesans]
     if sas_curves:
         qmax = max(c.q_data[1] for c in sas_curves)

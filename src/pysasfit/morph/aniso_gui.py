@@ -506,6 +506,10 @@ class AnisoWindow(QtWidgets.QMainWindow):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if QtWidgets.QApplication.instance() is None:
+        # OpenGL panels (pyqtgraph.opengl) that are detached into their own window get a new GL context:
+        # with shared contexts their shaders and buffers stay valid
+        QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv[:1])
     w = AnisoWindow()
     w.show()

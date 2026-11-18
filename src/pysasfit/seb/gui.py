@@ -3,18 +3,18 @@
     pysasfit-seb [data file]
     python -m pysasfit.seb.gui [data file]
 
-Also the "pySEBpolymers" tab of the pySASfit launcher. Panels (View menu; each can be moved, stacked or detached):
+Also the "pySEBpolymers" tab of the pySASfit launcher. Panels (View menu; each can be moved, stacked or detached)::
 
-Designer     the structure drawn as a graph: sub-units, patterns (Array, Chain, Generations) and components,
-             linked at their reference points (pysasfit.seb.editor); a template (micelle, star, multiblock chain,
-             dendrimer, bottle brush, rod-coil, vesicle with loops, custom) and its options start a design
-Code         the Python code of the structure: written by the designer, or typed and built with "Build" (Ctrl+B)
-Parameters   excess scattering lengths beta_<tag> and sizes (Rg_, R_, L_, ...) of the structure, scale and flat
-             background: value, fit, lower and upper bound; q grid of the model; Fit
-I(q)         model, data and residuals (normalised residuals (I - model)/sigma)
-3D sketch    one random realisation of the structure (pysasfit.seb.sketch)
-Components   the sub-units, their tags and the junctions
-Log          builds and fits
+    Designer     the structure drawn as a graph: sub-units, patterns (Array, Chain, Generations) and components,
+                 linked at their reference points (pysasfit.seb.editor); a template (micelle, star, multiblock chain,
+                 dendrimer, bottle brush, rod-coil, vesicle with loops, custom) and its options start a design
+    Code         the Python code of the structure: written by the designer, or typed and built with "Build" (Ctrl+B)
+    Parameters   excess scattering lengths beta_<tag> and sizes (Rg_, R_, L_, ...) of the structure, scale and flat
+                 background: value, fit, lower and upper bound; q grid of the model; Fit
+    I(q)         model, data and residuals (normalised residuals (I - model)/sigma)
+    3D sketch    one random realisation of the structure (pysasfit.seb.sketch)
+    Components   the sub-units, their tags and the junctions
+    Log          builds and fits
 
 I(q) = scale * F(q) + background with the normalised form factor F (F(0) = 1), or scale * S(q) + background with
 the unnormalised S(q) = (sum beta)^2 F(q). Lengths are in the inverse unit of q (Å for q in 1/Å).

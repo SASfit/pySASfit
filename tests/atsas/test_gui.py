@@ -1,5 +1,5 @@
 """pyATsas panel: builds without ATSAS, loads curves, writes runnable Python code, runs a (fake) ATSAS program
-in the background and shows its result; the tab icon is the ATSAS icon of the installation or a placeholder."""
+in the background and shows its result; the tab icon is pyATsas' own (logo bundle); the ATSAS icon of the installation is read by external_icon."""
 import os
 import sys
 
@@ -78,7 +78,21 @@ def test_tab_icon(app, tmp_path, monkeypatch):
     from pysasfit import resources
     resources._EXTERNAL_CACHE.clear()
     monkeypatch.setattr(A, "find_atsas", lambda *_a, **_k: (_ for _ in ()).throw(A.AtsasError("none")))
-    assert not resources.tool_icon("pyATsas").isNull()                    # placeholder without ATSAS
+    monkeypatch.setattr(A, "icon_files", lambda *_a, **_k: [])
+    assert resources.external_icon("pyATsas").isNull()                    # no ATSAS: no ATSAS icon
+    if resources.menu_icon_path("pyATsas"):                               # the tab: pyATsas' own logo set
+        assert not resources.tool_icon("pyATsas").isNull()
+    root = _fake_install(tmp_path / "inst")
+    d = root / "share" / "icons" / "hicolor" / "32x32" / "apps"
+    d.mkdir(parents=True)
+    from PySide6 import QtGui
+    pm = QtGui.QPixmap(32, 32)
+    pm.fill(QtGui.QColor("#123456"))
+    pm.save(str(d / "atsas.png"))
+    monkeypatch.undo()
+    resources._EXTERNAL_CACHE.clear()
+    ic = resources.external_icon("pyATsas", atsas_dir=str(root))          # the icon of the installation
+    assert not ic.isNull() and ic.pixmap(32, 32).toImage().pixelColor(5, 5).name() == "#123456"
     assert [s[0] for s in resources.wordmark("pyATsas")] == ["py", "AT", "sas"]
     resources._EXTERNAL_CACHE.clear()
 

@@ -653,6 +653,10 @@ Optional backends (NLopt, iminuit, bumps, cma, dfols) are skipped when not insta
 - **Hankel / SESANS:** ~~compute G(z) for any form factor~~ (done in Python, `pysasfit.studio.hankel`: SESANS and MSAS,
   see {doc}`studio_manual/sesans_msas`); FFTLog, QDHT and sasfit_hankel (all SASfit strategies) added
   as methods; still open: the Hankel-strategy benchmark from sasfit-collab, a thickness fit box in the explorer.
+- **Python ports of the C plugins:** pilot done (`pysasfit.studio.ports`, {doc}`studio_manual/python_ports`):
+  deformed generalized Gaussian chain, deformed ring polymers (BMB, BZ) and the isotropic rings, with a comparison
+  tool against the C library (`python -m pysasfit.studio.ports.check`); then the networks (WE/HSH), the reptating
+  chain and the shear-flow polymers (19 ports); next: the anisotropic SESANS transform.
 - **Parameter names:** take the names of the remaining built-in libsasfit functions from the SASfit Tcl GUI
   (`sasfit.vfs`). Today only `ff_sphere`, `sd_LogNorm` and `sq_HardSphere` have names; the others are addressed as
   `p0`, `p1`, ...

@@ -284,6 +284,8 @@ designer writes this.
 * pyseb 0.4.0 returns the surface *amplitude* for the Spheroid phase factor Ψ(center, surface);
   a Monte Carlo average of sin(qr)/(qr) confirms the value here.
 
+API reference: {doc}`api`.
+
 Tests: `tests/seb` (`test_seb_pyseb_reference.py` runs only where pyseb is installed, i.e.
 Python ≤ 3.12). Full comparison tables: `python tools/seb/compare_pyseb_subunits.py` and
 `compare_pyseb_structures.py` from the repository root.
@@ -295,8 +297,3 @@ Python ≤ 3.12). Full comparison tables: `python tools/seb/compare_pyseb_subuni
 3. T. Jarrett, C. Svaneborg, J. Appl. Cryst. 57, 587 (2024), doi:10.1107/S1600576724001729;
    code github.com/Tobionecenobi/SEB (GPL-3.0), Python bindings pyseb (BSD-3-Clause).
 
-```{toctree}
-:hidden:
-
-API <api>
-```

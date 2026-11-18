@@ -1,5 +1,17 @@
 # pyDENsity: electron-density maps with DENSS
 
+```{image} ../pySASfit-logo-bundle/logos/pyDENsity/svg/pyDENsity-light.svg
+:alt: pyDENsity
+:height: 70px
+:class: only-light
+```
+
+```{image} ../pySASfit-logo-bundle/logos/pyDENsity/svg/pyDENsity-dark.svg
+:alt: pyDENsity
+:height: 70px
+:class: only-dark
+```
+
 pyDENsity reconstructs low-resolution **electron-density maps** from SAXS/SANS curves with **DENSS** (DENsity from
 Solution Scattering; T. D. Grant, *Nature Methods* **15**, 191 (2018)). DENSS works on a grid in real space
 (iterative structure-factor retrieval with a shrink-wrap support), so unlike bead models the map can have internal

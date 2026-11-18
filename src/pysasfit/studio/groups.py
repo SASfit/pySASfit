@@ -225,11 +225,22 @@ def build_menu(entries, types, defs=None):
     for p in entries:
         if p.type not in types:
             continue
+        base = top
+        if p.collection == "py plugin ports":  # Python ports: a copy of the plugin tree below its own node
+            base = top.child(
+                "(py plugin ports)",
+                "py plugin ports",
+                "Python ports of SASfit plugins: the same functions and groups as the SASfit plugins, computed in "
+                "Python (vectorised, thread-safe) instead of by the compiled plugin",
+                order.get("ff_plugins", len(defs)) + 0.5,  # right after the tree of the SASfit plugins
+            )
         if not defs:
-            top.functions.append(p)  # no .def files: flat list
+            base.functions.append(p)  # no .def files: flat list
             continue
         path, root = _group_path(p.group, defs)
-        if path is None:
+        if path is None and base is not top:
+            node = base
+        elif path is None:
             key, label, k = _special(p)
             node = top.child(key, label, "", len(defs) + k)
         elif mine and root is not None and root not in mine:
@@ -241,7 +252,7 @@ def build_menu(entries, types, defs=None):
                 len(defs) + 4,
             )
         else:
-            node = top
+            node = base
             for name in path:
                 node = node.child(name, defs[name].label, defs[name].brief, order[name])
         node.functions.append(p)

@@ -8,7 +8,8 @@ and parses their output files into numpy arrays / dataclasses.  It has no Qt dep
     g = autorg("lysozyme.dat")                 # Guinier Rg, I(0), range, quality
     p = datgnom("lysozyme.dat", rg=g.rg)       # p(r), Dmax, real-space Rg, total estimate
 
-Covered programs
+Covered programs::
+
     autorg    Guinier Rg, I(0)                        (--format=ssv)
     datgnom   automatic p(r), Dmax                     (GNOM .out parsed)
     gnom      p(r) with a fixed Dmax, systems 0-6      (GNOM .out parsed)
@@ -140,14 +141,16 @@ def find_atsas(atsas_dir: Optional[str | os.PathLike] = None,
                refresh: bool = False) -> Path:
     """Return the ATSAS *bin* directory (cached after the first call).
 
-    Search order
-      1. `atsas_dir` argument (root or bin directory)
+    Search order::
+
+      1. atsas_dir argument (root or bin directory)
       2. $PYATSAS_DIR, $ATSAS (and on Windows the registry value of ATSAS)
-      3. `autorg` on $PATH (Debian/RPM packages install to /usr/bin)
+      3. autorg on $PATH (Debian/RPM packages install to /usr/bin)
       4. newest ATSAS-x.y.z folder in the default locations:
          Windows  C:\\Program Files\\ATSAS-x.y.z, %LOCALAPPDATA%\\Programs
          Linux    ~/ATSAS-x.y.z, /opt, /usr/local
          macOS    ~/ATSAS-x.y.z, /Applications, ~/Applications
+
     A Python started from a macOS GUI does not read ~/.zprofile, so step 4
     matters there even if the installer configured the shell.
     """

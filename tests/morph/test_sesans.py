@@ -222,3 +222,35 @@ def test_open_and_add_accept_ses_files(tmp_path, monkeypatch):
     w.on_open()
     assert [d.get("kind", "sas") for d in w.datasets] == ["sesans"]
     w.close()
+
+
+def test_positive_sesans_convention_is_accepted():
+    """Files that store G(0) - G(delta) (positive) gave C(0) < 0, a box of 0 and a ZeroDivisionError."""
+    from pysasfit.morph.multiphase import sesans_sign
+    _sas, ses = synthetic()
+    flipped = DataSet(ses.q, -ses.I, ses.sigma, SLD, name="pos", kind="sesans")
+    assert sesans_sign(ses.q, ses.I) == -1 and sesans_sign(flipped.q, flipped.I) == 1
+    p = dict(names=PS.names, fractions=PS.fractions, n=32)
+    ref = correlations_multi([ses], MultiParameters(**p))
+    res = correlations_multi([flipped], MultiParameters(**p))
+    assert res.params.box_size > 0 and res.params.box_size == pytest.approx(ref.params.box_size)
+    assert np.allclose(res.g, ref.g) and res.curves[0].chi2 == pytest.approx(ref.curves[0].chi2)
+    assert any("sign was reversed" in x for x in res.warnings)
+    assert res.params.box_size >= 2 * ses.q.max() or "the box is smaller" in " ".join(res.warnings)
+
+
+def test_inversion_of_linearly_spaced_sphere_data():
+    """Linearly scanned spin-echo lengths (as se008731_01.ses, 2 um polystyrene): a geometric node grid left
+    C at small r undetermined and gave C(0) < 0 (box 0, ZeroDivisionError in the GUI)."""
+    from pysasfit.studio.hankel import sphere_sesans
+    R = 10600.0
+    d = np.linspace(390.0, 47000.0, 200)
+    G0 = -0.21
+    rng = np.random.default_rng(3)
+    dG = np.full(d.size, 0.0037)
+    G = G0 * (1 - sphere_sesans(d, R)) + dG * rng.normal(size=d.size)
+    inv = invert_sesans(d, G, dG)
+    assert inv.C0 > 0 and inv.chi2 < 1.3
+    # sphere: C(0) = -G(inf) / (2 * integral gamma dr), integral gamma_sphere dr = 3R/4 ... gamma(2R) = 0
+    assert inv.C0 == pytest.approx(-G0 / (2 * 0.75 * R), rel=0.15)
+    assert abs(inv.gamma(np.array([2.3 * R]))[0]) < 0.05 and inv.gamma(np.array([R]))[0] > 0.3

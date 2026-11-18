@@ -59,6 +59,31 @@ _INGROUP = re.compile(r"\\ingroup\s+(\S+)")
 _BRIEF = re.compile(r"\\brief\s+(.*?)(?:\n\s*\*\s*\n|\n\s*\*\s*\\)", re.S)
 _PARAMS = re.compile(r"\\par\s+Required parameters:(.*?)(?:</table>|\*/)", re.S)
 _CELL = re.compile(r"<td[^>]*>(.*?)</td>", re.S)
+_DEFAULTS = re.compile(r"\\par\s+Default values and domains:\s*(.*?)(?=\n\s*\*\s*(?:\\|\n)|\n\s*\*\s*$|\*/)", re.S | re.M)
+_DEFAULT_ENTRY = re.compile(
+    r"^\s*(.+?)\s*=\s*([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?|[-+]?inf)\s*(?:([\[(])\s*([^,\])]+?)\s*,\s*([^\])]+?)\s*([\])]))?\s*$"
+)
+
+
+def _apply_defaults(params, text):
+    """Defaults and bounds of the paragraph "\\par Default values and domains:" (written by
+    tools/write_header_defaults.py): ``name = value [lo, hi)`` per parameter, in table order, separated by ';'."""
+    body = re.sub(r"\n\s*\*", " ", text)
+    entries = [e for e in body.split(";") if e.strip()]
+    if len(entries) != len(params):
+        return params
+    out = []
+    for prm, e in zip(params, entries):
+        m = _DEFAULT_ENTRY.match(e)
+        if not m:
+            out.append(prm)
+            continue
+        default = float(m.group(2))
+        bounds = prm.bounds
+        if m.group(3):
+            bounds = (float(m.group(4)), float(m.group(5)))
+        out.append(ParameterInfo(prm.name, prm.description, default, bounds))
+    return out
 _TAG = re.compile(r"<[^>]+>")
 
 
@@ -179,6 +204,11 @@ def _parse_parameters(block):
     return out
 
 
+def _with_defaults(params, sec):
+    d = _DEFAULTS.search(sec)
+    return _apply_defaults(params, d.group(1)) if d and params else params
+
+
 def parse_header(filename):
     """Return the list of :class:`PluginInfo` documented in one header file."""
     with open(filename, "r", errors="replace") as fh:
@@ -201,7 +231,7 @@ def parse_header(filename):
                 collection=collection,
                 group=g.group(1) if g else "",
                 brief=_brief(b.group(1)) if b else "",
-                parameters=_parse_parameters(p.group(1)) if p else [],
+                parameters=_with_defaults(_parse_parameters(p.group(1)) if p else [], sec),
                 header=filename,
             )
         )

@@ -161,6 +161,12 @@ designer; 3D sketch, fits to 1D data.
 :link: atsas/index
 :link-type: doc
 
+```{image} pySASfit-logo-bundle/menu-icons/pyATsas/pyATsas-menu.svg
+:alt: pyATsas
+:height: 40px
+:class: card-icon
+```
+
 AUTORG, DATGNOM, GNOM, CRYSOL and DAMMIF of an ATSAS installation (installed separately, own licence) on
 pySASfit curves, with plots and a results table; starts PRIMUS, CHROMIXS, PEAK with the selected curve.
 :::
@@ -169,6 +175,12 @@ pySASfit curves, with plots and a results table; starts PRIMUS, CHROMIXS, PEAK w
 :link: density/index
 :link-type: doc
 
+```{image} pySASfit-logo-bundle/menu-icons/pyDENsity/pyDENsity-menu.svg
+:alt: pyDENsity
+:height: 40px
+:class: card-icon
+```
+
 Low-resolution electron-density maps from SAXS/SANS curves with DENSS (Grant 2018; installed separately): single
 maps and averages with FSC resolution, isosurfaces and slices.
 :::
@@ -176,6 +188,12 @@ maps and averages with FSC resolution, isosurfaces and slices.
 :::{grid-item-card} pyDENSSmulti: maps from several contrasts
 :link: densitymulti/index
 :link-type: doc
+
+```{image} pySASfit-logo-bundle/menu-icons/pyDENSSmulti/pyDENSSmulti-menu.svg
+:alt: pyDENSSmulti
+:height: 40px
+:class: card-icon
+```
 
 3D maps from SANS contrast variation (and SAXS): volume fractions of the components through the contrast matrix
 (match points, H/D exchange), or a DENSS-Multiple-type averaged SLD map; own DENSS-type iteration.

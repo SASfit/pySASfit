@@ -1,0 +1,262 @@
+#include <stdlib.h>
+/* Support functions of sasfit_shim.h: psi override and sasfit_integrate (graded GSL QAGS, rel. tol. 1e-13). */
+#include <stdarg.h>
+#include <string.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
+#include "sasfit_shim.h"
+
+static int psi_override = 0;
+static double psi_value = 0.0;
+
+void shim_set_psi(double rad) { psi_override = 1; psi_value = rad; }
+void shim_clear_psi(void) { psi_override = 0; }
+scalar sasfit_param_override_get_psi(scalar default_val) { return psi_override ? psi_value : default_val; }
+
+void sasfit_init_param(sasfit_param *param) { memset(param, 0, sizeof(*param)); }
+
+void sasfit_param_set_err(sasfit_param *param, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(param->errStr, 256, format, ap);
+    va_end(ap);
+    param->errStatus = 1;
+}
+
+/* integrator: 0 = reference (graded QAGS, default), 1 = plain QAGS on [a,b] with rel. tol. 1e-8, like an
+ * adaptive SASfit strategy (used to show that a function no longer depends on the integrator) */
+static int shim_mode = 0;
+void shim_set_integrator(int mode) { shim_mode = mode; }
+
+typedef struct { scalar (*f)(scalar, sasfit_param *); sasfit_param *param; } shim_fp;
+static double shim_kernel(double x, void *v) { shim_fp *fp = (shim_fp *)v; return fp->f(x, fp->param); }
+
+scalar sasfit_integrate(scalar a, scalar b, scalar (*f)(scalar, sasfit_param *), sasfit_param *param)
+{
+    /* Reference quality, independent of the integrand: GSL QAGS (rel. tol. 1e-13) on subintervals graded
+     * geometrically towards both end points (a + (b-a) 10^-k, k = 1..16), so that narrow end-point layers (ring
+     * kernels at large q Rg) are resolved. Plain QAGS returns 0 there, CQUAD is off by ~1e-3. */
+    gsl_integration_workspace *w = gsl_integration_workspace_alloc(2000);
+    shim_fp fp = { f, param };
+    gsl_function F = { &shim_kernel, &fp };
+    double pts[40], sum = 0.0;
+    if (isinf(b)) {  /* semi-infinite (SASfit: QAGIU); [a, a+1] graded as below, then QAGIU from a+1 */
+        double res = 0.0, err = 0.0;
+        gsl_integration_workspace_free(w);
+        sum = sasfit_integrate(a, a + 1.0, f, param);
+        w = gsl_integration_workspace_alloc(4000);
+        gsl_integration_qagiu(&F, a + 1.0, 0.0, 1e-12, 4000, w, &res, &err);
+        gsl_integration_workspace_free(w);
+        return sum + res;
+    }
+    if (shim_mode == 1) {
+        double res = 0.0, err = 0.0;
+        gsl_integration_qags(&F, a, b, 0.0, 1e-8, 2000, w, &res, &err);
+        gsl_integration_workspace_free(w);
+        return res;
+    }
+    int n = 0, k;
+    pts[n++] = a;
+    for (k = 16; k >= 1; k--) pts[n++] = a + (b - a) * pow(10.0, -k);
+    pts[n++] = a + 0.5 * (b - a);
+    for (k = 1; k <= 16; k++) pts[n++] = b - (b - a) * pow(10.0, -k);
+    pts[n++] = b;
+    for (k = 0; k + 1 < n; k++) {
+        double res = 0.0, err = 0.0;
+        if (pts[k + 1] <= pts[k]) continue;
+        gsl_integration_qags(&F, pts[k], pts[k + 1], 0.0, 1e-13, 2000, w, &res, &err);
+        sum += res;
+    }
+    gsl_integration_workspace_free(w);
+    return sum;
+}
+
+void sasfit_out(const char *format, ...) { (void)format; }
+void sasfit_err(const char *format, ...) { (void)format; }
+scalar sasfit_eps_get_nriq(void) { return 1e-12; }
+scalar sasfit_eps_get_aniso(void) { return 1e-12; }
+
+/* sasfit_cubature for ndim = 1 or 2: nested reference integrals (graded QAGS in x[0], QAGS in x[1]) */
+typedef struct { sasfit_cubature_kernel f; void *param; size_t ndim; double y; } cub_fp;
+static double cub_x(double x, void *v)
+{
+    cub_fp *c = (cub_fp *)v;
+    double xy[2] = { x, c->y };
+    return c->f(xy, c->ndim, c->param);
+}
+static double graded(double (*fn)(double, void *), void *v, double a, double b, double rel)
+{
+    gsl_integration_workspace *w = gsl_integration_workspace_alloc(2000);
+    gsl_function F = { fn, v };
+    double pts[40], sum = 0.0;
+    int n = 0, k;
+    pts[n++] = a;
+    for (k = 16; k >= 1; k--) pts[n++] = a + (b - a) * pow(10.0, -k);
+    pts[n++] = a + 0.5 * (b - a);
+    for (k = 1; k <= 16; k++) pts[n++] = b - (b - a) * pow(10.0, -k);
+    pts[n++] = b;
+    for (k = 0; k + 1 < n; k++) {
+        double res = 0.0, err = 0.0;
+        if (pts[k + 1] <= pts[k]) continue;
+        gsl_integration_qags(&F, pts[k], pts[k + 1], 0.0, rel, 2000, w, &res, &err);
+        sum += res;
+    }
+    gsl_integration_workspace_free(w);
+    return sum;
+}
+typedef struct { cub_fp *c; double xmin, xmax; } cub_outer;
+static double cub_y(double y, void *v)
+{
+    cub_outer *o = (cub_outer *)v;
+    o->c->y = y;
+    return graded(&cub_x, o->c, o->xmin, o->xmax, 1e-12);
+}
+/* ndim = 3: plain nested QAGS (x[2] outer) */
+typedef struct { sasfit_cubature_kernel f; void *param; double y, z; } cub3;
+static double c3_x(double x, void *v) { cub3 *c = (cub3 *)v; double xyz[3] = { x, c->y, c->z }; return c->f(xyz, 3, c->param); }
+typedef struct { cub3 *c; const double *xmin, *xmax; } cub3o;
+static double qags(double (*fn)(double, void *), void *v, double a, double b, double rel)
+{
+    gsl_integration_workspace *w = gsl_integration_workspace_alloc(2000);
+    gsl_function F = { fn, v };
+    double r = 0.0, e = 0.0;
+    gsl_integration_qags(&F, a, b, 0.0, rel, 2000, w, &r, &e);
+    gsl_integration_workspace_free(w);
+    return r;
+}
+static double c3_y(double y, void *v) { cub3o *o = (cub3o *)v; o->c->y = y; return qags(&c3_x, o->c, o->xmin[0], o->xmax[0], 1e-10); }
+static double c3_z(double z, void *v) { cub3o *o = (cub3o *)v; o->c->z = z; return qags(&c3_y, o, o->xmin[1], o->xmax[1], 1e-9); }
+
+int sasfit_cubature(size_t ndim, const double *xmin, const double *xmax, sasfit_cubature_kernel f, void *param,
+                    double eps, double *sum, double *err)
+{
+    cub_fp c = { f, param, ndim, 0.0 };
+    if (ndim == 3) {
+        cub3 c3 = { f, param, 0.0, 0.0 };
+        cub3o o = { &c3, xmin, xmax };
+        *err = 0.0;
+        *sum = qags(&c3_z, &o, xmin[2], xmax[2], 1e-8);
+        return 0;
+    }
+    (void)eps;
+    *err = 0.0;
+    if (ndim == 1) {
+        *sum = graded(&cub_x, &c, xmin[0], xmax[0], 1e-13);
+    } else {
+        cub_outer o = { &c, xmin[0], xmax[0] };
+        gsl_integration_workspace *w = gsl_integration_workspace_alloc(2000);
+        gsl_function F = { &cub_y, &o };
+        double e2 = 0.0;
+        gsl_integration_qags(&F, xmin[1], xmax[1], 0.0, 1e-11, 2000, w, sum, &e2);
+        gsl_integration_workspace_free(w);
+    }
+    return 0;
+}
+
+void sasfit_get_param(sasfit_param *param, int num, ...)
+{
+    va_list ap;
+    int i;
+    va_start(ap, num);
+    for (i = 0; i < num; i++) {
+        scalar *v = va_arg(ap, scalar *);
+        if (v) *v = param->p[i];
+    }
+    va_end(ap);
+}
+
+scalar sasfit_jinc(scalar x)
+{
+    if (fabs(x) <= 1e-6)
+        return 0.5 - gsl_pow_2(x)/16.0 + gsl_pow_4(x)/384.0 - gsl_pow_6(x)/18432.0 + gsl_pow_8(x)/1474560.0;
+    return gsl_sf_bessel_J1(x) / x;
+}
+
+scalar sasfit_rwbrush_w(scalar Q, scalar R)
+{
+    scalar u = Q*Q * R*R, u2 = u*u;
+    if (fabs(u) <= 1.0e-4) return (1 - u/10. + u2/60.)/(1. + (2.*u)/5 + u2/20.);
+    return (-gsl_expm1(-u)) / u;
+}
+
+scalar sasfit_gauss_fc(scalar Q, scalar R)  /* fixed version: series up to u = 0.5 (was 1e-4) */
+{
+    scalar u = Q*Q * R*R, t, s;
+    int k;
+    if (fabs(u) < 0.5) {
+        t = 1.0; s = 0.0;
+        for (k = 0; k < 18; k++) { s += t; t *= -u/(k+3.); }
+        return s;
+    }
+    return 2 * (gsl_expm1(-u) + u) / (u*u);
+}
+
+/* robertus_p < 0 selects the closed-form structure factor of stackdiscs; PORTREF_ROBERTUS_P overrides (default 1) */
+scalar sasfit_eps_get_robertus_p(void)
+{
+    const char *e = getenv("PORTREF_ROBERTUS_P");
+    return e ? atof(e) : 1.0;
+}
+
+/* Gauss hypergeometric function for x < 1 (Pfaff transformation for x < 0, GSL for 0 <= x < 1) */
+scalar sasfit_2f1(scalar a, scalar b, scalar c, scalar x, sasfit_param *param)
+{
+    (void)param;
+    if (x < 0.0) return pow(1.0 - x, -a) * gsl_sf_hyperg_2F1(a, c - b, c, x / (x - 1.0));
+    return gsl_sf_hyperg_2F1(a, b, c, x);
+}
+
+scalar sasfit_sq_p__q___worm_ps3_(scalar q, sasfit_param *param) { (void)q; (void)param; return NAN; }
+
+/* sasfit_common/sasfit_utils.c (fixed version) */
+scalar find_LogNorm_int_range(scalar dim, scalar x0, scalar sigma, scalar *Xstart, scalar *Xend, sasfit_param *param)
+{
+    scalar a2 = fabs(sigma), a3 = 1.0, a4 = fabs(x0), X_0, X_n;
+    (void)param;
+    X_0 = a4 * exp(-a2 * a2 * (a3 - 2.0 * dim));
+    X_n = a4 * exp(-a2 * a2 * (a3 - 2.0 * dim) + sqrt(2.0 * a2 * a2 * log(100.0 / 0.1)));
+    *Xstart = 0.0;
+    *Xend = X_n;
+    if ((X_n - X_0) < X_0) { *Xend = X_n; *Xstart = 2.0 * X_0 - X_n; }
+    return 0;
+}
+/* LogNorm(x; N, s, p, mu) for p = 1 (normalised) */
+scalar sasfit_sd_LogNorm(scalar x, sasfit_param *param)
+{
+    scalar s = param->p[1], mu = param->p[3];
+    if (x <= 0) return 0.0;
+    return param->p[0] / (sqrt(2.0 * M_PI) * s * x) * exp(-gsl_pow_2(log(x / mu)) / (2.0 * s * s));
+}
+/* erfi(z) = 2z/sqrt(pi) int_0^1 exp(z^2 s^2) ds (Gauss-Legendre, enough for the arguments used here) */
+static void cerfi(double x, double y, double *re, double *im)
+{
+    static gsl_integration_glfixed_table *t = NULL;
+    double sr = 0.0, si = 0.0, zr2 = x * x - y * y, zi2 = 2.0 * x * y;
+    size_t i;
+    if (!t) t = gsl_integration_glfixed_table_alloc(600);
+    for (i = 0; i < 600; i++) {
+        double xi, wi, s2, m;
+        gsl_integration_glfixed_point(0.0, 1.0, i, &xi, &wi, t);
+        s2 = xi * xi;
+        m = exp(zr2 * s2);
+        sr += wi * m * cos(zi2 * s2);
+        si += wi * m * sin(zi2 * s2);
+    }
+    *re = 2.0 / sqrt(M_PI) * (x * sr - y * si);
+    *im = 2.0 / sqrt(M_PI) * (x * si + y * sr);
+}
+double re_cerfi_z(double x, double y) { double r, i; cerfi(x, y, &r, &i); return r; }
+double im_cerfi_z(double x, double y) { double r, i; cerfi(x, y, &r, &i); return i; }
+
+
+/* sasfit_common/sasfit_utils.c (fixed version) */
+scalar sasfit_sphere_fc(scalar Q, scalar R)
+{
+    scalar u = Q * R, u2 = u * u, u4 = u2 * u2;
+    if (fabs(u) <= 0.1)  /* fixed 2026-11-18: was 1e-4 (cancellation in sin(u)-u cos(u) up to u ~ 0.1) */
+        return (1. - (211.*u2)/2860. + (2647.*u4)/2162160.) / (1. + (15. *u2)/572. + (17. *u4)/61776.);
+    return 3.0 * (sin(u) - u * cos(u)) / (u * u * u);
+}
+
+__attribute__((constructor)) static void shim_init(void) { gsl_set_error_handler_off(); }

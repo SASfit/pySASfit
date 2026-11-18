@@ -11,7 +11,9 @@ from pysasfit.studio import paths
 @pytest.fixture(autouse=True)
 def sandbox(tmp_path, monkeypatch):
     """Own settings file, no environment variables, no choice made in the GUI."""
-    monkeypatch.setattr(paths, "SETTINGS_FILE", str(tmp_path / "home" / "settings.json"))
+    monkeypatch.setattr(
+        paths, "SETTINGS_FILE", str(tmp_path / "home" / "settings.json")
+    )
     monkeypatch.setattr(paths, "_override", None)
     monkeypatch.setattr(paths, "DEFAULT_LIB", str(tmp_path / "no_bundled_lib"))
     for var in ("PYSASFIT_SASFIT_LIB", "SASFIT_LOCATION", "PYSASFIT_STUDIO_PLUGINS"):
@@ -100,7 +102,9 @@ def test_the_gui_choice_beats_the_environment(sandbox, monkeypatch):
     paths.set_lib_dir(str(gui))
     assert paths.lib_dir() == str(gui) and paths.lib_dir_source() == "gui"
     paths.set_lib_dir(None)
-    assert paths.lib_dir() == str(env) and paths.lib_dir_source() == "PYSASFIT_SASFIT_LIB"
+    assert (
+        paths.lib_dir() == str(env) and paths.lib_dir_source() == "PYSASFIT_SASFIT_LIB"
+    )
 
 
 def test_priority_environment_then_sasfit_location_then_bundled(sandbox, monkeypatch):
@@ -160,7 +164,9 @@ def test_plugin_lib_dirs_lists_plugins_folder_and_lib(sandbox, monkeypatch):
     assert paths.plugin_lib_dirs() == [str(lib / "plugins"), str(lib)]
 
 
-def test_header_dirs_include_the_bundled_ones_and_the_library_headers(sandbox, monkeypatch):
+def test_header_dirs_include_the_bundled_ones_and_the_library_headers(
+    sandbox, monkeypatch
+):
     lib = make_lib(sandbox / "lib")
     (lib / "plugins" / "sasfit_ff_sphere.h").write_text("")
     monkeypatch.setenv("PYSASFIT_SASFIT_LIB", str(lib))
@@ -181,6 +187,41 @@ def test_def_dirs_prefer_a_def_subfolder_and_have_no_duplicates(sandbox, monkeyp
 def test_python_plugin_dirs_from_the_environment(sandbox, monkeypatch):
     a, b = sandbox / "a", sandbox / "b"
     a.mkdir()
-    monkeypatch.setenv("PYSASFIT_STUDIO_PLUGINS", os.pathsep.join([str(a), str(b)]))  # b does not exist
+    monkeypatch.setenv(
+        "PYSASFIT_STUDIO_PLUGINS", os.pathsep.join([str(a), str(b)])
+    )  # b does not exist
     assert str(a) in paths.python_plugin_dirs()
     assert str(b) not in paths.python_plugin_dirs()
+
+
+def test_plugin_build_tree(tmp_path, monkeypatch):
+    from pysasfit.studio import paths
+
+    ext = paths.LIB_EXT
+    (tmp_path / "shearflow" / "lib").mkdir(parents=True)
+    (tmp_path / "shearflow" / "lib" / f"libsasfit_shearflow.{ext}").write_bytes(b"")
+    (tmp_path / "shearflow" / "include").mkdir()
+    (tmp_path / "shearflow" / "include" / "sasfit_shearflow.h").write_text("")
+    (tmp_path / "notbuilt" / "lib").mkdir(parents=True)
+    monkeypatch.setattr(paths, "_build_override", None)
+    monkeypatch.setattr(paths, "get_setting", lambda key, default=None: None)
+    monkeypatch.setenv("PYSASFIT_PLUGIN_BUILD_DIR", str(tmp_path))
+    assert paths.plugin_build_dir() == str(tmp_path)
+    assert paths.plugin_build_lib_dirs() == [str(tmp_path / "shearflow" / "lib")]
+    assert paths.plugin_build_include_dirs() == [
+        str(tmp_path / "shearflow" / "include")
+    ]
+    assert paths.plugin_build_include_dirs()[0] in paths.header_dirs()
+    monkeypatch.delenv("PYSASFIT_PLUGIN_BUILD_DIR")
+    assert paths.plugin_build_dir() is None
+
+
+def test_msys_path_on_windows(monkeypatch):
+    from pysasfit.studio import paths
+
+    monkeypatch.setattr(paths, "_system", "Windows")
+    assert (
+        paths._clean("/c/Users/me/SASfitGit/src/plugins")
+        .replace("\\", "/")
+        .endswith("C:/Users/me/SASfitGit/src/plugins")
+    )

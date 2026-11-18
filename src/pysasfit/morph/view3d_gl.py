@@ -80,6 +80,63 @@ def gl_problem():
                 f"    \"{sys.executable}\" -m pip install pyqtgraph PyOpenGL scikit-image")
 
 
+def _reset_shader_programs():
+    """Forget the compiled shader programs of pyqtgraph (cached globally, they belong to a GL context)."""
+    import pyqtgraph.opengl as gl
+    from pyqtgraph.opengl import shaders
+    for prog in shaders.ShaderProgram.names.values():
+        prog.prog = None
+    # items with a class-level program (pyqtgraph >= 0.14: GLLinePlotItem, GLScatterPlotItem, ...)
+    for name in dir(gl):
+        klass = getattr(gl, name)
+        if isinstance(klass, type) and "_shaderProgram" in vars(klass):
+            klass._shaderProgram = None
+
+
+_VIEW_CLASS = None
+
+
+def _view_class(gl):
+    """GLViewWidget that notices a new GL context. Qt destroys the context of a QOpenGLWidget when it moves
+    to another top-level window (a dock or tab detached into its own window). Without
+    Qt.AA_ShareOpenGLContexts (set by the pySASfit launcher and the pySASmorph main) pyqtgraph's shader
+    programs and the buffers of the items are then invalid (GLError 1281 'invalid value' in glUseProgram /
+    glGetAttribLocation): the shader cache is cleared and ``context_recreated`` asks for new items."""
+    global _VIEW_CLASS
+    if _VIEW_CLASS is not None:
+        return _VIEW_CLASS
+
+    class _GLView(gl.GLViewWidget):
+        context_recreated = QtCore.Signal()
+
+        def __init__(self, *a, **k):
+            super().__init__(*a, **k)
+            self._context_lost = False
+
+        def _shared(self):
+            return QtCore.QCoreApplication.testAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+
+        def _on_context_destroyed(self):
+            self._context_lost = True
+            if not self._shared():
+                _reset_shader_programs()
+
+        def initializeGL(self):
+            ctx = self.context()
+            if ctx is not None:
+                ctx.aboutToBeDestroyed.connect(self._on_context_destroyed)
+            lost, self._context_lost = self._context_lost, False
+            if lost and not self._shared():
+                # items initialised in the old context: take them out before pyqtgraph draws them again
+                for it in list(self.items):
+                    self.removeItem(it)
+                QtCore.QTimer.singleShot(0, self.context_recreated.emit)
+            super().initializeGL()
+
+    _VIEW_CLASS = _GLView
+    return _GLView
+
+
 class MorphGLView(QtWidgets.QWidget):
     status = QtCore.Signal(str)
 
@@ -133,7 +190,8 @@ class MorphGLView(QtWidgets.QWidget):
         for w in (self.box, reset, save):
             bar.addWidget(w)
         lay.addLayout(bar)
-        self.view = gl.GLViewWidget()
+        self.view = _view_class(gl)()
+        self.view.context_recreated.connect(self._on_context_recreated)
         self.view.setBackgroundColor("w")
         self.view.setMinimumSize(150, 150)
         lay.addWidget(self.view, 1)
@@ -211,6 +269,12 @@ class MorphGLView(QtWidgets.QWidget):
             self.redraw()
             self.reset_camera()
 
+    def _on_context_recreated(self):
+        self._items = []
+        self._dirty = True
+        if self.isVisible():
+            self.redraw()
+
     def showEvent(self, event):
         super().showEvent(event)
         if self._dirty and self.view is not None:
@@ -260,7 +324,8 @@ class MorphGLView(QtWidgets.QWidget):
         self._dirty = False
         gl = self._gl
         for it in self._items:
-            self.view.removeItem(it)
+            if it in self.view.items:
+                self.view.removeItem(it)
         self._items = []
         res = self.result
         if phase_data(res)[0] is None:
