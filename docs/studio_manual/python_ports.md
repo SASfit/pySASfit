@@ -111,6 +111,7 @@ Gaussian ring) and against the large-q asymptotics.
 | ff_fractal_series1, 2, 3 | fractal_series | ~1e-15 | ∫ SD(x) x⁶/(1+q²x²)² dx computed directly; C fixed 2026-11-18 (closed forms with a three-term series for q xmax < 0.32: errors up to 7e-3) |
 | ff_power_law, ff_profile__power_law | powerlaw | ~1e-11 (mpmath) | sphere with the profile Δη(1-(r/R)^α): Gauss-Jacobi for ∫ t^(α+2) sinc; C uses sasfit_pfq (not in the reference library) |
 | ff_guwelop_sphere, _cyl_Pcs, _planar_Pcs, _profile | guwelop | ~1e-11 (mpmath) | Fourier integrals of N(1-F_GUWELOP(x)) with panels at quantiles of F; compared with C for q λ < 15 (C loses relative accuracy beyond, up to 1e-4) |
+| ff_ribbon_mono, peaks_ribbon_w_sd | ribbon | ~1e-14 (mpmath), C ~1e-12 | thin rod × ribbon cross section (A << B): F(x) = 1F2(1/2;3/2,2;-x²) = [J1(2x)+2Σ_{k≥1}J_{2k+1}(2x)]/x by Miller recurrence; Schulz average of the width as 2∫₀¹K(w)Re[k(k+1)θ²(1-iqθw)^-(k+2)]dw (≤ (k+2)/4 oscillations for any q). C rewritten 2026-11-18 (was sasfit_pfq plus the asymptotes 2/(qB) for qB/2 > 3, errors up to 2.3 %, and 2B/q); _v of ribbon_mono now returns ABC |
 | ff_sphere_chains_rw_, __rc, __nagg | spherical_ellipsoidal_micelles | ~1e-14 | Pedersen sphere + Gaussian chains |
 | ff_ell_chains_rw_, __rc, __nagg | spherical_ellipsoidal_micelles | ~1e-13 | spheroid + Gaussian chains, Gauss-Legendre over cos α. C fixed 2026-11-18 (spheroid surface: oblate ε → ε², prolate ae/tan → ae/sin; _nagg: R_core with 4/3 = 1) |
 
@@ -121,7 +122,7 @@ functions sasfit_sphere_fc and sasfit_gauss_fc (sasfit_common/sasfit_utils.c) no
 qR = 0.1 and (qRg)² = 0.5 (before 1e-4: up to ~1e-8 relative error from cancellation); rebuild of the SASfit core
 needed.
 
-**Batch 3 (2026-11-18), not ported yet:** fuzzysphere, stochastic_models, ribbon (needs ff_rod and a 1F2), gen_exp_sphere
+**Batch 3 (2026-11-18), not ported yet:** fuzzysphere, stochastic_models, gen_exp_sphere
 (large tabulated data), the structure factors of fractal_obj (sq_*), the worm form factors of thin_objects
 (sasfit_sq_p__q___worm_ps3_, needed for the sphere+R^-a / SAW micelles).
 

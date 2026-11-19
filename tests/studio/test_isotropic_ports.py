@@ -21,6 +21,7 @@ from pysasfit.studio.ports import (
     nonparticulate,
     pearls,
     polymers,
+    ribbon,
     spheres,
 )
 
@@ -36,6 +37,7 @@ NAMES = [
         micelles,
         fractals,
         guwelop,
+        ribbon,
     )
     for d in m.SPECS
     if d.get("c_reference", True)
@@ -551,3 +553,48 @@ def test_pearl_necklace_ext_radius_of_gyration(n, g):
     if g == 1:
         qq = np.geomspace(1e-3, 2, 20)
         np.testing.assert_allclose(pearls.pearl_necklace_ext(qq, p), pearls.pearl_necklace(qq, p), rtol=1e-13)
+
+
+# ---------------------------------------------------------------- ribbon (2026-11-18)
+
+
+def test_ribbon_f1f2_against_mpmath():
+    from pysasfit.studio.ports import ribbon
+
+    mp.mp.dps = 30
+    xs = [0.0, 1e-5, 1e-3, 0.05, 0.5, 1.0, 2.9, 3.1, 5.0, 10.0, 30.0, 100.0, 1000.0]
+    f = ribbon.f1f2(np.array(xs))
+    ref = [float(mp.hyp1f2(0.5, 1.5, 2, -mp.mpf(x) ** 2)) for x in xs]
+    np.testing.assert_allclose(f, ref, rtol=2e-14)
+
+
+@pytest.mark.parametrize("b,s", [(10.0, 3.0), (10.0, 0.5), (20.0, 8.0), (5.0, 4.9)])
+def test_ribbon_schulz_width_against_3f2(b, s):
+    """<b² F(qb/2)> = (B²+σ²) 3F2(1/2, 1+k/2, 3/2+k/2; 3/2, 2; -(qσ²/B)²), k = B²/σ² (the C formula)."""
+    from pysasfit.studio.ports import ribbon
+
+    mp.mp.dps = 30
+    k = (b / s) ** 2
+    qs = [1e-4, 1e-2, 0.1, 0.5, 2.0, 10.0, 100.0]
+    ref = [
+        float(mp.re(mp.hyp3f2(0.5, 1 + k / 2, 1.5 + k / 2, 1.5, 2, -((q * s * s / b) ** 2)))) * (b * b + s * s)
+        for q in qs
+    ]
+    np.testing.assert_allclose(ribbon._schulz_b2_f(np.array(qs), b, s), ref, rtol=1e-12)
+
+
+def test_ribbon_forward_scattering_and_sd_limit():
+    from pysasfit.studio.ports import ribbon
+
+    p = [2.0, 0.0, 20.0, 0.0, 200.0, 0.0, 1.3]
+    q0 = np.array([1e-9])
+    np.testing.assert_allclose(ribbon.ribbon_mono(q0, p)[0], (1.3 * 2 * 20 * 200) ** 2, rtol=1e-12)
+    np.testing.assert_allclose(ribbon.ribbon_mono_v(1.0, p, 0), 2 * 20 * 200)
+    ps = [2.0, 0.4, 20.0, 3.0, 200.0, 0.0, 1.3]
+    np.testing.assert_allclose(
+        ribbon.ribbon_w_sd(q0, ps)[0], 1.3**2 * 200**2 * (4 + 0.16) * (400 + 9), rtol=1e-12
+    )
+    # narrow distributions -> ribbon_mono
+    q = np.logspace(-3, 0, 20)
+    pn = [2.0, 1e-4, 20.0, 1e-3, 200.0, 0.0, 1.3]
+    np.testing.assert_allclose(ribbon.ribbon_w_sd(q, pn), ribbon.ribbon_mono(q, p), rtol=1e-5)

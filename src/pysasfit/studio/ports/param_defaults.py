@@ -498,6 +498,18 @@ for _n in (
     "ff_guwelop_profile",
 ):
     OVERRIDES[_n] = dict(_GW)
+# ---- ribbon (2026-11-18)
+_RB = {
+    "A": {"default": 2.0, "lower": 0.0, **_L},
+    "sigma_a": {"default": 0.5, "lower": 0.0, "lower_open": True, **_L},
+    "B": {"default": 20.0, "lower": 0.0, **_L},
+    "sigma_B": {"default": 4.0, "lower": 0.0, **_L},
+    "C": {"default": 200.0, "lower": 0.0, **_L},
+    "eta": {"default": 1.0, "kind": "sld"},
+}
+OVERRIDES["ff_ribbon_mono"] = {k: v for k, v in _RB.items() if not k.startswith("sigma")}
+OVERRIDES["peaks_ribbon_w_sd"] = dict(_RB)
+OVERRIDES["peaks_ribbon_w_sd"]["A"] = {"default": 2.0, "lower": 0.0, "lower_open": True, **_L}
 RULES_B3 = {
     "ff_guwelop_sphere": [Rule(lambda p: p[4] != 0, "theta == 0")],
     "ff_guwelop_cyl_Pcs": [Rule(lambda p: p[4] != 0, "theta == 0")],

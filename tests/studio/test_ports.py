@@ -409,4 +409,5 @@ def test_aliases_are_python_functions_next_to_c():
     entries = [functions._PYTHON_FUNCTIONS[n][0] for n in names]
     top = groups.build_menu(entries, ("ff",), groups.load_groups())
     assert [c.label for c in top.children] == ["py plugin ports"]
-    assert top.children[0].count() == len(names)
+    # peaks_py_ribbon_w_sd sits in the peaks menu, like the C peaks_ribbon_w_sd
+    assert top.children[0].count() == sum(n.startswith("ff_") for n in names)

@@ -45,6 +45,7 @@ Requires PySide6 and matplotlib (``pip install pysasfit[gui]``).
 from __future__ import annotations
 
 import argparse
+import copy
 import os
 import sys
 import time
@@ -217,6 +218,48 @@ class InstallationDialog(QtWidgets.QDialog):
 
 
 # --------------------------------------------------------------------------- main window
+class _CalcThread(QtCore.QThread):
+    """Runs one curve calculation (a closure without Qt objects) outside the window's thread."""
+
+    done = QtCore.Signal(object)  # the result or the exception
+
+    def __init__(self, fn, parent=None):
+        super().__init__(parent)
+        self.fn = fn
+        self.result = None
+
+    def run(self):
+        try:
+            res = self.fn()
+        except Exception as exc:  # noqa: BLE001 -- shown in the status line
+            res = exc
+        self.result = res
+        self.done.emit(res)
+
+
+def _copy_contribution(c):
+    """A copy of a contribution for a background calculation: own parameter vectors, shared (read-only) functions."""
+    c2 = copy.copy(c)
+    for name in ("ff_p", "sd_p", "sq_p"):
+        v = getattr(c, name, None)
+        if v is not None:
+            setattr(c2, name, np.array(v, dtype=float, copy=True))
+    if hasattr(c2, "cache"):
+        c2.cache = None
+    if hasattr(c2, "_grid"):
+        c2._grid = None
+    return c2
+
+
+def _copy_model(m):
+    m2 = copy.copy(m)
+    m2.contributions = [_copy_contribution(c) for c in m.contributions]
+    m2.scales = list(m.scales)
+    if hasattr(m, "active"):
+        m2.active = list(m.active)
+    return m2
+
+
 class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
     """Panels (2026-11-07, as pySASred / pySASmorph): Model, I(q), Fit and Size distributions; each can be
     moved, stacked as tabs, detached into its own window (button in its title bar) and hidden (View menu)."""
@@ -253,7 +296,16 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self._timer = QtCore.QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(40)  # debounce slider drags
-        self._timer.timeout.connect(self._redraw)
+        self._timer.timeout.connect(self._start_calc)
+        #BACKGROUND CALCULATION. The automatic recalculation (and Calculate) run in a worker thread on a copy of the
+        #model, so that choosing a slow function or typing does not freeze the window. One calculation at a time:
+        #changes during a calculation are collected and calculated once afterwards; a result made obsolete by a change
+        #of the model's structure is dropped. Every calculation in the window's own thread (_compute, build_model,
+        #the 2D map, a fit) first waits for the running one (the SASfit library is not thread safe).
+        self._calc = None  # running _CalcThread
+        self._calc_again = False  # changes arrived during the running calculation
+        self._struct_gen = 0  # incremented when contributions/functions change
+        self._calc_t0 = 0.0
         self._build_ui(qmin, qmax)
         self._initial(ff, sd, sq, extra)
 
@@ -438,7 +490,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.autocalc.setChecked(True)
         self.autocalc.toggled.connect(self._on_autocalc)
         self.calc_btn = QtWidgets.QPushButton("Calculate")
-        self.calc_btn.clicked.connect(self._force_calc)
+        self.calc_btn.clicked.connect(self._calc_button)
         from ..core.flowlayout import flow_bar
         rv.addWidget(flow_bar(                    # wraps to two rows in a narrow window
             "Q min:", self.qmin, self.units, "Q max:", self.qmax,
@@ -826,6 +878,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.mode_combo.setEnabled(any(p.contrib is not None and p.contrib.sq is not None for p in self.panels()))
         self._update_labels()
         self.fit_panel.refresh_table()
+        self._struct_gen += 1
         self._schedule()
 
     def _reset(self):
@@ -991,6 +1044,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.save_session()
 
     def closeEvent(self, event):
+        self.wait_calc()
         self.save_session()
         super().closeEvent(event)
 
@@ -1064,7 +1118,73 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         """Auto-calculate toggled: catch up immediately when switched on."""
         self._autocalc = bool(on)
         if self._autocalc:
-            self._force_calc()
+            self._calc_button()
+
+    def _calc_button(self, *_):
+        """Calculate (button): now, in the background."""
+        self._pending = False
+        if hasattr(self, "calc_btn"):
+            self.calc_btn.setText("Calculate")
+        if not self._busy:
+            self._start_calc()
+
+    def calculating(self):
+        """A background calculation is running."""
+        return self._calc is not None
+
+    def wait_calc(self):
+        """Wait for a running background calculation and draw its result (before any calculation in the window's
+        thread). Changes collected meanwhile are calculated later (debounce timer), not now."""
+        th = self._calc
+        if th is None:
+            return
+        if th.isRunning():
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+            try:
+                th.wait()
+            finally:
+                QtWidgets.QApplication.restoreOverrideCursor()
+        self._calc_done(th, th.job, th.result, restart=False)  # the queued signal is ignored afterwards
+
+    def _start_calc(self):
+        """Start the calculation of the curve in the background (or remember to do so after the running one)."""
+        if not self.has_model() or self._busy:
+            return
+        if self._calc is not None:
+            self._calc_again = True
+            return
+        self._calc_again = False
+        self._calc_t0 = time.perf_counter()
+        try:
+            job = self._make_job(background=True)
+        except Exception as exc:  # noqa: BLE001 -- keep the last good curve on screen
+            self._status(f"{type(exc).__name__}: {exc}", error=True)
+            return
+        th = _CalcThread(job["run"], self)
+        th.job = job
+        th.done.connect(lambda res, job=job, th=th: self._calc_done(th, job, res))
+        self._calc = th
+        self._status("calculating …")
+        th.start()
+
+    def _calc_done(self, th, job, res, restart=True):
+        if self._calc is not th:
+            return
+        th.wait()
+        th.deleteLater()
+        self._calc = None
+        if job["struct_gen"] == self._struct_gen and not self._busy:
+            for live, cp in job["pairs"]:
+                live.last_integration = getattr(cp, "last_integration", None)
+            if isinstance(res, Exception):
+                self._status(f"{type(res).__name__}: {res}", error=True)
+            else:
+                self._finish(job, res, self._calc_t0)
+        if self._calc_again and not self._busy:
+            if restart:
+                self._start_calc()
+            else:
+                self._timer.start()
 
     def _force_calc(self, *_):
         """Calculate now, whatever the auto setting."""
@@ -1091,6 +1211,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
     def _compute(self, q, k=None):
         """``(total, parts)``: I(q) of the model of data set ``k`` (None: the whole mixture) and scale_i * I_i(q) of every
         contribution (None for a contribution not assigned to data set ``k``)."""
+        self.wait_calc()
         if k is not None:
             model = self.model_for(k)
             with multidata.overridden(model, self.overrides_for(k)):
@@ -1104,12 +1225,14 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             return np.asarray(c.sq.evaluate_p(q, c.sq_p), dtype=float), []
         return self._compute_model(q, self.model_for(None))
 
-    def _compute_model(self, q, model):
+    def _compute_model(self, q, model, mode=None):
         """``(total, parts)`` of ``model`` at ``q``: P*S or P (structure factors left out), with its transform.
 
         The parts are scale_i * I_i(q) (MSAS: the single scattering of each contribution; SESANS G(δ)-G(0): the
-        transform of each contribution; SESANS P/P0: none)."""
-        mode = self.mode_combo.currentData()
+        transform of each contribution; SESANS P/P0: none). ``mode``: None = the plot mode of the window. Uses no Qt
+        object when ``mode`` is given (background calculation)."""
+        if mode is None:
+            mode = self.mode_combo.currentData()
         if mode == "S":
             return self._compute(q)
         removed = []
@@ -1152,38 +1275,86 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         return A * np.asarray(q, dtype=float) ** (-self.bgalpha_row.value) if A else 0.0
 
     def _redraw(self):
+        """Calculate and draw now, in the window's thread (the automatic recalculation runs in the background)."""
         if not self.has_model() or self._busy:
             return
+        self.wait_calc()
         t0 = time.perf_counter()
-        Id, parts = None, []  # the model at the data points (per data set); the contributions at the curve points
-        self._apply_links_to_rows()
-        curves = {}
         try:
-            q = self._q()
-            full = self._data_q() is not None
-            with warnings.catch_warnings(record=True) as caught:
-                warnings.simplefilter("always")
-                if not self.datasets:
-                    I, parts = self._compute(q)
-                else:  # per data set: one call for the curve and its data points
-                    Id = []
-                    dom = self._shown_domain
-                    for k, d in enumerate(self.datasets):
-                        if d.get("domain", "q") == dom:
-                            qq = np.concatenate([q, d["q"]]) if full else q
-                            both, pk = self._compute(qq, k)
-                            curves[k] = both[: q.size]
-                            Id.append(both[q.size:] if full else None)
-                        else:  # a data set on the other axis (q or δ): only its points, for chi²
-                            curves[k] = None
-                            Id.append(self._compute(d["q"], k)[0] if full else None)
-                            pk = []
-                        if k == self.current_ds:
-                            parts = [None if p is None else p[: q.size] for p in pk]
-                    I = curves[self.current_ds]
+            job = self._make_job(background=False)
+            res = job["run"]()
         except Exception as exc:  # noqa: BLE001 -- keep the last good curve on screen
             self._status(f"{type(exc).__name__}: {exc}", error=True)
             return
+        self._finish(job, res, t0)
+
+    def _make_job(self, background):
+        """Everything the calculation needs, read from the controls now. ``background``: copies of the models (the
+        controls may change them while the calculation runs) and a ``run`` that touches no Qt object."""
+        self._apply_links_to_rows()
+        q = self._q()
+        full = self._data_q() is not None
+        mode = self.mode_combo.currentData()
+        dom = self._shown_domain
+        cur = self.current_ds
+        pairs = []
+
+        def snap(m):
+            if not background:
+                return m
+            m2 = _copy_model(m)
+            pairs.extend(zip(m.contributions, m2.contributions))
+            return m2
+
+        if mode == "S":  # structure factor of the current contribution alone: no scale, no background
+            p = self.current_panel()
+            c = p.contrib if p is not None else None
+            if c is None or c.sq is None:
+                raise ValueError("the current contribution has no structure factor")
+            sq, sq_p = c.sq, np.array(c.sq_p, dtype=float, copy=True)
+
+            def compute_model(qq, _model, _mode):
+                return np.asarray(sq.evaluate_p(qq, sq_p), dtype=float), []
+        else:
+            compute_model = self._compute_model
+        if not self.datasets:
+            model = snap(self.model_for(None)) if mode != "S" else None
+
+            def run():
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    I, parts = compute_model(q, model, mode)
+                return {"I": I, "parts": parts, "curves": {}, "Id": None, "caught": caught}
+        else:
+            sets = []
+            for k, d in enumerate(self.datasets):
+                sets.append((k, d.get("domain", "q"), np.asarray(d["q"], float), snap(self.model_for(k)),
+                             dict(self.overrides_for(k))))  # fmt: skip
+
+            def run():
+                curves, Id, parts = {}, [], []
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    for k, domain, dq, model, ov in sets:
+                        with multidata.overridden(model, ov):
+                            if domain == dom:
+                                qq = np.concatenate([q, dq]) if full else q
+                                both, pk = compute_model(qq, model, mode)
+                                curves[k] = both[: q.size]
+                                Id.append(both[q.size:] if full else None)
+                            else:  # a data set on the other axis (q or δ): only its points, for chi²
+                                curves[k] = None
+                                Id.append(compute_model(dq, model, mode)[0] if full else None)
+                                pk = []
+                        if k == cur:
+                            parts = [None if p is None else p[: q.size] for p in pk]
+                return {"I": curves[cur], "parts": parts, "curves": curves, "Id": Id, "caught": caught}
+
+        return {"q": q, "run": run, "pairs": pairs, "struct_gen": self._struct_gen}
+
+    def _finish(self, job, res, t0):
+        """Draw the result of a calculation (window's thread)."""
+        q, I, parts, curves, Id, caught = job["q"], res["I"], res["parts"], res["curves"], res["Id"], res["caught"]
         if self.logy.isChecked() and not np.any(I > 0):  # matplotlib cannot draw a log axis without positive values
             self._status("no positive values to show on the logarithmic I axis (switch 'log I' off)", error=True)
             return
@@ -1714,6 +1885,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
 
     def set_busy(self, busy):
         """A fit is running (``True``): freeze the model controls; ``False``: redraw."""
+        if busy:
+            self.wait_calc()
         self._busy = bool(busy)
         self._left.setEnabled(not busy)
         self.menuBar().setEnabled(not busy)
@@ -1757,7 +1930,9 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
     # What the fit panel needs: the model, its parameters, a way back.
     def build_model(self):
         """A :class:`~pysasfit.studio.ModelFunction` of the mixture (the contributions are the live objects; with data
-        sets the background of the current one)."""
+        sets the background of the current one). Waits for a running background calculation (the caller evaluates
+        it in the window's thread)."""
+        self.wait_calc()
         return self.model_for(None)
 
     def parameter_entries(self):

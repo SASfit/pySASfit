@@ -851,6 +851,19 @@ TABLE = {
         "rules": [],
         "source_found": True,
     },
+    "ff_ribbon_mono": {
+        "params": [
+            ("A", 0.0, False, INF, False, "length"),
+            ("dummy", -INF, False, INF, False, "dummy"),
+            ("B", 0.0, False, INF, False, "length"),
+            ("dummy", -INF, False, INF, False, "dummy"),
+            ("C", 0.0, False, INF, False, "length"),
+            ("dummy", -INF, False, INF, False, "dummy"),
+            ("eta", -INF, False, INF, False, "sld"),
+        ],
+        "rules": [],
+        "source_found": True,
+    },
     "ff_ring_under_shearflow": {
         "params": [
             ("Rg", 0.0, False, INF, False, "length"),
@@ -1646,6 +1659,19 @@ TABLE = {
             ("dummy", 0.0, False, INF, False, "dummy"),
             ("psi", -INF, False, INF, False, "angle"),
             ("delta", -INF, False, INF, False, "length"),
+        ],
+        "rules": [],
+        "source_found": True,
+    },
+    "peaks_ribbon_w_sd": {
+        "params": [
+            ("A", 0.0, True, INF, False, "length"),
+            ("sigma_a", 0.0, True, INF, False, "dimensionless"),
+            ("B", 0.0, False, INF, False, "length"),
+            ("sigma_B", 0.0, False, INF, False, "dimensionless"),
+            ("C", 0.0, False, INF, False, "length"),
+            ("dummy", -INF, False, INF, False, "dummy"),
+            ("eta", -INF, False, INF, False, "sld"),
         ],
         "rules": [],
         "source_found": True,

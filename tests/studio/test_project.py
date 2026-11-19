@@ -149,7 +149,7 @@ def test_last_session_keeps_model_and_data_without_calculating(explorer, tmp_pat
         assert other.restore_session()
         for _ in range(5):
             QtWidgets.QApplication.processEvents()
-        assert not calls and not other._timer.isActive()             # nothing calculated
+        assert not calls and not other._timer.isActive() and not other.calculating()   # nothing calculated
         assert other._pending and other.calc_btn.text() == "Calculate *"
         assert [p.label() for p in other.panels()] == [p.label() for p in explorer.panels()]
         assert other.panels()[0].scale_row.value == 1.7 and other.bg_row.value == 0.01
@@ -162,9 +162,61 @@ def test_last_session_keeps_model_and_data_without_calculating(explorer, tmp_pat
         monkeypatch.setattr(E.ModelExplorer, "_session_path", staticmethod(lambda: str(tmp_path / "s.sasstudio")))
         monkeypatch.setattr(E.ModelExplorer, "_layout_path", staticmethod(lambda: str(tmp_path / "layout.json")))
         other.calc_btn.click()                                        # the user asks: now it is calculated
+        other.wait_calc()                                             # (in the background)
         assert other._last is not None and other.calc_btn.text() == "Calculate"
         other.forget_session()
         assert not (tmp_path / "s.sasstudio").exists()
     finally:
         other.close()
         other.deleteLater()
+
+
+def test_automatic_recalculation_runs_in_the_background(explorer, monkeypatch):
+    """Choosing a slow function must not freeze the window: the curve is calculated in a worker thread on a copy of
+    the model; changes during the calculation are calculated once afterwards; a calculation in the window's thread
+    waits for the running one."""
+    import threading
+    import time
+
+    from PySide6 import QtWidgets
+
+    from pysasfit.studio import model as M
+
+    w = explorer
+    w.autocalc.setChecked(True)
+    w.logy.setChecked(False)                             # the mock library's curve need not be positive
+    w.wait_calc()
+    for _ in range(5):                                   # first layout and drawing of the window
+        QtWidgets.QApplication.processEvents()
+    gate = threading.Event()
+    threads = []
+    orig = M.ScatteringContribution.intensity
+
+    def slow(self, q):
+        threads.append(threading.current_thread() is threading.main_thread())
+        gate.wait(5.0)
+        return orig(self, q)
+
+    monkeypatch.setattr(M.ScatteringContribution, "intensity", slow)
+    w._start_calc()
+    assert w.calculating()
+    t0 = time.perf_counter()
+    for _ in range(5):                                   # the window reacts while the model is evaluated
+        QtWidgets.QApplication.processEvents()
+    assert time.perf_counter() - t0 < 1.0 and w.calculating()
+    assert "calculating" in w.status.text()
+    p = w.panels()[0]
+    p.scale_row.set_value(2.5)                           # a change during the calculation: collected
+    w._start_calc()
+    assert w._calc_again
+    gate.set()
+    w.wait_calc()                                        # draws the first result, the second follows by the timer
+    assert w._last is not None and threads and not threads[0], w.status.text()
+    deadline = time.perf_counter() + 5.0
+    while (w.calculating() or w._timer.isActive()) and time.perf_counter() < deadline:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.01)
+    w.wait_calc()
+    monkeypatch.undo()
+    q, I = w._last
+    np.testing.assert_allclose(I, w.model_for(None)(q), rtol=1e-12)   # the curve belongs to the scale 2.5

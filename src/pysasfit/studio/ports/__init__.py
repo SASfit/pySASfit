@@ -232,6 +232,7 @@ def _load():
         pearls,
         polymers,
         reptation,
+        ribbon,
         sheared,
         shearflow,
         spheres,
@@ -251,6 +252,7 @@ def _load():
         micelles,
         fractals,
         guwelop,
+        ribbon,
     ):
         _register_module(mod)
 

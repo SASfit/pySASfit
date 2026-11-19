@@ -7,18 +7,25 @@ Formfactor               P_d(x) = F_d(x)^2
 Size distribution (Schulz-Zimm), mean X, z = (1-sigma^2)/sigma^2, weighted by x^s:
     <x^n> = (z+s+1)_n u^n,   u = X/(z+1)
 
-For every block three evaluation regimes are combined (Wagener & Foerster 2023):
-  I   power series in (qX)^2 with recursively computed coefficients
-  II  asymptotic expansion -> averages of x^-n cos/sin(kx) (closed form)
-  III (Porod) = non-oscillating leading part of II
-Series and asymptotics are chosen per element by an a-posteriori error estimate;
-a Gauss-Laguerre quadrature over the size distribution is the last resort.
+Evaluation (METHOD):
+  "integral" (default, 2026-11-18): one representation for all q, see schulz_kernel.py:
+      <f(qR)> = 2 int_0^T G(t) Re(1 - i q X t/(z+1))^-(z+s+1) dt
+  with the cosine-transform kernel G of the block (polynomial for d = 1, 3 and the core/shell cross terms,
+  elliptic for d = 2). Exact to rounding for every q and every z+s+1 > 0, no regime switching.
+  "hybrid": the original three regimes (Wagener & Foerster 2023):
+      I   power series in (qX)^2 with recursively computed coefficients
+      II  asymptotic expansion -> averages of x^-n cos/sin(kx) (closed form)
+      III (Porod) = non-oscillating leading part of II
+  chosen per element by an a-posteriori error estimate; a Gauss-Laguerre quadrature over the size
+  distribution is the last resort. Fails for broad distributions (z+s small, e.g. sigma = 0.5 with
+  s = 0..3: errors of 1e-2..1 for qX > 10, the closed forms need z+s+1 > 6), kept for comparison.
 """
 from __future__ import annotations
 import numpy as np
 from scipy.special import gammaln, roots_genlaguerre, spherical_jn, j1, sici
 
-TOL = 1e-6          # default target relative precision
+METHOD = "integral"  # "integral" (single exact representation) or "hybrid" (series/asymptotics/quadrature)
+TOL = 1e-6          # default target relative precision (hybrid)
 YCAP = 16.0         # series are not evaluated beyond q*X = YCAP
 NMAX = 400
 
@@ -251,6 +258,16 @@ class Block:
         y = np.asarray(y, float)
         if np.isinf(z):
             return self.mono(y, kind)
+        if METHOD == "integral" and z + s + 1 > 0:
+            from .schulz_kernel import block_value
+            return block_value(self.d, y, z, s, kind)
+        return self.value_hybrid(y, z, s, kind, tol)
+
+    def value_hybrid(self, y, z, s, kind='P', tol=TOL):
+        """The original series / asymptotics / quadrature combination (METHOD = "hybrid")."""
+        y = np.asarray(y, float)
+        if np.isinf(z):
+            return self.mono(y, kind)
         shape = y.shape
         y = np.abs(y.ravel())
         val, ok = self.series(y, z, s, kind, tol)
@@ -288,6 +305,9 @@ class Block:
         mono = lambda x: _line_int_mono(x)
         if np.isinf(z):
             return mono(y)
+        if METHOD == "integral" and z + s + 1 > 0:
+            from .schulz_kernel import line_integral_value
+            return line_integral_value(y, z, s)
         shape = y.shape
         y = np.abs(y.ravel())
         val, ok = self.series(y, z, s, 'P', tol, extra=lambda n: 1.0 / (2 * n + 1))
@@ -331,6 +351,9 @@ def cross3(a, b, y, z, s, tol=TOL):
     y = np.abs(np.asarray(y, float))
     if np.isinf(z):
         return BLOCK[3].mono(a * y, 'F') * BLOCK[3].mono(b * y, 'F')
+    if METHOD == "integral" and z + s + 1 > 0 and a > 0 and b > 0:
+        from .schulz_kernel import cross3_value
+        return cross3_value(a, b, y, z, s)
     shape = y.shape
     y = y.ravel()
     val = np.full(y.shape, np.nan)
