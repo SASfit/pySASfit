@@ -777,3 +777,237 @@ OVERRIDES["ff_spheroid_R"] = dict(_SP7)
 OVERRIDES["ff_spheroid_V"] = {**_SP7, "V": {"default": 1000.0, "lower": 0.0, "kind": "dimensionless", "doc": "volume (length³)"}}
 OVERRIDES["ff_spheroid_nu"] = {**_SP7, "nu": {"default": 2.0, "lower": 0.0, "kind": "dimensionless",
                                               "doc": "aspect ratio R_polar / R_equatorial"}}
+
+# batch 8 (2026-11-24): triaxial ellipsoidal shells (ports/triax_ellip_shell.py), thin ellipsoidal and cylindrical
+# shells with a size distribution (ports/thin_objects.py), hyperbranched polymers (ports/hyperbranched.py), helices
+# (ports/helix.py), cylinder cross sections with radial profiles (ports/fuzzy_cyl.py)
+_L8 = lambda d, doc: {"default": d, "lower": 0.0, "kind": "length", "doc": doc}  # noqa: E731
+_SIG8 = {"default": 0.0, "lower": 0.0, "kind": "dimensionless", "doc": "width of the log-normal distribution"}
+_TX8 = {"a": _L8(10.0, "core semi-axis a"), "b": _L8(5.0, "core semi-axis b"), "c": _L8(3.0, "core semi-axis c"),
+        "t": _L8(1.0, "shell thickness"),
+        "sigma": {"default": 0.0, "lower": 0.0, "kind": "dimensionless",
+                  "doc": "width of the log-normal distribution of the scaled lengths"},
+        "eta_c": {"default": 1.0}, "eta_sh": {"default": 0.5}, "eta_sol": {"default": 0.0}}
+for _s in ("", "_t", "_1", "_1t", "_2", "_2t", "_3", "_3t"):
+    OVERRIDES["ff_triax_ellip_shell" + _s] = dict(_TX8)
+OVERRIDES["ff_triax_ellip_shell_syl"] = {
+    "a": _L8(5.0, "core semi-axis a"), "delta_b": _L8(1.0, "b - a"), "delta_c": _L8(2.0, "c - b"),
+    "t": _L8(3.0, "shell thickness"), "eta_c": {"default": 1.0}, "eta_sh_dry": {"default": 0.5},
+    "eta_sol": {"default": 0.0},
+    "phi": {"default": 0.1, "lower": 0.0, "upper": 1.0, "kind": "fraction", "doc": "volume fraction of the cores"},
+    "v_pol_ap": {"default": 0.2, "lower": 0.0, "kind": "dimensionless", "doc": "polymer volume in the shell / V_core"}}
+_TH8 = {"t": _L8(4.0, "layer thickness (median)"), "sigma_t": _SIG8, "sigma_R0": _SIG8, "sigma_R": _SIG8,
+        "sigma_H": _SIG8, "sigma_H0": _SIG8,
+        "R0": _L8(50.0, "radius (median)"), "R": _L8(50.0, "radius (median)"),
+        "H": _L8(100.0, "height (median)"), "H0": _L8(100.0, "height (median)"),
+        "epsilon": {"default": 1.0, "lower": 0.0, "lower_open": True, "kind": "dimensionless",
+                    "doc": "axial ratio of the ellipsoid"},
+        "eta_l": {"default": 1.0}, "eta_sol": {"default": 0.0},
+        "sigma_out": {"default": 0.4, "lower": 0.0, "kind": "length", "doc": "width of the Gaussian head layers"},
+        "b_out": {"default": 1.0, "kind": "sld"},
+        "sigma_core": {"default": 0.5, "lower": 0.0, "kind": "length", "doc": "width of the Gaussian core layer"},
+        "b_core": {"default": -0.5, "kind": "sld"}}
+for _n in ("ff_ellsh_sd_homoxs", "ff_ellsh_sd_bilayergauss", "ff_cylsh_sd_homoxs", "ff_cylsh_sd_bilayergauss"):
+    OVERRIDES[_n] = dict(_TH8)
+_CB8 = {"zeta": {"default": 10.0, "lower": 1.0, "lower_open": True, "kind": "count", "doc": "side chains per backbone"},
+        "lambda": {"default": 0.5, "lower": 0.0, "upper": 1.0, "kind": "fraction", "doc": "backbone mass fraction"},
+        "I0": {"default": 1.0}}
+OVERRIDES["ff_comb_hetero"] = {"a": _L8(5.0, "radius of gyration"), **_CB8}
+OVERRIDES["ff_comb_random"] = {"a": _L8(5.0, "radius of gyration"), **_CB8}
+OVERRIDES["ff_comb_regular"] = {"Rg": _L8(5.0, "radius of gyration"), **_CB8}
+OVERRIDES["ff_ideal_dendrimer"] = {"a": _L8(1.0, "segment radius of gyration"),
+                                   "g": {"default": 3.0, "lower": 0.0, "upper": 9.0, "kind": "count",
+                                         "doc": "generation (fractional values interpolate)"}}
+OVERRIDES["ff_fract_hyperbranched_polym"] = {
+    "Rg": _L8(5.0, "radius of gyration"),
+    "d": {"default": 2.0, "lower": 1.0, "upper": 3.0, "kind": "dimensionless", "doc": "fractal dimension"},
+    "C": {"default": 0.5, "lower": 0.0, "upper": 1.0, "kind": "dimensionless", "doc": "branching parameter"}}
+OVERRIDES["ff_f_funct_homo_polym"] = {
+    "sigma": {"default": 1.0, "lower": 0.0, "lower_open": True, "kind": "length", "doc": "segment length"},
+    "f": {"default": 3.0, "lower": 1.0, "lower_open": True, "kind": "count", "doc": "functionality"},
+    "alpha": {"default": 0.2, "lower": 0.0, "upper": 1.0, "kind": "fraction", "doc": "branching probability"},
+    "type": {"default": 1.0, "lower": 0.0, "upper": 3.0, "kind": "count", "doc": "0: Zimm, 1: Burchard, 2, 3: excl. vol."}}
+_HX8 = {"P": _L8(5.0, "pitch"), "H": _L8(50.0, "height of the helix"), "eta_solv": {"default": 0.0}}
+OVERRIDES["ff_round_helix"] = {**_HX8, "r1": _L8(0.5, "strand radius 1"), "delta_1": _L8(1.5, "helix radius 1"),
+                               "r2": _L8(0.5, "strand radius 2"), "delta_2": _L8(1.5, "helix radius 2"),
+                               "alpha": {"default": 180.0, "kind": "angle", "unit": "deg",
+                                         "doc": "phase shift of strand 2"},
+                               "eta_1": {"default": 1.0}, "eta_2": {"default": 1.0}}
+OVERRIDES["ff_beads_helix"] = {**_HX8, "R": _L8(0.4, "bead radius"), "D": _L8(3.0, "helix diameter"),
+                               "n": {"default": 10.0, "lower": 0.0, "kind": "count", "doc": "beads per pitch"},
+                               "eta_b": {"default": 1.0}}
+OVERRIDES["ff_fan_helix"] = {**_HX8, "R": _L8(2.0, "outer radius of the blades"),
+                             "a": {"default": 0.3, "lower": 0.0, "upper": 1.0, "upper_open": True,
+                                   "kind": "fraction", "doc": "inner / outer radius"},
+                             "omega": {"default": 60.0, "lower": 0.0, "kind": "angle", "unit": "deg",
+                                       "doc": "opening angle of a blade"},
+                             "phi": {"default": 180.0, "kind": "angle", "unit": "deg", "doc": "angle between the blades"},
+                             "eta_h": {"default": 1.0}}
+OVERRIDES["ff_superhelices_straight"] = {"R1": _L8(1.5, "helix radius"),
+                                         "P": {"default": 5.0, "lower": 0.0, "lower_open": True, "kind": "length",
+                                               "doc": "pitch"},
+                                         "H": _L8(50.0, "height")}
+OVERRIDES["ff_superhelices_coiled"] = {
+    "R1": _L8(0.5, "radius of the small helix"), "R2": _L8(2.0, "radius of the big helix"),
+    "N": {"default": 4.0, "lower": 0.0, "kind": "count", "doc": "turns of the small helix per turn of the big one"},
+    "P": _L8(6.0, "pitch of the big helix"),
+    "turns": {"default": 2.0, "lower": 0.0, "kind": "dimensionless", "doc": "turns of the big helix"}}
+_PC8 = {"R0": _L8(5.0, "radius (median)"), "R": _L8(5.0, "radius"), "sigma_R0": _SIG8,
+        "alpha": {"default": 4.0, "lower": 2.0, "lower_open": True, "kind": "dimensionless",
+                  "doc": "profile exponent: (1 - r²/R²)^(alpha/2 - 2)"},
+        "Delta eta": {"default": 1.0, "kind": "sld"},
+        "sigma": {"default": 0.5, "lower": 0.0, "kind": "length", "doc": "width of the Gaussian smearing"},
+        "eta_cyl": {"default": 1.0}, "eta_sol": {"default": 0.0},
+        "t": _L8(2.0, "shell thickness"), "eta_c": {"default": 1.0}, "eta_sh_i": {"default": 0.7},
+        "eta_sh_o": {"default": 0.2}}
+for _n in ("ff_boucher_cyl", "ff_profile_boucher_cyl", "ff_profile_boucher2_cyl", "ff_fuzzy_cyl",
+           "ff_profile_fuzzy_cyl", "ff_linsh_cyl", "ff_profile_linsh_cyl"):
+    OVERRIDES[_n] = dict(_PC8)
+OVERRIDES["ff_boucher2_cyl"] = {**_PC8, "alpha": {"default": 4.0, "lower": 0.0, "lower_open": True,
+                                                  "kind": "dimensionless", "doc": "profile exponent"}}
+_RC8 = {"Rc": _L8(5.0, "core radius"), "t": _L8(5.0, "shell thickness"),
+        "alpha": {"default": 1.0, "kind": "dimensionless", "doc": "shape of the exponential shell profile"},
+        "sigma_s": {"default": 0.5, "lower": 0.0, "kind": "length", "doc": "width of the Fermi cut-off"},
+        "eta_c": {"default": 1.0}, "eta_sh_in": {"default": 0.8}, "eta_sh_out": {"default": 0.2},
+        "eta_solv": {"default": 0.0}}
+OVERRIDES["ff_rc_exp_sh_cyl"] = dict(_RC8)
+OVERRIDES["ff_rc_exp_sh_cyl_profile"] = dict(_RC8)
+RULES["ff_f_funct_homo_polym"] = [
+    Rule(lambda p: p[2] == 0 or p[1] < (1.0 + p[2]) / p[2], "f < (1 + alpha)/alpha"),
+    Rule(lambda p: p[1] <= 1.0 or p[2] * (p[1] - 1.0) < 1.0, "alpha < 1/(f - 1)"),
+]
+RULES["ff_superhelices_straight"] = [Rule(lambda p: p[5] > 0, "P > 0")]
+
+
+def _syl_w_ok(p):
+    a, t = p[0], p[3]
+    b = a + p[1]
+    c = b + p[2]
+    vc = a * b * c
+    return p[8] * vc <= (a + t) * (b + t) * (c + t) - vc
+
+
+RULES["ff_triax_ellip_shell_syl"] = [Rule(_syl_w_ok, "w < 0: polymer volume v_pol_ap V_core larger than the shell")]
+
+# batch 9 (2026-11-24): peaks and distributions with complete statistics in _v (ports/distributions.py): trapezoidal
+# peaks, q-exponential/-Gaussian/-Weibull, kappa-generalized gamma/logistic, generalized distributions (GEV, GH, GIG,
+# generalized normal, exponentiated generalized Pareto), metalog, t_r_y size distributions
+_D9 = lambda d, doc, **kw: {"default": d, "kind": "dimensionless", "doc": doc, **kw}  # noqa: E731
+_POS9 = lambda d, doc, kind="dimensionless": {"default": d, "lower": 0.0, "lower_open": True, "kind": kind,  # noqa: E731
+                                              "doc": doc}
+_PK9 = {"A": {"default": 1.0, "kind": "dimensionless", "doc": "amplitude (area or height)"},
+        "c0": {"default": 0.0, "kind": "dimensionless", "doc": "constant background"},
+        "y0": {"default": 0.0, "kind": "dimensionless", "doc": "constant background"}}
+_TZ9 = {**_PK9, "alpha": _D9(0.1, "start of the rising edge"), "beta": _D9(0.3, "start of the plateau"),
+        "gamma": _D9(0.6, "end of the plateau"), "delta": _D9(1.0, "end of the falling edge"),
+        "phi": _POS9(1.0, "relative height of the plateau"),
+        "n1": _POS9(2.0, "shape exponent of the rising edge"), "n3": _POS9(2.0, "shape exponent of the falling edge"),
+        "center": _D9(0.5, "peak centre"), "wp": {"default": 0.4, "lower": 0.0, "kind": "dimensionless",
+                                                  "doc": "plateau width"},
+        "we": {"default": 0.2, "lower": 0.0, "kind": "dimensionless", "doc": "edge width"},
+        "w1": {"default": 0.4, "lower": 0.0, "kind": "dimensionless", "doc": "width of the first box"},
+        "w2": {"default": 0.2, "lower": 0.0, "kind": "dimensionless", "doc": "width of the second box"},
+        "sigma": {"default": 0.05, "lower": 0.0, "kind": "dimensionless", "doc": "Gaussian smoothing width"}}
+for _n in ("ff_trapez__area", "ff_symm__trapez__area", "ff_general__trapez__area", "ff_symm__general__trapez__area",
+           "ff_trapez__ampl_", "ff_symm__trapez__ampl_", "ff_general__trapez__ampl_",
+           "ff_symm__general__trapez__ampl_", "ff_smoothed_symm_trapez_area", "ff_smoothed_symm_trapez_ampl"):
+    OVERRIDES[_n] = dict(_TZ9)
+for _n in ("ff_symm__general__trapez__area", "ff_symm__general__trapez__ampl_"):
+    OVERRIDES[_n] = {**_TZ9, "wp": _POS9(0.4, "plateau width"), "we": _POS9(0.2, "edge width")}
+_Q9 = {**_PK9, "q": _D9(1.5, "entropic index q"), "lambda": _POS9(2.0, "rate"), "beta": _POS9(2.0, "inverse width"),
+       "kappa": _POS9(2.0, "Weibull shape"), "shift": _D9(0.0, "location")}
+for _n in ("ff_q_exponential__area_", "ff_q_gaussian__area_", "ff_q_weibull__area_", "ff_q_exponential__ampl_",
+           "ff_q_gaussian__ampl_", "ff_q_weibull__ampl_"):
+    OVERRIDES[_n] = dict(_Q9)
+_KP9 = {**_PK9, "sigma": _POS9(1.0, "scale"), "xi": _D9(0.0, "location (lower end)"),
+        "kappa": _D9(0.3, "Kaniadakis kappa", lower=0.0, upper=1.0, upper_open=True),
+        "alpha": _POS9(1.0, "shape exponent"), "beta": _POS9(1.0, "rate"), "nu": _POS9(1.0, "shape"),
+        "lambda": _POS9(1.0, "logistic shape")}
+for _n in ("ff_kappa_generalized_gamma_distribution__area_", "ff_kappa_generalized_gamma_distribution__ampl_",
+           "ff_kappa_logistic_distribution__area_", "ff_kappa_logistic_distribution__ampl_"):
+    OVERRIDES[_n] = dict(_KP9)
+for _n, _o in (("exponentiated_generalized_pareto", {"sigma": _POS9(1.0, "scale"), "xi": _D9(0.2, "shape")}),
+               ("generalized_extreme_value", {"sigma": _POS9(1.0, "scale"), "xi": _D9(0.1, "shape"),
+                                              "mu": _D9(0.5, "location")}),
+               ("generalized_hyperbolic", {"lambda": _D9(1.0, "index"), "alpha": _POS9(2.0, "tail steepness"),
+                                           "beta": _D9(0.5, "asymmetry"), "delta": _POS9(1.0, "scale"),
+                                           "mu": _D9(0.5, "location")}),
+               ("generalized_inverse_gaussian", {"theta": _POS9(1.0, "concentration"), "eta": _POS9(1.0, "scale"),
+                                                 "p": _D9(1.0, "index")}),
+               ("generalized_normal", {"alpha": _POS9(1.0, "scale"), "kappa": _D9(0.1, "shape"),
+                                       "xi": _D9(0.5, "location")})):
+    for _s in ("__area_", "__ampl_"):
+        OVERRIDES["ff_" + _n + _s] = {**_PK9, **_o}
+_ML9 = {"N": {"default": 1.0, "kind": "dimensionless", "doc": "number density"},
+        "bl": _D9(0.0, "lower bound"), "bu": _D9(1.0, "upper bound"),
+        "alpha": _D9(0.0, "intensity weighting x^-alpha"),
+        **{f"a{_i}": _D9(0.0, f"metalog coefficient a{_i}") for _i in range(3, 11)}}
+OVERRIDES["sd_metalog_clipped"] = {**_ML9, "a1": _D9(0.5, "metalog coefficient a1"),
+                                   "a2": _D9(0.1, "metalog coefficient a2")}
+OVERRIDES["sd_metalog_log_clipped"] = {**_ML9, "bu": _D9(5.0, "upper bound"),
+                                       "a1": _D9(0.0, "metalog coefficient a1"),
+                                       "a2": _D9(0.3, "metalog coefficient a2")}
+OVERRIDES["sd_metalog_logit"] = {**_ML9, "a1": _D9(0.0, "metalog coefficient a1"),
+                                 "a2": _D9(0.5, "metalog coefficient a2")}
+_TR9 = {"N": {"default": 1.0, "kind": "dimensionless", "doc": "number density"},
+        "bl": {"default": 0.0, "kind": "length", "doc": "lower clipping bound"},
+        "bu": {"default": 100.0, "kind": "length", "doc": "upper clipping bound"}}
+OVERRIDES["sd_fgld_"] = {**_TR9, "kappa": _D9(1.0, "flattening"), "alpha": _D9(10.0, "location"),
+                         "beta": _POS9(1.0, "scale"), "delta": _D9(0.0, "asymmetry (atan mapped)")}
+OVERRIDES["sd_egu_w_l"] = {**_TR9, "k": _POS9(1.0, "shape k"), "alpha": _POS9(2.0, "shape alpha"),
+                           "beta": _POS9(1.0, "shape beta"), "c": _POS9(1.0, "shape c"),
+                           "lambda": _POS9(5.0, "scale")}
+OVERRIDES["sd_w_l_e_"] = {**_TR9, "theta": _POS9(1.0, "Lindley theta"), "alpha": _POS9(1.0, "Weibull shape"),
+                          "beta": _POS9(1.0, "Weibull scale")}
+OVERRIDES["sd_n_l_c_"] = {**_TR9, "theta": _POS9(1.0, "Lindley theta"), "mu": _D9(0.0, "Cauchy location"),
+                          "sigma": _POS9(1.0, "Cauchy scale")}
+OVERRIDES["sd_n_u_gl__"] = {"N": {"default": 1.0, "kind": "dimensionless", "doc": "number density"},
+                            "a": {"default": 0.0, "kind": "length", "doc": "lower end"},
+                            "b": {"default": 25.0, "kind": "length", "doc": "upper end"},
+                            "lambda2": _D9(-1.0, "GL lambda2 (< 0)", upper=0.0, upper_open=True),
+                            "lambda3": _D9(-1.0, "GL lambda3 (< 0)", upper=0.0, upper_open=True),
+                            "lambda4": _D9(-1.0, "GL lambda4 (< 0)", upper=0.0, upper_open=True)}
+OVERRIDES["sd_u_e_gl__"] = {"N": {"default": 1.0, "kind": "dimensionless", "doc": "number density"},
+                            "theta": _POS9(0.2, "exponential rate"), "lambda3": _POS9(1.0, "GL lambda3"),
+                            "lambda4": _POS9(1.0, "GL lambda4")}
+for _n in ("ff_q_exponential__area_", "ff_q_exponential__ampl_", "ff_q_weibull__area_", "ff_q_weibull__ampl_"):
+    RULES[_n] = [Rule(lambda p: p[1] < 2.0, "q < 2 (normalisable)")]
+for _n in ("ff_q_gaussian__area_", "ff_q_gaussian__ampl_"):
+    RULES[_n] = [Rule(lambda p: p[1] < 3.0, "q < 3 (normalisable)")]
+RULES["ff_q_weibull__ampl_"] = RULES["ff_q_weibull__ampl_"] + [Rule(lambda p: p[3] >= 1.0, "kappa >= 1")]
+for _n in ("ff_kappa_generalized_gamma_distribution__area_", "ff_kappa_generalized_gamma_distribution__ampl_"):
+    RULES[_n] = [Rule(lambda p: p[3] * p[6] < 1.0, "nu < 1/kappa")]
+for _n in ("ff_generalized_hyperbolic__area_", "ff_generalized_hyperbolic__ampl_"):
+    RULES[_n] = [Rule(lambda p: p[2] ** 2 > p[3] ** 2, "alpha^2 > beta^2")]
+for _n in ("sd_metalog_clipped", "sd_metalog_log_clipped", "sd_metalog_logit"):
+    RULES[_n] = [Rule(lambda p: p[1] != p[2], "bl != bu")]
+
+
+# domains 2026-11-24: scattering length densities, contrasts and excess scattering lengths may be negative (the
+# template checks "eta < 0" / "beta_r < 0" were removed from the C code as well)
+for _n, _ps in {"ff_porodcylinder": ["eta"], "ff_porodcylinder_v2": ["eta"], "ff_flatcylinder": ["eta"], "ff_rod": ["eta"],
+                "ff_teubner_strey": ["eta"], "ff_kratkysphere": ["eta"], "ff_pearl_necklace": ["beta_r", "beta_s"],
+                "ff_pearl_necklace_mod": ["beta_r", "beta_s"], "ff_pearl_necklace_ext": ["beta_r", "beta_s"],
+                "ff_multilamellar_vesicle": ["eta_shell", "eta_sol"]}.items():
+    for _p in _ps:
+        OVERRIDES.setdefault(_n, {}).setdefault(_p, {})
+        OVERRIDES[_n][_p] = {**OVERRIDES[_n][_p], "lower": -INF, "lower_open": False}
+
+# defaults and domains set by J. Kohlbrecher in sasfit_sphericalshells.h (table cells, 2026-11-24); the header
+# is the reference, the ports follow it
+_SPH_HDR = {
+    "ff_hollow_sphere": {"R": {"default": 10.0}, "eta": {"default": 1e10}},
+    "ff_multilamellar_vesicle": {"R_c": {"default": 10.0}, "t_sh": {"default": 2.0}, "t_sol": {"default": 1.0},
+                                 "eta_shell": {"default": 1.0}, "eta_sol": {"default": 1.2}, "n": {"default": 2.0}},
+    "ff_sphere": {"eta": {"default": 1e10}},
+    # inner radius R2 in [0;R1], outer radius R1 in [R2;+inf) (J. Kohlbrecher 2026-11-24): C check R2 > R1 -> rule in param_table
+    "ff_spherical_shell_i": {"R2": {"default": 8.0}, "mu": {"default": -2.0}, "eta": {"default": 1e10}},
+    # nu: the header said default 3 in [0;+inf), but nu*R is the inner radius and the C code requires 0 <= nu < 1:
+    # the port keeps nu in [0;1) and the header row was corrected
+    "ff_spherical_shell_ii": {"mu": {"default": -2.0}, "eta": {"default": 1e10}},
+    "ff_spherical_shell_iii": {"R": {"default": 10.0}, "eta1": {"default": 1e10}, "eta2": {"default": -0.5e10}},
+}
+for _n, _ps in _SPH_HDR.items():
+    for _p, _v in _ps.items():
+        OVERRIDES.setdefault(_n, {}).setdefault(_p, {})
+        OVERRIDES[_n][_p] = {**OVERRIDES[_n][_p], **_v}

@@ -66,10 +66,17 @@ scalar sasfit_ff_pcs_bilayergauss(scalar q, sasfit_param * param)
 
 scalar sasfit_ff_pcs_bilayergauss_f(scalar q, sasfit_param * param)
 {
+    scalar nuStart, nuEnd;
 	SASFIT_ASSERT_PTR(param); // assert pointer param is valid
-
-	// insert your code here
-	return 0.0;
+	// 2026-11-24: was a stub returning 0 (so EllSh+SD+BiLayerGauss_f was 0); amplitude <Fcore + 2 Fout cos(q D nu/2)>
+    P=1;
+    Q=q;
+    if (SIGMA_D==0) {
+        return bilayergauss(1,param);
+    } else {
+        find_LogNorm_int_range(1,1,SIGMA_D,&nuStart,&nuEnd,param);
+        return sasfit_integrate(nuStart,nuEnd,&LogNormBiLayerGauss,param);
+    }
 }
 
 scalar sasfit_ff_pcs_bilayergauss_v(scalar q, sasfit_param * param, int dist)

@@ -104,10 +104,11 @@ def test_header_defaults_round_trip(tmp_path):
         " *       <td>contrast</td>\r\n *      </tr></table>\r\n */\r\n"
         "/* ################ stop ff_sphere ################ */\r\n"
     )
-    line = W.defaults_line(ports.get("ff_sphere").params)
-    new, status = W.update_header(text, "ff_sphere", line, "\r\n")
-    assert status == "added" and "\n" not in new.replace("\r\n", "")
-    again, status2 = W.update_header(new, "ff_sphere", line, "\r\n")
+    prm = ports.get("ff_sphere").params
+    new, status, notes = W.update_header(text, "ff_sphere", prm, "\r\n")
+    assert status == "written" and not notes and "\n" not in new.replace("\r\n", "")
+    assert "<td>(default=10)</td>" in new and "<td>[0;+inf)</td>" in new
+    again, status2, _ = W.update_header(new, "ff_sphere", prm, "\r\n")
     assert status2 == "unchanged" and again == new
     path = tmp_path / "sasfit_x.h"
     path.write_bytes(new.encode())
@@ -118,7 +119,7 @@ def test_header_defaults_round_trip(tmp_path):
         math.inf,
     )
     assert (
-        info.parameters[3].default == 1.0
+        info.parameters[3].default == prm[3].default
         and info.parameters[3].description == "contrast"
     )
 

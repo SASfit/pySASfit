@@ -246,6 +246,11 @@ def _load():
         stochastic,
         worms,
         thin_objects,
+        triax_ellip_shell,
+        hyperbranched,
+        helix,
+        fuzzy_cyl,
+        distributions,
     )
 
     for mod in (
@@ -272,6 +277,11 @@ def _load():
         thin_objects,
         cylinders,
         ellipsoidal_shell,
+        triax_ellip_shell,
+        hyperbranched,
+        helix,
+        fuzzy_cyl,
+        distributions,
     ):
         _register_module(mod)
 

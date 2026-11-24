@@ -180,7 +180,17 @@ def _parse_bounds(s):
     return (float("-inf"), float("inf"))
 
 
+_NUM = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?|[-+]?inf"
+#: table cells of a parameter row: "(default=10)" and the domain "[0;+inf)", "(-inf;+inf)", "(0;1]"
+_CELL_DEFAULT = re.compile(rf"^\(\s*default\s*=\s*({_NUM})\s*\)$", re.I)
+_BOUND = rf"{_NUM}|[A-Za-z_][\w.]*"   # a number or the name of another parameter ("[R1;+inf)")
+_CELL_DOMAIN = re.compile(rf"^([\[(])\s*({_BOUND})\s*;\s*({_BOUND})\s*([\])])$", re.I)
+
+
 def _parse_parameters(block):
+    """Parameter rows of the table: name (``\\b`` cell), description, and optionally the cells
+    ``(default=value)`` and the domain ``[lo;hi)`` (any order after the name). Older tables with plain numbers
+    in the 3rd/4th cell are read positionally."""
     params = []
     cur = None
     for raw in _CELL.findall(block):
@@ -193,20 +203,39 @@ def _parse_parameters(block):
             cur.append(_clean(cell))
     out = []
     for c in params:
-        out.append(
-            ParameterInfo(
-                name=c[0],
-                description=c[1] if len(c) > 1 else "",
-                default=_parse_float(c[2]) if len(c) > 2 else 0.0,
-                bounds=_parse_bounds(c[3]) if len(c) > 3 else (float("-inf"), float("inf")),
-            )
-        )
+        desc, default, bounds, rest, found, domain = None, None, None, [], False, ""
+        for cell in c[1:]:
+            md = _CELL_DEFAULT.match(cell)
+            mb = _CELL_DOMAIN.match(cell)
+            if md:
+                default, found = float(md.group(1)), True
+            elif mb:
+                lo, hi = (_parse_float(mb.group(2), float("-inf")), _parse_float(mb.group(3), float("inf")))
+                bounds, found, domain = (lo, hi), True, cell
+            elif desc is None:
+                desc = cell
+            else:
+                rest.append(cell)
+        if not found and len(c) > 2:  # legacy: positional default and bounds
+            default = _parse_float(c[2])
+            bounds = _parse_bounds(c[3]) if len(c) > 3 else None
+        info = ParameterInfo(name=c[0], description=desc or "", default=0.0 if default is None else default,
+                             bounds=bounds if bounds is not None else (float("-inf"), float("inf")))  # fmt: skip
+        info.in_table = found
+        info.domain = domain    # the domain cell as written ("[R1;+inf)": bound given by another parameter)
+        out.append(info)
     return out
 
 
 def _with_defaults(params, sec):
+    """The older paragraph "\\par Default values and domains:" fills in parameters without table cells."""
+    if params and all(getattr(p, "in_table", False) for p in params):
+        return params
     d = _DEFAULTS.search(sec)
-    return _apply_defaults(params, d.group(1)) if d and params else params
+    if not (d and params):
+        return params
+    filled = _apply_defaults(params, d.group(1))
+    return [p if getattr(p, "in_table", False) else f for p, f in zip(params, filled)]
 
 
 def parse_header(filename):

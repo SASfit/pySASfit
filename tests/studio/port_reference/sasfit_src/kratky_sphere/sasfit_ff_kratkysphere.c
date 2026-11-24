@@ -44,7 +44,7 @@ scalar sasfit_ff_kratkysphere(scalar q, sasfit_param * param)
 	SASFIT_CHECK_COND1((q < 0.0), param, "q(%lg) < 0",q);
 	SASFIT_CHECK_COND1((R < 0.0), param, "R(%lg) < 0",R); // modify condition to your needs
 	SASFIT_CHECK_COND1((DELTA_Q_PERP < 0.0), param, "Delta_q_perp(%lg) < 0",DELTA_Q_PERP); // modify condition to your needs
-	SASFIT_CHECK_COND1((ETA < 0.0), param, "eta(%lg) < 0",ETA); // modify condition to your needs
+	// SASFIT_CHECK_COND1((ETA < 0.0), param, "eta(%lg) < 0",ETA); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
 	SASFIT_CHECK_COND1((D <= 1.0), param, "D(%lg) <= 1",D); // modify condition to your needs
 
 	// insert your code here

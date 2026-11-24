@@ -41,7 +41,7 @@ scalar sasfit_ff_flatcylinder(scalar q, sasfit_param * param)
 	SASFIT_CHECK_COND1((R < 0.0), param, "R(%lg) < 0",R); // modify condition to your needs
 	SASFIT_CHECK_COND1((L < 0.0), param, "L(%lg) < 0",L); // modify condition to your needs
 
-	SASFIT_CHECK_COND1((ETA < 0.0), param, "eta(%lg) < 0",ETA); // modify condition to your needs
+	// SASFIT_CHECK_COND1((ETA < 0.0), param, "eta(%lg) < 0",ETA); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
 
 	// insert your code here
     V = M_PI*R*R*L;

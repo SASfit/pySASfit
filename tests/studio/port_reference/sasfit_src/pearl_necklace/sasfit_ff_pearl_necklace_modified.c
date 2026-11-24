@@ -25,8 +25,8 @@ scalar sasfit_ff_pearl_necklace_mod(scalar q, sasfit_param * param)
 	SASFIT_CHECK_COND1((q < 0.0), param, "q(%lg) < 0",q);
 	SASFIT_CHECK_COND1((R < 0.0), param, "R(%lg) < 0",R); // modify condition to your needs
 	SASFIT_CHECK_COND1((L < 0.0), param, "L(%lg) < 0",L); // modify condition to your needs
-	SASFIT_CHECK_COND1((BETA_R < 0.0), param, "beta_r(%lg) < 0",BETA_R); // modify condition to your needs
-	SASFIT_CHECK_COND1((BETA_S < 0.0), param, "beta_s(%lg) < 0",BETA_S); // modify condition to your needs
+	// SASFIT_CHECK_COND1((BETA_R < 0.0), param, "beta_r(%lg) < 0",BETA_R); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
+	// SASFIT_CHECK_COND1((BETA_S < 0.0), param, "beta_s(%lg) < 0",BETA_S); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
 	SASFIT_CHECK_COND1((NP < 0.0), param, "Np(%lg) < 0",NP); // modify condition to your needs
 
 	// insert your code here

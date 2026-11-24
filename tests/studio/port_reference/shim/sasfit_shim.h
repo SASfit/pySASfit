@@ -50,6 +50,14 @@ int sasfit_cubature(size_t ndim, const double *xmin, const double *xmax, sasfit_
 /* sasfit_common utilities used by sheared_objects */
 #ifndef FALSE
 #define FALSE 0
+/* batch 9 (distributions, peaks): sasfit_common utilities */
+typedef scalar sasfit_func_vol_t(scalar, sasfit_param *, int);
+typedef scalar sasfit_func_one_t(scalar, sasfit_param *);
+scalar sasfit_invert_func_v(scalar u, sasfit_func_vol_t *f, int dist, scalar bl, scalar bu, sasfit_param *param);
+scalar sasfit_eps_get_comp(void);
+scalar sasfit_erfcinv(scalar y);
+scalar sasfit_gammaincinv(scalar a, scalar y);
+double r8_besk(double nu, double x);
 #endif
 #define SASFIT_CHECK_SUB_ERR(param, sub) do { (void)(sub); } while (0)
 scalar find_LogNorm_int_range(scalar dim, scalar x0, scalar sigma, scalar *Xstart, scalar *Xend, sasfit_param *param);
@@ -60,10 +68,12 @@ double im_cerfi_z(double x, double y);
 /* sasfit_common */
 #define EMPTY ((scalar *)0)
 /* sasfit_common.h: what the _v function of a distribution returns */
+/* same order as enum sasfit_dist in sasfit_common.h (before batch 9 the shim had MEDIAN/MEAN/MODE/VARIANCE in a
+ * different order; only the names were used so far) */
 typedef enum {
     DISTRIBUTION_TYPE, DISTRIBUTION_QUANTILE, DISTRIBUTION_QUANTILE_DENS, DISTRIBUTION_PROBABILITY,
-    DISTRIBUTION_CUMULATIVE, DISTRIBUTION_MEDIAN, DISTRIBUTION_MEAN, DISTRIBUTION_MODE, DISTRIBUTION_VARIANCE,
-    DISTRIBUTION_SKEWNESS, DISTRIBUTION_EXCESS_KURTOSIS
+    DISTRIBUTION_CUMULATIVE, DISTRIBUTION_MODE, DISTRIBUTION_MEAN, DISTRIBUTION_VARIANCE, DISTRIBUTION_MEDIAN,
+    DISTRIBUTION_SKEWNESS, DISTRIBUTION_EXCESS_KURTOSIS, DISTRIBUTION_X_MOMENT_MIN, DISTRIBUTION_X_MOMENT_MAX
 } sasfit_distribution_kind;
 #define SASFIT_RETURNVAL_ON_ERROR 0.0
 #define DBGINFO(s) s
@@ -75,6 +85,14 @@ scalar sasfit_eps_get_robertus_p(void);
 scalar sasfit_2f1(scalar a, scalar b, scalar c, scalar x, sasfit_param *param);
 #ifndef GSL_POSINF
 #define GSL_POSINF (1.0/0.0)
+/* batch 9 (distributions, peaks): sasfit_common utilities */
+typedef scalar sasfit_func_vol_t(scalar, sasfit_param *, int);
+typedef scalar sasfit_func_one_t(scalar, sasfit_param *);
+scalar sasfit_invert_func_v(scalar u, sasfit_func_vol_t *f, int dist, scalar bl, scalar bu, sasfit_param *param);
+scalar sasfit_eps_get_comp(void);
+scalar sasfit_erfcinv(scalar y);
+scalar sasfit_gammaincinv(scalar a, scalar y);
+double r8_besk(double nu, double x);
 #endif
 scalar sasfit_rwbrush_w(scalar Q, scalar R);
 scalar sasfit_gauss_fc(scalar Q, scalar R);
@@ -107,4 +125,12 @@ void sasfit_param_set_polar_theta(scalar v);
 scalar sasfit_param_get_polar_phi(void);
 scalar sasfit_param_get_polar_theta(void);
 
+/* batch 9 (distributions, peaks): sasfit_common utilities */
+typedef scalar sasfit_func_vol_t(scalar, sasfit_param *, int);
+typedef scalar sasfit_func_one_t(scalar, sasfit_param *);
+scalar sasfit_invert_func_v(scalar u, sasfit_func_vol_t *f, int dist, scalar bl, scalar bu, sasfit_param *param);
+scalar sasfit_eps_get_comp(void);
+scalar sasfit_erfcinv(scalar y);
+scalar sasfit_gammaincinv(scalar a, scalar y);
+double r8_besk(double nu, double x);
 #endif

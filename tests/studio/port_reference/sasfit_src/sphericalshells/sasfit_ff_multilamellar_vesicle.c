@@ -22,8 +22,8 @@ scalar sasfit_ff_multilamellar_vesicle(scalar q, sasfit_param * param)
 	SASFIT_CHECK_COND1((R_C < 0.0), param, "R_c(%lg) < 0",R_C); // modify condition to your needs
 	SASFIT_CHECK_COND1((T_SH < 0.0), param, "t_sh(%lg) < 0",T_SH); // modify condition to your needs
 	SASFIT_CHECK_COND1((T_SOL < 0.0), param, "t_sol(%lg) < 0",T_SOL); // modify condition to your needs
-	SASFIT_CHECK_COND1((ETA_SHELL < 0.0), param, "eta_shell(%lg) < 0",ETA_SHELL); // modify condition to your needs
-	SASFIT_CHECK_COND1((ETA_SOL < 0.0), param, "eta_sol(%lg) < 0",ETA_SOL); // modify condition to your needs
+	// SASFIT_CHECK_COND1((ETA_SHELL < 0.0), param, "eta_shell(%lg) < 0",ETA_SHELL); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
+	// SASFIT_CHECK_COND1((ETA_SOL < 0.0), param, "eta_sol(%lg) < 0",ETA_SOL); // modify condition to your needs   // removed 2026-11-24: scattering length densities / contrasts may be negative
 	SASFIT_CHECK_COND1((N < 0.0), param, "n(%lg) < 0",N); // modify condition to your needs
 
 	// insert your code here

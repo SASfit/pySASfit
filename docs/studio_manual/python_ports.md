@@ -136,6 +136,15 @@ Gaussian ring) and against the large-q asymptotics.
 | ff_torus | cylinders | ~1e-15 vs C | ring torus with shell and height ratio ν (tube integral in r = R + a sin β). C fixed 2026-11-24: the core integral started at R - a < 0 for a > R |
 | ff_ellipsoidal_shell_0, _0t, _rp, _rp_t, _re, _re_t, _2, _2t | ellipsoidal_shell | ~1e-14 (σ = 0) vs C, 1e-9 vs scipy | core-shell spheroids with solvent fractions, log-normal scale of t, R_p, R_e or combinations. C fixed 2026-11-24: _re and _re_t scaled the polar instead of the equatorial radius; _re_v, _2t_v (0) and _0_v (core only) volumes |
 | ff_spheroid_R, ff_spheroid_V, ff_spheroid_nu | ellipsoidal_shell | ~1e-14 vs C | homogeneous spheroid given by (R_p, R_e), (V, R_e) or (ν = R_p/R_e, R_e). C fixed 2026-11-24: spheroid_V put R_e into the polar axis (volume ≠ V, I(0) ≠ (Δη V)²) |
+| ff_triax_ellip_shell, _t, _1, _1t, _2, _2t, _3, _3t | triax_ellip_shell | ~1e-11 (σ = 0) vs C, 1e-9 vs scipy nquad | triaxial core-shell ellipsoid, log-normal scale of t and/or a, b, c (suffix: number of scaled axes, t: also the shell); φ, μ by Gauss-Legendre on 6 rad phase panels, ν in ln ν (σ > 0: C ~5e-5, truncated range). C fixed 2026-11-24: the base function and its _f read a third cubature coordinate for σ = 0 and integrated ν without the log-normal weight; the _v functions used the ν of the last cubature point, ignored the distributed parameter (_t_v wrong); Φ(u) = 3(sin u - u cos u)/u³ cancelled at small u (adaptive cubature stalled at q = 1e-3) |
+| ff_triax_ellip_shell_syl | triax_ellip_shell | ~1e-14 vs C | swollen shell: polymer volume v·V_core in the shell, macroscopic n P(q) with n = φ/((1 + v) V_c); rule w >= 0 |
+| ff_ellsh_sd_homoxs, ff_ellsh_sd_bilayergauss, ff_cylsh_sd_homoxs, ff_cylsh_sd_bilayergauss | thin_objects | ~1e-14 (σ = 0) vs C, 1e-9 vs scipy | P'(q) of thin ellipsoidal shells (log-normal R0, axial ratio ε) and closed hollow cylinders (log-normal R, H) times a plate or bilayer cross-section; _f and _v of the ellipsoidal shells. C fixed 2026-11-24: ff_pcs_bilayergauss_f was a stub (0), the ellsh _v returned 0 (now the mean shell volume) |
+| ff_comb_hetero, ff_comb_random, ff_comb_regular | hyperbranched_polymer | ~1e-15 vs C | Gaussian combs written with g(z) = (e^-z - 1 + z)/z², h(z) = (1 - e^-z)/z (no cancelling terms). C fixed 2026-11-24: the O(x⁴) numerators were differences of O(x²) terms (all digits lost at small q Rg) and the 0/0 fallbacks returned NaN or 2 I0/x² (K = 0) |
+| ff_ideal_dendrimer | hyperbranched_polymer | ~1e-13 vs mpmath | generations 0–9, I = 2 Σ c_k λ_k² g(λ_k u); fractional g interpolates linearly. C fixed 2026-11-24: summed exponentials with coefficients up to 786432 (2e-4 error at u = 1e-3, g = 9), rounded g with rint and read past its table for g = 9 |
+| ff_fract_hyperbranched_polym, ff_f_funct_homo_polym | hyperbranched_polymer | ~1e-14 vs C, 1e-12 vs scipy | fractal hyperbranched polymer P_DB/P_lin; f-functional homopolymer (types 0–3: Zimm, Burchard, excluded-volume integrals). C fixed 2026-11-24: types 2 and 3 were not multiplied by I0 |
+| ff_round_helix, ff_beads_helix, ff_fan_helix | helix | ~1e-14 vs C | layer-line sums (all n < qP/2π; C stops when two terms change the sum by < 1e-12 or after 200) times thinrod_helix(q, H) = H²(2 Si(qH)/qH - sinc²(qH/2)); fan blades' Bessel integrals by Gauss-Legendre. C fixed 2026-11-24: beads_helix and fan_helix had an extra factor H² (I(0) = (Δη V H)²), round_helix lost the n = 0 term at q = 0, fan_helix returned 0 and beads_helix NaN at q = 0 |
+| ff_superhelices_straight, ff_superhelices_coiled | helix | ~1e-14 vs C | thin helical line: ∫ 2(L - w) sinc(qΨ(w)) dw; coiled superhelix: Debye double integral on a Gauss-Legendre grid from the explicit positions (Numba when installed), I(0) = L². C fixed 2026-11-24 (coiled): pitch angle atan(R2/(2πP)) instead of atan(2πR2/P) and sin(γ1 - γ2) where the distance needs sin(N(γ1 - γ2)) (1–20 % off) |
+| ff_boucher_cyl, ff_boucher2_cyl, ff_fuzzy_cyl, ff_linsh_cyl, ff_rc_exp_sh_cyl (+ radial profiles) | pcs_fuzzy_cyl | ~1e-13 (σ_R = 0) vs C, 1e-9 vs scipy | cross sections Pcs of cylinders with radial profiles (Boucher 0F1, Gaussian-smeared disc, linear shell, exponential shell with Fermi cut-off); profiles and amplitudes checked as Hankel pairs. C fixed 2026-11-24: boucher_cyl_f did not set q; the Boucher profiles used integer abs(r); profile_fuzzy_cyl read σ from p[2], dropped η_sol (unparenthesised Δη), multiplied by Δη twice and clobbered r (now the exact disc ⊗ Gaussian convolution); profile_linsh_cyl read the SLDs from p[3..6] (header p[5..8]); linsh_cyl_v was 0; rc_exp_sh_cyl_v shifted the distributed index; rc_exp_sh_cyl_f integrated over the SLD step at Rc (1e-5) |
 
 **Batch 2 (2026-11-18), not ported:** local_cyl_micelle and local_planar_micelles are stubs in the C sources (all
 functions return 0). The sphere+R^-a and sphere+chains(SAW) functions of spherical_ellipsoidal_micelles call the
@@ -149,11 +158,28 @@ needed.
 x^(2 dim) LN(x) (sasfit_common, not changed), the ports integrate over ±8 σ. Not ported yet in thin_objects:
 ff_ellsh_sd_homoxs, ff_ellsh_sd_bilayergauss, ff_cylsh_sd_homoxs, ff_cylsh_sd_bilayergauss (P'(q) of thin
 ellipsoidal shells and closed hollow cylinders) and the P'(q) structure-factor-slot functions (worm_ps3 PRISM/RPA,
-thin spherical shell, gGC).
+thin spherical shell, gGC). The four shell functions are ported in batch 8.
 
 **Batch 7 (2026-11-24):** plugins cylinders and ellipsoidal_shell. Not ported: ff_alignedcylshell (oriented,
 ψ-dependent). The ellipsoidal shells with σ > 0 agree with C to ~1e-6 (C's truncated log-normal range); the
 spheroids and ellipsoidal_shell_0 do not depend on their p[4] (dummy).
+
+**Batch 8 (2026-11-24):** plugins triax_ellip_shell, hyperbranched_polymer, helix, pcs_fuzzy_cyl and the
+remaining thin_objects shells (fuzzysphere was already complete). Not ported: ff_carved_triax_ellip_shell (undocumented work in
+progress) and ff_triax_ellip_shell_sq_baba_ahmed_1/2 (need the Baba-Ahmed structure factor of another plugin). Functions with a log-normal
+distribution (triax σ > 0, pcs_fuzzy_cyl σ_R > 0) agree with C to ~1e-4 (C's truncated range) and with scipy to
+~1e-9. The volumes of pcs_fuzzy_cyl are cross-section areas (Pcs), those of the thin superhelices contour lengths.
+
+**Batch 9 (2026-11-24), distributions and peaks** (`ports/distributions.py`, 39 functions): plugins
+peak_trapezoidal (8 trapezoids + 2 smoothed), q_distribution (q-exponential, q-Gaussian, q-Weibull, area and
+amplitude), kappa_generalized_distribution (κ-generalized gamma and logistic), generalized_distributions (GEV,
+generalized hyperbolic, generalized inverse Gaussian, generalized normal, exponentiated generalized Pareto),
+metalog (sd_metalog_clipped/_log_clipped/_logit) and t_r_y (sd_fgld_, sd_egu_w_l, sd_w_l_e_, sd_n_l_c_,
+sd_n_u_gl__, sd_u_e_gl__). Every port has a complete `_v` (all selectors 0–10, see below); statistics the C code
+lacks come from closed forms, scipy.stats (genextreme, genhyperbolic, geninvgauss, genpareto, beta/t for the
+q-Gaussian) or quadrature/root finding. All agree with the fixed C code to ≤ 2e-14 (intensity) and ≤ 1e-12 (`_v`).
+The five generalized `_ampl_` functions are stubs in C (Python only). Not ported: sd_e_l_ll_, sd_g_c_e__,
+sd_ll_l_gl__, sd_p_w_gl__ (C stubs) and the t_r_y/metalog form-factor wrappers.
 
 **Batch 3 (2026-11-18), not ported yet:** fuzzysphere, stochastic_models, gen_exp_sphere
 (large tabulated data), the structure factors of fractal_obj (sq_*), the worm form factors of thin_objects
@@ -238,6 +264,37 @@ effect after rebuilding the SASfit plugins):
   - the parameter structure passed to the ring function is now initialised with `sasfit_init_param`, and its
     errors are passed on.
 
+## Statistics of distributions and peaks (`_v`)
+
+For size distributions and peaks the third argument of `_v(u, p, dist)` selects a statistic
+(`enum sasfit_dist`, sasfit_common.h); pySASstudio calls it as `SASfitFunction.volume(u, dist=...)`, the ports as
+`spec.volume(u, p, dist)` (constants in `ports.distributions`). For form factors it remains the volume index.
+
+| dist | name | argument u | port result |
+|---|---|---|---|
+| 0 | TYPE | – | 1: defined by its quantile function, 3: by its density |
+| 1 | QUANTILE | y ∈ (0, 1) | Q(y) |
+| 2 | QUANTILE_DENS | y | q(y) = dQ/dy = 1/p(Q(y)) |
+| 3 | PROBABILITY | x | N·p(x) (size distributions), p(x) (peaks) |
+| 4 | CUMULATIVE | x | N·F(x), F(x) |
+| 5 | MODE | – | position of the maximum of p (end point if p diverges there) |
+| 6 | MEAN | – | E[X] (inf/nan if it does not exist) |
+| 7 | VARIANCE | – | Var[X] (inf/nan if it does not exist) |
+| 8 | MEDIAN | – | Q(1/2) |
+| 9 | SKEWNESS | – | Bowley: (Q(¾) + Q(¼) − 2Q(½)) / (Q(¾) − Q(¼)) |
+| 10 | EXCESS_KURTOSIS | – | Moors ratio (Q(⅞) − Q(⅝) + Q(⅜) − Q(⅛)) / (Q(¾) − Q(¼)), as in C (1.2331 for a normal distribution; not an excess) |
+
+Statistics refer to the normalised shape: without amplitude A, background, the x^−α weighting of the metalog
+intensity and the clipping to [bl, bu]. Checked in `tests/studio/test_batch9_ports.py` against C, quadrature
+(∫p = 1, F, mean, variance), Q(F(x)) = x, q·p = 1, the maximum of p and scipy.stats closed forms.
+
+C fixes (batch 9, `patches_2026-11-24/11_batch9_distributions_peaks.patch`): q-exponential/-Gaussian/-Weibull
+normalisations (area at SHIFT, ln_q with q′ = 1/(2−q), no cut at z < 0, q-Weibull peak height), κ-exponential in
+the asinh form (cancellation in the tails), κ-gamma κ = 0 branch missing 1/σ, κ-logistic amplitude normalised at
+its own mode, metalog QUANTILE_DENS = 1/q (gave q, so PROBABILITY was q²), t_r_y: egu_w_l statistics from its own
+quantile (called fgld), n_l_c exp(−t²/2) and N in the CDF, w_l_e N in the CDF, n_u_gl N in `_f`, u_e_gl zero for
+x < 0; parameter tables of sd_fgld_, sd_n_u_gl__, sd_u_e_gl__ and the generalized `_ampl_` headers.
+
 ## Parameter domains and default values
 
 Every port has a description of its parameters, ``spec.params`` (:mod:`pysasfit.studio.ports.params`): for each
@@ -262,14 +319,35 @@ Derived from it:
   names) and sets the scale (or the amplitude N of the size distribution).
 
 ``python tools/write_header_defaults.py <SASfitGit/src/plugins>`` writes the defaults and domains into the
-plugin headers, as a paragraph after the parameter table::
+parameter tables of the plugin headers: every row gets, after the description, a cell with the default value and
+one with the domain (syntax agreed 2026-11-24)::
 
-     * \par Default values and domains:
-     *      R = 10 [0, inf); dummy = 0; dummy = 0; eta = 1
+     *       <td>\b R_c</td>
+     *       <td>core radius containing solvent</td>
+     *       <td>(default=10)</td>
+     *       <td>[0;+inf)</td>
 
-The SASfit GUI ignores the paragraph (it reads only the ``\b`` lines of the table); Doxygen shows it, and the
-pySASfit header parser uses the values as defaults and bounds, so the C plugins in the explorer get the same
-defaults as the ports.
+The domain uses `;`, `+inf` / `-inf`, square brackets for closed and round brackets for open bounds; a bound
+may also be the name of another parameter (`[0;R_c]`). A row without description keeps an empty description
+cell, so the order is name, description, default, domain. Values already in the header that differ from the
+port are kept (set by hand; the tool reports them so that the port can follow, `--force` overwrites). The
+pySASfit header parser reads the cells in any order after the name; the older paragraph
+`\par Default values and domains:` is obsolete, removed from all headers and only read as a fallback.
+
+**Systematic check (2026-11-24).** The defaults and domains are written for every ported plugin function (267 functions in
+44 plugin headers; the Python-only variants `ff_sheared_*__schulz_` and the libsasfit core functions have no
+plugin header). Every port is checked at its defaults: each default lies inside its domain and satisfies the
+rules between parameters, and the function is finite, not identically zero and (form factors) not negative on
+q = 1e-3 … 10. Reading the written headers back with the pySASfit parser gives exactly the defaults and domains
+of the ports. `write_header_defaults.py` writes only the parameters listed in the header table (trailing unused
+parameters of a port are left out; other count differences are reported, not written) and 12 significant
+digits for the bounds. Domain policy: lengths, radii, widths ≥ 0 (or > 0 where the function divides by them);
+scattering length densities, contrasts and excess scattering lengths are **not** restricted – the template
+checks `eta < 0` / `beta_r < 0` of SASfit's plugin skeleton were removed from rod, flat/Porod cylinders,
+Kratky sphere, Teubner–Strey, the three pearl necklaces and the multilamellar vesicle (C and ports). Header
+fixes found on the way: missing `</table>` (sphere+R^-a ×3), malformed `/td>` (two thin_objects tables), an
+unterminated comment block and `</tr></tr>` (boucher_cyl), and the unused 8th parameter of the modified
+pearl necklace (was documented as g). Defaults set by hand in `sasfit_sphericalshells.h` (sphere, hollow sphere, spherical shells i–iii, multilamellar vesicle) were taken over by the ports, except ν of spherical shell ii (inner radius νR, the C code requires 0 ≤ ν < 1: default 0.8, domain [0;1)). Each new port batch runs the tool for its plugins.
 
 ## Magnetic ports (2026-11-23)
 

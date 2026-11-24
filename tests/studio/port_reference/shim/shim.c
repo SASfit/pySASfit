@@ -589,3 +589,25 @@ scalar sasfit_orient_avg(sasfit_func_two_t *f, sasfit_param *param)
     sasfit_cubature(2, xmin, xmax, &oavg_kernel, &o, 1e-12, &s, &e);
     return s / ((1.0 - cos(polar_theta)) * polar_phi / (2.0 * M_PI));
 }
+
+/* ---- batch 9: sasfit_invert_func_v (root of f(y, dist) = u on [bl, bu], bisection to full precision),
+ * eps_get_comp, erfcinv, gammaincinv (not needed by the compared functions: NaN), r8_besk (dead code in GIG) */
+scalar sasfit_invert_func_v(scalar u, sasfit_func_vol_t *f, int dist, scalar bl, scalar bu, sasfit_param *param)
+{
+    scalar a = bl, b = bu, fa, m, fm;
+    int i;
+    fa = f(a, param, dist) - u;
+    if (fa >= 0) return a;
+    if (f(b, param, dist) - u <= 0) return b;
+    for (i = 0; i < 200; i++) {
+        m = 0.5 * (a + b);
+        if (m == a || m == b) break;
+        fm = f(m, param, dist) - u;
+        if ((fm < 0) == (fa < 0)) { a = m; fa = fm; } else { b = m; }
+    }
+    return 0.5 * (a + b);
+}
+scalar sasfit_eps_get_comp(void) { return 1e-14; }
+scalar sasfit_erfcinv(scalar y) { return sasfit_erfinv(1.0 - y); }
+scalar sasfit_gammaincinv(scalar a, scalar y) { (void)a; (void)y; return NAN; }
+double r8_besk(double nu, double x) { return gsl_sf_bessel_Knu(fabs(nu), x); }

@@ -19,6 +19,7 @@ scalar sasfit_ff_spherical_shell_i(scalar q, sasfit_param * param)
 	SASFIT_CHECK_COND1((q < 0.0), param, "q(%lg) < 0",q);
 	SASFIT_CHECK_COND1((R1 < 0.0), param, "R1(%lg) < 0",R1); // modify condition to your needs
 	SASFIT_CHECK_COND1((R2 < 0.0), param, "R2(%lg) < 0",R2); // modify condition to your needs
+	SASFIT_CHECK_COND2((R2 > R1), param, "R2(%lg) > R1(%lg)",R2,R1); // inner radius R2 in [0;R1] (2026-11-24)
 
 	// insert your code here
 	return gsl_pow_2(sasfit_ff_spherical_shell_i_f(q,param));
