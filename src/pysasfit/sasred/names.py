@@ -12,6 +12,12 @@ file (raw-data folders are often read-only) and are applied whenever a run of th
 ``raw.sample_name_in_file``, and ``raw.role`` (if set) overrides the role from the name
 (:func:`pysasfit.sasred.plan.role_of`).
 
+The **spin-flipper state** of polarised runs (SANS-I SANSPOL) is not stored in the raw files (the polariser
+state is, ``raw.polariser``). It is set by hand per run (:meth:`Corrections.set_flipper`, also alternately for a
+sequence off, on, off, on, …) or, when not set, taken from the sample name ("flipper on", "flip off", "…_on",
+"…_off"; :func:`flipper_from_name`). ``raw.flipper`` is "off", "on" or "" (unknown), ``raw.flipper_source`` says
+where it comes from. The grouping keeps the states apart and the reduced files carry the state.
+
 A run can also be **excluded** (sample preparation failed, phase separation during the measurement, …):
 ``raw.excluded`` holds the reason, the run is skipped like an empty run (never selected, not reduced)
 and stays excluded when the folder is read again.
@@ -23,7 +29,31 @@ import json
 import os
 from typing import Dict, Iterable, Optional
 
-__all__ = ["Corrections", "load", "save", "apply", "store_path", "ROLE_CHOICES"]
+__all__ = ["Corrections", "load", "save", "apply", "store_path", "ROLE_CHOICES", "flipper_from_name",
+           "alternate_flipper", "FLIPPER_STATES"]
+
+import re
+
+#: flipper states that can be set by hand ("" = unknown / from the sample name)
+FLIPPER_STATES = ("off", "on")
+_FLIP_WORD = re.compile(r"(?i)\bflip(?:per|ping)?[\s_:=\-]*(on|off)\b")
+_FLIP_END = re.compile(r"(?i)(?:^|[\s_\-(\[])(on|off)[\s)\]]*$")
+
+
+def flipper_from_name(name) -> str:
+    """Flipper state from a sample name: "flipper on", "flip_off", "flipper=on", or a trailing "_on" / "-off" /
+    " (on)"; "" when the name says nothing."""
+    s = str(name or "")
+    m = _FLIP_WORD.search(s) or _FLIP_END.search(s)
+    return m.group(1).lower() if m else ""
+
+
+def alternate_flipper(runs, first: str = "off") -> Dict[int, str]:
+    """{run: state} alternating in run order, starting with ``first`` ("off" or "on")."""
+    if first not in FLIPPER_STATES:
+        raise ValueError("first must be 'off' or 'on'")
+    other = "on" if first == "off" else "off"
+    return {int(r): (first if i % 2 == 0 else other) for i, r in enumerate(sorted(int(x) for x in runs))}
 
 #: role -> label (empty role: from the sample name)
 ROLE_CHOICES = {"": "from the sample name", "sample": "sample", "water": "water (H2O)",
@@ -33,7 +63,7 @@ ROLE_CHOICES = {"": "from the sample name", "sample": "sample", "water": "water 
 
 class Corrections(dict):
     """{run: {"name": new sample name or None, "role": role or None, "note": text,
-    "exclude": reason or None}} of one folder."""
+    "exclude": reason or None, "flipper": "off" | "on" | None}} of one folder."""
 
     def __init__(self, folder: str = "", data=None):
         super().__init__()
@@ -45,11 +75,27 @@ class Corrections(dict):
         """New name (None or "" keeps the name of the file) and role (None or "" from the name)."""
         for r in runs:
             old = self.get(int(r), {})
-            d = {"name": name or None, "role": role or None, "note": note, "exclude": old.get("exclude")}
+            d = {"name": name or None, "role": role or None, "note": note, "exclude": old.get("exclude"),
+                 "flipper": old.get("flipper")}
             self._store(int(r), d)
 
+    def set_flipper(self, runs, state: Optional[str] = None):
+        """Flipper state of runs: "off", "on", None (back to the sample name); ``runs`` may also be a dict
+        {run: state} (e.g. from :func:`alternate_flipper`)."""
+        items = runs.items() if isinstance(runs, dict) else ((r, state) for r in runs)
+        for r, st in items:
+            st = (st or None) and str(st).lower()
+            if st is not None and st not in FLIPPER_STATES:
+                raise ValueError(f"flipper state must be 'off', 'on' or None, got {st!r}")
+            d = dict(self.get(int(r), {"name": None, "role": None, "note": "", "exclude": None}))
+            d["flipper"] = st
+            self._store(int(r), d)
+
+    def flippers(self) -> Dict[int, str]:
+        return {r: d["flipper"] for r, d in self.items() if d.get("flipper")}
+
     def _store(self, r: int, d: dict):
-        if d.get("name") is None and d.get("role") is None and not d.get("exclude"):
+        if d.get("name") is None and d.get("role") is None and not d.get("exclude") and not d.get("flipper"):
             self.pop(r, None)
         else:
             self[r] = d
@@ -57,7 +103,7 @@ class Corrections(dict):
     def exclude(self, runs: Iterable[int], reason: str = ""):
         """Exclude runs from every reduction (``reason``: why, shown in the run list and the log)."""
         for r in runs:
-            d = dict(self.get(int(r), {"name": None, "role": None, "note": ""}))
+            d = dict(self.get(int(r), {"name": None, "role": None, "note": "", "flipper": None}))
             d["exclude"] = (reason or "").strip() or "no reason given"
             self._store(int(r), d)
 
@@ -85,6 +131,8 @@ class Corrections(dict):
                 parts.append(f"name '{d['name']}'")
             if d.get("role"):
                 parts.append(f"role {d['role']}")
+            if d.get("flipper"):
+                parts.append(f"flipper {d['flipper']}")
             if d.get("exclude"):
                 parts.append(f"EXCLUDED: {d['exclude']}")
             lines.append(f"run {r}: " + ", ".join(parts) + (f" ({d['note']})" if d.get("note") else ""))
@@ -132,4 +180,13 @@ def apply(raw, corrections: Optional[Dict[int, dict]]):
     raw.sample_name = (d or {}).get("name") or raw.sample_name_in_file
     raw.role = (d or {}).get("role") or ""
     raw.excluded = (d or {}).get("exclude") or ""
+    if hasattr(raw, "flipper"):
+        fl = (d or {}).get("flipper")
+        if fl:
+            raw.flipper, raw.flipper_source = fl, "set by hand"
+        elif getattr(raw, "polariser", "") == "in":
+            raw.flipper = flipper_from_name(raw.sample_name_in_file)
+            raw.flipper_source = "from the sample name" if raw.flipper else ""
+        else:
+            raw.flipper, raw.flipper_source = "", ""
     return raw

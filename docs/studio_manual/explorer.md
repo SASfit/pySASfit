@@ -92,8 +92,9 @@ store these names, so C and Python versions can be used side by side, even in on
 
 ## 2D map
 
-The *2D map* panel (a tab next to *I(q)*) shows I(q_y, q_z) of the current model on the detector. ψ, the direction
-of q, is measured from q_y (horizontal) towards q_z. For every function with a ψ parameter (the anisotropic
+The *2D map* panel (a tab next to *I(q)*) shows I(q_x, q_y) of the current model on the detector, as seen looking
+towards the sample (q_x to the right, q_y up; {doc}`../conventions`). ψ, the direction of q, is measured from q_x
+(horizontal) towards q_y, counter-clockwise. For every function with a ψ parameter (the anisotropic
 SASfit plugins and their Python ports, e.g. sheared cylinders/spheroids, polymers under shear flow, deformed
 polymers and networks) the model is evaluated at *ψ steps* directions in [0°, 180°) and interpolated onto
 *pixels* × *pixels* points in [-q max, q max]² (q max empty: that of the I(q) panel). Isotropic models need one

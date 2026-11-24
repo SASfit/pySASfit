@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Detector image in polar coordinates (azimuth φ, scattering vector q) for display.
 
-φ = 0 is the horizontal direction (+x, axis 1 of the image), increasing counter-clockwise
-(towards +y, axis 0), as the azimuth ``phi`` of :func:`pysasred.core.geometry.pixel_geometry`.
+φ = 0 is the horizontal direction +x of the lab frame (to the right in the view towards the sample;
+the raw columns run towards -x, ``column_sign`` = -1), increasing counter-clockwise (towards +y = up,
+axis 0), as the azimuth ``phi`` of :func:`pysasfit.sasred.core.geometry.pixel_geometry`
+(docs/conventions.md).
 Every cell of the (q, φ) grid takes the value of the detector pixel that contains its centre
 (nearest-pixel resampling, no interpolation: counts are not mixed); cells outside the
 detector are NaN. Pixel sizes may differ in x and y.
@@ -29,7 +31,8 @@ class PolarImage:
 
 
 def polar_image(values, beam_center_px, pixel_size_m, SD_m, wavelength_A, n_phi: int = 360,
-                r_step_m: Optional[float] = None, invalid: Optional[np.ndarray] = None) -> PolarImage:
+                r_step_m: Optional[float] = None, invalid: Optional[np.ndarray] = None,
+                column_sign: float = -1.0) -> PolarImage:
     """Resample ``values`` (ny, nx) onto a polar grid around the beam centre.
 
     ``invalid``: pixels shown as NaN (e.g. the beamstop mask)."""
@@ -46,7 +49,7 @@ def polar_image(values, beam_center_px, pixel_size_m, SD_m, wavelength_A, n_phi:
     rc = 0.5 * (r_edges[1:] + r_edges[:-1])
     pc = np.deg2rad(0.5 * (phi_edges[1:] + phi_edges[:-1]))
     R, P = np.meshgrid(rc, pc, indexing="ij")
-    ix = np.rint(xc + R * np.cos(P) / px).astype(int)
+    ix = np.rint(xc + (np.sign(column_sign) or 1.0) * R * np.cos(P) / px).astype(int)
     iy = np.rint(yc + R * np.sin(P) / py).astype(int)
     inside = (ix >= 0) & (ix < nx) & (iy >= 0) & (iy < ny)
     out = np.full(R.shape, np.nan)

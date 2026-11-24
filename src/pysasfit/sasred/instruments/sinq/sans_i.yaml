@@ -75,3 +75,27 @@ water:                                   # calibration standard
     uncertainty_rel: 0.006               # fit uncertainty of the cubic inside 0.47-1.2 nm (0.5-0.7 %; rms residual 0.3 %)
   denominator: water_and_cell            # water factor g A_W (1 - T_W/T_EC)/(4π D): water_and_cell → D = T_W (BerSANS, used at
                                          # SANS-I with this g(λ)); tau → D = τ_W = T_W/T_EC (Strunz eq. 8), 1/T_EC lower
+polarisation:                            # SANSPOL option: polariser in or out, RF flipper on or off, no analyser
+  # Aswal et al., NIM A 586 (2008) 86: V-shaped Fe/Si supermirror cavity in the first collimation section
+  # (polarised beam up to 15 m collimation), adiabatic RF flipper 1.5 m before the sample.
+  max_collimation_m: 15
+  beam_polarisation:                     # P = 2p - 1, measured with a polarised proton spin filter (Fig. 4, digitised ± 0.002)
+    wavelength_nm: [0.47, 0.60, 0.80, 1.00]
+    collimation_m: [2, 3, 6, 15]
+    P: [[0.957, 0.960, 0.973, 0.977],
+        [0.976, 0.981, 0.984, 0.984],
+        [0.982, 0.983, 0.987, null],
+        [0.985, 0.984, null, null]]
+    uncertainty: 0.005                   # δP/P ≤ 0.5 % (paper) plus digitising; values of 2008, to be remeasured
+    source: "SANS-I table (Aswal et al. 2008)"
+  flipped_fraction:                      # f, flipper efficiency F = 2f - 1
+    f: 0.995
+    uncertainty: null
+    source: "SANS-I default, F = 0.99 (Quan et al. 2019, 2021)"
+  flipper_off_is_plus: true              # flipper off: neutron spin parallel to the field at the sample (to confirm)
+  metadata_keys:                         # keys in the metadata of reduced files (SASprocess metadata)
+    polariser: [polariser, entry1/SANS/polarizer/state]   # "in" / "out" (raw file: SANS/polarizer/state)
+    flipper: [flipper]                   # "off" / "on": NOT in the raw files – set by hand or from the sample name
+    P: []
+    f: []
+    P_f: []

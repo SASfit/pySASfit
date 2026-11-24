@@ -489,7 +489,8 @@ scalar sasfit_ff_Sphere_R_ma_Profile(scalar q, sasfit_param * param)
 			V = 4./3. * M_PI * pow(Rc,3.);
 			S = 4.*M_PI*Rc*Rc;
 			Nagg = n_agg*S;
-			if (Nagg == 0.0) return Pc;
+			// no chains: the core alone (returned Pc without contrast and volume before 2026-11-23)
+			if (Nagg == 0.0) return gsl_pow_2(V*(1.-xsolv_core)*(rho_c-rho_solv))*Pc;
 			Vc = V / Nagg*(1.-xsolv_core);
 			break;
 		case SPHERE_2ND_RMA_RC:
@@ -523,6 +524,7 @@ scalar sasfit_ff_Sphere_R_ma_Profile(scalar q, sasfit_param * param)
 			// which can happen if the scattering curve is weakly dependent on this parameter or
 			// if this function is not the right choice to describe the scattering curve
 			SASFIT_CHECK_COND1((Nagg < 0.0), param, "Nagg(%lg) < 0",Nagg);
+			SASFIT_CHECK_COND1((xsolv_core >= 1.0), param, "xsolv_core(%lg) >= 1",xsolv_core);
 			V = Nagg*Vc/(1.-xsolv_core);
 			Rc = pow(V*3./4./M_PI,1./3.);
 			Fc = sasfit_sphere_fc(q, Rc) * smoothie;
@@ -617,8 +619,21 @@ scalar sasfit_ff_Sphere_R_ma_Profile_v(scalar q, sasfit_param * param, int distr
 scalar fRg2(scalar cl,scalar lb)
 // the radius of gyration of ideal semiflexible chains.
 {
-	scalar nb;
+	scalar nb, g, t;
+	int m;
 	nb = cl/lb;
+	if (nb < 1.0) { // series 0.75 sum_{m>=4} (-2)^m nb^(m-3)/m! (the closed form cancels for L << lb; 2026-11-23)
+		g = 0.0;
+		t = 0.5*nb;
+		m = 4;
+		while (1) {
+			g += t;
+			m++;
+			t *= -2.0*nb/m;
+			if (fabs(t) < 1e-17*fabs(g) || m > 80) break;
+		}
+		return cl*lb/6.0*g;
+	}
 	return cl*lb/6.0*(1.-1.5/nb
 		               +1.5/gsl_pow_2(nb)
 					   -0.75/gsl_pow_3(nb)
@@ -672,7 +687,9 @@ scalar sasfit_sphere_SAWbrush(scalar q, sasfit_param * param)
 			V = 4./3. * M_PI * pow(Rc,3.);
 			S = 4.*M_PI*Rc*Rc;
 			Nc = n_agg*S;
-			rhos = V/(1.-xsolv_core) * (eta_core  - eta_solv);
+			// core volume without solvent: V (1 - xsolv_core), as in the _rc and _nagg variants
+			// (was V/(1 - xsolv_core) before 2026-11-23)
+			rhos = V*(1.-xsolv_core) * (eta_core  - eta_solv);
 			break;
 		case SPHERE_SAW_RC:
 			Rc		= param->p[0];
@@ -685,6 +702,7 @@ scalar sasfit_sphere_SAWbrush(scalar q, sasfit_param * param)
 		case SPHERE_SAW_NAGG:
 			Nagg		= param->p[0];
 			V_core		= param->p[1];
+			SASFIT_CHECK_COND1((xsolv_core >= 1.0), param, "xsolv_core(%lg) >= 1",xsolv_core);
 
 			V = (Nagg*V_core)/(1.-xsolv_core);
 			Rc = pow(V*3./4./M_PI,1./3.);

@@ -376,7 +376,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             self.view2d.addItem(text, data)
         self.view2d.setToolTip("What the 2D panel shows. With 2D data: the model is calculated at the data pixels "
                                "(Calculate 2D or the fit); 'data | model' shows the data left, the model right "
-                               "of q_h = 0")
+                               "of q_x = 0")
         self.view2d.currentIndexChanged.connect(lambda _i: self.draw_2d())
         self.log2d = QtWidgets.QCheckBox("log")
         self.log2d.setChecked(True)
@@ -670,8 +670,8 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
             fig.colorbar(im, ax=ax, fraction=0.05, pad=0.02)
         if self.hkl2d.isChecked():
             self._overlay_hkl(ax)
-        ax.set_xlabel("q_h [1/nm]")
-        ax.set_ylabel("q_v [1/nm]")
+        ax.set_xlabel("q_x [1/nm]  (view towards the sample)")
+        ax.set_ylabel("q_y [1/nm]")
         self.canvas2d.draw_idle()
 
     def _overlay_hkl(self, ax):
@@ -710,7 +710,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
         if ev.inaxes is None or ev.xdata is None:
             return
         q = np.hypot(ev.xdata, ev.ydata)
-        self.statusBar().showMessage(f"q_h {ev.xdata:.4g}  q_v {ev.ydata:.4g}  |q| {q:.4g} 1/nm  "
+        self.statusBar().showMessage(f"q_x {ev.xdata:.4g}  q_y {ev.ydata:.4g}  |q| {q:.4g} 1/nm  "
                                      f"d = 2π/q = {2 * np.pi / q if q > 0 else np.inf:.4g} nm", 4000)
 
     # ------------------------------------------------------------------ data
@@ -946,7 +946,7 @@ class MainWindow(DockMixin, QtWidgets.QMainWindow):
                 np.save(path, np.stack([qy, qz, I]))
             else:
                 np.savetxt(path, np.column_stack([qy.ravel(), qz.ravel(), I.ravel()]),
-                           header="pySCAtter model\nq_h [1/nm]   q_v [1/nm]   I")
+                           header="pySCAtter model (pySASfit frame: q_x horizontal, right in the view towards the sample; q_y up)\nq_x [1/nm]   q_y [1/nm]   I")
             self.log(f"saved {path}")
 
     # ------------------------------------------------------------------ session (launcher hooks)

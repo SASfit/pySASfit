@@ -18,7 +18,8 @@ table of fit parameters:
 
 Parameters are addressed like in :class:`~pysasfit.studio.Pipeline`: ``"background"``, ``"scale.<i>"`` and
 ``"<i>.<ff|sd|sq>.<name>"`` for contribution ``i`` of a model; ``"transform.thickness"`` and ``"transform.wavelength"``
-for a model with a SESANS or MSAS transform (:mod:`pysasfit.studio.hankel`). A data set of a SESANS model has the
+for a model with a SESANS or MSAS transform (:mod:`pysasfit.studio.hankel`); ``"pol.P"``, ``"pol.f"``, ``"pol.P_f"``,
+``"pol.psi_H"`` for a model with a polarisation setting (:mod:`pysasfit.studio.polarisation`). A data set of a SESANS model has the
 spin-echo lengths in place of q. Variable projection leaves the parameters of data sets whose model is not linear in
 the scales (SESANS P/P0, MSAS) to the optimiser.
 
@@ -122,6 +123,12 @@ def locate(model, address):
         if t is None or np.ndim(getattr(t, attr, None)) != 0:
             raise KeyError(f"'{address}': the model has no transform with a single {attr}")
         return (lambda: float(getattr(t, attr)), lambda v: setattr(t, attr, float(v)))
+    if address in ("pol.P", "pol.f", "pol.P_f", "pol.psi_H"):  # polarised neutrons: instrument values of a data set
+        attr = address.split(".", 1)[1]
+        p = getattr(model, "polarisation", None)
+        if p is None:
+            raise KeyError(f"'{address}': the model has no polarisation setting")
+        return (lambda: float(getattr(p, attr)), lambda v: setattr(p, attr, float(v)))
     parts = address.split(".")
     if parts[0] == "scale":
         i = int(parts[1])

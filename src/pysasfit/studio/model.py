@@ -33,6 +33,12 @@ scattering of the particles into what an instrument measures:
 * a :class:`~pysasfit.studio.hankel.MSASTransform` -- multiple small-angle
   scattering of a sample of the given thickness, before resolution and background.
 
+``polarisation`` (a :class:`~pysasfit.studio.polarisation.Polarisation`, a dictionary for it, or None) says what a
+data set measured with polarised neutrons (unpolarised, flipper off / on not corrected, I+, I-, I- - I+, the four
+channels): magnetic functions return their basis terms and the model weights them; non-magnetic contributions
+count with the nuclear weight (0 in the spin-flip channels and the difference); C functions with a ``pol``
+parameter get SASfit's pol (moment labels) = n- - n+ of the setting (+/- = neutron spin).
+
 A transform may also be given as a dictionary or name for
 :func:`~pysasfit.studio.hankel.make_transform`, e.g.
 ``transform={"kind": "msas", "thickness": 0.1, "wavelength": 0.6}``.
@@ -62,6 +68,12 @@ from .integration import size_integral
 __all__ = ["ScatteringContribution", "ModelFunction", "Pipeline", "FitResult"]
 
 APPROACHES = ("monodisperse", "decoupling", "lma")
+
+
+def _pol_key():
+    from .polarisation import cache_key
+
+    return cache_key()
 
 
 def _as_function(f):
@@ -222,7 +234,7 @@ class ScatteringContribution:
         vec = lambda v: None if v is None else np.asarray(v, float).tobytes()  # noqa: E731
         return (q.tobytes(), vec(self.ff_p), vec(self.sd_p), vec(self.sq_p), self.approach, self.method, self.n_x, self.rtol,
                 self.atol, self.limit, self.x_power, self.tail, None if self.x_range is None else tuple(self.x_range),
-                self.distributed, self.snap)  # fmt: skip
+                self.distributed, self.snap, _pol_key())  # fmt: skip
 
     def intensity(self, q):
         q = np.asarray(q, dtype=float)
@@ -261,7 +273,7 @@ class ScatteringContribution:
 
 class ModelFunction:
     def __init__(self, contributions=(), scales=None, background=0.0, resolution=None, bg_A=0.0, bg_alpha=4.0,
-                 active=None, transform=None):
+                 active=None, transform=None, polarisation=None):
         self.contributions = list(contributions)
         self.scales = list(scales) if scales is not None else [1.0] * len(self.contributions)
         # several data sets (SASfit): a contribution counts only where it is active; the others keep their place so
@@ -273,6 +285,48 @@ class ModelFunction:
         self.resolution = resolution
         self._bg_z = None
         self.transform = transform
+        self.polarisation = polarisation
+
+    @property
+    def polarisation(self):
+        """What the data set measures with polarised neutrons (:mod:`pysasfit.studio.polarisation`) or None."""
+        return self._polarisation
+
+    @polarisation.setter
+    def polarisation(self, p):
+        if p is not None and not hasattr(p, "weights"):
+            from .polarisation import Polarisation
+
+            p = Polarisation.from_dict(p) if isinstance(p, dict) else Polarisation(quantity=str(p))
+        self._polarisation = p
+
+    def _contribution_intensity(self, c, q):
+        """I of one contribution under the polarisation setting (set active by the caller)."""
+        pol = self._polarisation
+        if pol is None:
+            return np.asarray(c.intensity(q), dtype=float)
+        from .polarisation import is_magnetic, pol_parameter_index
+
+        if is_magnetic(c.ff):
+            return np.asarray(c.intensity(q), dtype=float)
+        k = pol_parameter_index(c.ff)
+        if k is not None:  # a C function with SASfit's pol parameter
+            if not pol.sanspol:
+                raise ValueError(f"{c.ff.name}: the quantity '{pol.quantity}' needs the basis terms of a Python port "
+                                 "(the C function knows only (1+pol)/2 I+ + (1-pol)/2 I-)")
+            old = c.ff_p[k]
+            c.ff_p[k] = pol.effective_pol()
+            try:
+                return np.asarray(c.intensity(q), dtype=float)
+            finally:
+                c.ff_p[k] = old
+        w = pol.weights()[0]  # nuclear scattering only
+        return w * np.asarray(c.intensity(q), dtype=float) if w != 1.0 else np.asarray(c.intensity(q), dtype=float)
+
+    def _pol_active(self):
+        from .polarisation import active
+
+        return active(self._polarisation)
 
     @property
     def transform(self):
@@ -365,7 +419,8 @@ class ModelFunction:
                 old = c.sd_p[k]
                 c.sd_p[k] = 1.0
             try:
-                v = np.asarray(c.intensity(qe), dtype=float)
+                with self._pol_active():
+                    v = self._contribution_intensity(c, qe)
             finally:
                 if k is not None:
                     c.sd_p[k] = old
@@ -375,9 +430,10 @@ class ModelFunction:
     def particles(self, q):
         q = np.asarray(q, dtype=float)
         I = np.zeros(q.shape)
-        for i, (s, c) in enumerate(zip(self.scales, self.contributions)):
-            if self.is_active(i):
-                I = I + s * c.intensity(q)
+        with self._pol_active():
+            for i, (s, c) in enumerate(zip(self.scales, self.contributions)):
+                if self.is_active(i):
+                    I = I + s * self._contribution_intensity(c, q)
         return I
 
     def intensity(self, q):
@@ -463,6 +519,10 @@ class Pipeline:
         if addr in ("bg.A", "bg.alpha"):
             attr = "bg_" + addr[3:]
             return (lambda: getattr(m, attr), lambda v: setattr(m, attr, float(v)))
+        if addr.startswith("pol."):
+            from .fitting import locate
+
+            return locate(m, addr)
         parts = addr.split(".")
         if parts[0] == "scale":
             i = int(parts[1])

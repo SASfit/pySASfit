@@ -30,7 +30,11 @@ parameters, notes and the header items of the raw run (`SASprocess/metadata`).
 * q rings (list of q in 1/nm) drawn as circles (qx – qy) or lines (polar);
 * the cursor read-out gives the pixel, q, ψ and I ± dI, and whether the pixel is masked.
 
-ψ = 0 is the horizontal direction (+x), increasing counter-clockwise, as in pySASred.
+All views show the detector as seen looking towards the sample: +q_x to the right, +q_y up
+({doc}`../conventions`). ψ = 0 is the horizontal direction +q_x, increasing counter-clockwise, as in pySASred.
+The raw columns of SANS-I / SANS-LLB images run towards −x, so the pixel view shows column 0 on the right.
+pySASred 2D files written before 2026-11-23 (q_x of the other sign) are recognised and read in the present
+frame.
 
 ## Beam centre
 

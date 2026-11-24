@@ -220,3 +220,36 @@ def test_automatic_recalculation_runs_in_the_background(explorer, monkeypatch):
     monkeypatch.undo()
     q, I = w._last
     np.testing.assert_allclose(I, w.model_for(None)(q), rtol=1e-12)   # the curve belongs to the scale 2.5
+
+
+def test_the_2d_map_is_calculated_in_the_background_after_the_curve(explorer, monkeypatch):
+    import threading
+    import time
+
+    from PySide6 import QtWidgets
+
+    from pysasfit.studio import map2d
+
+    w = explorer
+    w.logy.setChecked(False)
+    w.map_dock.show()
+    w.map_panel.auto.setChecked(True)
+    for _ in range(5):
+        QtWidgets.QApplication.processEvents()
+    w.wait_calc()
+    seen = []
+    orig = map2d.timed_map
+
+    def spy(*a, **k):
+        seen.append(threading.current_thread() is threading.main_thread())
+        return orig(*a, **k)
+
+    monkeypatch.setattr(map2d, "timed_map", spy)
+    w.map_panel.request(force=True)
+    deadline = time.perf_counter() + 10.0
+    while (w.calculating() or w._timer.isActive() or w._map_pending) and time.perf_counter() < deadline:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.01)
+    w.wait_calc()
+    assert seen and not any(seen)                         # computed outside the window's thread
+    assert w.map_panel._data is not None and not w.map_panel.stale

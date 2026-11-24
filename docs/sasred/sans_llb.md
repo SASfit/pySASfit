@@ -35,8 +35,9 @@ the `sasred.llb.end_px` pixels at both tube ends and tubes without counts.
 of the key, e.g. "70 mm | left panel"). The **detector** selector in the detector panel chooses the bank that is
 shown and edited: central, left panel or bottom panel. All mask tools work on the panels as on the central
 detector (draw, mask/unmask, undo, *Suggest*, save/load); a new panel mask starts with the tube ends and dead
-tubes, *Suggest* adds hot pixels and keeps what was drawn by hand. The panels are shown in the orientation of the
-central detector (x against posx, y with posy; on the left panel row 0 is at the top). *Save masks…* keeps the
+tubes, *Suggest* adds hot pixels and keeps what was drawn by hand. The panels are shown like every detector image of pySASfit, as seen
+looking towards the sample ({doc}`../conventions`): lab x = posx to the right, y = posy up (the central columns
+run against posx; on the left panel row 0 is at the top). *Save masks…* keeps the
 masks of all banks and configurations in one file. The live I(q) follows the bank shown. The reduction uses the
 edited mask of each bank (else the default panel mask) – also in the reduction table.
 
@@ -75,9 +76,10 @@ NICOS writes for every bank the pixel positions `posx`, `posy` [mm] in one frame
 (`SINQ_SANS_LLB.ini`) uses the same nominal geometry. The beam position in that frame follows from the beam
 centre on the central detector, so the panels need no beam centre of their own. A panel pixel is at
 
-    x = -(posx + dx - xb),   y = posy + dy - yb,   z = L + dz,      ΔΩ = A z / |r|³
+    x = posx + dx - xb,   y = posy + dy - yb,   z = L + dz,      ΔΩ = A z / |r|³
 
-(x and y as in the central detector's geometry; A the pixel area; panel plane perpendicular to the beam).
+(x, y, z in the lab frame of pySASfit, {doc}`../conventions`, which is the NICOS frame: the left panel at
+posx > 0; A the pixel area; panel plane perpendicular to the beam. Before 2026-11-23 x had the opposite sign).
 
 The offsets are set under *Settings → Preferences → pySASred → SANS-LLB detector geometry*:
 

@@ -258,6 +258,7 @@ notes from the pyOZgui development are in `docs/oz/notes/`.
 
 Installation <installation>
 Launcher <launcher>
+Axis conventions <conventions>
 pySASred <sasred/index>
 pySASstudio <studio_manual/index>
 pySLDprofile <sldprofile/index>

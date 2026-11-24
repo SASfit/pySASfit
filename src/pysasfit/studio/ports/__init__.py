@@ -81,6 +81,7 @@ class PortSpec:
     group: str = ""  # menu group (Doxygen group of the plugin header) for a port without an installed header
     c_valid: object = None  # c_valid(q, p) -> bool mask: where the C function is accurate (comparison only there)
     c_reference: bool = True  # False: the C plugin is known to be wrong, the port is not compared with it
+    terms: object = None  # magnetic ports: terms(q, p, psi=None) -> (NN, NM, MH, MSF, CH), see studio.polarisation
 
     @property
     def params(self):
@@ -222,10 +223,16 @@ def _load():
     if _REGISTRY:
         return
     from . import (
+        cylinders,
+        ellipsoidal_shell,
         deformed_polymers,
         fractals,
+        fuzzy,
+        genexp,
         guwelop,
+        magnetic,
         micelles,
+        micelles_worm,
         misc,
         networks,
         nonparticulate,
@@ -236,6 +243,9 @@ def _load():
         sheared,
         shearflow,
         spheres,
+        stochastic,
+        worms,
+        thin_objects,
     )
 
     for mod in (
@@ -253,6 +263,15 @@ def _load():
         fractals,
         guwelop,
         ribbon,
+        fuzzy,
+        genexp,
+        stochastic,
+        magnetic,
+        worms,
+        micelles_worm,
+        thin_objects,
+        cylinders,
+        ellipsoidal_shell,
     ):
         _register_module(mod)
 

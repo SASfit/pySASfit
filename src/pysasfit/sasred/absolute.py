@@ -357,6 +357,10 @@ def reduce_row_2d(table, row, read: Callable[[int], object], beam_center_px, mas
         return r
     S_runs = _runs(row.used, read)
     raw0 = S_runs[0]
+    states = {(getattr(r, "polariser", ""), getattr(r, "flipper", "")) for r in S_runs}
+    if len(states) > 1:   # SANSPOL: polariser / flipper states must not be summed
+        notes.append("WARNING: the summed runs have different polariser / flipper states "
+                     + ", ".join(f"{p or '?'}/{f or '?'}" for p, f in sorted(states)) + " – split the row")
     inst = instrument or load_instrument(raw0)
     if mask is None:
         if raw0.panel is not None:

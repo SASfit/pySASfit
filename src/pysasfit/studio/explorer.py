@@ -76,6 +76,7 @@ from .param_row import ParameterRow, clear_layout, slider_range  # noqa: E402,F4
 from .model import ModelFunction  # noqa: E402
 from . import multidata  # noqa: E402
 from .transform_panel import LENGTH_OF_Q_UNIT, TransformBox, build_transform, default_settings, domain_of  # noqa: E402
+from .polarisation_panel import PolarisationBox, build_polarisation  # noqa: E402
 from ..resources import tool_icon  # noqa: E402
 from ..core.docking import DockMixin  # noqa: E402
 
@@ -218,6 +219,9 @@ class InstallationDialog(QtWidgets.QDialog):
 
 
 # --------------------------------------------------------------------------- main window
+SLOW_STEP_S = 0.3  # a drawing step in the window's thread slower than this is named in the status line
+
+
 class _CalcThread(QtCore.QThread):
     """Runs one curve calculation (a closure without Qt objects) outside the window's thread."""
 
@@ -281,6 +285,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.current_ds = 0  # the data set whose background the rows show (and whose contributions are drawn dotted)
         self.overrides = {}  # data set -> {address: value}: values of parameters fitted separately per data set
         self._tr_global = default_settings()  # transform settings without data (with data: per data set)
+        self._pol_global = None  # polarisation setting without data (with data: per data set "polarisation")
         self._tr_objs = {}  # data set (or "g") -> (settings key, transform object): keeps the weight matrices
         self._ranges = {}  # domain ("q" / "delta") -> (min text, max text) of the curve
         self._shown_domain = "q"
@@ -296,14 +301,15 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self._timer = QtCore.QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(40)  # debounce slider drags
-        self._timer.timeout.connect(self._start_calc)
+        self._timer.timeout.connect(self._on_timer)
         #BACKGROUND CALCULATION. The automatic recalculation (and Calculate) run in a worker thread on a copy of the
         #model, so that choosing a slow function or typing does not freeze the window. One calculation at a time:
         #changes during a calculation are collected and calculated once afterwards; a result made obsolete by a change
         #of the model's structure is dropped. Every calculation in the window's own thread (_compute, build_model,
         #the 2D map, a fit) first waits for the running one (the SASfit library is not thread safe).
-        self._calc = None  # running _CalcThread
+        self._calc = None  # running _CalcThread (curve or 2D map)
         self._calc_again = False  # changes arrived during the running calculation
+        self._map_pending = False  # the 2D map waits for its turn
         self._struct_gen = 0  # incremented when contributions/functions change
         self._calc_t0 = 0.0
         self._build_ui(qmin, qmax)
@@ -410,6 +416,9 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.transform_box = TransformBox()
         self.transform_box.changed.connect(self._transform_edited)
         lv.addWidget(self.transform_box)
+        self.polarisation_box = PolarisationBox()
+        self.polarisation_box.changed.connect(self._polarisation_edited)
+        lv.addWidget(self.polarisation_box)
 
         self.tabs = QtWidgets.QTabWidget()
         self.tabs.currentChanged.connect(self._schedule)
@@ -1112,6 +1121,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 self.calc_btn.setText("Calculate *")
             return
         if not self._busy:
+            self._calc_again = True  # the curve is wanted (now or after the running calculation)
             self._timer.start()
 
     def _on_autocalc(self, on):
@@ -1146,6 +1156,52 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 QtWidgets.QApplication.restoreOverrideCursor()
         self._calc_done(th, th.job, th.result, restart=False)  # the queued signal is ignored afterwards
 
+    def _on_timer(self):
+        """Debounce timer: the curve if something changed, then a waiting 2D map."""
+        self._start_next()
+
+    def queue_map(self):
+        """The 2D map wants an update: calculated in the background after the curve (one calculation at a time)."""
+        self._map_pending = True
+        if self._calc is None and not self._busy and not self._timer.isActive():
+            self._start_next()
+
+    def map_model_copy(self):
+        """``(model, intensity)`` for the 2D map: a copy of the mixture and I(q) of it in the plot mode (no Qt)."""
+        mode = self.mode_combo.currentData()
+        model = _copy_model(self.model_for(None))
+        if mode == "S":
+            p = self.current_panel()
+            c = p.contrib if p is not None else None
+            if c is None or c.sq is None:
+                raise ValueError("the current contribution has no structure factor")
+            sq, sq_p = c.sq, np.array(c.sq_p, dtype=float, copy=True)
+            return model, lambda q: np.asarray(sq.evaluate_p(q, sq_p), dtype=float)
+        return model, lambda q: self._compute_model(q, model, mode)[0]
+
+    def _start_next(self):
+        """After a calculation: the curve first (changes collected), then the 2D map."""
+        if self._busy or self._calc is not None:
+            return
+        if self._calc_again:
+            self._start_calc()
+        elif self._map_pending and hasattr(self, "map_panel"):
+            self._map_pending = False
+            try:
+                job = self.map_panel.make_job()
+            except Exception as exc:  # noqa: BLE001 -- shown in the panel
+                self.map_panel.note.setText(f"{type(exc).__name__}: {exc}")
+                return
+            if job is None:
+                return
+            job["kind"], job["struct_gen"], job["pairs"] = "map", self._struct_gen, []
+            th = _CalcThread(job["run"], self)
+            th.job = job
+            th.done.connect(lambda res, job=job, th=th: self._calc_done(th, job, res))
+            self._calc = th
+            self.map_panel.note.setText("calculating the 2D map …")
+            th.start()
+
     def _start_calc(self):
         """Start the calculation of the curve in the background (or remember to do so after the running one)."""
         if not self.has_model() or self._busy:
@@ -1160,6 +1216,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         except Exception as exc:  # noqa: BLE001 -- keep the last good curve on screen
             self._status(f"{type(exc).__name__}: {exc}", error=True)
             return
+        job["kind"] = "curve"
         th = _CalcThread(job["run"], self)
         th.job = job
         th.done.connect(lambda res, job=job, th=th: self._calc_done(th, job, res))
@@ -1173,16 +1230,21 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         th.wait()
         th.deleteLater()
         self._calc = None
-        if job["struct_gen"] == self._struct_gen and not self._busy:
+        if job.get("kind") == "map":
+            if job["struct_gen"] == self._struct_gen and not self._busy:
+                job["finish"](res)
+            else:
+                self._map_pending = True  # obsolete: again with the new model
+        elif job["struct_gen"] == self._struct_gen and not self._busy:
             for live, cp in job["pairs"]:
                 live.last_integration = getattr(cp, "last_integration", None)
             if isinstance(res, Exception):
                 self._status(f"{type(res).__name__}: {res}", error=True)
             else:
                 self._finish(job, res, self._calc_t0)
-        if self._calc_again and not self._busy:
+        if (self._calc_again or self._map_pending) and not self._busy:
             if restart:
-                self._start_calc()
+                self._start_next()
             else:
                 self._timer.start()
 
@@ -1258,7 +1320,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 if not model.is_active(i):
                     parts.append(None)
                     continue
-                parts.append(sc * np.asarray(c.intensity(q), dtype=float))
+                with model._pol_active():  # polarised neutrons: the quantity of the data set
+                    parts.append(sc * model._contribution_intensity(c, q))
             if t is not None:  # MSAS: the total with multiple scattering, the parts are single scattering
                 return np.asarray(model.intensity(q), dtype=float), parts
             total = np.zeros(np.shape(q)) + model._background(q)
@@ -1380,18 +1443,31 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 self.ax.legend(handles=hs, fontsize=8, loc="best")
         elif self.ax.get_legend() is not None:
             self.ax.get_legend().remove()
-        self._update_parts(q, parts)
-        self._update_background(q)
-        self._update_distributions()
-        fit_note = self._update_residuals(Id)
-        self.fit_panel.refresh_values()
+        t_calc = time.perf_counter() - t0
+        slow = []  # steps in the window's thread that took long (shown in the status line)
+
+        def step(name, fn, *a):
+            ts = time.perf_counter()
+            out = fn(*a)
+            dt = time.perf_counter() - ts
+            if dt > SLOW_STEP_S:
+                slow.append(f"{name} {dt:.2f} s")
+            return out
+
+        step("parts", self._update_parts, q, parts)
+        step("background", self._update_background, q)
+        step("size distributions", self._update_distributions)
+        fit_note = step("residuals", self._update_residuals, Id)
+        step("fit table", self.fit_panel.refresh_values)
         if self.autoscale.isChecked():
             self.ax.relim(visible_only=True)
             self.ax.autoscale_view()
         self.canvas.draw_idle()
         if hasattr(self, "map_panel"):
             self.map_panel.request()
-        msg = f"{q.size} points in {(time.perf_counter() - t0) * 1e3:.0f} ms"
+        msg = f"{q.size} points in {t_calc * 1e3:.0f} ms"
+        if slow:
+            msg += " - window busy: " + ", ".join(slow)
         infos = [p.contrib.last_integration for p in self.models() if p.contrib.sd is not None and p.contrib.last_integration]
         if infos:
             msg += f" ({infos[0]['method']}, {sum(i['neval'] for i in infos)} evaluations of the form factor)"
@@ -1510,9 +1586,62 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             d["I"], d["sigma"], d["observable"] = np.asarray(y, float), np.asarray(sig, float), obs
             self._draw_dataset_points(k)
 
+    # ------------------------------------------------------------- polarised neutrons
+    def _pol_settings(self, k=None):
+        """Polarisation settings of data set ``k`` (None: current / without data); None = not polarised."""
+        if k is None:
+            k = self.current_ds if self.datasets else None
+        if k is None or not 0 <= k < len(self.datasets):
+            return self._pol_global
+        return self.datasets[k].get("polarisation")
+
+    def polarisation_for(self, k=None):
+        """The :class:`~pysasfit.studio.polarisation.Polarisation` of data set ``k`` (None: current / box) or None."""
+        return build_polarisation(self._pol_settings(k))
+
+    def set_polarisation(self, quantity=None, k=None, **values):
+        """Set what data set ``k`` (None: current / without data) measures: ``quantity`` ("none", "unpolarised",
+        "off", "on", "plus", "minus", "difference", "pp", "mm", "pm", "mp") and values (``P``, ``f``, ``P_f``,
+        ``form``, ``flipper_off_is_plus``, ``psi_H``, ``average``, ``source``)."""
+        old = self._pol_settings(k) or {}
+        new = {**old, **values, **({"quantity": quantity} if quantity else {})}
+        if new.get("quantity") in (None, "none"):
+            new = None
+        else:
+            new = build_polarisation(new).to_dict()
+            src = dict(new.get("source") or {})
+            for name in ("P", "f", "P_f"):
+                if name in values and "source" not in values:
+                    src[name] = "entered"
+            new["source"] = src
+        if k is None and self.datasets:
+            k = self.current_ds
+        if k is None or not 0 <= k < len(self.datasets):
+            self._pol_global = new
+        else:
+            self.datasets[k]["polarisation"] = new
+        if k is None or k == (self.current_ds if self.datasets else None):
+            self.polarisation_box.set_settings(new)
+        self._schedule()
+
+    def _polarisation_edited(self, *_):
+        try:
+            new = self.polarisation_box.settings()
+        except ValueError as exc:
+            self._status(str(exc), error=True)
+            return False
+        if self.datasets:
+            self.datasets[self.current_ds]["polarisation"] = new
+        else:
+            self._pol_global = new
+        self._schedule()
+        return True
+
     def _load_tr(self, k=None):
         """Show the transform of data set ``k`` (None: without data) in the box; switch the axis if needed."""
         d = self.datasets[k] if k is not None and 0 <= k < len(self.datasets) else None
+        if hasattr(self, "polarisation_box"):
+            self.polarisation_box.set_settings(self._pol_settings(k))
         s = self._tr_settings(k) if d is not None else self._tr_global
         self.transform_box.set_settings(s, self._file_lambda(d))
         if domain_of(s) != self._shown_domain:
@@ -1588,12 +1717,15 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         self.clear_data()
         return self.add_dataset(q, I, sigma, name)
 
-    def add_dataset(self, q, I, sigma, name="data", bg=None, transform=None, sesans=None):
+    def add_dataset(self, q, I, sigma, name="data", bg=None, transform=None, sesans=None, polarisation=None):
         """Add a data set (shown with its model curve and fitted together with the others); returns its index.
 
         ``transform``: its transform settings (see :mod:`pysasfit.studio.transform_panel`; default: those shown,
         if they fit the data). ``sesans``: a SESANS data set -- ``q`` are spin-echo lengths and the dictionary holds
         ``{"G": (y, sigma), "P": (y, sigma), "lam": wavelengths}`` (I, sigma are those of the transform's observable).
+        ``polarisation``: what the data set measures with polarised neutrons (settings of
+        :mod:`pysasfit.studio.polarisation_panel`; default: from the file, :func:`pysasfit.studio.polarisation.from_file`,
+        else not polarised).
         """
         q, I = np.asarray(q, float), np.asarray(I, float)
         sigma = np.full(q.shape, np.nan) if sigma is None else np.asarray(sigma, float)
@@ -1630,6 +1762,12 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             self.bgalpha_row.set_value(bg["bg_alpha"], emit=False)
         d = {"q": q, "I": I, "sigma": sigma, "name": os.path.basename(str(name)), "bg": dict(bg or first), "path": str(name),
              "artist": None, "line": None, "res": None, "domain": domain, "transform": tr, "sesans": sesans}  # fmt: skip
+        if polarisation is None and os.path.isfile(str(name)):
+            from .polarisation import from_file
+
+            found = from_file(str(name))
+            polarisation = found.to_dict() if found is not None else None
+        d["polarisation"] = dict(polarisation) if polarisation else None
         if sesans:
             d["observable"] = "P" if tr["kind"] == "sesans_p" else "G"
         self.datasets.append(d)
@@ -1753,6 +1891,7 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         return ModelFunction(
             [p.contrib for p in ms], scales=[p.scale_row.value for p in ms], background=bg["background"],
             bg_A=bg["bg_A"], bg_alpha=bg["bg_alpha"], active=active, transform=self.transform_for(k),
+            polarisation=self.polarisation_for(k),
         )  # fmt: skip
 
     def overrides_for(self, k):
@@ -2099,6 +2238,9 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
         if tr is not None:
             lines[0:0] = ["from pysasfit.studio.hankel import make_transform"]
             bg += f", transform={tr}"
+        ps = self._pol_settings(None)
+        if ps:
+            bg += f", polarisation={ps!r}"
         lines += ["", f"model = ModelFunction([{names}], scales=[{scales}], {bg})", "I = model(q)"]
         return "\n".join(lines)
 
@@ -2174,6 +2316,9 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
             if cur in lam_vars:  # the curve uses the λ of a file: the data come first
                 tr = self._transform_code(None)
             mkw["transform"] = Code(tr)
+        ps = self._pol_settings(cur)
+        if ps:  # polarised neutrons: what the data set measures (studio.polarisation)
+            mkw["polarisation"] = Code(repr(ps))
         sc.add(call("model = ModelFunction", Code("[" + ", ".join(names) + "]"), **mkw))
         mode = self.mode_combo.currentData()
         if mode == "S":
@@ -2238,6 +2383,8 @@ class ModelExplorer(DockMixin, QtWidgets.QMainWindow):
                 if trk is not None:
                     sc.imp("from pysasfit.studio.hankel import make_transform")
                     kw["transform"] = Code(trk)
+                if d.get("polarisation"):
+                    kw["polarisation"] = Code(repr(d["polarisation"]))
                 sc.add(call(f"model{k + 1} = ModelFunction", Code("[" + ", ".join(names) + "]"), **kw))
                 plot.append(f"ax.errorbar(q{k + 1}, I{k + 1}, s{k + 1}, fmt='o', ms=3, label={d['name']!r})")
             self.fit_panel.python_fit_code(sc, len(self.datasets))

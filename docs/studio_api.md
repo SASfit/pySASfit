@@ -29,6 +29,16 @@ work without it are listed here.
    :members: load_sesans, SESANSData, is_sesans_file
 ```
 
+## Polarised neutrons
+
+```{eval-rst}
+.. automodule:: pysasfit.studio.polarisation
+   :members: Polarisation, QUANTITIES, basis_terms, combine, angular_moments, active, current, from_metadata, from_file
+
+.. automodule:: pysasfit.studio.ports.magnetic
+   :members: magnetic_shell_terms, superparamagnetic_terms, langevin_moments
+```
+
 ## SasView models (sasmodels)
 
 ```{eval-rst}

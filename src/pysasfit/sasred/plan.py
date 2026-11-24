@@ -204,6 +204,15 @@ def config_base(cfg: str) -> str:
     return _re.sub(r", panels [-0-9.]+ m$", "", cfg or "")
 
 
+def sample_label(raw) -> str:
+    """Sample name of a group; polarised runs (polariser in) get their flipper state: "name [flipper off]",
+    "[flipper ?]" when it is not known."""
+    name = raw.sample_name
+    if getattr(raw, "polariser", "") == "in":
+        return f"{name} [flipper {getattr(raw, 'flipper', '') or '?'}]"
+    return name
+
+
 def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dict] = None,
                transmission=None, beam_center_px=None, edges=None,
                mask=None, efficiency=None, alpha: float = 0.01, rel_floor: float = 0.0,
@@ -240,14 +249,14 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
             if g is not None:
                 geometry_notes.setdefault(_config(r), g.describe())
     match = match or {"sample": None, "SD_m": "1%", "panel_SD_m": "1%", "wavelength_A": "2%", "coll_m": "1%",
-                      "attenuator": None, "sample_position_mm": 0.5}
+                      "attenuator": None, "sample_position_mm": 0.5, "polariser": None, "flipper": None}
     raws = [getattr(r, "raw", r) for r in runs]
     raws = [r for r in raws if r is not None]
     entries: List[Entry] = []
     for g in gr.group_runs(raws, match, fields=fields):
         r0 = g.runs[0]
         kind = "transmission" if transmission(r0) else "scattering"
-        e = Entry(_config(r0), getattr(r0, "role", "") or role_of(r0.sample_name, roles), r0.sample_name, kind,
+        e = Entry(_config(r0), getattr(r0, "role", "") or role_of(r0.sample_name, roles), sample_label(r0), kind,
                   g.run_numbers,
                   g.run_numbers, [], "single", start=str(r0.start_time), end=str(g.runs[-1].end_time or ""))
         bad = [f"{x}: {odd[x]}" for x in g.run_numbers if x in odd]
@@ -262,6 +271,9 @@ def build_plan(runs, roles: Optional[Dict[str, str]] = None, match: Optional[dic
         ab = [r.run for r in g.runs if getattr(r, "aborted", False)]
         if ab:
             bad.append(f"aborted before the preset: {ab}")
+        if kind == "scattering" and getattr(r0, "polariser", "") == "in" and not getattr(r0, "flipper", ""):
+            bad.append("polariser in, flipper state unknown (not stored in the file): set it in the run table "
+                       "(right mouse button → Flipper state) – flipper off and on runs would otherwise be summed")
         if bad:
             e.message = "; ".join(bad)
         pos = g.values.get("sample_position_mm")

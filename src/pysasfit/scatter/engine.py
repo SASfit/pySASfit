@@ -538,7 +538,8 @@ def pixel_q(p, quadrant=True):
 
 
 def q_grid_2d(p):
-    """(qx, qy, qz) of the calculated image: beam along x; detector plane (qy horizontal, qz vertical).
+    """(qx, qy, qz) of the calculated image: beam along x; detector plane (qy horizontal = detector q_x of the
+    pySASfit frame, docs/conventions.md; qz vertical = detector q_y).
     'Preset': a Qmax-limited q map of GridPoints²; otherwise the pixels of the experiment group (Eq. 1)."""
     if p["EditQmaxPreset"]:
         N = int(p["GridPoints"])

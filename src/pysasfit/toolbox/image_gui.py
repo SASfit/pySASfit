@@ -280,24 +280,28 @@ class ImageTool(QtWidgets.QWidget):
         if view == "polar":
             from ..sasred.core.polar import polar_image
             pol = polar_image(np.asarray(np.ma.filled(data, np.nan), float), im.centre_px, im.pixel_m, im.SD_m,
-                              im.wavelength_A, invalid=(~valid if how != "shown" else None))
+                              im.wavelength_A, invalid=(~valid if how != "shown" else None),
+                              column_sign=im.column_sign)
             qe = pol.q_edges * 10
             art = ax.imshow(pol.image, origin="lower", aspect="auto", norm=norm, cmap=cmap,
                             extent=(0, 360, qe[0], qe[-1]), interpolation="nearest")
-            ax.set_xlabel("ψ [°]")
+            ax.set_xlabel("ψ [°]  (0° = +qx, counter-clockwise)")
             ax.set_ylabel("q [1/nm]")
             ax.set_xticks(range(0, 361, 45))
             self._polar = pol
         elif view == "q":
             ext = im.q_extent()
             art = ax.imshow(data, origin="lower", extent=ext, norm=norm, cmap=cmap, interpolation="nearest")
-            ax.set_xlabel("qx [1/nm]")
+            ax.set_xlim(min(ext[0], ext[1]), max(ext[0], ext[1]))     # +qx to the right (view towards the sample)
+            ax.set_xlabel("qx [1/nm]  (view towards the sample)")
             ax.set_ylabel("qy [1/nm]")
             ax.set_aspect("equal")
         else:
             art = ax.imshow(data, origin="lower", norm=norm, cmap=cmap, interpolation="nearest")
-            ax.set_xlabel("x [pixel]")
-            ax.set_ylabel("y [pixel]")
+            if im.columns_run_left:                                  # as the q view: +x to the right
+                ax.invert_xaxis()
+            ax.set_xlabel("column [pixel]  (view towards the sample)")
+            ax.set_ylabel("row [pixel]")
             if im.centre_px and all(np.isfinite(im.centre_px)):
                 ax.plot(*im.centre_px, "+", color="w", ms=10)
         for qr in self._rings():

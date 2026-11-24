@@ -182,7 +182,9 @@ def size_integral(c, q, S):
     cache = getattr(c, "cache", None)
     scope = None
     if cache is not None:  # form factor at the nodes: depends on q and the form-factor parameters except x
-        scope = cache.scope((q.tobytes(), np.delete(np.asarray(c.ff_p, float), c.distributed).tobytes()))
+        from .polarisation import cache_key as _pol_key
+
+        scope = cache.scope((q.tobytes(), np.delete(np.asarray(c.ff_p, float), c.distributed).tobytes(), _pol_key()))
 
     def P(x, kind="intensity"):
         if scope is not None:

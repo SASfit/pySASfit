@@ -59,7 +59,7 @@ class LatticeView(QtWidgets.QWidget):
         for t, d in VIEWS:
             self.view_mode.addItem(t, d)
         self.view_mode.setToolTip("real space: unit cells and particles, beam (red) and detector plane;\n"
-                                  "along the beam: parallel projection as seen from the detector (q_h →, q_v ↑);\n"
+                                  "along the beam: parallel projection as seen from the detector (q_x →, q_y ↑);\n"
                                   "reciprocal lattice: reflections (red: on the Ewald sphere / detector);\n"
                                   "detector: positions of the Bragg reflections (powder: rings) with hkl")
         self.ncell = QtWidgets.QSpinBox()
@@ -292,12 +292,12 @@ class LatticeView(QtWidgets.QWidget):
         if not frame:                      # view along the beam: only the detector axes
             self._arrow([0, 0, 0], [0, 1.05 * R, 0], (0.2, 0.2, 0.5, 1), 1.5, 0.05)
             self._arrow([0, 0, 0], [0, 0, 1.05 * R], (0.2, 0.2, 0.5, 1), 1.5, 0.05)
-            self._text([0, 1.08 * R, 0], "q_h", (0.2, 0.2, 0.5, 1))
-            self._text([0, 0, 1.08 * R], "q_v", (0.2, 0.2, 0.5, 1))
+            self._text([0, 1.08 * R, 0], "q_x", (0.2, 0.2, 0.5, 1))
+            self._text([0, 0, 1.08 * R], "q_y", (0.2, 0.2, 0.5, 1))
             if sc.director is not None and spec.get("type") not in ("sphere", "none"):
                 self._arrow(-0.8 * R * sc.director, 1.6 * R * sc.director, DIRECTOR, 2, 0.06)
             return
-        # beam and detector plane (x = beam, y = q_h, z = q_v)
+        # beam and detector plane (engine x = beam, y = detector q_x, z = detector q_y)
         self._arrow([-1.6 * R, 0, 0], [3.0 * R, 0, 0], BEAM, 2.5, 0.05)
         self._text([-1.6 * R, 0, 0.08 * R], "beam", BEAM)
         xd = 1.6 * R
@@ -306,8 +306,8 @@ class LatticeView(QtWidgets.QWidget):
         self._lines([[quad[i], quad[(i + 1) % 4]] for i in range(4)], (0.35, 0.45, 0.65, 1), 1.0)
         self._arrow([xd, 0, 0], [0, 0.9 * R, 0], (0.2, 0.2, 0.5, 1), 2, 0.1)
         self._arrow([xd, 0, 0], [0, 0, 0.9 * R], (0.2, 0.2, 0.5, 1), 2, 0.1)
-        self._text([xd, 0.95 * R, 0], "q_h", (0.2, 0.2, 0.5, 1))
-        self._text([xd, 0, 0.95 * R], "q_v", (0.2, 0.2, 0.5, 1))
+        self._text([xd, 0.95 * R, 0], "q_x", (0.2, 0.2, 0.5, 1))
+        self._text([xd, 0, 0.95 * R], "q_y", (0.2, 0.2, 0.5, 1))
         self._text([xd, -R, -R * 1.08], "detector", (0.2, 0.2, 0.5, 1))
         if sc.director is not None and spec.get("type") not in ("sphere", "none"):
             self._arrow(-0.8 * R * sc.director, 1.6 * R * sc.director, DIRECTOR, 3, 0.06)
@@ -383,7 +383,7 @@ class LatticeView(QtWidgets.QWidget):
             R = float(max(self.scene.qmax, np.linalg.norm(G, axis=0).max() if G.size else 1.0))
         else:
             R = self._extent(self.scene)
-        if mode == "beam":                     # from the detector side: q_h to the right, q_v up
+        if mode == "beam":                     # from the detector side (view towards the sample): q_x to the right, q_y up
             self.view.opts["fov"] = 1.0
             self.view.setCameraPosition(pos=QtGui_vec(0, 0, 0), distance=R * 2.6 / np.tan(np.radians(0.5)),
                                         elevation=0, azimuth=0)
@@ -413,7 +413,7 @@ def hkl_text(hkl):
 
 
 def draw_reflections(ax, sc, labels=True, standalone=False, colour="r", max_labels=30):
-    """Bragg reflections of the scene on the detector (q_h, q_v): spots of an oriented crystal, rings of a powder.
+    """Bragg reflections of the scene on the detector (q_x, q_y): spots of an oriented crystal, rings of a powder.
     Used by the panel (``standalone``) and as an overlay on the 2D pattern."""
     import matplotlib.patches as mpatches
     refl = LV.detector_reflections(sc)
@@ -422,8 +422,8 @@ def draw_reflections(ax, sc, labels=True, standalone=False, colour="r", max_labe
         ax.set_xlim(-qm, qm)
         ax.set_ylim(-qm, qm)
         ax.set_aspect("equal")
-        ax.set_xlabel("q_h [1/nm]")
-        ax.set_ylabel("q_v [1/nm]")
+        ax.set_xlabel("q_x [1/nm]  (view towards the sample)")
+        ax.set_ylabel("q_y [1/nm]")
         ax.axhline(0, color="0.85", lw=0.6)
         ax.axvline(0, color="0.85", lw=0.6)
         ax.set_title(sc.title + ("  (rings)" if sc.rings else ""), fontsize="small")

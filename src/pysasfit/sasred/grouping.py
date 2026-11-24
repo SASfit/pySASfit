@@ -80,6 +80,8 @@ FIELDS: Dict[str, Callable] = {
     "thickness_cm": lambda r: r.sample_thickness_cm,
     "counting_time_s": lambda r: r.counting_time_s,
     "start": lambda r: _parse_time(r.start_time),
+    "polariser": lambda r: getattr(r, "polariser", "") or None,       # SANSPOL: polariser in / out (file)
+    "flipper": lambda r: getattr(r, "flipper", "") or None,           # flipper off / on (by hand or sample name)
 }
 
 

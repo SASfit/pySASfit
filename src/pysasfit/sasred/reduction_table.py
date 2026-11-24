@@ -445,6 +445,14 @@ def transmission_from_runs(runs, raws: Dict[int, object], eb_runs: Optional[List
     return float(v.mean()), sig, [a[2] for a in vals], vals[0][3], [float(a[0]) for a in vals]
 
 
+_FLIP_LABEL = re.compile(r"\s*\[flipper [^\]]*\]$")
+
+
+def base_sample(label: str) -> str:
+    """Sample name without the flipper state that the plan adds to polarised groups ("name [flipper on]")."""
+    return _FLIP_LABEL.sub("", str(label or ""))
+
+
 def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, transmissions=None,
               sample_background: Optional[str] = "empty_cell") -> ReductionTable:
     """Fill the table of one configuration from a plan.
@@ -489,7 +497,7 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
             if p1 is None:
                 continue
             t1 = _parse_time(getattr(r, "start_time", "")) or 0.0
-            w = slots.setdefault(e.sample, {}).setdefault(round(p1, 1), [t1, t1])
+            w = slots.setdefault(base_sample(e.sample), {}).setdefault(round(p1, 1), [t1, t1])
             w[0], w[1] = min(w[0], t1), max(w[1], t1)
     eb_runs = [x for e in plan.entries if e.kind == "transmission" and e.role == "empty_beam"
                and _lam(e.config) == lam for x in e.summed or e.runs]
@@ -506,7 +514,7 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
         elif e.message:
             notes.append(e.message)
         p0 = entry_pos(e)
-        tr = [x for x in tr_entries if x.sample == e.sample]
+        tr = [x for x in tr_entries if base_sample(x.sample) == base_sample(e.sample)]
         trc = [c for x in tr for c in _choices(x)]
         if p0 is not None and trc:
             same = [c for c in trc if pos(c.run) is None or abs(pos(c.run) - p0) <= POSITION_TOL_MM]
@@ -516,7 +524,7 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
                              f"not used for position {p0:.1f} mm")
             trc = same
         row.trans_runs = trc
-        hit = trans_by_name.get(e.sample)
+        hit = trans_by_name.get(base_sample(e.sample))
         if hit is not None and p0 is not None and pos(hit.run) is not None \
                 and abs(pos(hit.run) - p0) > POSITION_TOL_MM:
             notes.append(f"trans.txt value {hit.value:g} ({hit.file}) is for position {pos(hit.run):.1f} mm, "
@@ -543,16 +551,16 @@ def from_plan(plan, config: str, raws: Optional[Dict[int, object]] = None, trans
                                  ", ".join(f"{x}: {v:.3f}" for x, v in zip(ct[2], ct[4])) +
                                  ") – other sample under the same name? Open the row and untick runs")
         if p0 is not None and e.role == "sample":
-            mine = slots.get(e.sample, {}).get(round(p0, 1))
-            others = sorted({(n, q) for n, ps in slots.items() if n != e.sample for q, w in ps.items()
+            mine = slots.get(base_sample(e.sample), {}).get(round(p0, 1))
+            others = sorted({(n, q) for n, ps in slots.items() if n != base_sample(e.sample) for q, w in ps.items()
                              if abs(q - p0) <= SLOT_TOL_MM and mine is not None
                              and w[0] <= mine[1] and mine[0] <= w[1]})      # same slot at the same time
             if others:
                 notes.append("decision needed: sample position {:.1f} mm is that of {} – changer not moved or "
                              "wrong sample name?".format(p0, ", ".join(f"{n} ({q:g} mm)" for n, q in others)))
-            if len(slots.get(e.sample, ())) > 1:
+            if len(slots.get(base_sample(e.sample), ())) > 1:
                 notes.append("measured at several positions: " +
-                             ", ".join(f"{v:g}" for v in sorted(slots[e.sample])) + " mm")
+                             ", ".join(f"{v:g}" for v in sorted(slots[base_sample(e.sample)])) + " mm")
         row.notes = "; ".join(dict.fromkeys(notes))
         r0 = raws.get(e.runs[0])
         if r0 is not None and getattr(r0, "sample_thickness_cm", None):

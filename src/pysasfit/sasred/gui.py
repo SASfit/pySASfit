@@ -589,7 +589,38 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         m.addSeparator()
         m.addAction("Exclude runs… (kept for this folder)", self.on_exclude)
         m.addAction("Include runs again", lambda: self.include_runs([e.run for e in self.selected_entries()]))
+        m.addSeparator()
+        fm = m.addMenu("Flipper state (polarised runs; not stored in the files)")
+        sel = lambda: [e.run for e in self.selected_entries() if e.raw is not None]  # noqa: E731
+        fm.addAction("flipper off", lambda: self.set_flipper(sel(), "off"))
+        fm.addAction("flipper on", lambda: self.set_flipper(sel(), "on"))
+        fm.addAction("alternate: off, on, off, … (run order)", lambda: self.set_flipper(sel(), "alternate-off"))
+        fm.addAction("alternate: on, off, on, … (run order)", lambda: self.set_flipper(sel(), "alternate-on"))
+        fm.addAction("from the sample name (clear)", lambda: self.set_flipper(sel(), None))
         m.exec(self.table.viewport().mapToGlobal(pos))
+
+    def set_flipper(self, runs, state):
+        """Flipper state of polarised runs (SANS-I stores the polariser but not the flipper): "off", "on",
+        "alternate-off" / "alternate-on" (alternating in run order), None (back to the sample name). Kept for the
+        folder; the grouping keeps the states apart and the reduced files carry them."""
+        from . import names as nm
+        if not self.folder or not runs:
+            return
+        if self.name_corrections is None:
+            self.name_corrections = nm.load(self.folder)
+        if state in ("alternate-off", "alternate-on"):
+            what = nm.alternate_flipper(runs, state.split("-")[1])
+        else:
+            what = {int(r): state for r in runs}
+        self.name_corrections.set_flipper(what)
+        p = nm.save(self.name_corrections)
+        self._apply_corrections()
+        unpol = [e.run for e in self.entries if e.raw is not None and e.run in what
+                 and getattr(e.raw, "polariser", "") != "in"]
+        txt = ", ".join(f"{r}: {s or 'from name'}" for r, s in sorted(what.items())[:20]) + (" …" if len(what) > 20 else "")
+        self.log(f"flipper state set ({txt}) (kept in {p})"
+                 + (f"; note: runs {unpol} have no polariser in – the flipper state is ignored for them" if unpol else ""))
+        self._after_corrections("reduction table filled again with the flipper states")
 
     def on_names(self):
         sel = [e for e in self.selected_entries() if e.raw is not None]
@@ -1328,6 +1359,12 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                     it.setToolTip(f"skipped: {e.skip or 'unreadable'} – not used in any reduction")
                 elif e.raw.aborted:
                     it.setForeground(QtGui.QBrush(QtGui.QColor("firebrick")))
+                if j == 0 and e.raw is not None and getattr(e.raw, "polariser", "") == "in":
+                    fl = getattr(e.raw, "flipper", "")
+                    it.setToolTip(f"polariser in, flipper {fl or 'unknown'}"
+                                  + (f" ({e.raw.flipper_source})" if fl else " – set it: right mouse button → Flipper state"))
+                    if not fl:
+                        it.setForeground(QtGui.QBrush(QtGui.QColor("darkorange")))
                 if j == 1 and e.raw is not None and (e.raw.sample_name != (e.raw.sample_name_in_file or e.raw.sample_name)
                                                      or getattr(e.raw, "role", "")):
                     f = it.font()
@@ -1992,8 +2029,10 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         c = r.parameters.get("beam_center_px")
         if c:
             ax.plot([c[0]], [c[1]], "+", color="red", ms=12, mew=1.5, zorder=5)
-        ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
-        ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]")
+        from .core.geometry import VIEW_NOTE, orient_pixel_axes
+        orient_pixel_axes(ax, r.raw)
+        ax.set_xlabel(f"column [pixel of {px * 1e3:g} mm], {VIEW_NOTE}")
+        ax.set_ylabel(f"row [pixel of {py * 1e3:g} mm]")
         lab = r.parameters.get("label")
         ax.set_title(f"reduced 2D: {lab + ' ' if lab else ''}{r.parameters.get('sample', r.raw.sample_name)}",
                      fontsize="medium")
@@ -2050,29 +2089,29 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         decorate_colorbar(image_colorbar(fig, ax, im, cunit), self.det_scale.currentData())
         self.mask_editor.draw_overlay(ax, c.shape, image=np.nan_to_num(c), scale=self.det_scale.currentData())
         x, y = self.xc.value(), self.yc.value()
+        from .core.geometry import COLUMN_SIGN, VIEW_NOTE, orient_pixel_axes
+        # every detector as seen looking towards the sample (docs/conventions.md): lab +x (posx) to the right,
+        # up = up; the central columns and the left panel's rows run against these axes
+        orient_pixel_axes(ax, raw)
         if raw.panel is not None:                  # wide-angle panel: no beam centre on it
-            # orientation as the central detector: x grows against posx, y with posy (the left panel's rows
-            # run from top to bottom)
-            if raw.panel.posy_mm[0] > raw.panel.posy_mm[-1]:
-                ax.invert_yaxis()
-            if raw.panel.posx_mm[0] < raw.panel.posx_mm[-1]:
-                ax.invert_xaxis()
-            ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
-            ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]" + (" (row 0 at the top)" if raw.panel.posy_mm[0] > raw.panel.posy_mm[-1] else ""))
+            ax.set_xlabel(f"column [pixel of {px * 1e3:g} mm], {VIEW_NOTE}")
+            ax.set_ylabel(f"row [pixel of {py * 1e3:g} mm]" + (" (row 0 at the top)" if raw.panel.posy_mm[0] > raw.panel.posy_mm[-1] else ""))
             ax.set_title(f"run {raw.run}: {raw.sample_name} – {raw.bank} panel{cnote}", fontsize="medium")
             self.det_canvas.draw_idle()
             return
         ax.plot([x], [y], "+", color="red", ms=12, mew=1.5, zorder=5)
         if self.sector.isChecked():
             L = max(c.shape)
+            cs = float(getattr(raw, "column_sign", COLUMN_SIGN))      # lab φ -> pixel direction (columns run towards -x)
             for s in (-1, 1):
                 for base in (0.0, 180.0):
                     a = np.deg2rad(base + self.sector_c.value() + s * self.sector_hw.value())
-                    ax.plot([x, x + L * np.cos(a)], [y, y + L * np.sin(a)], ":", color="white", lw=1)
-            ax.set_xlim(-0.5, c.shape[1] - 0.5)
+                    ax.plot([x, x + cs * L * np.cos(a)], [y, y + L * np.sin(a)], ":", color="white", lw=1)
+            xl = (-0.5, c.shape[1] - 0.5)
+            ax.set_xlim(xl[::-1] if ax.xaxis_inverted() else xl)
             ax.set_ylim(-0.5, c.shape[0] - 0.5)
-        ax.set_xlabel(f"x [pixel of {px * 1e3:g} mm]")
-        ax.set_ylabel(f"y [pixel of {py * 1e3:g} mm]")
+        ax.set_xlabel(f"column [pixel of {px * 1e3:g} mm], {VIEW_NOTE}")
+        ax.set_ylabel(f"row [pixel of {py * 1e3:g} mm]")
         ax.set_title(f"run {raw.run}: {raw.sample_name}{cnote}", fontsize="medium")
         self.det_canvas.draw_idle()
 
@@ -2203,8 +2242,8 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
                 decorate_colorbar(image_colorbar(fig, ax, im, single[1]), self.det_scale.currentData())
 
     def _draw_detector_polar(self, fig, ax, raw, c, norm, cunit="counts"):
-        """Detector image over (φ, q): φ = 0 horizontal (+x), counter-clockwise; masked cells in the
-        mask colours, outside the detector light grey."""
+        """Detector image over (φ, q): φ = 0 along lab +x (right in the view towards the sample),
+        counter-clockwise (docs/conventions.md); masked cells in the mask colours, outside the detector light grey."""
         import matplotlib
         from .core.polar import polar_image
         u = self.units
@@ -2256,7 +2295,7 @@ class MainWindow(EfficiencyMixin, DockMixin, QtWidgets.QMainWindow):
         ax.set_xlim(0, 360)
         ax.set_xticks(np.arange(0, 361, 45))
         ax.set_ylim(0, qe[-1])
-        ax.set_xlabel("azimuth φ [°]  (0° = horizontal, +x)")
+        ax.set_xlabel("azimuth φ [°]  (0° = +x, right in the view towards the sample; counter-clockwise)")
         ax.set_ylabel(f"q [{u.q}]")
         ax.set_title(f"run {raw.run}: {raw.sample_name}", fontsize="medium")
 

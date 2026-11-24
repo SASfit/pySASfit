@@ -1,7 +1,8 @@
 """Geometry of the lattice sketch of pySCAtter (Qt-free): the crystal block with its particles in the laboratory
 frame of the engine, the reciprocal lattice and the reflections that fall on the detector.
 
-The frame is that of :mod:`engine`: x along the beam, y horizontal (detector q_h), z vertical (detector q_v).
+The frame is that of :mod:`engine`: x along the beam, y horizontal (detector q_x of the pySASfit frame, docs/conventions.md: to the right in
+the view towards the sample), z vertical (detector q_y).
 Everything is taken from the engine itself (:func:`engine.make_lattice`, the zone-axis rotation of
 ``_oriented_lattice``, :func:`engine.director_lab`), so the sketch shows exactly the structure that is calculated.
 
@@ -58,7 +59,7 @@ class Scene:
     intensity: np.ndarray = field(default_factory=lambda: np.zeros(0))    # weight * <P>(g) (relative)
     excitation: np.ndarray = field(default_factory=lambda: np.zeros(0))   # distance from the Ewald sphere (1/nm)
     on_detector: np.ndarray = field(default_factory=lambda: np.zeros(0, bool))
-    det: np.ndarray = field(default_factory=lambda: np.zeros((2, 0)))       # (q_h, q_v) of the spot on the detector
+    det: np.ndarray = field(default_factory=lambda: np.zeros((2, 0)))       # (q_x, q_y) of the spot on the detector (pySASfit frame)
     spread: np.ndarray = field(default_factory=lambda: np.zeros(0))         # azimuthal factor A at the detector
     rings: bool = False                   # reflections smeared over the whole sphere |q| = g (powder or EditAzi = 0)
     tolerance: float = 0.0

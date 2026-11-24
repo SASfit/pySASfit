@@ -4,8 +4,10 @@ averages, A(q) + B(q) sin²ψ decomposition, box projections, sums of several im
 
 An :class:`Image2D` holds the image, its statistical uncertainty, the mask and the geometry
 (beam centre in pixels, pixel size, detector distance, wavelength), from which q, qx, qy and the
-azimuth ψ of every pixel follow. ψ = 0 is the horizontal direction (+x, axis 1), increasing
-counter-clockwise (towards +y, axis 0), as in pySASred.
+azimuth ψ of every pixel follow. Frame of pySASfit (docs/conventions.md): +x horizontal, to the right
+in the views (which show the detector as seen looking towards the sample), +y up; ψ = 0 along +x,
+counter-clockwise, as in pySASred. The raw columns of SANS-I / SANS-LLB images run towards -x
+(``column_sign`` = -1; pixel views are mirrored accordingly).
 
 Sources (:func:`read_images`, :func:`image_from_reduced`):
 
@@ -45,6 +47,7 @@ class Image2D:
     wavelength_A: Optional[float] = None
     entry: str = ""
     _qxy: Optional[Tuple[np.ndarray, np.ndarray]] = None   # given q (1/nm) when the geometry is unknown
+    column_sign: float = -1.0                  # lab x per +1 column (SINQ raw arrays: -1)
 
     def __post_init__(self):
         from ..sasred.legacy import rename_keys
@@ -101,7 +104,7 @@ class Image2D:
             raise ValueError("geometry unknown: give beam centre, pixel size, distance and wavelength")
         ny, nx = self.I.shape
         iy, ix = np.mgrid[0:ny, 0:nx].astype(float)
-        x = (ix - self.centre_px[0]) * self.pixel_m[0]
+        x = (np.sign(self.column_sign) or 1.0) * (ix - self.centre_px[0]) * self.pixel_m[0]
         y = (iy - self.centre_px[1]) * self.pixel_m[1]
         r = np.hypot(x, y)
         tth = np.arctan2(r, self.SD_m)
@@ -116,12 +119,22 @@ class Image2D:
         return np.hypot(qx, qy)
 
     def psi_deg(self) -> np.ndarray:
-        """Azimuth ψ in degrees, 0…360, 0 = +x (horizontal), counter-clockwise."""
+        """Azimuth ψ in degrees, 0…360, 0 = +x (horizontal, right in the view towards the sample),
+        counter-clockwise."""
         qx, qy = self.qxy()
         return np.degrees(np.arctan2(qy, qx)) % 360.0
 
+    @property
+    def columns_run_left(self) -> bool:
+        """True when qx decreases with the column index (SINQ raw arrays): the views mirror the columns."""
+        if self._qxy is not None:
+            qx = self._qxy[0]
+            return bool(np.nanmean(qx[:, -1] - qx[:, 0]) < 0) if qx.shape[1] > 1 else False
+        return self.column_sign < 0
+
     def q_extent(self):
-        """(qx min, qx max, qy min, qy max) of the pixel edges, 1/nm, for imshow."""
+        """(qx at column 0 edge, qx at last column edge, qy min, qy max) of the pixel edges, 1/nm, for imshow
+        (the first two in column order: decreasing when the columns run towards -x)."""
         qx, qy = self.qxy()
         ny, nx = self.I.shape
         dx = (qx[:, -1] - qx[:, 0]).mean() / max(1, nx - 1)
@@ -216,12 +229,26 @@ def _read_nxcansas(path) -> List[Image2D]:
                     img.SD_m = _num(meta["SD_m"])
                 if img.wavelength_A is None and _num(meta.get("wavelength_A")) is not None:
                     img.wavelength_A = _num(meta["wavelength_A"])
-                if not img.has_q and "Qx" in d and "Qy" in d:
+                from_sasred = any(isinstance(g, h5py.Group) and "name" in g and
+                                  str(_dec(g["name"][()])).startswith("pySASred") and
+                                  str(_dec(g.attrs.get("canSAS_class", b""))) == "SASprocess" for g in e.values())
+                framed = "pysasfit_frame" in d.attrs
+                qxy = None
+                if "Qx" in d and "Qy" in d:
                     u = str(_dec(d["Qx"].attrs.get("units", b"1/nm"))).lower()
                     f = 10.0 if "ang" in u or u in ("1/a", "a^-1") else 1.0
                     qx, qy = np.asarray(d["Qx"][()], float) * f, np.asarray(d["Qy"][()], float) * f
                     if qx.shape == I.shape:
-                        img._qxy = (qx, qy)
+                        if from_sasred and not framed:      # pySASred before 2026-11-23: Qx of the other sign
+                            qx = -qx
+                            meta["note"] = "Qx sign corrected (pySASred file written before 2026-11-23)"
+                        qxy = (qx, qy)
+                if qxy is not None and qxy[0].shape[1] > 1:
+                    img.column_sign = -1.0 if np.nanmean(qxy[0][:, -1] - qxy[0][:, 0]) < 0 else 1.0
+                elif from_sasred:
+                    img.column_sign = -1.0
+                if not img.has_q and qxy is not None:
+                    img._qxy = qxy
                 out.append(img)
     return out
 
@@ -299,8 +326,11 @@ def image_from_reduced(reduced, key=None) -> Image2D:
     ps = raw.pixel_size_m
     tag = key if key is not None else (par.get("label") or getattr(r, "run", ""))
     img = r.image
+    gqx = np.asarray(r.geometry.qx, float)
+    cs = -1.0 if gqx.ndim == 2 and gqx.shape[1] > 1 and np.nanmean(gqx[:, -1] - gqx[:, 0]) < 0 else \
+        (1.0 if gqx.ndim == 2 and gqx.shape[1] > 1 else -1.0)
     return Image2D(np.asarray(img.value, float), np.asarray(img.std(systematic=False), float),
-                   np.asarray(mask) != 0, f"pySASred:{tag}", "pySASred (memory)", meta,
+                   np.asarray(mask) != 0, f"pySASred:{tag}", "pySASred (memory)", meta, column_sign=cs,
                    unit=getattr(img, "unit", "") or getattr(r, "unit", ""),
                    centre_px=tuple(map(float, par.get("beam_center_px", (np.nan, np.nan)))),
                    pixel_m=(ps, ps) if np.isscalar(ps) else tuple(ps), SD_m=float(r.geometry.SD_m),

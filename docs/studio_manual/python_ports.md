@@ -112,15 +112,48 @@ Gaussian ring) and against the large-q asymptotics.
 | ff_power_law, ff_profile__power_law | powerlaw | ~1e-11 (mpmath) | sphere with the profile Δη(1-(r/R)^α): Gauss-Jacobi for ∫ t^(α+2) sinc; C uses sasfit_pfq (not in the reference library) |
 | ff_guwelop_sphere, _cyl_Pcs, _planar_Pcs, _profile | guwelop | ~1e-11 (mpmath) | Fourier integrals of N(1-F_GUWELOP(x)) with panels at quantiles of F; compared with C for q λ < 15 (C loses relative accuracy beyond, up to 1e-4) |
 | ff_ribbon_mono, peaks_ribbon_w_sd | ribbon | ~1e-14 (mpmath), C ~1e-12 | thin rod × ribbon cross section (A << B): F(x) = 1F2(1/2;3/2,2;-x²) = [J1(2x)+2Σ_{k≥1}J_{2k+1}(2x)]/x by Miller recurrence; Schulz average of the width as 2∫₀¹K(w)Re[k(k+1)θ²(1-iqθw)^-(k+2)]dw (≤ (k+2)/4 oscillations for any q). C rewritten 2026-11-18 (was sasfit_pfq plus the asymptotes 2/(qB) for qB/2 > 3, errors up to 2.3 %, and 2B/q); _v of ribbon_mono now returns ABC |
+| ff_fuzzysphere, ff_linshell, ff_linshell2, ff_expshell, ff_coreshellmicrogel (+ radial profiles) | fuzzysphere | ~1e-11 (mpmath) | core φ(qR) stable; linear shells closed form with χ(x) = ∫₀¹t³sinc(xt)dt (series below x = 1), exponential and parabolic zones by Gauss-Legendre (panels ≤ 2 rad, split at the kinks). C fixed 2026-11-23: the closed forms divided by q³…q⁵ (LinShell: 100 % errors at q R = 1e-3, fuzzysphere 1e-5 at q R = 1e-6), LinShell2 macro R1 = RTOT-DR unparenthesised (q*R1 = q*RTOT - DR), LinShell(2)_v returned 0; now same series/quadrature for small q |
+| ff_gen__exp__sphere, ff_gen__gauss__sphere (+ profiles) | gen_exp_sphere | ~1e-14 (mpmath) | generalised exponential / Gaussian profiles r^α e^(-…): (θ/u) sinc form, Kummer 1F1(β/2; 3/2; -x). C fixed 2026-11-23: the gen_gauss fallback (GSL error) read an uninitialised value and kept only the Gaussian term; now the full asymptotic expansion |
+| ff_clipped_random_waves_1…5, _twocut_1…5, _twocut_intersection_1…5 | stochastic_models | ~1e-9 (scipy QAWO); C ~1e-3 (intdeo) | level-cut Gaussian fields: γ = X(g)/(φ(1-φ)), X = 1/2π∫₀^asin g e^(-α²/(1+sin θ)) (one cut), 1/π∫[e^(-α²/(1+s)) - e^(-α²/(1-s))] (two cuts), 2φX_s + X_s² (intersection), γ(0) = 1; θ rule graded towards ±π/2. C fixed 2026-11-23: one cut subtracted φ² (γ(∞) ≠ 0), two cuts used the sum with 1/2π, intersection C11²/2π - φ², integer abs() on asin g (γ = 0 for \|asin g\| < 1), gy4 not normalised at r = 0 |
+| ff_boolean_union_model, ff_dead_leaves_model | stochastic_models | ~1e-10; C ~1e-4 (intdeo) | log-normal spheres, ThetaK closed form checked against the covariogram average. C fixed 2026-11-23: Boolean γ used e^(K-1) instead of e^K - 1; dead leaves leaked its workspace. ff_boolean_intersection_model is a stub in C (returns 0), not ported |
 | ff_sphere_chains_rw_, __rc, __nagg | spherical_ellipsoidal_micelles | ~1e-14 | Pedersen sphere + Gaussian chains |
 | ff_ell_chains_rw_, __rc, __nagg | spherical_ellipsoidal_micelles | ~1e-13 | spheroid + Gaussian chains, Gauss-Legendre over cos α. C fixed 2026-11-18 (spheroid surface: oblate ε → ε², prolate ae/tan → ae/sin; _nagg: R_core with 4/3 = 1) |
+| ff_worms_ps1_, ff_worms_ps2_, ff_worms_ps3_ | polymer_semi_flexible + thin_objects | ~1e-11 vs C | Pedersen–Schurtenberger methods 1–3 (with / without excluded volume); method 3 continuous in value and slope at q0. C fixed 2026-11-23: fRg2 cancelled for L << b (series), IDebye was 1 - u/3 below u = 0.01 (8e-6), Sharp–Bloomfield term 7/(15u)(1 - e^-u) cancelled (expm1), dS/dq at q0 with the absolute step 1e-8 (now 1e-3 q0) |
+| ff_kholodenko_worm | polymer_semi_flexible + thin_objects | ~1e-13 vs C, 1e-9 vs scipy | contour integral by Gauss-Legendre (geometric panels, or 1.5 rad panels in the oscillating regime q lb > 3) |
+| ff_freely_joined_chain_of_rods | polymer_semi_flexible + thin_objects | ~1e-14 vs C, 1e-12 vs direct sum | C fixed 2026-11-23: (1-γ)⁻¹ - n⁻¹(1-γⁿ)(1-γ)⁻² cancelled for small qb (100 % at qb = 1e-5; the series branch below 1e-6 gave S(0) = 1 - 2/(3n)); γⁿ NaN for γ = j0(qb) < 0 and non-integer n (now \|γ\|ⁿ cos πn) |
+| ff_sphere_chains_saw_, __rc, __nagg | spherical_ellipsoidal_micelles | ~1e-13 | Pedersen model 39 with self-avoiding worm chains. C fixed 2026-11-23: R_core/n_agg variant used the core volume V/(1 - xsolv) instead of V(1 - xsolv); _nagg: xsolv_core >= 1 checked |
+| ff_sphere_r__a, _rc, _nagg | spherical_ellipsoidal_micelles | ~1e-13 | r^-α corona (Gauss-Legendre, Gauss-Jacobi from r = 0), chains: worm (exvol 0, 1) or generalized Gaussian coil (exvol 2: L = Rg, b = ν). C fixed 2026-11-23: n_agg = 0 returned Φ² without volume and contrast; _nagg: xsolv_core >= 1 checked. Not ported: sphere_2nd+R^-a_Rc, sphere_smooth_interface+R^-a_Nagg (stubs returning 0) |
+| ff_koyama_worm | polymer_semi_flexible + thin_objects | ~1e-12 vs C, 1e-10 vs scipy | Koyama (1973): pair distribution from <R²> and <R⁴> of the worm-like chain, contour integral by Gauss-Legendre on panels of the phase and the Gaussian exponent; <R⁴> by series below x = 1 (the closed form cancels; C uses its series only below 1e-4, ~1e-9 at L << lb), rod and Gaussian limits checked |
+| ff_pcs_ellcylsh | thin_objects | ~1e-13 (σ = 0) vs C, 1e-9 vs scipy | elliptical core-shell cross-section, log-normal R and t, average over the orientation α of the ellipse. C fixed 2026-11-24: for ε ≠ 1 the α integral was not divided by π/2 (π/2 too large, discontinuous at ε = 1) |
+| ff_rod_sd_ellcylsh | thin_objects | ~1e-13 (σ = 0) | Pcs:ellCylSh · P'(q) of a thin rod with log-normal length |
+| ff_worm_ps1_sd_ellcylsh, ff_worm_ps2_sd_ellcylsh, ff_worm_ps3_sd_ellcylsh, ff_worm_kholodenko_sd_ellcylsh | thin_objects | ~1e-11 (σ = 0) | Pcs:ellCylSh · L² S(q) of the worm. C fixed 2026-11-24: the parameter vector was passed to Pcs unchanged, so methods 1–3 used lb as σ_t of the thickness distribution and the Kholodenko variant read the contrasts one place too early. Method 3 without excluded volume (header: dummy), as in C |
+| ff_pcs_homogeneouscyl, ff_pcs_homogeneousplate, ff_pcs_twoinfinitelythinlayers, ff_pcs_bilayergauss, ff_pcs_layeredcentrosymmetricxs, ff_pcs_plate_chains_rw_ | thin_objects | ~1e-14 (σ = 0) vs C, 1e-10 vs scipy | cross-section form factors with log-normal widths. C fixed 2026-11-24: Pcs:BilayerGauss used an uninitialised parameter structure for its log-normal |
+| ff_disc_sd_homoxs, ff_disc_sd_bilayergauss | thin_objects | ~1e-14 (σ = 0) vs C, 1e-13 vs mpmath | P'(q) of a thin disc times a plate or bilayer cross-section. C fixed 2026-11-24: P'(q) of the thin disc was NaN at q = 0 and cancelled for small qR (series); ff_disc_sd_homoxs used half of R0 as the radius |
+| ff_cylinder, ff_disc, ff_rod | cylinders | ~1e-14 vs C, 1e-11 vs scipy / 1e-13 vs mpmath | randomly oriented cylinder (orientation integral by Gauss-Legendre on phase panels), infinitely thin disc and rod. C fixed 2026-11-24: ff_cylinder_f did not set q (amplitude of a previous q); the disc and its amplitude lost digits for 1e-6 < qR < 1e-2 (series only below 1e-6, 1 - cos instead of 2 sin²) |
+| ff_longcylinder, ff_flatcylinder, ff_porodcylinder, ff_porodcylinder_v2 | cylinders | ~1e-12 vs C, 1e-10 vs mpmath | Porod's approximations for long and flat cylinders (Struve functions), blended by 2R/L; the flat approximation holds for qL ≲ 1 and becomes negative beyond. C fixed 2026-11-24: both closed forms cancelled for small q (long: 2e-4 at qL = 1e-4; series below q·max(L, 2R) = 0.3, 8/σ²(3J₂ + J₀ - 1) by its series), flatcylinder _f and _v swapped, porodcylinder_v2 used an uninitialised parameter structure |
+| ff_longcylshell | cylinders | ~1e-13 vs C | Pcs of a circular core-shell cross-section · P'(q) of a thin rod |
+| ff_ellcylshell1, ff_ellcylshell2, ff_cylshell1, ff_cylshell2 | cylinders | ~1e-14 vs C, 1e-9 vs scipy | core-shell cylinder with elliptical (circular) cross-section, shell around the mantle (1) or also on the caps (2). C fixed 2026-11-24: for ε ≠ 1 the orientation average weighted A² with sin α/(4π) although sasfit_orient_avg is already uniform in cos α (result ~1/(4π) too small, discontinuous at ε = 1); the volumes of the type-2 shells lacked the caps (L or L + t instead of L + 2t) |
+| ff_torus | cylinders | ~1e-15 vs C | ring torus with shell and height ratio ν (tube integral in r = R + a sin β). C fixed 2026-11-24: the core integral started at R - a < 0 for a > R |
+| ff_ellipsoidal_shell_0, _0t, _rp, _rp_t, _re, _re_t, _2, _2t | ellipsoidal_shell | ~1e-14 (σ = 0) vs C, 1e-9 vs scipy | core-shell spheroids with solvent fractions, log-normal scale of t, R_p, R_e or combinations. C fixed 2026-11-24: _re and _re_t scaled the polar instead of the equatorial radius; _re_v, _2t_v (0) and _0_v (core only) volumes |
+| ff_spheroid_R, ff_spheroid_V, ff_spheroid_nu | ellipsoidal_shell | ~1e-14 vs C | homogeneous spheroid given by (R_p, R_e), (V, R_e) or (ν = R_p/R_e, R_e). C fixed 2026-11-24: spheroid_V put R_e into the polar axis (volume ≠ V, I(0) ≠ (Δη V)²) |
 
 **Batch 2 (2026-11-18), not ported:** local_cyl_micelle and local_planar_micelles are stubs in the C sources (all
 functions return 0). The sphere+R^-a and sphere+chains(SAW) functions of spherical_ellipsoidal_micelles call the
-worm form factor sasfit_sq_p__q___worm_ps3_ (Pedersen-Schurtenberger) and follow with its port. The core
+worm form factor sasfit_sq_p__q___worm_ps3_ (Pedersen-Schurtenberger); ported in batch 5 (2026-11-23). The core
 functions sasfit_sphere_fc and sasfit_gauss_fc (sasfit_common/sasfit_utils.c) now use their series up to
 qR = 0.1 and (qRg)² = 0.5 (before 1e-4: up to ~1e-8 relative error from cancellation); rebuild of the SASfit core
 needed.
+
+**Batch 6 (2026-11-24):** all functions with a log-normal size distribution agree with the C code only to
+~1e-4 (up to 1e-3 at large q): SASfit's find_LogNorm_int_range ends the integral 3.7 σ above the peak of
+x^(2 dim) LN(x) (sasfit_common, not changed), the ports integrate over ±8 σ. Not ported yet in thin_objects:
+ff_ellsh_sd_homoxs, ff_ellsh_sd_bilayergauss, ff_cylsh_sd_homoxs, ff_cylsh_sd_bilayergauss (P'(q) of thin
+ellipsoidal shells and closed hollow cylinders) and the P'(q) structure-factor-slot functions (worm_ps3 PRISM/RPA,
+thin spherical shell, gGC).
+
+**Batch 7 (2026-11-24):** plugins cylinders and ellipsoidal_shell. Not ported: ff_alignedcylshell (oriented,
+ψ-dependent). The ellipsoidal shells with σ > 0 agree with C to ~1e-6 (C's truncated log-normal range); the
+spheroids and ellipsoidal_shell_0 do not depend on their p[4] (dummy).
 
 **Batch 3 (2026-11-18), not ported yet:** fuzzysphere, stochastic_models, gen_exp_sphere
 (large tabulated data), the structure factors of fractal_obj (sq_*), the worm form factors of thin_objects
@@ -237,6 +270,15 @@ plugin headers, as a paragraph after the parameter table::
 The SASfit GUI ignores the paragraph (it reads only the ``\b`` lines of the table); Doxygen shows it, and the
 pySASfit header parser uses the values as defaults and bounds, so the C plugins in the explorer get the same
 defaults as the ports.
+
+## Magnetic ports (2026-11-23)
+
+`ff_magnetic_shell_psi` and `ff_superparamagnetic_ff_psi` (libsasfit core) are ported with an additional
+`PortSpec.terms(q, p, psi)` that returns the magnetic basis terms (NN, NM, MH, MSF, CH). The channel of a data set
+is then a setting of the data set, not a separate function ({doc}`polarisation`). Without a setting the ports give
+the SASfit result with their `pol` parameter; the comparison with the C functions runs as for every port.
+C fix: `ff_magnetic_shell_cross` wrote ψ = π/2 into the caller's ψ parameter and read it as degrees
+(sin²ψ = 7.5e-4 instead of 1); it now uses ψ = 90°.
 
 ## Writing a port
 

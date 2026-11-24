@@ -15,6 +15,8 @@ from pysasfit.studio.ports import (
     check,
     common,
     fractals,
+    fuzzy,
+    genexp,
     guwelop,
     micelles,
     misc,
@@ -38,6 +40,8 @@ NAMES = [
         fractals,
         guwelop,
         ribbon,
+        fuzzy,
+        genexp,
     )
     for d in m.SPECS
     if d.get("c_reference", True)

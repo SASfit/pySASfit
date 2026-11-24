@@ -152,3 +152,27 @@ def test_gui_window(synth, tmp_path):
         assert f.axes
     w.close()
     main.close()
+
+
+def test_load_2d_corrects_old_pysasred_qx_sign(tmp_path):
+    """pySASred 2D files written before 2026-11-23 (no attribute pysasfit_frame) have Qx of the opposite
+    sign of the pySASfit frame (docs/conventions.md)."""
+    import h5py
+    from pysasfit.morph.anisotropic import load_2d
+    qx = np.tile(np.linspace(-1, 1, 5), (4, 1))
+    qy = np.tile(np.linspace(-1, 1, 4)[:, None], (1, 5))
+    for name, framed in (("old.h5", False), ("new.h5", True)):
+        with h5py.File(tmp_path / name, "w") as f:
+            e = f.create_group("sasentry01")
+            d = e.create_group("sasdata01")
+            if framed:
+                d.attrs["pysasfit_frame"] = "x"
+            d["I"], d["Qx"], d["Qy"] = np.ones(qx.shape), qx, qy
+            d["Qx"].attrs["units"] = "1/nm"
+            p = e.create_group("sasprocess01")
+            p["name"] = "pySASred"
+        dat = load_2d(tmp_path / name)
+        sgn = 1.0 if framed else -1.0
+        np.testing.assert_allclose(np.sort(dat.qx), np.sort(sgn * qx.ravel()))
+        k = np.argmax(np.asarray(dat.qy) * 10 + np.asarray(dat.qx))      # top row, largest qx
+        assert dat.qx[k] == pytest.approx(1.0)

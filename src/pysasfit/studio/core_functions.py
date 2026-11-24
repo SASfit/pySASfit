@@ -153,10 +153,23 @@ CORE_PARAMETERS = {
     "ff_sphere": [("R", "radius"), ("dummy1", "unused"), ("dummy2", "unused"), ("eta", "scattering length density contrast")],
     "sd_LogNorm": [("N", "number of particles (area)"), ("s", "width sigma"), ("p", "shape exponent p"), ("mu", "location parameter R")],
     "sq_HardSphere": [("RHS", "hard-sphere radius"), ("fp", "volume fraction")],
+    # magnetic core-shell spheres (C sources sasfit_ff/magnetic_shell, sasfit_ff/superparamagnetic_ff_psi)
+    "ff_magnetic_shell_psi": [("R", "core radius"), ("dR", "shell thickness"), ("eta_nuc_core", "nuclear SLD core"),
+                              ("eta_nuc_shell", "nuclear SLD shell"), ("eta_nuc_matrix", "nuclear SLD matrix"),
+                              ("eta_mag_core", "magnetic SLD core"), ("eta_mag_shell", "magnetic SLD shell"),
+                              ("eta_mag_matrix", "magnetic SLD matrix"), ("psi", "angle between q and the field [deg]"),
+                              ("pol", "polarisation (neutron moment labels: +1 = spin antiparallel to the field)")],
+    "ff_superparamagnetic_ff_psi": [("R", "core radius"), ("dR", "shell thickness"), ("eta_nuc_core", "nuclear SLD core"),
+                                    ("eta_nuc_shell", "nuclear SLD shell"), ("eta_nuc_matrix", "nuclear SLD matrix"),
+                                    ("eta_mag_core", "magnetic SLD core"), ("R_av", "radius at which xi = mu_kT"),
+                                    ("mu_kT", "Langevin parameter at R_av"), ("psi", "angle between q and the field [deg]"),
+                                    ("pol", "polarisation (neutron moment labels: +1 = spin antiparallel to the field)")],
 }
 
 CORE_LABELS = {
     "ff_sphere": "Sphere",
     "sd_LogNorm": "LogNorm",
     "sq_HardSphere": "Hard Sphere (Percus-Yevick)",
+    "ff_magnetic_shell_psi": "Magnetic core-shell sphere (saturated)",
+    "ff_superparamagnetic_ff_psi": "Superparamagnetic core-shell sphere (Langevin)",
 }

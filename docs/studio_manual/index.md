@@ -23,6 +23,7 @@ complete description of every option is in the {doc}`reference <../studio>` and 
 - {doc}`models`: mixtures, size distributions, structure factors, background, integration.
 - {doc}`fitting`: bounds, constraints, priors, optimisers, global search, speed-ups.
 - {doc}`sesans_msas`: SESANS data (`.ses`) and multiple small-angle scattering (SASfit's transform).
+- {doc}`polarisation`: polarised neutrons – magnetic models and what a data set measured (I+, I−, flipper off/on, …).
 - {doc}`python_ports`: Python ports of SASfit C plugins and their comparison with the C code.
 - {doc}`results`: Result tab, correlations, Excel, CSV, summary figure, size distributions.
 - {doc}`scripting`: Python examples for functions, models, the fitting engine and the export.
@@ -36,6 +37,7 @@ explorer
 models
 fitting
 sesans_msas
+polarisation
 python_ports
 results
 scripting

@@ -207,7 +207,7 @@ scalar sasfit_2f1(scalar a, scalar b, scalar c, scalar x, sasfit_param *param)
     return gsl_sf_hyperg_2F1(a, b, c, x);
 }
 
-scalar sasfit_sq_p__q___worm_ps3_(scalar q, sasfit_param *param) { (void)q; (void)param; return NAN; }
+/* sasfit_sq_p__q___worm_ps3_: from sasfit_src/thin_objects_worms (2026-11-23) */
 
 /* sasfit_common/sasfit_utils.c (fixed version) */
 scalar find_LogNorm_int_range(scalar dim, scalar x0, scalar sigma, scalar *Xstart, scalar *Xend, sasfit_param *param)
@@ -260,3 +260,332 @@ scalar sasfit_sphere_fc(scalar Q, scalar R)
 }
 
 __attribute__((constructor)) static void shim_init(void) { gsl_set_error_handler_off(); }
+
+
+/* ---- Ooura DE quadrature for oscillatory integrands (sasfit_common/sasfit_intde2.c), sasfit_erfinv (sasfit_utils.c) */
+#include <float.h>
+#ifndef MAXDOUBLE
+#define MAXDOUBLE DBL_MAX
+#endif
+#ifndef CENTRAL_RANGE
+#define CENTRAL_RANGE 0.7
+#endif
+void sasfit_intdeoini(int lenaw, double tiny, double eps, double *aw)
+{
+    /* ---- adjustable parameter ---- */
+    int lmax = 5;
+    double efs = 0.1, enoff = 0.40, pqoff = 2.9, ppoff = -0.72;
+    /* ------------------------------ */
+    int noff0, nk0, noff, k, nk, j;
+    double pi4, tinyln, epsln, frq4, per2, pp, pq, ehp, ehm, h, t, 
+        ep, em, tk, xw, wg, xa;
+    
+    pi4 = atan(1.0);
+    tinyln = -log(tiny);
+    epsln = 1 - log(efs * eps);
+    frq4 = 1 / (2 * pi4);
+    per2 = 4 * pi4;
+    pq = pqoff / epsln;
+    pp = ppoff - log(pq * pq * frq4);
+    ehp = exp(2 * pq);
+    ehm = 1 / ehp;
+    aw[3] = lmax;
+    aw[4] = eps;
+    aw[5] = sqrt(efs * eps);
+    noff0 = 6;
+    nk0 = 1 + (int) (enoff * epsln);
+    aw[1] = nk0;
+    noff = 2 * nk0 + noff0;
+    wg = 0;
+    xw = 1;
+    for (k = 1; k <= nk0; k++) {
+        wg += xw;
+        aw[noff - 2 * k] = wg;
+        aw[noff - 2 * k + 1] = xw;
+        xw = xw * (nk0 - k) / k;
+    }
+    wg = per2 / wg;
+    for (k = noff0; k <= noff - 2; k += 2) {
+        aw[k] *= wg;
+        aw[k + 1] *= wg;
+    }
+    xw = exp(pp - 2 * pi4);
+    aw[noff] = sqrt(xw * (per2 * 0.5));
+    aw[noff + 1] = xw * pq;
+    aw[noff + 2] = per2 * 0.5;
+    h = 2;
+    nk = 0;
+    k = noff + 3;
+    do {
+        t = h * 0.5;
+        do {
+            em = exp(2 * pq * t);
+            ep = pi4 * em;
+            em = pi4 / em;
+            tk = t;
+            j = k;
+            do {
+                xw = exp(pp - ep - em);
+                wg = sqrt(frq4 * xw + tk * tk);
+                xa = xw / (tk + wg);
+                wg = (pq * xw * (ep - em) + xa) / wg;
+                aw[j] = xa;
+                aw[j + 1] = xw * pq;
+                aw[j + 2] = wg;
+                ep *= ehp;
+                em *= ehm;
+                tk += 1;
+                j += 3;
+            } while (ep < tinyln && j <= lenaw - 3);
+            t += h;
+            k += nk;
+        } while (t < 1);
+        h *= 0.5;
+        if (nk == 0) {
+            if (j > lenaw - 6) j -= 3;
+            nk = j - noff;
+            k += nk;
+            aw[2] = nk;
+        }
+    } while (2 * k - noff - 3 <= lenaw);
+    aw[0] = k - 3;
+}
+
+
+void sasfit_intdeo(double (*f)(double, void *), double a, double omega, double *aw, 
+    double *i, double *err, void *fparams)
+{
+    int lenawm, nk0, noff0, nk, noff, lmax, m, k, j, jm, l;
+    double eps, per, perw, w02, ir, h, iback, irback, t, tk, 
+        xa, fm, fp, errh, s0, s1, s2, errd;
+    
+    
+    lenawm = (int) (aw[0] + 0.5);
+    nk0 = (int) (aw[1] + 0.5);
+    noff0 = 6;
+    nk = (int) (aw[2] + 0.5);
+    noff = 2 * nk0 + noff0;
+    lmax = (int) (aw[3] + 0.5);
+    eps = aw[4];
+    per = 1 / fabs(omega);
+    w02 = 2 * aw[noff + 2];
+    perw = per * w02;
+    
+    *i = (*f)(a + aw[noff] * per,fparams);
+    
+    ir = *i * aw[noff + 1];
+    
+    *i *= aw[noff + 2];
+    
+    *err = fabs(*i);
+    
+    h = 2;
+    m = 1;
+    k = noff;
+    do {
+        iback = *i;
+        irback = ir;
+        
+        t = h * 0.5;
+        do {
+            if (k == noff) {
+                tk = 1;
+                k += nk;
+                j = noff;
+                do {
+                    j += 3;
+                    xa = per * aw[j];
+                    fm = (*f)(a + xa,fparams);
+                    fp = (*f)(a + xa + perw * tk,fparams);
+                    ir += (fm + fp) * aw[j + 1];
+                    fm *= aw[j + 2];
+                    fp *= w02 - aw[j + 2];
+                    *i += fm + fp;
+                    *err += fabs(fm) + fabs(fp);
+                    tk += 1;
+                } while (aw[j] > eps && j < k);
+                errh = *err * aw[5];
+                *err *= eps;
+                jm = j - noff;
+            } else {
+                tk = t;
+                for (j = k + 3; j <= k + jm; j += 3) {
+                    xa = per * aw[j];
+                    fm = (*f)(a + xa,fparams);
+                    fp = (*f)(a + xa + perw * tk,fparams);
+                    ir += (fm + fp) * aw[j + 1];
+                    fm *= aw[j + 2];
+                    fp *= w02 - aw[j + 2];
+                    *i += fm + fp;
+                    tk += 1;
+                }
+                j = k + jm;
+                k += nk;
+            }
+            while (fabs(fm) > *err && j < k) {
+                j += 3;
+                fm = (*f)(a + per * aw[j],fparams);
+                ir += fm * aw[j + 1];
+                fm *= aw[j + 2];
+                *i += fm;
+            }
+            fm = (*f)(a + perw * tk,fparams);
+            s2 = w02 * fm;
+            *i += s2;
+            if (fabs(fp) > *err || fabs(s2) > *err) {
+                l = 0;
+                for (;;) {
+                    l++;
+                    s0 = 0;
+                    s1 = 0;
+                    s2 = fm * aw[noff0 + 1];
+                    for (j = noff0 + 2; j <= noff - 2; j += 2) {
+                        tk += 1;
+                        fm = (*f)(a + perw * tk,fparams);
+                        s0 += fm;
+                        s1 += fm * aw[j];
+                        s2 += fm * aw[j + 1];
+                    }
+                    if (s2 <= *err || l >= lmax) break;
+                    *i += w02 * s0;
+                }
+                *i += s1;
+                if (s2 > *err) *err = s2;
+            }
+            t += h;
+        } while (t < 1);
+        if (m == 1) {
+            errd = 1 + 2 * errh;
+        } else {
+            errd = h * (fabs(*i - 2 * iback) + fabs(ir - 2 * irback));
+        }
+        h *= 0.5;
+        m *= 2;
+    } while (errd > errh && 2 * k - noff <= lenawm);
+    *i *= h * per;
+    if (errd > errh) {
+        *err = -errd * per;
+    } else {
+        *err *= per * m * 0.5;
+    }
+}
+
+scalar sasfit_erfinv(scalar y)
+{
+        double x,z,num,dem; /*working variables */
+        /* coefficients in rational expansion */
+        double a[4]={ 0.886226899, -1.645349621,  0.914624893, -0.140543331};
+        double b[4]={-2.118377725,  1.442710462, -0.329097515,  0.012229801};
+        double c[4]={-1.970840454, -1.624906493,  3.429567803,  1.641345311};
+        double d[2]={ 3.543889200,  1.637067800};
+        if(fabs(y) > 1.0) return (atof("NaN"));  /* This needs IEEE constant*/
+        if(fabs(y) == 1.0) return((copysign(1.0,y))*MAXDOUBLE);
+        if( fabs(y) <= CENTRAL_RANGE )
+        {
+                z = y*y;
+                num = (((a[3]*z + a[2])*z + a[1])*z + a[0]);
+                dem = ((((b[3]*z + b[2])*z + b[1])*z +b[0])*z + 1.0);
+                x = y*num/dem;
+        }
+        else if( (fabs(y) > CENTRAL_RANGE) && (fabs(y) < 1.0) )
+        {
+                z = sqrt(-log((1.0-fabs(y))/2.0));
+                num = ((c[3]*z + c[2])*z + c[1])*z + c[0];
+                dem = (d[1]*z + d[0])*z + 1.0;
+                x = (copysign(1.0,y))*num/dem;
+        }
+        /* Two steps of Newton-Raphson correction */
+        x = x - (erf(x) - y)/( (2.0/sqrt(M_PI))*exp(-x*x));
+        x = x - (erf(x) - y)/( (2.0/sqrt(M_PI))*exp(-x*x));
+
+        return(x);
+}
+
+
+
+/* hcubature / pcubature (fdim = 1, dim <= 2) by the nested reference integrals of sasfit_cubature */
+typedef struct { integrand f; void *fdata; } jc_wrap;
+static double jc_kernel(const double *x, size_t ndim, void *v)
+{
+    jc_wrap *w = (jc_wrap *)v;
+    double val = 0.0;
+    w->f((unsigned)ndim, x, w->fdata, 1, &val);
+    return val;
+}
+int sasfit_get_int_strategy(void) { return P_CUBATURE; }
+int hcubature(unsigned fdim, integrand f, void *fdata, unsigned dim, const double *xmin, const double *xmax,
+              size_t maxEval, double reqAbsError, double reqRelError, error_norm norm, double *val, double *err)
+{
+    jc_wrap w = { f, fdata };
+    (void)fdim; (void)maxEval; (void)reqAbsError; (void)reqRelError; (void)norm;
+    return sasfit_cubature(dim, xmin, xmax, &jc_kernel, &w, 1e-12, val, err);
+}
+int pcubature(unsigned fdim, integrand f, void *fdata, unsigned dim, const double *xmin, const double *xmax,
+              size_t maxEval, double reqAbsError, double reqRelError, error_norm norm, double *val, double *err)
+{
+    return hcubature(fdim, f, fdata, dim, xmin, xmax, maxEval, reqAbsError, reqRelError, norm, val, err);
+}
+
+
+/* ---- batch 7: Struve H0, H1 (series for x < 6, else H - Y by the Laplace integrals
+ *      H0 - Y0 = 2/pi int_0^inf e^{-xt} / sqrt(1+t^2) dt,  H1 - Y1 = 2x/pi int_0^inf e^{-xt} sqrt(1+t^2) dt) */
+#include <gsl/gsl_sf_bessel.h>
+typedef struct { double x; int nu; } struve_lp;
+static double struve_kernel(double t, void *v)
+{
+    struve_lp *s = (struve_lp *)v;
+    double r = sqrt(1.0 + t * t);
+    return exp(-s->x * t) * (s->nu == 0 ? 1.0 / r : r);
+}
+static double struve_series(double x, int nu)
+{
+    /* H_nu(x) = sum_k (-1)^k (x/2)^(2k+nu+1) / (Gamma(k+3/2) Gamma(k+nu+3/2)) */
+    long double h = x / 2.0L, term, sum = 0.0L;
+    long double g1 = sqrtl(M_PI) / 2.0L;                    /* Gamma(3/2) */
+    long double g2 = (nu == 0) ? g1 : g1 * 1.5L;            /* Gamma(nu + 3/2) */
+    int k;
+    term = powl(h, nu + 1) / (g1 * g2);
+    for (k = 0; k < 200; k++) {
+        sum += term;
+        term *= -h * h / ((k + 1.5L) * (k + nu + 1.5L));
+        if (fabsl(term) < 1e-21L * fabsl(sum)) break;
+    }
+    return (double)sum;
+}
+static double struve(double x, int nu)
+{
+    if (x < 6.0) return struve_series(x, nu);
+    {
+        gsl_integration_workspace *w = gsl_integration_workspace_alloc(2000);
+        struve_lp s = { x, nu };
+        gsl_function F = { &struve_kernel, &s };
+        double r = 0.0, e = 0.0;
+        gsl_integration_qagiu(&F, 0.0, 0.0, 1e-12, 2000, w, &r, &e);
+        gsl_integration_workspace_free(w);
+        return nu == 0 ? gsl_sf_bessel_Y0(x) + 2.0 / M_PI * r : gsl_sf_bessel_Y1(x) + 2.0 * x / M_PI * r;
+    }
+}
+scalar sasfit_struve_h0(scalar *x) { return struve(*x, 0); }
+scalar sasfit_struve_h1(scalar *x) { return struve(*x, 1); }
+
+/* sasfit_orient_avg: mean of f(theta, phi) over cos(theta) in [cos(theta_max), 1], phi in [0, phi_max]
+ * (nested reference integrals, uniform in cos(theta), as the cubature branch of sasfit_orient_avg_ctm) */
+static double polar_phi = 2.0 * M_PI, polar_theta = M_PI;
+void sasfit_param_set_polar_phi(scalar v) { polar_phi = v; }
+void sasfit_param_set_polar_theta(scalar v) { polar_theta = v; }
+scalar sasfit_param_get_polar_phi(void) { return polar_phi; }
+scalar sasfit_param_get_polar_theta(void) { return polar_theta; }
+typedef struct { sasfit_func_two_t *f; sasfit_param *param; } oavg;
+static double oavg_kernel(const double *x, size_t ndim, void *v)
+{
+    oavg *o = (oavg *)v;
+    (void)ndim;
+    return o->f(acos(x[0]), 2.0 * M_PI * x[1], o->param);
+}
+scalar sasfit_orient_avg(sasfit_func_two_t *f, sasfit_param *param)
+{
+    oavg o = { f, param };
+    double xmin[2] = { cos(polar_theta), 0.0 }, xmax[2] = { 1.0, polar_phi / (2.0 * M_PI) }, s = 0.0, e = 0.0;
+    sasfit_cubature(2, xmin, xmax, &oavg_kernel, &o, 1e-12, &s, &e);
+    return s / ((1.0 - cos(polar_theta)) * polar_phi / (2.0 * M_PI));
+}

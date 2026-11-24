@@ -119,7 +119,7 @@ def test_panel_geometry_and_offsets(llb):
     tt = np.arctan(np.hypot(x, y) / L)
     assert g.q[0, 0] == pytest.approx(4 * np.pi / 5.0 * np.sin(tt / 2), rel=1e-9)
     assert g.d_omega[0, 0] == pytest.approx(0.0134 * 0.005 * L / (L * L + x * x + y * y) ** 1.5, rel=1e-9)
-    assert g.x[0, 0] < 0 and g.y[0, 0] > 0           # x of the central pixel_geometry (against posx)
+    assert g.x[0, 0] > 0 and g.y[0, 0] > 0           # lab x = posx: the left panel (seen from the sample) at +x
     # offsets: dy shifts along the tubes, dz the distance
     g2 = panel_geometry(b, (63.5, 63.5), offsets_mm=(0.0, -100.0, 50.0))
     assert g2.y[0, 0] == pytest.approx(0.4135) and g2.z[0, 0] == pytest.approx(1.070)

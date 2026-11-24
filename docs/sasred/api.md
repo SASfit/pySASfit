@@ -132,6 +132,13 @@ Generated from the docstrings.
    :members: FIELDS, hdf_field, metadata, group_runs, RunGroup, equivalence, Equivalence, Trend, check_runs, plot_equivalence, mid_time
 ```
 
+## Polarised data (SANSPOL)
+
+```{eval-rst}
+.. automodule:: pysasfit.sasred.polarisation
+   :members:
+```
+
 ## Masks
 
 ```{eval-rst}

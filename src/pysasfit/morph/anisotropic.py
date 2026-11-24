@@ -92,10 +92,22 @@ class Data2D:
                       self.name, self.path, None, self.q_unit)
 
 
+def _from_pysasred(entry) -> bool:
+    for g in entry.values():
+        try:
+            if "name" in g and str(g["name"][()].decode() if isinstance(g["name"][()], bytes)
+                                   else g["name"][()]).startswith("pySASred"):
+                return True
+        except (AttributeError, TypeError, KeyError):
+            continue
+    return False
+
+
 def load_2d(path, q_scale=1.0):
     """2D data: NXcanSAS (``.h5 .hdf5 .nxs``, e.g. pySASred's *Save 2D NXcanSAS*: I, Idev, Qx, Qy, Mask),
     ``.npz`` (qx, qy, I [, sigma, mask]) or a text file with columns q_x q_y I [dI]. Masked pixels are
-    dropped. ``q_scale`` multiplies q (e.g. 0.1 for 1/nm -> 1/Angstrom)."""
+    dropped. ``q_scale`` multiplies q (e.g. 0.1 for 1/nm -> 1/Angstrom). q_x, q_y in the pySASfit frame
+    (docs/conventions.md: q_x horizontal, to the right in the view towards the sample, q_y up)."""
     ext = os.path.splitext(str(path))[1].lower()
     name = os.path.splitext(os.path.basename(str(path)))[0]
     unit = "A"
@@ -118,6 +130,8 @@ def load_2d(path, q_scale=1.0):
             mask = np.asarray(d["Mask"][()]) != 0 if "Mask" in d else np.zeros(I.shape, bool)
             qu = d["Qx"].attrs.get("units", b"1/angstrom")
             qu = qu.decode() if isinstance(qu, bytes) else str(qu)
+            if "pysasfit_frame" not in d.attrs and _from_pysasred(d.parent):
+                qx = -qx            # pySASred before 2026-11-23 wrote Qx of the opposite sign (docs/conventions.md)
             if "nm" in qu:
                 unit = "nm"
         if qx.shape != I.shape:                      # 1D axes

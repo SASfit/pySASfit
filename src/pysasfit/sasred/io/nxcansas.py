@@ -83,6 +83,11 @@ def write_nxcansas_1d(path, reduced, title=None, i_unit="arbitrary", units="nm")
         sm["name"] = _s(reduced.raw.sample_name)
 
 
+#: lab frame of Qx, Qy in pySASred's 2D files (attribute ``pysasfit_frame`` of SASdata)
+FRAME = ("NXcanSAS/McStas: z along the beam, y up, x = y cross z (left as seen from the sample, right in views "
+         "towards the sample); raw columns run towards -x (2026-11-23)")
+
+
 def write_nxcansas_2d(path, reduced, title=None, units="nm"):
     """The 2D image of a reduction (:class:`~pysasfit.sasred.reduce.ReducedRun` or
     :class:`~pysasfit.sasred.absolute.Reduced2D`) as NXcanSAS: SASdata with I (ny, nx), Idev
@@ -108,7 +113,10 @@ def write_nxcansas_2d(path, reduced, title=None, units="nm"):
         e["run"] = _s(getattr(r, "run", "") or (getattr(r, "runs", None) or [""])[0])
         d = e.create_group("sasdata01")
         d.attrs.update({"NX_class": _s("NXdata"), "canSAS_class": _s("SASdata"), "signal": _s("I"),
-                        "I_axes": _s("Qy,Qx"), "Qy_indices": np.int32(0), "Qx_indices": np.int32(1)})
+                        "I_axes": _s("Qy,Qx"), "Qy_indices": np.int32(0), "Qx_indices": np.int32(1),
+                        # pySASfit frame (docs/conventions.md); files without it (before 2026-11-23) have Qx of
+                        # the opposite sign
+                        "pysasfit_frame": _s(FRAME)})
         unit = getattr(img, "unit", "") or getattr(r, "unit", "")
         i = d.create_dataset("I", data=np.asarray(img.value, float), compression="gzip")
         i.attrs.update({"units": _s("1/cm" if "cm" in unit and "sr" in unit and "monitor" not in unit else

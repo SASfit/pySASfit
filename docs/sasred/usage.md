@@ -26,8 +26,10 @@ arrangement.
    geometry; values typed into x / y are kept for the geometry of the run shown. The centre is the masked centre
    of gravity, re-centred until it moves by less than 0.1 pixel; the label shows its statistical uncertainty
    (about 0.004 pixel for the Vifor runs) and where it comes from. Runs of different geometries are reduced
-   separately (one geometry per *Reduce selected*), each with the centre of its geometry. Pixel indices count from 0, as in Python and GRASP: x is axis 1 (horizontal),
-   y is axis 0 (vertical) of the stored image.
+   separately (one geometry per *Reduce selected*), each with the centre of its geometry. Pixel indices count from 0, as in Python and GRASP: x (column) is axis 1
+   (horizontal), y (row) is axis 0 (vertical) of the stored image. The raw columns run to the right as seen from
+   the sample, i.e. towards lab −x; all images are shown as seen looking towards the sample (lab +x to the
+   right, {doc}`../conventions`), so the column index grows to the left.
 3. **Mask**: a new image starts with the standard mask (two outer rows and columns) and a first-guess square
    beamstop around the beam centre. Adjust it with the mask tools, or click **Suggest** in the detector panel:
    it replaces the guess by the rectangle around the beamstop shadow and adds hot pixels found in the image
@@ -208,7 +210,7 @@ the same 52 runs as BerSANS; grouped by sample they give 30 samples, 31 with *sa
 | units | **nm, 1/nm** (default) or **Å, 1/Å** for wavelength and q, in the table, the fields, the plots and the saved files. Switching converts q min / q max |
 | q min, q max | limits of the binning; *auto* takes the q range of the unmasked pixels |
 | normalise by | monitor 1 (its Poisson error is propagated) or counting time |
-| sector average | only pixels within ± half width of the sector centre φ (and of φ + 180°) are averaged. φ = 0 is the horizontal direction (+x), counter-clockwise. The sector boundaries are drawn in the detector image |
+| sector average | only pixels within ± half width of the sector centre φ (and of φ + 180°) are averaged. φ = 0 is the horizontal direction +x (to the right in the image), counter-clockwise ({doc}`../conventions`; before 2026-11-23 an oblique sector at φ was the present 180° − φ). The sector boundaries are drawn in the detector image |
 | live I(q) of the selected run | the on-the-fly radial average described above |
 
 The start values of these fields (except the beam centre) are in **Settings → Preferences → SANS reduction**;
@@ -249,9 +251,10 @@ automatic direct-beam centres are determined again.
   the preferences) and *Show*. If a map cannot be made (no water in that geometry, no water transmission, …) a message box says why. The view **efficiency map** draws the shown map around 1 (blue below, red above),
   the pixels it only estimates (row × column, e.g. behind the beam stop) outlined, undefined pixels grey; the
   title gives its water runs, distance, wavelength, rms and median σ.
-* **view**: *cartesian (x, y)*, the detector as measured, drawn with the true aspect ratio of the pixels
+* **view**: *cartesian (x, y)*, the detector as measured, seen looking towards the sample (lab +x to the right,
+  {doc}`../conventions`), drawn with the true aspect ratio of the pixels
   (from `x_pixel_size` / `y_pixel_size` of the file) and flush left in the panel; or *polar (φ, q)*: azimuth
-  φ horizontally (0° = +x, counter-clockwise, as for the sector), q vertically. In the polar view isotropic
+  φ horizontally (0° = +x = right in the cartesian view, counter-clockwise, as for the sector), q vertically. In the polar view isotropic
   rings become horizontal bands and anisotropy shows as waves along φ; each (φ, q) cell takes the value of the
   pixel under its centre (no interpolation), cells outside the detector are light grey.
 * **axes** (cartesian view and *SANS-LLB: all detectors*): *pixels*, *angle 2θ* or *q_x, q_y*. In angle or q

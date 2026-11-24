@@ -33,7 +33,7 @@ parameter) can be exchanged with them.
 :width: 100%
 ```
 
-*The window after a 2D fit of the orientation width of cylinders. The 2D panel shows the data (left of q_h = 0)
+*The window after a 2D fit of the orientation width of cylinders. The 2D panel shows the data (left of q_x = 0)
 and the model (right); the fitted values are in the Model panel and in Data and fit.*
 
 ## Panels
@@ -67,7 +67,7 @@ title bars are coloured; their colour can be changed under Preferences → Appea
 : Shows one of four views:
   * the model;
   * the loaded 2D data;
-  * *data | model* (data left and model right of q_h = 0);
+  * *data | model* (data left and model right of q_x = 0);
   * the normalised residuals (data − model)/σ.
 
   The scale can be log or linear, and the colour map can be chosen. Moving the cursor over the image shows q and
@@ -84,7 +84,8 @@ title bars are coloured; their colour can be changed under Preferences → Appea
 
 **Lattice view**
 : Shows the structure that is calculated, in the laboratory frame of the calculation: the beam along x and the
-  detector plane (q_h horizontal, q_v vertical). Four views are available:
+  detector plane (q_x horizontal, q_y vertical, seen looking towards the sample: {doc}`../conventions`). Four views are
+  available:
   * **real space 3D**: the unit cells of a block of 1–5 cells per direction with the particles at their lattice
     positions, the cell axes a, b, c, the beam, the detector plane and the director. The particles have the shape
     and size of the model (sphere, core + shell, cylinder, disk, ellipsoid, cube, superball). Lamellae are drawn as
@@ -139,7 +140,7 @@ detector. Bottom: hexagonally packed cylinders, the gyroid, bcc with oriented el
 
 **File** menu
 : Open and save parameter files (`.ini`), load data, and export I(q) (text) and the 2D pattern (`.npy`, or text
-  with columns q_h, q_v, I).
+  with columns q_x, q_y, I).
 
 The parameters, fit flags, loaded files and the panel arrangement are kept in a session file
 (`scatter_session.json` next to the preferences). The session is restored at the next start.
@@ -271,7 +272,7 @@ perfectly along the director, *fiber pattern* rotates them uniformly about the b
   [Lattices](#lattices)).
 
 The director (θ, φ) is defined as in CrystalScatter: n = (sin θ cos φ, sin θ sin φ, cos θ) in the frame
-(q_h, q_v, beam). θ = 0 points along the beam, θ = 90°, φ = 0 is horizontal, and θ = 90°, φ = 90° is vertical.
+(q_x, q_y, beam), the frame of pySASfit ({doc}`../conventions`). θ = 0 points along the beam, θ = 90°, φ = 0 is horizontal, and θ = 90°, φ = 90° is vertical.
 The streak of long cylinders lies perpendicular to the director.
 
 ## Fitting measured data

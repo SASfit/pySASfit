@@ -70,6 +70,10 @@ class RawRun:
     frames: Optional[dict] = None  # multi-frame runs: per-frame counting_time_s, monitors, rotation_speed, wavelength_A
     scan: str = ""                # a selector speed scan (λ differs between the frames): not reduced
     excluded: str = ""            # excluded by hand (names.py, kept per folder): the reason; not reduced
+    polariser: str = ""           # SANSPOL: polariser "in" / "out" (SANS/polarizer/state); "" = not in the file
+    flipper: str = ""             # spin flipper "off" / "on": not stored in the files, set by hand or from the
+                                  # sample name (names.py); "" = unknown
+    flipper_source: str = ""      # "set by hand", "from the sample name", ...
 
     @property
     def panel_SD_m(self) -> Optional[float]:
@@ -228,6 +232,17 @@ def distance_offset_for(start_time: str) -> float:
     return off
 
 
+def _state_text(v) -> str:
+    """A state string of the file ("in", "out", ...) in lower case; "" when absent."""
+    if v is None:
+        return ""
+    x = np.asarray(v).ravel()
+    if not x.size:
+        return ""
+    x = x[0]
+    return (x.decode(errors="replace") if isinstance(x, bytes) else str(x)).strip().lower()
+
+
 def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] = None) -> RawRun:
     """Read a SANS-I HDF file. ``checksum=False`` skips the SHA-256 (fast header
     catalogue); a reduction always reads with the checksum.
@@ -289,6 +304,7 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         thk, thu = _read(g, "sample/thickness", False, missing)
         start, _ = _read(g, "start_time")
         end, _ = _read(g, "end_time", False, missing)
+        polz, _ = _read(g, "SANS/polarizer/state", False, [])   # SANSPOL option (not in older files)
     if chiu is not None and str(chiu).lower() not in ("degree", "degrees", "deg"):
         raise ValueError(f"chi_position unit '{chiu}' unexpected")
     if thk is not None and thu is not None and str(thu).lower() != "cm":
@@ -309,7 +325,8 @@ def read_sans_i(path, checksum: bool = True, distance_offset_m: Optional[float] 
         beamstop_type="" if bst is None else str(np.asarray(bst).ravel()[0] if np.ndim(bst) else bst).strip(),
         sample_name=str(name), sample_position_mm=None if pos is None else float(pos),
         sample_thickness_cm=None if thk is None else float(thk),
-        start_time=str(start), end_time=end, missing_optional=missing)
+        start_time=str(start), end_time=end, missing_optional=missing,
+        polariser=_state_text(polz))
     _dlam_from_selector(run, tilt, dlam)
     _frames(run, t_frames, frame_monitors, rpm)
     off = distance_offset_for(run.start_time) if distance_offset_m is None else float(distance_offset_m)

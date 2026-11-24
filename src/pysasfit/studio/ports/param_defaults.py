@@ -510,6 +510,83 @@ _RB = {
 OVERRIDES["ff_ribbon_mono"] = {k: v for k, v in _RB.items() if not k.startswith("sigma")}
 OVERRIDES["peaks_ribbon_w_sd"] = dict(_RB)
 OVERRIDES["peaks_ribbon_w_sd"]["A"] = {"default": 2.0, "lower": 0.0, "lower_open": True, **_L}
+# ---- batch 4 (2026-11-23): fuzzysphere, gen_exp_sphere, stochastic_models
+_SLD1 = {"default": 1.0, "kind": "sld"}
+_SLD0 = {"default": 0.0, "kind": "sld"}
+_X = {"lower": 0.0, "upper": 1.0, "kind": "fraction"}
+_FZ = {
+    "R": {"default": 20.0, "lower": 0.0, **_L},
+    "sigma": {"default": 2.0, "lower": 0.0, **_L},
+    "eta_sph": _SLD1,
+    "eta_sol": _SLD0,
+}
+_SH = {
+    "R_core": {"default": 20.0, "lower": 0.0, **_L},
+    "R_tot": {"default": 30.0, "lower": 0.0, **_L},
+    "dR": {"default": 10.0, "lower": 0.0, **_L},
+    "eta_core": _SLD1,
+    "eta_sh": _SLD1,
+    "x_in_solv": {"default": 0.0, **_X},
+    "x_out_solv": {"default": 1.0, **_X},
+    "alpha": {"default": 2.0, "kind": "dimensionless"},
+    "eta_solv": _SLD0,
+}
+_MGD = {
+    "W_core": {"default": 15.0, "lower": 0.0, **_L},
+    "sigma_core": {"default": 2.0, "lower": 0.0, **_L},
+    "W_sh": {"default": 10.0, "lower": 0.0, **_L},
+    "sigma_sh,in": {"default": 2.0, "lower": 0.0, **_L},
+    "D": {"default": 2.0, "lower": 0.0, **_L},
+    "sigma_out": {"default": 3.0, "lower": 0.0, **_L},
+    "eta_core": _SLD1,
+    "eta_shell": {"default": 0.5, "kind": "sld"},
+    "eta_sol": _SLD0,
+}
+_GES = {
+    "Rg": {"default": 10.0, "lower": 0.0, **_L},
+    "alpha": {"default": 0.0, "lower": -3.0, "lower_open": True, "kind": "exponent"},
+    "Delta eta": _SLD1,
+}
+_CRW = {
+    "scale": {"default": 1.0, "lower": 0.0},
+    "phi_1": {
+        "default": 0.5,
+        "lower": 0.0,
+        "upper": 1.0,
+        "lower_open": True,
+        "upper_open": True,
+        "kind": "fraction",
+    },
+    "d": {"default": 50.0, "lower": 0.0, "lower_open": True, **_L},
+    "xi": {"default": 10.0, "lower": 0.0, "lower_open": True, **_L},
+    "rc": {"default": 2.0, "lower": 0.0, "lower_open": True, **_L},
+}
+_BOOL = {
+    "Scale": {"default": 1.0, "lower": 0.0},
+    "phi_1": _CRW["phi_1"],
+    "mu": {"default": 10.0, "lower": 0.0, "lower_open": True, **_L},
+    "sigma": {"default": 0.2, "lower": 0.0, "kind": "dimensionless"},
+    "dummy": {"default": 0.5, "kind": "dimensionless"},
+}
+for _n in ("ff_fuzzysphere", "ff_radial_profile_of_fuzzysphere"):
+    OVERRIDES[_n] = dict(_FZ)
+for _n in ("ff_linshell", "ff_radial_profile_of_linshell", "ff_linshell2", "ff_radial_profile_of_linshell2",
+           "ff_expshell", "ff_radial_profile_of_expshell"):  # fmt: skip
+    OVERRIDES[_n] = dict(_SH)
+for _n in ("ff_coreshellmicrogel", "ff_radial_profile_of_coreshellmicrogel"):
+    OVERRIDES[_n] = dict(_MGD)
+for _n in ("ff_gen__exp__sphere", "ff_profile__gen__exp__sphere", "ff_gen__gauss__sphere",
+           "ff_profile__gen__gauss__sphere"):  # fmt: skip
+    OVERRIDES[_n] = dict(_GES)
+for _pre in (
+    "ff_clipped_random_waves_",
+    "ff_clipped_random_waves_twocut_",
+    "ff_clipped_random_waves_twocut_intersection_",
+):
+    for _k in range(1, 6):
+        OVERRIDES[f"{_pre}{_k}"] = dict(_CRW)
+for _n in ("ff_boolean_union_model", "ff_dead_leaves_model"):
+    OVERRIDES[_n] = dict(_BOOL)
 RULES_B3 = {
     "ff_guwelop_sphere": [Rule(lambda p: p[4] != 0, "theta == 0")],
     "ff_guwelop_cyl_Pcs": [Rule(lambda p: p[4] != 0, "theta == 0")],
@@ -529,3 +606,174 @@ RULES = {
     ],
 }
 RULES.update(RULES_B3)
+
+# magnetic core-shell spheres (ports/magnetic.py, 2026-11-23): SLDs in the unit of the model (e.g. 1e-6 Å⁻²),
+# magnetic SLD from pySLDcalculator (2.906e-12 Å⁻² per A/m); pol is replaced by the data-set polarisation setting
+_MAG_COMMON = {
+    "R": {"default": 5.0, "lower": 0.0, "doc": "core radius"},
+    "dR": {"default": 1.0, "lower": 0.0, "doc": "shell thickness"},
+    "eta_nuc_core": {"default": 6.9, "doc": "nuclear SLD of the core"},
+    "eta_nuc_shell": {"default": 0.5, "doc": "nuclear SLD of the shell"},
+    "eta_nuc_matrix": {"default": 6.0, "doc": "nuclear SLD of the matrix"},
+    "eta_mag_core": {"default": 1.5, "doc": "magnetic SLD of the core"},
+    "psi": {"default": 90.0, "unit": "deg", "kind": "angle",
+            "doc": "angle between q and the field on the detector (data-set field direction ψ_H subtracted)"},
+    "pol": {"default": 0.0, "lower": -1.0, "upper": 1.0, "kind": "dimensionless",
+            "doc": "SASfit polarisation, labelled by the neutron moment: pol = +1 is spin antiparallel to the field; "
+                   "not used when the data set has a polarisation setting"},
+}
+OVERRIDES["ff_magnetic_shell_psi"] = {
+    **_MAG_COMMON,
+    "eta_mag_shell": {"default": 0.0, "doc": "magnetic SLD of the shell"},
+    "eta_mag_matrix": {"default": 0.0, "doc": "magnetic SLD of the matrix"},
+}
+OVERRIDES["ff_superparamagnetic_ff_psi"] = {
+    **_MAG_COMMON,
+    "R_av": {"default": 5.0, "lower": 0.0, "lower_open": True, "doc": "radius at which ξ = mu_kT"},
+    "mu_kT": {"default": 5.0, "kind": "dimensionless", "doc": "Langevin parameter μ0 μ H / kT of a core of radius R_av"},
+}
+
+# batch 5 (2026-11-23): worm-like chains (ports/worms.py), micelles with worm or SAW chains (ports/micelles_worm.py)
+_WORM = {
+    "lb": {"default": 10.0, "doc": "Kuhn length"},
+    "L": {"default": 200.0, "doc": "contour length"},
+    "exvol": {"default": 0.0, "lower": 0.0, "kind": "dimensionless",
+              "doc": "excluded volume: < 1 without, >= 1 with (method 3: chains with excluded volume)"},
+    "dummy": {"default": 0.0, "kind": "dummy"},
+    "I0": {"default": 1.0},
+}
+for _n in ("ff_worms_ps1_", "ff_worms_ps2_", "ff_worms_ps3_", "ff_kholodenko_worm", "ff_freely_joined_chain_of_rods"):
+    OVERRIDES[_n] = dict(_WORM)
+_MIC5 = {
+    "V_brush": {"default": 400.0, "kind": "volume", "doc": "volume of one chain"},
+    "V_core": {"default": 400.0, "lower": 0.0, "lower_open": True, "kind": "volume",
+               "doc": "volume of one core block"},
+    "eta_core": {"default": 6.0},
+    "eta_brush": {"default": 1.0},
+    "eta_solv": {"default": 0.0},
+    "xsolv_core": {"default": 0.0, "lower": 0.0, "upper": 1.0, "upper_open": True, "kind": "dimensionless",
+                   "doc": "solvent fraction of the core"},
+    "L": {"default": 40.0, "lower": 0.0, "lower_open": True, "kind": "length", "doc": "contour length of a chain"},
+    "lb": {"default": 4.0, "lower": 0.0, "kind": "length", "doc": "Kuhn length of a chain"},
+}
+for _n, _first in (("ff_sphere_chains_saw_", {"R_core": {"default": 5.0, "lower": 0.0},
+                                               "n_agg": {"default": 0.02, "lower": 0.0, "kind": "dimensionless",
+                                                         "doc": "chains per core surface"}}),
+                   ("ff_sphere_chains_saw__rc", {"R_core": {"default": 5.0, "lower": 0.0}}),
+                   ("ff_sphere_chains_saw__nagg", {"Nagg": {"default": 50.0, "lower": 0.0, "kind": "count"}})):
+    OVERRIDES[_n] = {**_MIC5, **_first}
+_RMA5 = {
+    **{k: v for k, v in _MIC5.items() if k not in ("L", "lb")},
+    "alpha": {"default": 2.0, "lower": 0.0, "kind": "exponent", "doc": "corona density ∝ r^-alpha"},
+    "t": {"default": 5.0, "lower": 0.0, "kind": "length", "doc": "corona thickness"},
+    "exvol": {"default": 0.0, "lower": 0.0, "kind": "dimensionless",
+              "doc": "chains: 0 worm, 1 worm with excluded volume, 2 generalized Gaussian coil (L = Rg, b = nu)"},
+}
+_LB5 = {"default": 40.0, "lower": 0.0, "lower_open": True, "kind": "length",
+        "doc": "contour length L of a chain (exvol 0, 1) or its Rg (exvol 2)"}
+_BN5 = {"default": 4.0, "lower": 0.0, "kind": "dimensionless", "doc": "Kuhn length b (exvol 0, 1) or ν (exvol 2)"}
+OVERRIDES["ff_sphere_r__a"] = {**_RMA5, "R_core": {"default": 5.0, "lower": 0.0},
+                               "n_agg": {"default": 0.02, "lower": 0.0, "kind": "dimensionless"},
+                               "L/Rg": _LB5, "b/nu": _BN5}
+OVERRIDES["ff_sphere_r__a_rc"] = {**_RMA5, "R_core": {"default": 5.0, "lower": 0.0}, "L/Rg": _LB5, "b/nu": _BN5}
+OVERRIDES["ff_sphere_r__a_nagg"] = {**_RMA5, "Nagg": {"default": 50.0, "lower": 0.0, "kind": "count"},
+                                    "L (RG)": _LB5, "b (nu)": _BN5}
+
+# batch 6 (2026-11-24): Koyama worm (ports/worms.py), thin_objects cross sections and elongated objects with an
+# elliptical core-shell cross-section, thin discs (ports/thin_objects.py)
+OVERRIDES["ff_koyama_worm"] = dict(OVERRIDES["ff_kholodenko_worm"])
+_SIG6 = {"default": 0.0, "lower": 0.0, "kind": "dimensionless", "doc": "width of the log-normal distribution"}
+_CS6 = {
+    "R0": {"default": 5.0, "lower": 0.0, "kind": "length", "doc": "core semi-axis R (median)"},
+    "R": {"default": 5.0, "lower": 0.0, "kind": "length", "doc": "core semi-axis R (median)"},
+    "sigma_R0": _SIG6, "sigma_R": _SIG6, "sigma_t0": _SIG6, "sigma_L0": _SIG6,
+    "epsilon": {"default": 1.0, "lower": 0.0, "lower_open": True, "kind": "dimensionless",
+                "doc": "ratio of the core semi-axes (εR and R)"},
+    "t0": {"default": 2.0, "lower": 0.0, "kind": "length", "doc": "shell thickness (median)"},
+    "t": {"default": 2.0, "lower": 0.0, "kind": "length", "doc": "shell thickness"},
+    "L0": {"default": 100.0, "lower": 0.0, "kind": "length", "doc": "rod length (median)"},
+    "lb": {"default": 20.0, "lower": 0.0, "lower_open": True, "kind": "length", "doc": "Kuhn length"},
+    "L": {"default": 500.0, "lower": 0.0, "lower_open": True, "kind": "length", "doc": "contour length"},
+    "exvol": {"default": 0.0, "lower": 0.0, "kind": "dimensionless", "doc": "0: without, 1: with excluded volume"},
+    "eta_core": {"default": 1.0}, "eta_shell": {"default": 0.5}, "eta_solv": {"default": 0.0},
+}
+for _n in ("ff_pcs_ellcylsh", "ff_rod_sd_ellcylsh", "ff_worm_ps1_sd_ellcylsh", "ff_worm_ps2_sd_ellcylsh",
+           "ff_worm_ps3_sd_ellcylsh", "ff_worm_kholodenko_sd_ellcylsh"):
+    OVERRIDES[_n] = dict(_CS6)
+OVERRIDES["ff_pcs_homogeneouscyl"] = {"R": {"default": 5.0, "lower": 0.0, "kind": "length"}, "sigma_R": _SIG6,
+                                      "eta_core": {"default": 1.0}, "eta_sol": {"default": 0.0}}
+OVERRIDES["ff_pcs_homogeneousplate"] = {"t": {"default": 4.0, "lower": 0.0, "kind": "length"}, "sigma_t": _SIG6,
+                                        "eta_L": {"default": 1.0}, "eta_solv": {"default": 0.0}}
+OVERRIDES["ff_pcs_twoinfinitelythinlayers"] = {"t": {"default": 4.0, "lower": 0.0, "kind": "length"},
+                                               "sigma_t": _SIG6}
+OVERRIDES["ff_pcs_bilayergauss"] = {
+    "sigma_core": {"default": 0.5, "lower": 0.0, "kind": "length", "doc": "width of the Gaussian core layer"},
+    "b_core": {"default": -0.5, "kind": "sld", "doc": "scattering length density contrast of the core layer"},
+    "sigma_out": {"default": 0.4, "lower": 0.0, "kind": "length", "doc": "width of the Gaussian head layers"},
+    "b_out": {"default": 1.0, "kind": "sld", "doc": "scattering length density contrast of the head layers"},
+    "D": {"default": 4.0, "lower": 0.0, "kind": "length", "doc": "distance of the head layers"},
+    "sigma_D": _SIG6,
+}
+OVERRIDES["ff_pcs_layeredcentrosymmetricxs"] = {
+    "Lc": {"default": 4.0, "lower": 0.0, "kind": "length", "doc": "core layer thickness (median)"},
+    "sigma_Lc": _SIG6,
+    "Lsh": {"default": 1.0, "lower": 0.0, "kind": "length", "doc": "shell layer thickness (median)"},
+    "sigma_Lsh": _SIG6,
+    "eta_Lc": {"default": 1.0}, "eta_Lsh": {"default": 0.5}, "eta_solv": {"default": 0.0},
+}
+OVERRIDES["ff_pcs_plate_chains_rw_"] = {
+    "L_core": {"default": 4.0, "lower": 0.0, "kind": "length", "doc": "thickness of the core layer"},
+    "n_agg": {"default": 0.05, "lower": 0.0, "lower_open": True, "kind": "dimensionless", "doc": "chains per area"},
+    "V_brush": {"default": 100.0, "lower": 0.0, "kind": "volume", "doc": "volume of one chain"},
+    "eta_core": {"default": 1.0}, "eta_brush": {"default": 0.4}, "eta_solv": {"default": 0.0},
+    "xsolv_core": {"default": 0.0, "lower": 0.0, "upper": 1.0, "upper_open": True, "kind": "dimensionless"},
+    "Rg": {"default": 2.0, "lower": 0.0, "lower_open": True, "kind": "length"},
+    "d": {"default": 1.0, "lower": 0.0, "kind": "dimensionless", "doc": "distance of the chain centres in units of Rg"},
+}
+for _n in ("ff_disc_sd_homoxs", "ff_disc_sd_bilayergauss"):
+    OVERRIDES[_n] = {"t": {"default": 4.0, "lower": 0.0, "kind": "length"}, "sigma_t": _SIG6,
+                     "R0": {"default": 50.0, "lower": 0.0, "kind": "length", "doc": "disc radius (median)"},
+                     "sigma_R0": _SIG6, "eta_l": {"default": 1.0}, "eta_sol": {"default": 0.0},
+                     "sigma_out": {"default": 0.4, "lower": 0.0, "kind": "length"}, "b_out": {"default": 1.0},
+                     "sigma_core": {"default": 0.5, "lower": 0.0, "kind": "length"}, "b_core": {"default": -0.5}}
+
+# batch 7 (2026-11-24): cylinders (ports/cylinders.py), ellipsoidal shells and spheroids (ports/ellipsoidal_shell.py)
+_L7 = lambda d, doc: {"default": d, "lower": 0.0, "kind": "length", "doc": doc}  # noqa: E731
+_RL7 = {"R": _L7(5.0, "radius"), "L": _L7(40.0, "length"), "eta": {"default": 1.0}}
+for _n in ("ff_cylinder", "ff_longcylinder", "ff_porodcylinder"):
+    OVERRIDES[_n] = dict(_RL7)
+OVERRIDES["ff_longcylinder"] = {"R": _L7(2.0, "radius"), "L": _L7(100.0, "length (L >> R)"), "eta": {"default": 1.0}}
+OVERRIDES["ff_flatcylinder"] = {"R": _L7(40.0, "radius"), "L": _L7(2.0, "thickness (L << R, valid for qL < 1)"),
+                                "eta": {"default": 1.0, "lower": 0.0}}
+OVERRIDES["ff_porodcylinder_v2"] = {"R": _L7(5.0, "radius"),
+                                    "nu": {"default": 8.0, "lower": 0.0, "kind": "dimensionless", "doc": "L / R"},
+                                    "eta": {"default": 1.0, "lower": 0.0}}
+OVERRIDES["ff_disc"] = {"R": _L7(20.0, "radius of the infinitely thin disc"), "eta": {"default": 1.0}}
+OVERRIDES["ff_rod"] = {"L": _L7(100.0, "length of the infinitely thin rod"), "eta": {"default": 1.0, "lower": 0.0}}
+_CS7 = {"R": _L7(5.0, "core radius (semi-axis R)"), "t": _L7(1.0, "shell thickness"), "L": _L7(40.0, "core length"),
+        "epsilon": {"default": 1.0, "lower": 0.0, "lower_open": True, "kind": "dimensionless",
+                    "doc": "ratio of the core semi-axes (εR and R)"},
+        "eta_core": {"default": 1.0}, "eta_shell": {"default": 0.5}, "eta_solv": {"default": 0.0}}
+for _n in ("ff_ellcylshell1", "ff_ellcylshell2", "ff_cylshell1", "ff_cylshell2", "ff_longcylshell"):
+    OVERRIDES[_n] = dict(_CS7)
+OVERRIDES["ff_longcylshell"]["L"] = _L7(200.0, "length (L >> R + t)")
+OVERRIDES["ff_torus"] = {"R": _L7(10.0, "major radius"), "a": _L7(3.0, "tube radius"),
+                         "Delta_a": _L7(0.0, "shell thickness of the tube"),
+                         "nu": {"default": 1.0, "lower": 0.0, "kind": "dimensionless", "doc": "height / width of the tube"},
+                         "eta_c": {"default": 1.0}, "eta_sh": {"default": 0.5}, "eta_sol": {"default": 0.0}}
+_ES7 = {"R_polar": _L7(10.0, "polar semi-axis of the core"), "R_equatorial": _L7(5.0, "equatorial semi-axis of the core"),
+        "t": _L7(1.0, "shell thickness"),
+        "sigma": {"default": 0.0, "lower": 0.0, "kind": "dimensionless",
+                  "doc": "width of the log-normal distribution of the scaled lengths"},
+        "eta_core": {"default": 1.0}, "eta_shell": {"default": 0.5}, "eta_solv": {"default": 0.0},
+        "x_core": {"default": 0.0, "lower": 0.0, "upper": 1.0, "kind": "fraction", "doc": "solvent fraction in the core"},
+        "x_shell": {"default": 0.0, "lower": 0.0, "upper": 1.0, "kind": "fraction", "doc": "solvent fraction in the shell"}}
+for _n in ("ff_ellipsoidal_shell_0", "ff_ellipsoidal_shell_0t", "ff_ellipsoidal_shell_rp", "ff_ellipsoidal_shell_rp_t",
+           "ff_ellipsoidal_shell_re", "ff_ellipsoidal_shell_re_t", "ff_ellipsoidal_shell_2", "ff_ellipsoidal_shell_2t"):
+    OVERRIDES[_n] = dict(_ES7)
+_SP7 = {"R_polar": _L7(10.0, "polar semi-axis"), "R_equatorial": _L7(5.0, "equatorial semi-axis"),
+        "eta_core": {"default": 1.0}, "eta_solv": {"default": 0.0}}
+OVERRIDES["ff_spheroid_R"] = dict(_SP7)
+OVERRIDES["ff_spheroid_V"] = {**_SP7, "V": {"default": 1000.0, "lower": 0.0, "kind": "dimensionless", "doc": "volume (length³)"}}
+OVERRIDES["ff_spheroid_nu"] = {**_SP7, "nu": {"default": 2.0, "lower": 0.0, "kind": "dimensionless",
+                                              "doc": "aspect ratio R_polar / R_equatorial"}}

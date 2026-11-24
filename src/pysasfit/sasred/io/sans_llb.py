@@ -204,17 +204,18 @@ def bank_run(raw: RawRun, name: str) -> RawRun:
 
 
 def panel_geometry(raw: RawRun, beam_center_px, offsets_mm: Optional[Tuple[float, float, float]] = None):
-    """:class:`~pysasfit.sasred.core.geometry.PixelGeometry` of a panel run. Pixel centre in the frame of
-    the central detector's pixel_geometry (x grows with the central column, i.e. against posx; y with
-    posy), panel plane perpendicular to the beam at the recorded distance + dz:
+    """:class:`~pysasfit.sasred.core.geometry.PixelGeometry` of a panel run. Pixel centre in the lab frame
+    of pySASfit (docs/conventions.md: z beam, y up, +x to the left as seen from the sample), which is the
+    NICOS frame of posx/posy (the 'left' panel at posx > 0; the central columns run against posx, i.e.
+    ``column_sign`` = -1), panel plane perpendicular to the beam at the recorded distance + dz:
 
-        x = -(posx + dx - xb),  y = posy + dy - yb,  z = L + dz,  ΔΩ = A z / |r|³."""
+        x = posx + dx - xb,  y = posy + dy - yb,  z = L + dz,  ΔΩ = A z / |r|³."""
     from ..core.geometry import PixelGeometry
     p: Panel = raw.panel
     dx, dy, dz = panel_offsets(p.name) if offsets_mm is None else offsets_mm
     xb, yb = beam_position_mm(raw, beam_center_px)
     X, Y = np.meshgrid(p.posx_mm, p.posy_mm)
-    x = -(X + dx - xb) / 1e3
+    x = (X + dx - xb) / 1e3
     y = (Y + dy - yb) / 1e3
     z = np.full_like(x, p.distance_m + dz / 1e3)
     d = np.sqrt(x * x + y * y + z * z)

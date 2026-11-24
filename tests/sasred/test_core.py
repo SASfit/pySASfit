@@ -90,12 +90,16 @@ def test_polar_image_orientation_and_pixels():
     ix, iy = np.divmod(pol.image, 1000)[0], np.divmod(pol.image, 1000)[1]
     r = 0.5 * (pol.r_edges_m[1:] + pol.r_edges_m[:-1])
     k = np.searchsorted(r, 0.05)                   # 5 cm from the centre
-    # phi = 0 (first column, centre 0.5 deg): to the right (+x), same row
-    assert ix[k, 0] == round(xc + r[k] / 0.005) and iy[k, 0] == yc
+    # phi = 0 (first column, centre 0.5 deg): lab +x, i.e. towards smaller column indices (the raw columns
+    # run towards -x: right as seen from the sample; docs/conventions.md), same row
+    assert ix[k, 0] == round(xc - r[k] / 0.005) and iy[k, 0] == yc
     # phi = 90 deg: up (+y), same column
     assert ix[k, 90] == xc and iy[k, 90] == round(yc + r[k] * np.sin(np.deg2rad(90.5)) / 0.008)
-    # phi = 180 deg: to the left
-    assert ix[k, 180] < xc and iy[k, 180] == yc
+    # phi = 180 deg: -x, larger column indices
+    assert ix[k, 180] > xc and iy[k, 180] == yc
+    # column_sign = +1: columns along +x
+    polp = polar_image(img, (xc, yc), (0.005, 0.008), 2.0, 6.0, n_phi=360, column_sign=1.0)
+    assert np.divmod(polp.image, 1000)[0][k, 0] == round(xc + r[k] / 0.005)
     assert np.isnan(pol.image[-1]).any()          # outside the detector
     q = 4 * np.pi / 6.0 * np.sin(0.5 * np.arctan(pol.r_edges_m / 2.0))
     np.testing.assert_allclose(pol.q_edges, q)
@@ -103,3 +107,39 @@ def test_polar_image_orientation_and_pixels():
     inv[18:23, 28:33] = True
     pol2 = polar_image(img, (xc, yc), (0.005, 0.008), 2.0, 6.0, invalid=inv)
     assert np.all(np.isnan(pol2.image[0]))        # beamstop region blank
+
+
+def test_lab_frame_convention():
+    """docs/conventions.md: z beam, y up, x = y × z (left as seen from the sample); the raw columns of the
+    SINQ detectors run to the right as seen from the sample, i.e. towards -x; φ counter-clockwise in the view
+    towards the sample (x right, y up)."""
+    from pysasfit.sasred.core.geometry import COLUMN_SIGN, pixel_geometry
+    assert COLUMN_SIGN == -1.0
+    g = pixel_geometry((21, 31), 0.005, (15.0, 10.0), 4.0, 6.0)
+    assert g.x[10, 20] < 0 and g.qx[10, 20] < 0 and g.x[10, 10] > 0          # larger column -> -x
+    assert g.y[15, 15] > 0 and g.qy[15, 15] > 0                               # larger row -> up
+    assert np.degrees(g.phi[10, 10]) == pytest.approx(0.0) and np.degrees(g.phi[15, 15]) == pytest.approx(90.0)
+    assert abs(np.degrees(g.phi[10, 20])) == pytest.approx(180.0)
+    np.testing.assert_allclose(np.cross([1, 0, 0], [0, 1, 0]), [0, 0, 1])     # x × y = z (beam): right-handed
+    g1 = pixel_geometry((21, 31), 0.005, (15.0, 10.0), 4.0, 6.0, column_sign=1.0)
+    np.testing.assert_allclose(g1.qx, -g.qx)
+    np.testing.assert_allclose(g1.q, g.q)
+    np.testing.assert_allclose(g1.d_omega, g.d_omega)
+
+
+def test_pixel_views_are_mirrored_towards_the_sample():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from pysasfit.sasred.core.geometry import orient_pixel_axes
+    fig, ax = plt.subplots()
+    ax.imshow(np.zeros((4, 6)), origin="lower")
+    orient_pixel_axes(ax)
+    assert ax.xaxis_inverted() and not ax.yaxis_inverted()
+    orient_pixel_axes(ax)                      # idempotent
+    assert ax.xaxis_inverted()
+    fig2, ax2 = plt.subplots()
+    ax2.imshow(np.zeros((4, 6)), origin="lower")
+    orient_pixel_axes(ax2, column_sign=1.0)
+    assert not ax2.xaxis_inverted()
+    plt.close("all")

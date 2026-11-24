@@ -21,7 +21,10 @@ Load one 2D pattern with the background subtracted, or fit the flat background B
 - **`.npz`** with `qx, qy, I` and optionally `sigma, mask`.
 - **Text file** with the columns q_x q_y I [dI].
 
-Lengths are in the inverse unit of q.
+Lengths are in the inverse unit of q. q_x, q_y and the axis angle follow the frame of pySASfit
+({doc}`../conventions`): q_x horizontal (to the right in the view towards the sample), q_y up, angles
+counter-clockwise from +q_x. pySASred 2D files written before 2026-11-23 (q_x of the other sign) are corrected
+when read.
 
 ## Two models
 

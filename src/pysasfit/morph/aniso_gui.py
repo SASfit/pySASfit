@@ -405,7 +405,7 @@ class AnisoWindow(QtWidgets.QMainWindow):
         qm = float(d.q.max())
         ax.plot([-qm * np.cos(t), qm * np.cos(t)], [-qm * np.sin(t), qm * np.sin(t)], "--", color="magenta", lw=1)
         ax.set_aspect("equal")
-        ax.set_xlabel("q_x")
+        ax.set_xlabel("q_x  (view towards the sample)")
         ax.set_ylabel("q_y")
         ax.set_title("data, symmetry axis dashed", fontsize="small")
         if res is not None:

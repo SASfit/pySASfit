@@ -76,6 +76,7 @@ def to_dict(ex):
         },
         "datasets": [], "current_ds": ex.current_ds,
         "transform": _tr(getattr(ex, "_tr_global", None)),
+        "polarisation": getattr(ex, "_pol_global", None),
         "overrides": {str(k): v for k, v in ex.overrides.items()},
     }  # fmt: skip
     ex._store_bg()
@@ -86,6 +87,8 @@ def to_dict(ex):
         }  # fmt: skip
         if dt.get("transform") is not None:  # SESANS / MSAS (additions: older versions ignore them)
             item["transform"] = _tr(dt["transform"])
+        if dt.get("polarisation"):  # polarised neutrons (studio.polarisation)
+            item["polarisation"] = dict(dt["polarisation"])
         ses = dt.get("sesans")
         if ses:
             item["domain"] = "delta"
@@ -160,6 +163,8 @@ def load_dict(ex, d):
         ex.bgalpha_row.set_value(b0["bg_alpha"], emit=False)
     if d.get("transform") and hasattr(ex, "_tr_global"):
         ex._tr_global.update(d["transform"])
+    if hasattr(ex, "_pol_global"):
+        ex._pol_global = d.get("polarisation")
     for dt in sets:
         ses = None
         if dt.get("sesans"):
@@ -169,6 +174,8 @@ def load_dict(ex, d):
         kw = {}
         if dt.get("transform") is not None or ses is not None:
             kw = {"transform": dt.get("transform"), "sesans": ses}
+        if dt.get("polarisation"):
+            kw["polarisation"] = dt["polarisation"]
         ex.add_dataset(nan(dt["q"]), nan(dt["I"]), nan(dt["sigma"]), dt.get("name", "data"), bg=dt.get("bg"), **kw)
     if sets:
         ex.current_ds = 0

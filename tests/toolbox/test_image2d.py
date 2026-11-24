@@ -32,10 +32,12 @@ def test_bersans_2d_and_geometry(tmp_path):
     im.set_geometry((7.0, 8.0))
     assert im.has_q and im.q()[8, 7] == 0
     psi = im.psi_deg()
-    assert psi[8, 10] == pytest.approx(0) and psi[11, 7] == pytest.approx(90) and psi[8, 4] == pytest.approx(180)
+    # raw columns run towards -x (right as seen from the sample; docs/conventions.md): ψ = 0 at smaller columns
+    assert psi[8, 4] == pytest.approx(0) and psi[11, 7] == pytest.approx(90) and psi[8, 10] == pytest.approx(180)
     qx, qy = im.qxy()
     q1 = 4 * np.pi / 0.6 * np.sin(np.arctan(3 * 0.0075 / 8.0) / 2)
-    assert qx[8, 10] == pytest.approx(q1) and qy[11, 7] == pytest.approx(q1)
+    assert qx[8, 4] == pytest.approx(q1) and qy[11, 7] == pytest.approx(q1)
+    assert im.columns_run_left
 
 
 @pytest.mark.skipif(not os.path.isfile(BERSANS2D), reason="BerSANS 2D file not available")
@@ -85,3 +87,41 @@ def test_pysasred_2d_memory_file_and_gui(tmp_path):
     assert any(x.endswith("_2d.h5") for x in paths)
     box.close()
     red.close()
+
+
+def _nx2d(path, qx, framed, from_sasred=True):
+    import h5py
+    with h5py.File(path, "w") as f:
+        e = f.create_group("sasentry01")
+        e.attrs["canSAS_class"] = "SASentry"
+        d = e.create_group("sasdata01")
+        d.attrs["canSAS_class"] = "SASdata"
+        if framed:
+            d.attrs["pysasfit_frame"] = "x"
+        d["I"] = np.ones(qx.shape)
+        d["Qx"] = qx
+        d["Qx"].attrs["units"] = "1/nm"
+        d["Qy"] = np.zeros_like(qx)
+        d["Qy"].attrs["units"] = "1/nm"
+        if from_sasred:
+            p = e.create_group("sasprocess01")
+            p.attrs["canSAS_class"] = "SASprocess"
+            p["name"] = "pySASred"
+
+
+def test_old_pysasred_2d_files_get_the_qx_sign_of_the_frame(tmp_path):
+    """pySASred before 2026-11-23 wrote Qx growing with the raw column (wrong sign for the SINQ detectors,
+    docs/conventions.md); new files carry the attribute pysasfit_frame and are read as they are."""
+    qx = np.tile(np.linspace(-1, 1, 5), (3, 1))           # grows with the column
+    _nx2d(tmp_path / "old.h5", qx, framed=False)
+    im = i2.read_images(tmp_path / "old.h5")[0]
+    np.testing.assert_allclose(im.qxy()[0], -qx)
+    assert im.columns_run_left and im.column_sign == -1.0
+    _nx2d(tmp_path / "new.h5", -qx, framed=True)
+    im = i2.read_images(tmp_path / "new.h5")[0]
+    np.testing.assert_allclose(im.qxy()[0], -qx)
+    assert im.columns_run_left
+    _nx2d(tmp_path / "other.h5", qx, framed=False, from_sasred=False)   # other software: as written
+    im = i2.read_images(tmp_path / "other.h5")[0]
+    np.testing.assert_allclose(im.qxy()[0], qx)
+    assert not im.columns_run_left

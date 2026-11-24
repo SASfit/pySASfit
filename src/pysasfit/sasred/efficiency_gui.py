@@ -422,8 +422,22 @@ class EfficiencyMixin:
         if e.filled.any():
             ax.contour(e.filled.astype(float), levels=[0.5], colors="k", linewidths=0.8)
         m = e.meta or {}
-        ax.set_xlabel("x [pixel]")
-        ax.set_ylabel("y [pixel]")
+        from .core.geometry import VIEW_NOTE, orient_pixel_axes
+        raw = None
+        try:                                                   # a panel is oriented by its posx/posy
+            raw = self.displayed_raw()
+            if m.get("bank") and getattr(raw, "panels", None) and m["bank"] in raw.panels:
+                from .io.sans_llb import bank_run
+                raw = bank_run(raw, m["bank"])
+            elif m.get("bank") and getattr(raw, "bank", "") != m["bank"]:
+                raw = None
+        except Exception:  # noqa: BLE001 -- no run shown: orientation of the central detector
+            raw = None
+        if raw is not None and v.shape != np.shape(raw.counts):
+            raw = None
+        orient_pixel_axes(ax, raw)
+        ax.set_xlabel(f"column [pixel], {VIEW_NOTE}")
+        ax.set_ylabel("row [pixel]")
         std = np.nanmedian(np.where(e.measured, e.std(), np.nan)) if e.measured.any() else float("nan")
         bk = f" – {m.get('bank')} detector at {float(m.get('detector_distance_m', float('nan'))):.3f} m" if m.get("bank") else ""
         ax.set_title(f"efficiency: {self.shown_efficiency_name}{bk}\nwater runs {m.get('water_runs', '?')}, "

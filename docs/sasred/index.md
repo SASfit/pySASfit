@@ -46,6 +46,7 @@ per steradian, I(q) in counts / monitor / sr.
 | standard, suggested and drawn masks | pixel splitting in the averaging |
 | radial and sector average; resolution from the direct beam of each geometry (2D Gaussian fit → divergence) + wavelength + bin width, Qdev in 1D and a 2D Gaussian per pixel; without a direct beam the divergence comes from the collimation model, calibrated on the direct beams of the same collimation at other distances (apertures and default dλ/λ in the preferences), with a warning; I and q error bars in the plots, each switchable | – |
 | NXcanSAS and ASCII output with the full uncertainty information | live reduction during the measurement |
+| SANSPOL correction without spin analysis (polariser in/out, flipper on/off): I+, I−, (I+ + I−)/2, I− − I+ from two or three states, exact or BerSANS flipper form, depolarisation, P and f from the metadata or the SANS-I defaults (Aswal et al. 2008) ({doc}`polarisation`) | polarisation keys of the SANS-I files; polarisation box in the GUI; analyser (POLARIS) |
 
 Values whose uncertainty is not yet known (the dead time τ, the attenuator factors) are used but not
 propagated; every output says so in its notes ("uncertainty unknown, not propagated").
@@ -59,6 +60,7 @@ reduction
 formula
 grouping
 scripting
+polarisation
 sans_llb
 ```
 

@@ -1,13 +1,14 @@
-"""2D detector maps I(q_y, q_z) of a model with ψ-dependent (anisotropic) functions.
+"""2D detector maps I(q_x, q_y) of a model with ψ-dependent (anisotropic) functions.
 
-ψ is the direction of q on the detector, measured from the horizontal axis q_y towards q_z, in degrees (the
+ψ is the direction of q on the detector, measured from the horizontal axis q_x towards q_y, in degrees (the
 SASfit ψ parameter of the anisotropic plugins and of their Python ports). I(q) = I(-q), so ψ ∈ [0°, 180°) is
-enough.
+enough. Frame of pySASfit (docs/conventions.md): the map is shown as seen looking towards the sample, q_x to the
+right, q_y up, ψ counter-clockwise (positive rotation about the beam).
 
 The ψ parameter of a function is found from its Python port (``PortSpec.psi_index``; e.g. varphi p[11] for
 shearflow_lin) or, for other functions, from a parameter named ``psi``. :func:`evaluate_polar` writes ψ into
 that parameter of every contribution (form factor and structure factor) and evaluates the model once per ψ;
-:func:`detector_map` then interpolates the polar grid onto a Cartesian (q_y, q_z) grid.
+:func:`detector_map` then interpolates the polar grid onto a Cartesian (q_x, q_y) grid.
 
 Example::
 
@@ -15,8 +16,8 @@ Example::
     ports.enable()
     c = ScatteringContribution("ff_sheared_cylinders__maier_saupe_", [20, 5, 200, 1, 2, 0, 0, 0, 5])
     model = ModelFunction([c])
-    qy, qz, I = map2d.detector_map(model, qmax=0.1)
-    map2d.plot(qy, qz, I)
+    qx, qy, I = map2d.detector_map(model, qmax=0.1)
+    map2d.plot(qx, qy, I)
 """
 
 from __future__ import annotations
@@ -94,7 +95,7 @@ def evaluate_polar(model, q, psi_deg, intensity=None):
 
 
 def detector_map(model, qmax, n=128, n_psi=36, n_q=None, intensity=None):
-    """``(qy, qz, I)`` on an n × n grid over [-qmax, qmax]², ``I[iz, iy]``.
+    """``(qx, qy, I)`` on an n × n grid over [-qmax, qmax]², ``I[iy, ix]``.
 
     The model is evaluated on a polar grid (``n_psi`` angles in [0°, 180°), ``n_q`` radii up to √2 qmax, default
     n) and interpolated bilinearly; isotropic models need one evaluation only."""
@@ -105,28 +106,28 @@ def detector_map(model, qmax, n=128, n_psi=36, n_q=None, intensity=None):
         raise ValueError("qmax must be > 0")
     n = int(n)
     n_q = int(n_q or n)
-    qy = np.linspace(-qmax, qmax, n)
-    qz = qy.copy()
-    QY, QZ = np.meshgrid(qy, qz)
-    Q = np.hypot(QY, QZ)
+    qx = np.linspace(-qmax, qmax, n)
+    qy = qx.copy()
+    QX, QY = np.meshgrid(qx, qy)
+    Q = np.hypot(QX, QY)
     qr = np.linspace(0.0, math.sqrt(2.0) * qmax, n_q)
     qr[0] = qr[1] * 1e-3  # q = 0 is a removable singularity of many form factors
     Qc = np.maximum(Q, qr[0])
     if not anisotropic_parameters(model):
         row = np.asarray((intensity or model.intensity)(qr), float)
-        return qy, qz, np.interp(Qc, qr, row)
+        return qx, qy, np.interp(Qc, qr, row)
     psi = np.arange(int(n_psi)) * (180.0 / int(n_psi))
     polar = evaluate_polar(model, qr, psi, intensity)
     psi_ext = np.append(psi, 180.0)
     polar_ext = np.vstack([polar, polar[:1]])
-    PSI = np.mod(np.degrees(np.arctan2(QZ, QY)), 180.0)
+    PSI = np.mod(np.degrees(np.arctan2(QY, QX)), 180.0)
     f = RegularGridInterpolator(
         (psi_ext, qr), polar_ext, method="linear", bounds_error=False, fill_value=None
     )
-    return qy, qz, f(np.stack([PSI, Qc], axis=-1))
+    return qx, qy, f(np.stack([PSI, Qc], axis=-1))
 
 
-def plot(qy, qz, intensity, ax=None, log=True, cmap="viridis", unit=""):
+def plot(qx, qy, intensity, ax=None, log=True, cmap="viridis", unit=""):
     """Show a detector map with matplotlib; returns the image."""
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm
@@ -140,10 +141,10 @@ def plot(qy, qz, intensity, ax=None, log=True, cmap="viridis", unit=""):
         if pos.size:
             norm = LogNorm(vmin=max(pos.min(), pos.max() * 1e-8), vmax=pos.max())
             data = np.where(data > 0, data, np.nan)
-    im = ax.imshow(data, origin="lower", extent=(qy[0], qy[-1], qz[0], qz[-1]), cmap=cmap, norm=norm,
+    im = ax.imshow(data, origin="lower", extent=(qx[0], qx[-1], qy[0], qy[-1]), cmap=cmap, norm=norm,
                    interpolation="nearest", aspect="equal")  # fmt: skip
-    ax.set_xlabel(f"q_y {unit}".strip())
-    ax.set_ylabel(f"q_z {unit}".strip())
+    ax.set_xlabel(f"q_x {unit}".strip())
+    ax.set_ylabel(f"q_y {unit}".strip())
     ax.figure.colorbar(im, ax=ax, label="I(q)")
     return im
 
