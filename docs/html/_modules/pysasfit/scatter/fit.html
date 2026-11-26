@@ -1,0 +1,368 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.scatter.fit &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.scatter.fit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.scatter.fit</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Least-squares fit of pySCAtter model parameters to measured data (pySASred output or any 1D / 2D file the</span>
+<span class="sd">pyTOOLbox readers understand).</span>
+
+<span class="sd">* 1D: I(q) with Idev; the model is folded with the q resolution Qdev (Gaussian) when the file has it.</span>
+<span class="sd">* 2D: an NXcanSAS 2D image (Qx, Qy, I, Idev, mask); the model is evaluated at the q vector of every used pixel</span>
+<span class="sd">  (beam along x, detector horizontal = model qy, vertical = model qz, the beam component from the Ewald sphere</span>
+<span class="sd">  when the wavelength is known).  Pixels can be thinned (every n-th) to keep a fit fast.</span>
+
+<span class="sd">Fitted parameters are the numeric parameters with a fit flag (the SasScatter ``FITFLAG_``), bounded by their ranges</span>
+<span class="sd">in :mod:`params`.  Lengths in nm, q in 1/nm as everywhere in pySCAtter.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">least_squares</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">NUM</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Data1D"</span><span class="p">,</span> <span class="s2">"Data2D"</span><span class="p">,</span> <span class="s2">"FitResult"</span><span class="p">,</span> <span class="s2">"fit"</span><span class="p">,</span> <span class="s2">"chi2_reduced"</span><span class="p">,</span> <span class="s2">"model_for"</span><span class="p">,</span> <span class="s2">"FitAborted"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="FitAborted">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.FitAborted">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitAborted</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="Data1D">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data1D">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Data1D</span><span class="p">:</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                    <span class="c1"># 1/nm</span>
+    <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">dI</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dq</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 1/nm, standard deviation of the q resolution</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+<div class="viewcode-block" id="Data1D.from_curve">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data1D.from_curve">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_curve</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""From a :class:`pysasfit.toolbox.merge.Curve` (q already in 1/nm)."""</span>
+        <span class="n">dq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">dq</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">dq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">dq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">dq</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Data1D.used">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data1D.used">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">used</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qmax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dI</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dI</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">qmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;=</span> <span class="n">qmin</span>
+        <span class="k">if</span> <span class="n">qmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="n">qmax</span>
+        <span class="k">return</span> <span class="n">m</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Data2D">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data2D">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Data2D</span><span class="p">:</span>
+    <span class="n">qh</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                   <span class="c1"># horizontal q of every pixel, 1/nm (image shape)</span>
+    <span class="n">qv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                   <span class="c1"># vertical q</span>
+    <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">dI</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># True = not used</span>
+    <span class="n">wavelength_nm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+<div class="viewcode-block" id="Data2D.from_image">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data2D.from_image">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_image</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">im</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""From a :class:`pysasfit.toolbox.image2d.Image2D` with known q."""</span>
+        <span class="n">qh</span><span class="p">,</span> <span class="n">qv</span> <span class="o">=</span> <span class="n">im</span><span class="o">.</span><span class="n">qxy</span><span class="p">()</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="n">im</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">/</span> <span class="mf">10.0</span> <span class="k">if</span> <span class="n">im</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qh</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qv</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+                   <span class="kc">None</span> <span class="k">if</span> <span class="n">im</span><span class="o">.</span><span class="n">dI</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">dI</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="n">lam</span><span class="p">,</span> <span class="n">im</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Data2D.q_beam">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data2D.q_beam">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">q_beam</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Beam component of q on the Ewald sphere (0 without wavelength)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qh</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span>
+        <span class="n">q2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qh</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">qv</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">q2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Data2D.used">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.Data2D.used">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">used</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">every</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dI</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dI</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qv</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">qmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">q</span> <span class="o">&gt;=</span> <span class="n">qmin</span>
+        <span class="k">if</span> <span class="n">qmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">q</span> <span class="o">&lt;=</span> <span class="n">qmax</span>
+        <span class="k">if</span> <span class="n">every</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">thin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">thin</span><span class="p">[::</span><span class="n">every</span><span class="p">,</span> <span class="p">::</span><span class="n">every</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">thin</span>
+        <span class="k">return</span> <span class="n">m</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="model_for">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.model_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">model_for</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Model intensity at the data points (all points without ``used``)."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Data1D</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">q</span> <span class="k">if</span> <span class="n">used</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="n">used</span><span class="p">]</span>
+        <span class="n">dq</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">dq</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">dq</span> <span class="k">if</span> <span class="n">used</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">data</span><span class="o">.</span><span class="n">dq</span><span class="p">[</span><span class="n">used</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">smeared_1d</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">dq</span><span class="p">)</span>
+    <span class="n">qb</span><span class="p">,</span> <span class="n">qh</span><span class="p">,</span> <span class="n">qv</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">q_beam</span><span class="p">(),</span> <span class="n">data</span><span class="o">.</span><span class="n">qh</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">qv</span>
+    <span class="k">if</span> <span class="n">used</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">intensity_2d</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">qb</span><span class="p">[</span><span class="n">used</span><span class="p">],</span> <span class="n">qh</span><span class="p">[</span><span class="n">used</span><span class="p">],</span> <span class="n">qv</span><span class="p">[</span><span class="n">used</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">intensity_2d</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">qb</span><span class="p">,</span> <span class="n">qh</span><span class="p">,</span> <span class="n">qv</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sigma</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="n">used</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">1e-30</span><span class="p">)</span>     <span class="c1"># no errors: 1 % relative weights</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">[</span><span class="n">used</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="chi2_reduced">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.chi2_reduced">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chi2_reduced</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">,</span> <span class="n">n_free</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">model_for</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">)</span> <span class="o">-</span> <span class="n">data</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="n">used</span><span class="p">])</span> <span class="o">/</span> <span class="n">_sigma</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">n_free</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="FitResult">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.FitResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitResult</span><span class="p">:</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">errors</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">chi2r</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">nfev</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">correlations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FitResult.report">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.FitResult.report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"χ²ᵣ = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chi2r</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">   points </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_points</span><span class="si">}</span><span class="s2">   evaluations </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nfev</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">:</span><span class="s2">16s</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.2g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">correlations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correlations</span>
+            <span class="n">strong</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">))</span>
+                      <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">0.9</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">strong</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  strongly correlated: </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">+.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="fit">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.fit.fit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">qmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">every</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_nfev</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">should_abort</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">log_weight</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FitResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fit the flagged numeric parameters of ``p`` to ``data`` (Data1D or Data2D).</span>
+
+<span class="sd">    ``callback(p, chi2r)`` after every evaluation; ``should_abort()`` stops the fit (FitAborted).</span>
+<span class="sd">    ``log_weight``: residuals of ln I (relative errors), useful over many decades without good errors."""</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">NUM</span> <span class="k">if</span> <span class="n">flags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no parameter marked for fitting"</span><span class="p">)</span>
+    <span class="n">used</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">used</span><span class="p">(</span><span class="n">qmin</span><span class="p">,</span> <span class="n">qmax</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Data1D</span><span class="p">)</span> <span class="k">else</span> <span class="n">data</span><span class="o">.</span><span class="n">used</span><span class="p">(</span><span class="n">qmin</span><span class="p">,</span> <span class="n">qmax</span><span class="p">,</span> <span class="n">every</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">used</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"only </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> data points for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="si">}</span><span class="s2"> parameters"</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="n">used</span><span class="p">]</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">_sigma</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">)</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">NUM</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">NUM</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]),</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x0</span> <span class="o">==</span> <span class="n">lo</span><span class="p">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lo</span><span class="p">)),</span> <span class="n">x0</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x0</span> <span class="o">==</span> <span class="n">hi</span><span class="p">,</span> <span class="n">hi</span> <span class="o">-</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hi</span><span class="p">)),</span> <span class="n">x0</span><span class="p">)</span>
+    <span class="n">work</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"chi2"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">resid</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">should_abort</span> <span class="ow">and</span> <span class="n">should_abort</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">FitAborted</span><span class="p">(</span><span class="s2">"fit aborted"</span><span class="p">)</span>
+        <span class="n">work</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">))))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">model_for</span><span class="p">(</span><span class="n">work</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">used</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">engine</span><span class="o">.</span><span class="n">CalcError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log_weight</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">sig</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">sig</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">r</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">c2</span> <span class="o">&lt;</span> <span class="n">best</span><span class="p">[</span><span class="s2">"chi2"</span><span class="p">]:</span>
+            <span class="n">best</span><span class="p">[</span><span class="s2">"chi2"</span><span class="p">]</span> <span class="o">=</span> <span class="n">c2</span>
+        <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>
+            <span class="n">callback</span><span class="p">(</span><span class="n">work</span><span class="p">,</span> <span class="n">c2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">least_squares</span><span class="p">(</span><span class="n">resid</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">),</span> <span class="n">x_scale</span><span class="o">=</span><span class="s2">"jac"</span><span class="p">,</span> <span class="n">max_nfev</span><span class="o">=</span><span class="n">max_nfev</span><span class="p">,</span> <span class="n">diff_step</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+    <span class="n">dof</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+    <span class="n">chi2r</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">dof</span><span class="p">)</span>
+    <span class="n">errs</span><span class="p">,</span> <span class="n">corr</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">},</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">jac</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">J</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">J</span><span class="p">)</span> <span class="o">*</span> <span class="n">chi2r</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">errs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">e</span><span class="p">)))</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- errors are optional</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">FitResult</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">errs</span><span class="p">,</span> <span class="n">chi2r</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">nfev</span><span class="p">),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">corr</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

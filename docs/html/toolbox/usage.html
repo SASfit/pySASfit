@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Using pyTOOLbox &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Merge geometries" href="merge.html" />
+    <link rel="prev" title="pyTOOLbox: small helpful tools" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyTOOLbox</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Using pyTOOLbox</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hdf5-viewer">HDF5 viewer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#metadata-lister">Metadata lister</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#from-python">From Python</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="merge.html">Merge geometries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image2d.html">2D data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data1d.html">1D data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pyTOOLbox: small helpful tools</a></li>
+      <li class="breadcrumb-item active">Using pyTOOLbox</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/toolbox/usage.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="using-pytoolbox">
+<h1>Using pyTOOLbox<a class="headerlink" href="#using-pytoolbox" title="Link to this heading"></a></h1>
+<section id="hdf5-viewer">
+<h2>HDF5 viewer<a class="headerlink" href="#hdf5-viewer" title="Link to this heading"></a></h2>
+<img alt="pyTOOLbox HDF5 viewer showing the detector counts of a SANS-I file" src="../_images/viewer.png" />
+<p><strong>Opening files</strong>: <em>Open files…</em> (several at once), <em>File → Open HDF5 files…</em>, drag and drop onto the viewer, or
+the file names on the command line. Every file is a top-level item of the tree; <em>Close file</em> removes the file of
+the selected item. Files are opened only while they are read, so the instrument software or the metadata lister
+can write to a file that is shown.</p>
+<p><strong>Tree</strong>: groups, datasets, soft links (<code class="docutils literal notranslate"><span class="pre">→</span> <span class="pre">target</span></code>) and external links; broken links are marked. Groups are read
+when they are expanded. The second column gives the shape and type of a dataset, or the <code class="docutils literal notranslate"><span class="pre">NX_class</span></code> of a group.</p>
+<p><strong>Search</strong>: the field below the tree searches the paths of all open files (case-insensitive substring);
+clicking a hit selects that object in the tree.</p>
+<p><strong>Display</strong> shows the selected object; <em>view</em> chooses how:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>view</p></th>
+<th class="head"><p>for</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Auto</p></td>
+<td><p>scalars, strings and one-element datasets as text; 1D numeric data as a line; 2D and higher as a heatmap; other data (compound, string arrays) as a matrix</p></td>
+</tr>
+<tr class="row-odd"><td><p>Line</p></td>
+<td><p>1D data, or one dimension of an N-dimensional dataset (chosen as <em>x</em>; the other dimensions are fixed by the index spin boxes)</p></td>
+</tr>
+<tr class="row-even"><td><p>Heatmap</p></td>
+<td><p>two dimensions (<em>x</em>, <em>y</em>) of an N-dimensional dataset, the others fixed by index</p></td>
+</tr>
+<tr class="row-odd"><td><p>Matrix</p></td>
+<td><p>the values as a table (row and column headers give the index)</p></td>
+</tr>
+<tr class="row-even"><td><p>Text</p></td>
+<td><p>the value as text; for a group, the list of its members</p></td>
+</tr>
+</tbody>
+</table>
+<p>Options: <em>log x</em>, <em>log y</em>, <em>log colour</em>, <em>error bars</em> (NeXus plots), the colour map, and <strong>pixel aspect</strong>: a
+detector image is drawn with the true aspect ratio of its pixels, taken from <code class="docutils literal notranslate"><span class="pre">x_pixel_size</span></code> and <code class="docutils literal notranslate"><span class="pre">y_pixel_size</span></code>
+(with their units) of the dataset’s <code class="docutils literal notranslate"><span class="pre">NXdetector</span></code> group, also when the image is shown through a link (such as
+<code class="docutils literal notranslate"><span class="pre">data1/counts</span></code> of SANS-I). <code class="docutils literal notranslate"><span class="pre">x_pixel_size</span></code> belongs to the last dimension, <code class="docutils literal notranslate"><span class="pre">y_pixel_size</span></code> to the one before; the
+axis labels give the pixel size. Images are drawn flush left with the colour bar attached.</p>
+<p><strong>NeXus default plots</strong>: a group with <code class="docutils literal notranslate"><span class="pre">&#64;signal</span></code> (<code class="docutils literal notranslate"><span class="pre">NXdata</span></code>, NXcanSAS <code class="docutils literal notranslate"><span class="pre">SASdata</span></code>), or a file / entry whose
+<code class="docutils literal notranslate"><span class="pre">&#64;default</span></code> leads to one, is plotted with its axes (<code class="docutils literal notranslate"><span class="pre">&#64;axes</span></code>) and error bars (<code class="docutils literal notranslate"><span class="pre">&#64;uncertainties</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&lt;signal&gt;_errors</span></code>). A reduced NXcanSAS file of pySASred therefore shows I(Q) with Idev when its root is selected.</p>
+<p>Very large datasets are read with a stride (every n-th element along each shown dimension, as the axis label
+says) so that a plot never reads more than <em>Preferences → pyTOOLbox → largest number of elements read for a plot</em>
+(4 million).</p>
+<p><strong>→ 2D data</strong> hands the 2D dataset shown (detector counts of a raw file, a reduced image) to the tab
+<strong>2D data</strong>: there the beam centre is set by a click or by coordinates (or the centre of gravity), and radial,
+sector or azimuthal averages and the polar view ψ – q follow (<a class="reference internal" href="image2d.html"><span class="doc">2D data</span></a>). SANS-I raw files come with their
+geometry (pixel size, distance, wavelength); for other data the pixel size of the viewer is used.</p>
+<p><strong>Inspect</strong> lists the object (path, type, shape, number of elements, storage size, chunks, compression filters,
+maximum shape, fill value) and all its attributes with their types.</p>
+</section>
+<section id="metadata-lister">
+<h2>Metadata lister<a class="headerlink" href="#metadata-lister" title="Link to this heading"></a></h2>
+<img alt="pyTOOLbox metadata lister with a listing of 15 runs" src="../_images/lister.png" />
+<ol class="arabic simple">
+<li><p><strong>Files</strong>: folder, instrument prefix (<code class="docutils literal notranslate"><span class="pre">sans</span></code>), year and run-number range select the files
+<code class="docutils literal notranslate"><span class="pre">&lt;instrument&gt;&lt;year&gt;n&lt;number&gt;.hdf</span></code>.</p></li>
+<li><p><strong>Scan files for entries</strong> collects every attribute and every small dataset (at most 16 elements; larger ones
+are images or histograms) of the selected files. Keys are <code class="docutils literal notranslate"><span class="pre">/group/dataset</span></code> and <code class="docutils literal notranslate"><span class="pre">/group&#64;attribute</span></code>.</p></li>
+<li><p>Choose <strong>list</strong> or <strong>skip</strong> for each entry (the filter field and <em>All</em> / <em>None</em> act on the visible entries).</p></li>
+<li><p><strong>Generate listing</strong>: one row per file, one column per entry; column titles are the last path component
+(parents are added when names repeat).</p></li>
+<li><p><strong>Copy to clipboard</strong> (tab separated, for a spreadsheet; Ctrl+C copies the selected rows), <strong>Save as Excel /
+CSV / Text…</strong> (Excel needs <code class="docutils literal notranslate"><span class="pre">openpyxl</span></code>).</p></li>
+</ol>
+<p><strong>Correcting values</strong>: double-click (or F2) edits a value; numbers keep their type. <strong>Paste from clipboard</strong>
+(Ctrl+V) pastes a column or block from a spreadsheet, starting at the current cell. Edited cells are yellow and
+are written only with <strong>Write changed values to HDF files</strong>: before a value is changed, its original is kept as a
+new entry <code class="docutils literal notranslate"><span class="pre">old_&lt;name&gt;</span></code> next to it (an existing <code class="docutils literal notranslate"><span class="pre">old_&lt;name&gt;</span></code> is never overwritten), and a backup copy
+<code class="docutils literal notranslate"><span class="pre">&lt;file&gt;.hdf.bak</span></code> can be made. A text longer than a fixed-length string dataset allows is stored as a new, longer
+dataset under the same name with the same attributes. Closing the window (or the launcher) with edited values
+that are not written asks first.</p>
+<p>Floating-point values are shown rounded to 3 digits after the decimal point; this and the largest dataset counted
+as metadata are in <em>Preferences → pyTOOLbox</em>. The folder, the range and the list / skip choice of every entry are
+kept in <code class="docutils literal notranslate"><span class="pre">toolbox_meta_lister.json</span></code> next to the pySASfit preferences file (the file <code class="docutils literal notranslate"><span class="pre">~/.hdf_meta_lister.json</span></code> of the
+old stand-alone script is read once if present).</p>
+</section>
+<section id="from-python">
+<h2>From Python<a class="headerlink" href="#from-python" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.toolbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">hdf5</span>
+<span class="n">hdf5</span><span class="o">.</span><span class="n">children</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">,</span> <span class="s2">"/entry1/SANS/detector"</span><span class="p">)</span>       <span class="c1"># members with kind and shape</span>
+<span class="n">meta</span><span class="p">,</span> <span class="n">attrs</span> <span class="o">=</span> <span class="n">hdf5</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">,</span> <span class="s2">"/entry1/SANS/detector/counts"</span><span class="p">)</span>
+<span class="n">img</span><span class="p">,</span> <span class="n">stride</span> <span class="o">=</span> <span class="n">hdf5</span><span class="o">.</span><span class="n">read_slice</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">,</span> <span class="s2">"/entry1/SANS/detector/counts"</span><span class="p">,</span> <span class="n">x_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y_dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">hdf5</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">,</span> <span class="s2">"/entry1/SANS/detector/counts"</span><span class="p">)</span>   <span class="c1"># (0.0075, 0.0075) m</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.toolbox.meta_lister</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_entries</span><span class="p">,</span> <span class="n">write_values</span>
+<span class="n">collect_entries</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">)[</span><span class="s2">"/entry1/sample/thickness"</span><span class="p">]</span>       <span class="c1"># 0.1</span>
+<span class="n">write_values</span><span class="p">(</span><span class="s2">"sans2026n082140.hdf"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"/entry1/sample/thickness"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span>  <span class="c1"># keeps old_thickness</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="pyTOOLbox: small helpful tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="merge.html" class="btn btn-neutral float-right" title="Merge geometries" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

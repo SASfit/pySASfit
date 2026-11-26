@@ -1,0 +1,542 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.integration &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.integration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.integration</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">"""Integration over the size distribution of a :class:`~pysasfit.studio.model.ScatteringContribution`.</span>
+
+<span class="sd">Two different things are called "integration" in pySASfit:</span>
+
+<span class="sd">* inside the compiled SASfit functions (form factors with orientation averages, Hankel</span>
+<span class="sd">  transforms, ...) libsasfit does the integrals. Its strategy, accuracy and number of points</span>
+<span class="sd">  are chosen with :func:`pysasfit.studio.library.configure_precision`;</span>
+<span class="sd">* the size-distribution integral  I(q) = ∫ N(x) P(q; x) dx  (and its decoupling / local</span>
+<span class="sd">  monodisperse variants) is done here, in Python, with one of the methods in :data:`METHODS`.</span>
+<span class="sd">  Scipy cannot replace the first kind: the compiled functions call libsasfit directly.</span>
+
+<span class="sd">The integrand is vector valued (one value per q), so a method evaluates the form factor once</span>
+<span class="sd">per x and handles all q together.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">integrate</span> <span class="k">as</span> <span class="n">_si</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"METHODS"</span><span class="p">,</span> <span class="s2">"DEFAULTS"</span><span class="p">,</span> <span class="s2">"PANELS"</span><span class="p">,</span> <span class="s2">"ContributionCache"</span><span class="p">,</span> <span class="s2">"integrate"</span><span class="p">,</span> <span class="s2">"size_integral"</span><span class="p">,</span> <span class="s2">"suggest_n_x"</span><span class="p">,</span> <span class="s2">"format_node_check"</span><span class="p">,</span>
+           <span class="s2">"load_settings"</span><span class="p">,</span> <span class="s2">"save_settings"</span><span class="p">]</span>  <span class="c1"># fmt: skip</span>
+
+<span class="n">METHODS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"gauss-legendre"</span><span class="p">:</span> <span class="s2">"Gauss-Legendre, fixed nodes (n_x per panel, 4 panels)"</span><span class="p">,</span>
+    <span class="s2">"quad_vec"</span><span class="p">:</span> <span class="s2">"scipy quad_vec, adaptive (rtol, atol, limit)"</span><span class="p">,</span>
+    <span class="s2">"simpson"</span><span class="p">:</span> <span class="s2">"scipy simpson, equidistant grid (4·n_x points)"</span><span class="p">,</span>
+    <span class="s2">"trapezoid"</span><span class="p">:</span> <span class="s2">"scipy trapezoid, equidistant grid (4·n_x points)"</span><span class="p">,</span>
+    <span class="s2">"romb"</span><span class="p">:</span> <span class="s2">"scipy romb (Romberg), equidistant grid (2^k+1 points &gt;= 4·n_x)"</span><span class="p">,</span>
+    <span class="s2">"sasfit"</span><span class="p">:</span> <span class="s2">"SASfit sasfit_integrate_ctm, strategy 'int_strategy' of the SASfit tab (rtol, atol, limit); "</span>
+    <span class="s2">"one q value at a time: slow"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">DEFAULTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"gauss-legendre"</span><span class="p">,</span> <span class="s2">"n_x"</span><span class="p">:</span> <span class="mi">96</span><span class="p">,</span> <span class="s2">"rtol"</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s2">"atol"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"limit"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
+    <span class="s2">"x_power"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"tail"</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">,</span>
+<span class="p">}</span>  <span class="c1"># fmt: skip  (x_power, tail: range search, see ScatteringContribution.support)</span>
+<span class="n">PANELS</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># the support of N(x) is split into this many panels (skewed distributions)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nodes</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n_x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Nodes and weights (weights None: the method integrates the samples itself) of a fixed-node method."""</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"gauss-legendre"</span><span class="p">:</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_x</span><span class="p">))</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">PANELS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">+</span> <span class="n">lo</span><span class="p">))</span>
+            <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_x</span><span class="p">)</span> <span class="o">*</span> <span class="n">PANELS</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"simpson"</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span>  <span class="c1"># odd number of points</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"romb"</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sasfit_integrate</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">limit</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Vector valued integral with libsasfit: one ``sasfit_integrate_ctm`` call per component.</span>
+
+<span class="sd">    The integrand is evaluated for all components at once and cached per x, so components whose</span>
+<span class="sd">    integrator visits the same nodes share the evaluations.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_library</span>
+
+    <span class="n">lib</span> <span class="o">=</span> <span class="n">get_library</span><span class="p">()</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">vec</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">:</span>
+                <span class="n">cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">vec</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lib</span><span class="o">.</span><span class="n">integrate</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">:</span> <span class="n">vec</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="n">k</span><span class="p">],</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">rtol</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
+
+
+<div class="viewcode-block" id="integrate">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.integrate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">integrate</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"gauss-legendre"</span><span class="p">,</span> <span class="n">n_x</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""∫_a^b f(x) dx of a vector valued ``f(x)`` (scalar x -&gt; array); returns ``(value, info)``.</span>
+
+<span class="sd">    ``info``: method, number of evaluations of ``f`` (``neval``) and, for ``quad_vec``, the error estimate.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown integration method '</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">' (choose from </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">METHODS</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">g</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="n">method</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"sasfit"</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">_sasfit_integrate</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"quad_vec"</span><span class="p">:</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">_si</span><span class="o">.</span><span class="n">quad_vec</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">epsabs</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">atol</span><span class="p">),</span> <span class="mf">1e-200</span><span class="p">),</span> <span class="n">epsrel</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">rtol</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">))</span>
+        <span class="n">info</span><span class="p">[</span><span class="s2">"error"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="n">_nodes</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n_x</span><span class="p">)</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"gauss-legendre"</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">Y</span> <span class="o">@</span> <span class="n">ws</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"simpson"</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">_si</span><span class="o">.</span><span class="n">simpson</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"trapezoid"</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">_si</span><span class="o">.</span><span class="n">trapezoid</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">_si</span><span class="o">.</span><span class="n">romb</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">[</span><span class="s2">"neval"</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">info</span></div>
+
+
+
+<div class="viewcode-block" id="ContributionCache">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContributionCache</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What a contribution remembers during a fit (see ``FitProblem.fit(cache=True)``).</span>
+
+<span class="sd">    * ``result``: the finished intensity for identical parameters (a change of another contribution, of a scale or</span>
+<span class="sd">      of the background does not recompute it);</span>
+<span class="sd">    * ``scope``: the form factor P(q, x) at the integration nodes x for identical *other* form-factor parameters</span>
+<span class="sd">      (a change of the size distribution does not recompute it).</span>
+
+<span class="sd">    Both are small LRU memories. The cache must be discarded when the SASfit precision settings change.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">max_scopes</span><span class="o">=</span><span class="mi">24</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_scopes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_results</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_scopes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(),</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result_hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_misses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_misses</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="ContributionCache.get">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result_misses</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result_hits</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="ContributionCache.put">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache.put">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_results</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ContributionCache.scope">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache.scope">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The dictionary ``{(kind, x): P(q, x)}`` for the form-factor parameters ``key``."""</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_scopes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="ContributionCache.clear">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scopes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ContributionCache.text">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.ContributionCache.text">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">r</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_hits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_misses</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_hits</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_misses</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"intensities reused </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">result_hits</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">, form-factor nodes reused </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">node_hits</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="size_integral">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.size_integral">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">size_integral</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">S</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Intensity of contribution ``c`` (with a size distribution) at ``q``; ``S`` = S(q) or None (LMA).</span>
+
+<span class="sd">    ``c`` provides ff, sd, sq, ff_p, sd_p, sq_p, distributed, approach, support() and the settings</span>
+<span class="sd">    method, n_x, rtol, atol, limit (optionally cache, fixed_grid, grid_margin). The result of the</span>
+<span class="sd">    integration is kept in ``c.last_integration``.</span>
+<span class="sd">    """</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">support</span><span class="p">()</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">nq</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">weight</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sd_p</span><span class="p">))</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">scope</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># form factor at the nodes: depends on q and the form-factor parameters except x</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache_key</span> <span class="k">as</span> <span class="n">_pol_key</span>
+
+        <span class="n">scope</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">scope</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">tobytes</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">distributed</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">(),</span> <span class="n">_pol_key</span><span class="p">()))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">P</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"intensity"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scope</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">kind</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cache</span><span class="o">.</span><span class="n">node_hits</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="n">v</span>
+            <span class="n">cache</span><span class="o">.</span><span class="n">node_misses</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">p</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">distributed</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scope</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">scope</span><span class="p">[(</span><span class="n">kind</span><span class="p">,</span> <span class="n">x</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"fixed_grid"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">sq</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">approach</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"monodisperse"</span><span class="p">,</span> <span class="s2">"decoupling"</span><span class="p">))</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">:</span>
+        <span class="c1"># fixed logarithmic grid: P(q, x) is computed once per grid, the distribution only gives the weights</span>
+        <span class="k">return</span> <span class="n">_grid_integral</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">_fixed_grid</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">P</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">sq</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">approach</span> <span class="o">==</span> <span class="s2">"monodisperse"</span><span class="p">:</span>  <span class="c1"># manual 4.1.1:  S(q) ∫ N P dx</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">P</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">v</span> <span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span> <span class="o">*</span> <span class="n">S</span>
+
+    <span class="k">elif</span> <span class="n">c</span><span class="o">.</span><span class="n">approach</span> <span class="o">==</span> <span class="s2">"decoupling"</span><span class="p">:</span>  <span class="c1"># manual 4.1.2:  ∫N P + (∫N F)^2 / ∫N (S - 1)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">n</span> <span class="o">*</span> <span class="n">P</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">n</span> <span class="o">*</span> <span class="n">P</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">"amplitude"</span><span class="p">),</span> <span class="p">[</span><span class="n">n</span><span class="p">]])</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">v</span><span class="p">[:</span><span class="n">nq</span><span class="p">]</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="n">nq</span> <span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">nq</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nq</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">S</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># local monodisperse approximation, manual 4.1.3:  ∫ N P S(q; R_V(x)) dx</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">sq_p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">weight</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cbrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">volume</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">distributed</span><span class="p">))</span> <span class="o">*</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">n</span> <span class="o">*</span> <span class="n">P</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">sq</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">sp</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">post</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+    <span class="n">value</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">integrate</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">rtol</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">atol</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">last_integration</span> <span class="o">=</span> <span class="n">info</span>
+    <span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fixed_grid</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Nodes and trapezoid weights of a grid equidistant in ln x that contains the support ``[a, b]``.</span>
+
+<span class="sd">    The grid is kept in ``c._grid`` while it still contains the support with at least half the resolution (nodes</span>
+<span class="sd">    inside the support: ``n_x * PANELS / 2``); otherwise a new one is built around the support with the margin</span>
+<span class="sd">    ``c.grid_margin`` (default 1.6) on both sides. The integrand N(x) P(q, x) x is smooth in ln x and decays at both</span>
+<span class="sd">    ends, where the trapezoid rule converges very fast.</span>
+<span class="sd">    """</span>
+    <span class="n">n_in</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">)</span> <span class="o">*</span> <span class="n">PANELS</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">48</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"_grid"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">g</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">a</span> <span class="ow">and</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="n">g</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">inside</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">((</span><span class="n">g</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">a</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">inside</span> <span class="o">&gt;=</span> <span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">g</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"grid_margin"</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">))</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">m</span><span class="p">,</span> <span class="n">b</span> <span class="o">*</span> <span class="n">m</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_in</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">hi</span> <span class="o">/</span> <span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="n">d</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">lo</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">*</span> <span class="n">d</span>
+    <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+    <span class="n">w</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">0.5</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">xs</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">xs</span><span class="p">,</span> <span class="n">w</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_grid_integral</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">cache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The size-distribution integral as a weighted sum over the fixed grid (monodisperse and decoupling)."""</span>
+    <span class="n">xs</span><span class="p">,</span> <span class="n">w0</span> <span class="o">=</span> <span class="n">grid</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">node_misses</span> <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sd_p</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">w0</span>
+    <span class="n">Pm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">P</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">sq</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">approach</span> <span class="o">==</span> <span class="s2">"monodisperse"</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">Pm</span> <span class="o">@</span> <span class="n">n</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span> <span class="o">*</span> <span class="n">S</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># decoupling approximation</span>
+        <span class="n">Fm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">P</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="s2">"amplitude"</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">])</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">Pm</span> <span class="o">@</span> <span class="n">n</span> <span class="o">+</span> <span class="p">(</span><span class="n">Fm</span> <span class="o">@</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">S</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">evals</span> <span class="o">=</span> <span class="p">(</span><span class="n">cache</span><span class="o">.</span><span class="n">node_misses</span> <span class="o">-</span> <span class="n">before</span><span class="p">)</span> <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">xs</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">last_integration</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="s2">"fixed grid"</span><span class="p">,</span> <span class="s2">"neval"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">evals</span><span class="p">),</span> <span class="s2">"nodes"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">xs</span><span class="o">.</span><span class="n">size</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="n">NODE_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+<span class="n">_FIXED_NODE_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"gauss-legendre"</span><span class="p">,</span> <span class="s2">"simpson"</span><span class="p">,</span> <span class="s2">"trapezoid"</span><span class="p">,</span> <span class="s2">"romb"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="suggest_n_x">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.suggest_n_x">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">suggest_n_x</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">NODE_CANDIDATES</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Smallest ``n_x`` whose intensity agrees with a reference of (at least) 192 nodes per panel to ``tol``.</span>
+
+<span class="sd">    The difference is the maximum over q of ``|I_n - I_ref| / max(|I_ref|, 1e-6 max|I_ref|)``. A candidate counts only if</span>
+<span class="sd">    the next candidate agrees as well. Returns a dictionary: ``n_x`` (None: no candidate reached ``tol``),</span>
+<span class="sd">    ``current``, ``reference``, ``table`` [(n_x, difference)], ``tol``, ``method``; methods that choose their nodes</span>
+<span class="sd">    themselves (``quad_vec``, ``sasfit``) return ``n_x`` None and a ``note``. The settings of ``c`` are restored.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">sd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the contribution has no size distribution"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="s2">"tol"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">tol</span><span class="p">),</span> <span class="s2">"current"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">),</span> <span class="s2">"n_x"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"reference"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_FIXED_NODE_METHODS</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"note"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">' chooses its nodes itself: n_x does not apply"</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">ref_n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">),</span> <span class="mi">192</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_n</span>
+    <span class="n">saved</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"fixed_grid"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"fixed_grid"</span><span class="p">):</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">fixed_grid</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">n_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">ref_n</span><span class="p">)</span>
+        <span class="n">finite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="n">floor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="n">finite</span><span class="p">])))</span> <span class="k">if</span> <span class="n">finite</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">difference</span><span class="p">(</span><span class="n">I</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ref</span><span class="p">),</span> <span class="n">floor</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="k">else</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="n">cand</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">ref_n</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">saved</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">ref_n</span><span class="p">:</span>
+            <span class="n">cand</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">saved</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">streak</span><span class="p">,</span> <span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">cand</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">difference</span><span class="p">(</span><span class="n">run</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"table"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">streak</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">first</span>
+                <span class="n">streak</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">streak</span><span class="p">,</span> <span class="n">first</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">streak</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">saved</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="k">break</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"n_x"</span><span class="p">]</span> <span class="o">=</span> <span class="n">first</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">n_x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">saved</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">saved</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"fixed_grid"</span><span class="p">):</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">fixed_grid</span> <span class="o">=</span> <span class="n">saved</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="format_node_check">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.format_node_check">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_node_check</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Text of :func:`suggest_n_x` results; ``results``: ``[(label, dictionary)]``."""</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: method </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'method'</span><span class="p">]</span><span class="si">}</span><span class="s2">, current n_x = </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'current'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"note"</span><span class="p">):</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'note'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">]</span>
+            <span class="k">continue</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  difference to n_x = </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'reference'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (max relative, all q), goal </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'tol'</span><span class="p">]</span><span class="si">:</span><span class="s2">.0e</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s2">"table"</span><span class="p">]:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    n_x = </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">4d</span><span class="si">}</span><span class="s2">   </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">9.2e</span><span class="si">}{</span><span class="s1">'   &lt;- current'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="s1">'current'</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"n_x"</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  no tested n_x reaches the goal: keep the current value or loosen the goal"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">saving</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">"current"</span><span class="p">]</span> <span class="o">/</span> <span class="n">r</span><span class="p">[</span><span class="s2">"n_x"</span><span class="p">]</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  n_x = </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_x'</span><span class="p">]</span><span class="si">}</span><span class="s2"> is enough"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">saving</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">x fewer form-factor calls than now)"</span> <span class="k">if</span> <span class="n">saving</span> <span class="o">&gt;</span> <span class="mf">1.2</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ------------------------------------------------------------------ settings</span>
+<div class="viewcode-block" id="load_settings">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.load_settings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_settings</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The integration settings saved by the explorer (``paths.get_setting``), defaults for missing ones."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">paths</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DEFAULTS</span><span class="p">)</span>
+    <span class="n">saved</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">"integration"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">saved</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span> <span class="ow">in</span> <span class="n">DEFAULTS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">saved</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">default</span><span class="p">)(</span><span class="n">saved</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                    <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">[</span><span class="s2">"method"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"method"</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULTS</span><span class="p">[</span><span class="s2">"method"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="save_settings">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.integration.save_settings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remember ``settings`` (all keys of :data:`DEFAULTS`: method, n_x, rtol, atol, limit, x_power, tail) for later sessions."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">paths</span>
+
+    <span class="n">paths</span><span class="o">.</span><span class="n">set_setting</span><span class="p">(</span><span class="s2">"integration"</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">DEFAULTS</span><span class="p">})</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,499 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.core.efficiency &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.core.efficiency</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.core.efficiency</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Detector efficiency (flood) from a water measurement.</span>
+
+<span class="sd">Water scatters almost isotropically, so after the usual corrections its image is flat apart</span>
+<span class="sd">from the efficiency of the detector pixels:</span>
+
+<span class="sd">    I_water = [ (W - B) - (T_w / T_ec) (EC - B) ] / (T_w ΔΩ)</span>
+
+<span class="sd">with W, EC and B the monitor-normalised images of water, empty cell and (optionally) the</span>
+<span class="sd">blocked beam, T_w and T_ec the transmissions and ΔΩ the solid angle of each pixel. The</span>
+<span class="sd">efficiency is this image divided by its mean over the valid (unmasked) pixels.</span>
+
+<span class="sd">**Masked pixels** (behind the beamstop, hot pixels, ...) have no water data. The SANS-I</span>
+<span class="sd">detector is a multiwire detector read out in coincidence: a pixel is the crossing of an x wire</span>
+<span class="sd">and a y wire, so its efficiency is approximately the product of a row and a column factor,</span>
+<span class="sd">ε(i, j) ≈ a_i · b_j. The masked pixels are therefore filled with</span>
+
+<span class="sd">    ε(i, j) = R_i · C_j / m,</span>
+
+<span class="sd">R_i the mean efficiency of the valid pixels of row i (same y wire), C_j that of column j (same</span>
+<span class="sd">x wire) and m the mean of all valid pixels (1 by construction). A pixel whose whole row or</span>
+<span class="sd">whole column is masked (the standard border) has no estimate: its efficiency is set to 1 and</span>
+<span class="sd">it gets the mask bit :data:`~pysasfit.sasred.core.mask.EFFICIENCY`.</span>
+
+<span class="sd">**Edge of the beamstop**: pixels in the half shadow of the beamstop are not always in the</span>
+<span class="sd">mask of the water run, and their low "efficiency" would then be applied to the sample. Valid</span>
+<span class="sd">pixels within ``edge_px`` pixels of the masked area (not counting the border) whose value</span>
+<span class="sd">differs from the row x column estimate by more than ``reject_sigma`` statistical standard</span>
+<span class="sd">deviations are therefore *rejected* and filled like the masked ones (iterated until no new</span>
+<span class="sd">pixel is rejected). Elsewhere a deviating pixel is kept: it may be a real local defect.</span>
+
+<span class="sd">The efficiency is a :class:`~pysasfit.sasred.data.uarray.UArray`: it keeps its exact</span>
+<span class="sd">sensitivities to the counts and monitors of the water and empty-cell runs and to the</span>
+<span class="sd">transmissions, so dividing a sample image by it propagates all of them (also the</span>
+<span class="sd">correlations it causes between the q points). Saved to a file (:meth:`Efficiency.save`), only</span>
+<span class="sd">the standard deviation per pixel is kept; :meth:`Efficiency.load` makes it one independent</span>
+<span class="sd">source per pixel (``flood:&lt;name&gt;``), which drops the (small) correlations between pixels.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..data.uarray</span><span class="w"> </span><span class="kn">import</span> <span class="n">Source</span><span class="p">,</span> <span class="n">UArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.mask</span><span class="w"> </span><span class="kn">import</span> <span class="n">EFFICIENCY</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Efficiency"</span><span class="p">,</span> <span class="s2">"water_intensity"</span><span class="p">,</span> <span class="s2">"separable_fill"</span><span class="p">,</span> <span class="s2">"efficiency_from_water"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Efficiency">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Efficiency</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Detector efficiency map (mean 1 over the measured pixels).</span>
+
+<span class="sd">    Fields::</span>
+
+<span class="sd">        value     : UArray (detector shape) with its uncertainty sources</span>
+<span class="sd">        measured  : bool, pixels taken from the water data</span>
+<span class="sd">        filled    : bool, masked or rejected pixels approximated by row x column (x and y wire)</span>
+<span class="sd">        undefined : bool, no estimate (whole row or column masked); value 1, mask bit EFFICIENCY</span>
+<span class="sd">        rejected  : bool, valid pixels at the beamstop edge replaced by the estimate (part of filled)</span>
+<span class="sd">        meta      : provenance (runs, transmissions, distance, wavelength, ...)</span>
+<span class="sd">    """</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">UArray</span>
+    <span class="n">measured</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">filled</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">undefined</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">rejected</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rejected</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filled</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span>
+
+<div class="viewcode-block" id="Efficiency.std">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.std">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">std</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">std</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Efficiency.profiles">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.profiles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""(row profile, column profile): mean efficiency of the measured pixels of every row (y wire)</span>
+<span class="sd">        and every column (x wire); NaN where a row or column has none. Useful to follow single wires."""</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">measured</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">),</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Efficiency.mask_bits">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.mask_bits">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mask_bits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""uint32 mask with the bit EFFICIENCY on the pixels without an estimate."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">undefined</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span> <span class="o">*</span> <span class="n">EFFICIENCY</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ files</span>
+<div class="viewcode-block" id="Efficiency.write_entry">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.write_entry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Write the map into an open h5py group ``entry`` (made an NXentry): ``efficiency`` (NXdata:</span>
+<span class="sd">        ``efficiency``, ``efficiency_errors``, ``filled``, ``undefined``, ``rejected``, the wire</span>
+<span class="sd">        profiles) and ``process`` with the provenance."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">...</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"NX_class"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"NXentry"</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"efficiency"</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"efficiency"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"NX_class"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"NXdata"</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"signal"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"efficiency"</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"efficiency"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"efficiency_errors"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">meaning</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">"filled"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filled</span><span class="p">,</span> <span class="s2">"1 = masked in the water run, approximated by row x column"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"undefined"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">undefined</span><span class="p">,</span> <span class="s2">"1 = no estimate (whole row or column masked); value 1"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"rejected"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rejected</span><span class="p">,</span> <span class="s2">"1 = valid in the water run but replaced (beamstop edge)"</span><span class="p">)):</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"meaning"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meaning</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"row_profile"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">rows</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"column_profile"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"row_profile"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"meaning"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean efficiency of the measured pixels of each row (y wire)"</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"column_profile"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"meaning"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean efficiency of the measured pixels of each column (x wire)"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_instrument</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"process"</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"NX_class"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"NXprocess"</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"program"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"pySASred </span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(</span><span class="n">timespec</span><span class="o">=</span><span class="s2">"seconds"</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"meta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">description</span><span class="p">:</span>
+            <span class="n">p</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span></div>
+
+
+    <span class="c1">#: configuration of the water measurement written to ``instrument`` (meta key, group, name, unit)</span>
+    <span class="n">_CONFIG</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"SD_m"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">,</span> <span class="s2">"distance"</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"detector_tilt_deg"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">,</span> <span class="s2">"tilt_angle"</span><span class="p">,</span> <span class="s2">"deg"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"pixel_size_m"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">,</span> <span class="s2">"pixel_size"</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"detector_offset_m"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">,</span> <span class="s2">"offset"</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"beam_center_px"</span><span class="p">,</span> <span class="s2">"detector"</span><span class="p">,</span> <span class="s2">"beam_center"</span><span class="p">,</span> <span class="s2">"pixel"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"wavelength_A"</span><span class="p">,</span> <span class="s2">"monochromator"</span><span class="p">,</span> <span class="s2">"wavelength"</span><span class="p">,</span> <span class="s2">"angstrom"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"dlam_over_lam_fwhm"</span><span class="p">,</span> <span class="s2">"monochromator"</span><span class="p">,</span> <span class="s2">"wavelength_spread"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"coll_m"</span><span class="p">,</span> <span class="s2">"collimator"</span><span class="p">,</span> <span class="s2">"length"</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">),</span>
+               <span class="p">(</span><span class="s2">"attenuator"</span><span class="p">,</span> <span class="s2">"attenuator"</span><span class="p">,</span> <span class="s2">"selection"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_instrument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Configuration of the water measurement (detector distance and tilt, wavelength, ...) as</span>
+<span class="sd">        NeXus fields under ``instrument``, so that every archived map says what it was measured at."""</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"detector"</span><span class="p">:</span> <span class="s2">"NXdetector"</span><span class="p">,</span> <span class="s2">"monochromator"</span><span class="p">:</span> <span class="s2">"NXmonochromator"</span><span class="p">,</span>
+                   <span class="s2">"collimator"</span><span class="p">:</span> <span class="s2">"NXcollimator"</span><span class="p">,</span> <span class="s2">"attenuator"</span><span class="p">:</span> <span class="s2">"NXattenuator"</span><span class="p">}</span>
+        <span class="n">ins</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">grp</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">unit</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_CONFIG</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">ins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ins</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"instrument"</span><span class="p">)</span>
+                <span class="n">ins</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"NX_class"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"NXinstrument"</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">require_group</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"NX_class"</span><span class="p">]</span> <span class="o">=</span> <span class="n">classes</span><span class="p">[</span><span class="n">grp</span><span class="p">]</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">v</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">unit</span><span class="p">:</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit</span>
+
+<div class="viewcode-block" id="Efficiency.save">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""HDF5 file with one map: ``/entry`` (see :meth:`write_entry`). For a dated collection of</span>
+<span class="sd">        maps in one file see :mod:`pysasfit.sasred.efficiency_log`."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"entry"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_entry</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"entry"</span><span class="p">),</span> <span class="n">description</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="Efficiency.read_entry">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.read_entry">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Efficiency"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Map from an open h5py group written by :meth:`write_entry`; its uncertainty becomes one</span>
+<span class="sd">        independent source per pixel, ``flood:&lt;name&gt;``."""</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"efficiency"</span><span class="p">]</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"efficiency"</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"efficiency_errors"</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">filled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"filled"</span><span class="p">][()],</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">undefined</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"undefined"</span><span class="p">][()],</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"rejected"</span><span class="p">][()],</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="s2">"rejected"</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">filled</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s2">"process/meta"</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"process/meta"</span><span class="p">][()]</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="k">else</span> <span class="n">raw</span><span class="p">)</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..legacy</span><span class="w"> </span><span class="kn">import</span> <span class="n">rename_keys</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">rename_keys</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>                    <span class="c1"># maps written before coll / SD</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">s</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">UArray</span><span class="o">.</span><span class="n">from_source</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Source</span><span class="p">(</span><span class="sa">f</span><span class="s2">"flood:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="s2">"flood"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">~</span><span class="p">(</span><span class="n">filled</span> <span class="o">|</span> <span class="n">undefined</span><span class="p">),</span> <span class="n">filled</span><span class="p">,</span> <span class="n">undefined</span><span class="p">,</span> <span class="n">rejected</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bank</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Detector bank of the map ("" = the main / central detector; SANS-LLB: "left", "bottom")."""</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bank"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Efficiency.save_banks">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.save_banks">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_banks</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">maps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""HDF5 file with the maps of several detector banks (``maps``: bank -&gt; map; "" = central):</span>
+<span class="sd">        ``/entry`` the central detector, ``/entry_&lt;bank&gt;`` the others; each entry has the attribute ``bank``."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"entry"</span> <span class="k">if</span> <span class="s2">""</span> <span class="ow">in</span> <span class="n">maps</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"entry_</span><span class="si">{</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">maps</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">for</span> <span class="n">bank</span><span class="p">,</span> <span class="n">eff</span> <span class="ow">in</span> <span class="n">maps</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">eff</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eff</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{},</span> <span class="n">bank</span><span class="o">=</span><span class="n">bank</span><span class="p">)</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"entry"</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">bank</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"entry_</span><span class="si">{</span><span class="n">bank</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"bank"</span><span class="p">]</span> <span class="o">=</span> <span class="n">bank</span>
+                <span class="n">eff</span><span class="o">.</span><span class="n">write_entry</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">description</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">bank</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">bank</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="Efficiency.load_banks">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.load_banks">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_banks</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""All maps of a file: bank -&gt; map (a file of :meth:`save`: its one map under its own bank)."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"efficiency"</span> <span class="ow">in</span> <span class="n">f</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                     <span class="ow">and</span> <span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="s2">"entry"</span> <span class="ow">or</span> <span class="n">n</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"entry_"</span><span class="p">))]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">entry</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">bank</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="s2">"entry"</span> <span class="ow">or</span> <span class="s2">"bank"</span> <span class="ow">in</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span> <span class="k">else</span> <span class="n">n</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"entry_"</span><span class="p">):]]</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="Efficiency.load">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.Efficiency.load">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Efficiency"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Map from a file of :meth:`save` or from an entry of an efficiency archive</span>
+<span class="sd">        (``entry``: its name; default ``entry``, or the newest map of an archive)."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">entry</span> <span class="o">=</span> <span class="s2">"entry"</span> <span class="k">if</span> <span class="s2">"entry"</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"default"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: no efficiency map '</span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="n">stem</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">eff</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">read_entry</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">entry</span><span class="p">],</span> <span class="n">name</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stem</span> <span class="k">if</span> <span class="n">entry</span> <span class="o">==</span> <span class="s2">"entry"</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">entry</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bank"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">eff</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"bank"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+        <span class="n">eff</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eff</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">entry</span><span class="o">=</span><span class="n">entry</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eff</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="water_intensity">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.water_intensity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">water_intensity</span><span class="p">(</span><span class="n">water</span><span class="p">:</span> <span class="n">UArray</span><span class="p">,</span> <span class="n">empty_cell</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UArray</span><span class="p">],</span> <span class="n">t_water</span><span class="p">,</span> <span class="n">t_empty</span><span class="p">,</span> <span class="n">d_omega</span><span class="p">,</span>
+                    <span class="n">blocked</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">UArray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Corrected water image [(W - B) - (T_w/T_ec)(EC - B)] / (T_w ΔΩ).</span>
+
+<span class="sd">    ``water``, ``empty_cell``, ``blocked``: monitor-normalised images (UArray); ``t_water``,</span>
+<span class="sd">    ``t_empty``: transmissions (UArray scalars or numbers); ``d_omega``: solid angle per pixel."""</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">water</span> <span class="k">if</span> <span class="n">blocked</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">water</span> <span class="o">-</span> <span class="n">blocked</span>
+    <span class="k">if</span> <span class="n">empty_cell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ec</span> <span class="o">=</span> <span class="n">empty_cell</span> <span class="k">if</span> <span class="n">blocked</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">empty_cell</span> <span class="o">-</span> <span class="n">blocked</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">-</span> <span class="n">ec</span> <span class="o">*</span> <span class="p">(</span><span class="n">t_water</span> <span class="o">/</span> <span class="n">t_empty</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span> <span class="o">/</span> <span class="n">t_water</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d_omega</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="separable_fill">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.separable_fill">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">separable_fill</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">UArray</span><span class="p">,</span> <span class="n">valid</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Masked pixels of ``e`` (2D) replaced by R_i C_j / m (row and column means of the valid</span>
+<span class="sd">    pixels, m their overall mean). Returns (UArray, filled, undefined); undefined pixels (whole</span>
+<span class="sd">    row or column masked) get the value 1."""</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="n">valid</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">ny</span> <span class="o">*</span> <span class="n">nx</span>
+    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">valid</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"efficiency and mask shapes differ"</span><span class="p">)</span>
+    <span class="n">n_row</span> <span class="o">=</span> <span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">n_col</span> <span class="o">=</span> <span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no valid pixels"</span><span class="p">)</span>
+    <span class="n">flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+    <span class="n">iy</span><span class="p">,</span> <span class="n">ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divmod</span><span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
+    <span class="n">A_R</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n_row</span><span class="p">[</span><span class="n">iy</span><span class="p">],</span> <span class="p">(</span><span class="n">iy</span><span class="p">,</span> <span class="n">flat</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">A_C</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">n_col</span><span class="p">[</span><span class="n">ix</span><span class="p">],</span> <span class="p">(</span><span class="n">ix</span><span class="p">,</span> <span class="n">flat</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">nx</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">A_m</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">flat</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="n">flat</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+
+    <span class="n">row_ok</span> <span class="o">=</span> <span class="n">n_row</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">col_ok</span> <span class="o">=</span> <span class="n">n_col</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="o">~</span><span class="n">valid</span> <span class="o">&amp;</span> <span class="n">row_ok</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">col_ok</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">undefined</span> <span class="o">=</span> <span class="o">~</span><span class="n">valid</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">target</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"csr"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">keep</span><span class="p">,</span> <span class="n">out_shape</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="n">ky</span><span class="p">,</span> <span class="n">kx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divmod</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
+        <span class="n">sel_r</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">ky</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ny</span><span class="p">))</span>
+        <span class="n">sel_c</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">kx</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">nx</span><span class="p">))</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">sel_r</span> <span class="o">@</span> <span class="n">A_R</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">sel_c</span> <span class="o">@</span> <span class="n">A_C</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">A_m</span><span class="p">,</span> <span class="n">out_shape</span><span class="o">=</span><span class="p">())</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">R</span> <span class="o">*</span> <span class="n">C</span> <span class="o">/</span> <span class="n">m</span>
+        <span class="n">embed</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">))),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">k</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">embed</span><span class="p">,</span> <span class="n">out_shape</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">undefined</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">undefined</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">undefined</span></div>
+
+
+
+<div class="viewcode-block" id="efficiency_from_water">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.efficiency.efficiency_from_water">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">efficiency_from_water</span><span class="p">(</span><span class="n">I_water</span><span class="p">:</span> <span class="n">UArray</span><span class="p">,</span> <span class="n">valid</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reject_sigma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+                          <span class="n">edge_px</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Efficiency</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Efficiency map from the corrected water image (:func:`water_intensity`) and the valid</span>
+<span class="sd">    pixels of the water run: normalised to mean 1 over the valid pixels, masked pixels filled by</span>
+<span class="sd">    :func:`separable_fill`. Pixels at the beamstop edge that deviate from the fill by more than</span>
+<span class="sd">    ``reject_sigma`` standard deviations are rejected and filled too (None: no rejection).</span>
+<span class="sd">    ``border``: bool image of the border mask, not counted as "masked area" for the edge."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
+    <span class="n">valid0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">valid0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">rejected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">stat_var</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span> <span class="k">if</span> <span class="n">reject_sigma</span> <span class="k">else</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">I_water</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">valid</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">I_water</span> <span class="o">/</span> <span class="n">mean</span>
+        <span class="n">filled_value</span><span class="p">,</span> <span class="n">filled</span><span class="p">,</span> <span class="n">undefined</span> <span class="o">=</span> <span class="n">separable_fill</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">valid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reject_sigma</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="n">stat_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stat_var</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">variance</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># row x column estimate for every pixel (from the current valid set)</span>
+        <span class="n">ev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">),</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>          <span class="c1"># rows / columns without valid pixel</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ev</span><span class="p">)</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="o">~</span><span class="n">valid0</span> <span class="k">if</span> <span class="n">border</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="o">~</span><span class="n">valid0</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">border</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span>
+        <span class="n">near</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_dilation</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">edge_px</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">valid</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">stat_var</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">near</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="n">reject_sigma</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">new</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">break</span>
+        <span class="n">rejected</span> <span class="o">|=</span> <span class="n">new</span>
+        <span class="n">valid</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">new</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">m</span><span class="p">[</span><span class="s2">"n_rejected"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rejected</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">m</span><span class="p">[</span><span class="s2">"water_mean"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mean</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>      <span class="c1"># water / ΔΩ over the valid pixels (before mean 1)</span>
+    <span class="k">return</span> <span class="n">Efficiency</span><span class="p">(</span><span class="n">filled_value</span><span class="p">,</span> <span class="n">valid</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">filled</span><span class="p">,</span> <span class="n">undefined</span><span class="p">,</span> <span class="n">rejected</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.model &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.model</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Combining SASfit functions into models and fitting them (SASfit manual, ch. 4-5).</span>
+
+<span class="sd">A :class:`ScatteringContribution` is one population: a form factor P(q; x),</span>
+<span class="sd">optionally a size distribution N(x) over one form-factor parameter x and a</span>
+<span class="sd">structure factor S(q). With a size distribution:</span>
+
+<span class="sd">* ``"monodisperse"`` (manual 4.1.1):  I = S(q) ∫ N(x) P(q;x) dx</span>
+<span class="sd">* ``"decoupling"``   (manual 4.1.2):  I = ∫N P dx + (∫N F dx)² / ∫N dx · (S(q) - 1),</span>
+<span class="sd">  F = scattering amplitude (the '_f' function)</span>
+<span class="sd">* ``"lma"`` local monodisperse (4.1.3): I = ∫ N(x) P(q;x) S(q; R_V(x)) dx, with</span>
+<span class="sd">  the first structure-factor parameter set to the volume-equivalent radius</span>
+<span class="sd">  R_V = (3V(x)/4π)^(1/3) of the '_v' function</span>
+<span class="sd">* without a structure factor:          I = ∫ N(x) P(q;x) dx</span>
+
+<span class="sd">The x integral is done on the support of N(x) (found automatically or given as</span>
+<span class="sd">``x_range``) with Gauss-Legendre nodes (default) or another method of</span>
+<span class="sd">:mod:`pysasfit.studio.integration` (``method``, ``n_x``, ``rtol``, ``atol``,</span>
+<span class="sd">``limit``; scipy ``quad_vec``, ``simpson``, ...). The integrals inside the SASfit</span>
+<span class="sd">functions follow :func:`pysasfit.studio.library.configure_precision`.</span>
+
+<span class="sd">A :class:`ModelFunction` sums contributions (with scale factors) and an</span>
+<span class="sd">optional background (a :class:`pysasfit.core.background.Background` or a</span>
+<span class="sd">constant), and optionally applies an instrumental resolution from</span>
+<span class="sd">:mod:`pysasfit.core.resolution` (Rician pinhole, slit, ...).</span>
+
+<span class="sd">``transform`` (SASfit's transform menu, :mod:`pysasfit.studio.hankel`) turns the</span>
+<span class="sd">scattering of the particles into what an instrument measures:</span>
+
+<span class="sd">* ``None`` -- I(q) itself;</span>
+<span class="sd">* a :class:`~pysasfit.studio.hankel.SESANSTransform` -- the model is evaluated at</span>
+<span class="sd">  spin-echo lengths δ (passed instead of q) and gives G(δ) - G(0) or P/P0; the</span>
+<span class="sd">  constant background is an offset of G(δ) - G(0), the power-law term is unused;</span>
+<span class="sd">* a :class:`~pysasfit.studio.hankel.MSASTransform` -- multiple small-angle</span>
+<span class="sd">  scattering of a sample of the given thickness, before resolution and background.</span>
+
+<span class="sd">``polarisation`` (a :class:`~pysasfit.studio.polarisation.Polarisation`, a dictionary for it, or None) says what a</span>
+<span class="sd">data set measured with polarised neutrons (unpolarised, flipper off / on not corrected, I+, I-, I- - I+, the four</span>
+<span class="sd">channels): magnetic functions return their basis terms and the model weights them; non-magnetic contributions</span>
+<span class="sd">count with the nuclear weight (0 in the spin-flip channels and the difference); C functions with a ``pol``</span>
+<span class="sd">parameter get SASfit's pol (moment labels) = n- - n+ of the setting (+/- = neutron spin).</span>
+
+<span class="sd">A transform may also be given as a dictionary or name for</span>
+<span class="sd">:func:`~pysasfit.studio.hankel.make_transform`, e.g.</span>
+<span class="sd">``transform={"kind": "msas", "thickness": 0.1, "wavelength": 0.6}``.</span>
+
+<span class="sd">:class:`Pipeline` holds data sets and model functions and fits named</span>
+<span class="sd">parameters with ``scipy.optimize.least_squares``::</span>
+
+<span class="sd">    pipe = Pipeline()</span>
+<span class="sd">    d = pipe.add_dataset("test.dat")</span>
+<span class="sd">    sc = ScatteringContribution("ff_sphere", {"R": 50, "eta": 1},</span>
+<span class="sd">                                size_distribution="sd_LogNorm", sd_params={"N": 1, "s": 0.1, "p": 1, "mu": 50},</span>
+<span class="sd">                                distributed="R")</span>
+<span class="sd">    m = pipe.add_model(ModelFunction([sc], background=0.0), dataset=d)</span>
+<span class="sd">    res = pipe.fit(m, ["0.sd.N", "0.sd.mu", "0.sd.s", "background"])</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SASfitFunction</span><span class="p">,</span> <span class="n">function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">size_integral</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ScatteringContribution"</span><span class="p">,</span> <span class="s2">"ModelFunction"</span><span class="p">,</span> <span class="s2">"Pipeline"</span><span class="p">,</span> <span class="s2">"FitResult"</span><span class="p">]</span>
+
+<span class="n">APPROACHES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"monodisperse"</span><span class="p">,</span> <span class="s2">"decoupling"</span><span class="p">,</span> <span class="s2">"lma"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pol_key</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache_key</span>
+
+    <span class="k">return</span> <span class="n">cache_key</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_function</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">SASfitFunction</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span>
+    <span class="k">return</span> <span class="n">function</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ScatteringContribution">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScatteringContribution</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">form_factor</span><span class="p">,</span>
+        <span class="n">ff_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">size_distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sd_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">structure_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">sq_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">distributed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">approach</span><span class="o">=</span><span class="s2">"monodisperse"</span><span class="p">,</span>
+        <span class="n">x_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_x</span><span class="o">=</span><span class="mi">96</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"gauss-legendre"</span><span class="p">,</span>
+        <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">limit</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">x_power</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span>
+        <span class="n">tail</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ff</span> <span class="o">=</span> <span class="n">_as_function</span><span class="p">(</span><span class="n">form_factor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sd</span> <span class="o">=</span> <span class="n">_as_function</span><span class="p">(</span><span class="n">size_distribution</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sq</span> <span class="o">=</span> <span class="n">_as_function</span><span class="p">(</span><span class="n">structure_factor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="p">,</span> <span class="n">ff_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="p">,</span> <span class="n">sd_params</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sq_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sq</span><span class="p">,</span> <span class="n">sq_params</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distributed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="p">,</span> <span class="n">distributed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_approach</span><span class="p">(</span><span class="n">approach</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_range</span> <span class="o">=</span> <span class="n">x_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>  <span class="c1"># integration over the size distribution, see pysasfit.studio.integration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rtol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atol</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">atol</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_power</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_power</span><span class="p">)</span>  <span class="c1"># the range search weighs N(x) with x**x_power (form factor ~ x^2 ... x^6)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tail</span><span class="p">)</span>  <span class="c1"># ... and cuts where N(x) x**x_power falls below tail * its maximum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_integration</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># info of the last size-distribution integration (method, neval, ...)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># ContributionCache while a fit runs with cache=True (see FitProblem.fit)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snap</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># &gt; 0: the automatic integration range is rounded outwards to a geometric grid of this step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_grid</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># True: fixed logarithmic grid for the size-distribution integral (FitProblem.fit(grid=True))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_margin</span> <span class="o">=</span> <span class="mf">1.6</span>  <span class="c1"># the fixed grid extends by this factor beyond the support at both ends</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_vec</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_index</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">parameter_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no parameter '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScatteringContribution.set_approach">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.set_approach">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_approach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">approach</span><span class="p">):</span>
+        <span class="n">approach</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"decoupling approximation"</span><span class="p">:</span> <span class="s2">"decoupling"</span><span class="p">,</span> <span class="s2">"local monodisperse"</span><span class="p">:</span> <span class="s2">"lma"</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">approach</span><span class="p">,</span> <span class="n">approach</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">approach</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">APPROACHES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"approach must be one of </span><span class="si">{</span><span class="n">APPROACHES</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="n">approach</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.vector">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.vector">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"ff"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span><span class="p">,</span> <span class="s2">"sd"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span><span class="p">,</span> <span class="s2">"sq"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq_p</span><span class="p">}[</span><span class="n">role</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.function_for">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.function_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">function_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"ff"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="p">,</span> <span class="s2">"sd"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="p">,</span> <span class="s2">"sq"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq</span><span class="p">}[</span><span class="n">role</span><span class="p">]</span></div>
+
+
+    <span class="c1"># --------------------------------------------------------- integration</span>
+<div class="viewcode-block" id="ScatteringContribution.support">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.support">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">support</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Integration range of the size distribution (``x_range``, or found from N(x) x**x_power).</span>
+
+<span class="sd">        The intensity of a particle grows like x^2 ... x^6, so a small amount of large particles can</span>
+<span class="sd">        still dominate I(q): the cut-off is applied to N(x) x**x_power (``x_power``, default 6),</span>
+<span class="sd">        not to N(x) alone, at the relative level ``tail``.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_range</span><span class="p">)</span>
+        <span class="n">hint</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="p">,</span> <span class="s2">"_py_i"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"support"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># a distribution that knows its range</span>
+        <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">hint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">lo</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">hi</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="p">])</span> <span class="ow">or</span> <span class="mf">1.0</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">]:</span>  <span class="c1"># typical location parameters of SASfit distributions</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">x0</span> <span class="o">*</span> <span class="mf">1e-4</span><span class="p">,</span> <span class="n">x0</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">,</span> <span class="mi">1400</span><span class="p">)</span>
+        <span class="n">sd_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amplitude_index</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sd_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># N = 0 (a fit switched the contribution off): the support is that of N = 1</span>
+            <span class="n">sd_p</span> <span class="o">=</span> <span class="n">sd_p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">sd_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sd_p</span><span class="p">))</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">x_power</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"size distribution is zero everywhere; give x_range"</span><span class="p">)</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span> <span class="o">*</span> <span class="n">w</span><span class="o">.</span><span class="n">max</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">keep</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="n">x</span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">keep</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">snap</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># same nodes for nearby parameters: the form factor on them can be reused</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snap</span><span class="p">)</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">hi</span><span class="p">)</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.amplitude_index">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.amplitude_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amplitude_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Index of the amplitude ``N`` among the size-distribution parameters (the intensity is proportional to it)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="s2">"N"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"N"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.enable_cache">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.enable_cache">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Remember intensities and form factors at the integration nodes (stop with :meth:`disable_cache`).</span>
+
+<span class="sd">        ``snap`` &gt; 0 rounds the automatic integration range outwards to a geometric grid of that step, so</span>
+<span class="sd">        nearby parameter sets share nodes and the form factor on them can be reused.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContributionCache</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">ContributionCache</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">snap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">snap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.disable_cache">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.disable_cache">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">disable_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">snap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="ScatteringContribution.nodes">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.nodes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">()</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_x</span><span class="p">)</span>
+        <span class="c1"># split into 4 panels for skewed distributions</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ws</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">xs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">+</span> <span class="n">lo</span><span class="p">))</span>
+            <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ff_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"intensity"</span><span class="p">):</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">xj</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">p</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="p">]</span> <span class="o">=</span> <span class="n">xj</span>
+            <span class="n">M</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>  <span class="c1"># noqa: E731</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">tobytes</span><span class="p">(),</span> <span class="n">vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span><span class="p">),</span> <span class="n">vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd_p</span><span class="p">),</span> <span class="n">vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sq_p</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">approach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">atol</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_power</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tail</span><span class="p">,</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_range</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_range</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">snap</span><span class="p">,</span> <span class="n">_pol_key</span><span class="p">())</span>  <span class="c1"># fmt: skip</span>
+
+<div class="viewcode-block" id="ScatteringContribution.intensity">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ScatteringContribution.intensity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span>
+        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intensity</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_key</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">hit</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">cache</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">I</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">I</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">approach</span> <span class="o">==</span> <span class="s2">"lma"</span><span class="p">):</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq_p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">evaluate_p</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff_p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">*</span> <span class="n">S</span>  <span class="c1"># manual 4.1.1 without distribution</span>
+            <span class="k">return</span> <span class="n">I</span>
+        <span class="k">return</span> <span class="n">size_integral</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>  <span class="c1"># the three approaches of the manual, method chosen by self.method</span>
+
+    <span class="fm">__call__</span> <span class="o">=</span> <span class="n">intensity</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"form factor: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", size distribution: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sd</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> over </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="p">]</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sq</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", structure factor: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sq</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">approach</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<div class="viewcode-block" id="ModelFunction">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelFunction</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contributions</span><span class="o">=</span><span class="p">(),</span> <span class="n">scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bg_A</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">bg_alpha</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
+                 <span class="n">active</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">polarisation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contributions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">contributions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scales</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="k">if</span> <span class="n">scales</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="p">)</span>
+        <span class="c1"># several data sets (SASfit): a contribution counts only where it is active; the others keep their place so</span>
+        <span class="c1"># that the addresses '&lt;i&gt;.ff.R', 'scale.&lt;i&gt;' are the same in the models of all data sets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">active</span><span class="p">)</span> <span class="k">if</span> <span class="n">active</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">background</span> <span class="o">=</span> <span class="n">background</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bg_A</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bg_A</span><span class="p">)</span>  <span class="c1"># power-law term of the background: bg_A * q**(-bg_alpha) (off while bg_A = 0)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bg_alpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bg_alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="n">resolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bg_z</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">polarisation</span> <span class="o">=</span> <span class="n">polarisation</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">polarisation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""What the data set measures with polarised neutrons (:mod:`pysasfit.studio.polarisation`) or None."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polarisation</span>
+
+    <span class="nd">@polarisation</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">polarisation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"weights"</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Polarisation</span>
+
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Polarisation</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">Polarisation</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_polarisation</span> <span class="o">=</span> <span class="n">p</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_contribution_intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""I of one contribution under the polarisation setting (set active by the caller)."""</span>
+        <span class="n">pol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polarisation</span>
+        <span class="k">if</span> <span class="n">pol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_magnetic</span><span class="p">,</span> <span class="n">pol_parameter_index</span>
+
+        <span class="k">if</span> <span class="n">is_magnetic</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">ff</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">pol_parameter_index</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">ff</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># a C function with SASfit's pol parameter</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pol</span><span class="o">.</span><span class="n">sanspol</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: the quantity '</span><span class="si">{</span><span class="n">pol</span><span class="o">.</span><span class="n">quantity</span><span class="si">}</span><span class="s2">' needs the basis terms of a Python port "</span>
+                                 <span class="s2">"(the C function knows only (1+pol)/2 I+ + (1-pol)/2 I-)"</span><span class="p">)</span>
+            <span class="n">old</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">effective_pol</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">ff_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">old</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">weights</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># nuclear scattering only</span>
+        <span class="k">return</span> <span class="n">w</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">if</span> <span class="n">w</span> <span class="o">!=</span> <span class="mf">1.0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pol_active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">active</span>
+
+        <span class="k">return</span> <span class="n">active</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_polarisation</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""SESANS / MSAS transform (see the module docstring) or None."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span>
+
+    <span class="nd">@transform</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.hankel</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_transform</span>
+
+            <span class="n">t</span> <span class="o">=</span> <span class="n">make_transform</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span> <span class="k">else</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span> <span class="o">=</span> <span class="n">t</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""True if the model is linear in the scales, the amplitudes N and the background (variable projection)."""</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span>
+        <span class="k">return</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">domain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""``"q"`` or ``"delta"`` (SESANS: the model is evaluated at spin-echo lengths)."""</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">,</span> <span class="s2">"domain"</span><span class="p">,</span> <span class="s2">"q"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModelFunction.include">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.include">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">include</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contribution</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">active</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">contribution</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scales</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">scale</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">active</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="ModelFunction.is_active">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.is_active">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ModelFunction.power_term">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.power_term">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">power_term</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The power-law part of the background, ``bg_A * q**(-bg_alpha)`` (0 while ``bg_A`` is 0, and with SESANS)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bg_A</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">==</span> <span class="s2">"delta"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bg_A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">bg_alpha</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_background</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The background: ``background`` (a constant, a Background object or a function of q) + ``bg_A * q**(-bg_alpha)``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constant_background</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_term</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_constant_background</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>  <span class="c1"># pysasfit.core.background.Background</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bg_z</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_bg_z</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">z0</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bg_z</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">b</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The constant background as a number (the SESANS offset)."""</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+<div class="viewcode-block" id="ModelFunction.components">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.components">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">unit_amplitude</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">        </span><span class="sd">"""``([I_i(q)], background)``: every contribution without its scale factor, resolution applied.</span>
+
+<span class="sd">        For the contributions in ``unit_amplitude`` the size-distribution amplitude N is set to 1 while</span>
+<span class="sd">        evaluating (variable projection solves for it). The background is a scalar or an array like q.</span>
+<span class="sd">        With a linear transform (SESANS G(δ) - G(0)) the parts are the transformed contributions; a non-linear</span>
+<span class="sd">        transform (P/P0, MSAS) has no such decomposition (ValueError).</span>
+<span class="sd">        """</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linear</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">: the model is not a sum of its contributions"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># SESANS G(δ) - G(0): each contribution on the Q grid, then transformed</span>
+            <span class="n">k</span><span class="p">,</span> <span class="n">Wt</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+            <span class="n">raw</span><span class="p">,</span> <span class="n">_bg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_components</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">unit_amplitude</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Wt</span> <span class="o">@</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">()</span>
+        <span class="n">qe</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_components</span><span class="p">(</span><span class="n">qe</span><span class="p">,</span> <span class="n">unit_amplitude</span><span class="p">,</span> <span class="n">W</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_raw_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qe</span><span class="p">,</span> <span class="n">unit_amplitude</span><span class="p">,</span> <span class="n">W</span><span class="p">):</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">qe</span><span class="o">.</span><span class="n">shape</span> <span class="k">if</span> <span class="n">W</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">W</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">amplitude_index</span><span class="p">()</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">unit_amplitude</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">old</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">sd_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">sd_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pol_active</span><span class="p">():</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contribution_intensity</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">qe</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">c</span><span class="o">.</span><span class="n">sd_p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">old</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span> <span class="k">if</span> <span class="n">W</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">W</span> <span class="o">@</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parts</span><span class="p">,</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ModelFunction.particles">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.particles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">particles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pol_active</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scales</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contributions</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+                    <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">+</span> <span class="n">s</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contribution_intensity</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">I</span></div>
+
+
+<div class="viewcode-block" id="ModelFunction.intensity">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.ModelFunction.intensity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">domain</span> <span class="o">==</span> <span class="s2">"delta"</span><span class="p">:</span>  <span class="c1"># SESANS: q are spin-echo lengths</span>
+                <span class="n">G</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">g_from</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particles</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+            <span class="c1"># MSAS: multiple scattering of the particles, then resolution and background</span>
+            <span class="n">qe</span><span class="p">,</span> <span class="n">Wr</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+            <span class="n">k</span><span class="p">,</span> <span class="n">_r</span><span class="p">,</span> <span class="n">_w</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+            <span class="n">Ims</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">multiple</span><span class="p">(</span><span class="n">qe</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particles</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">particles</span><span class="p">(</span><span class="n">qe</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">Ims</span> <span class="k">if</span> <span class="n">Wr</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Wr</span> <span class="o">@</span> <span class="n">Ims</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qe</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+            <span class="n">Ip</span> <span class="o">=</span> <span class="n">W</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">particles</span><span class="p">(</span><span class="n">qe</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Ip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">particles</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Ip</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
+
+
+    <span class="fm">__call__</span> <span class="o">=</span> <span class="n">intensity</span></div>
+
+
+
+<div class="viewcode-block" id="FitResult">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.FitResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FitResult</span><span class="p">:</span>
+    <span class="n">names</span><span class="p">:</span> <span class="nb">list</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">errors</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">chi2</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">chi2_red</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">I_fit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">raw</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FitResult.summary">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.FitResult.summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"chi2 = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chi2</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">, chi2/(M-n) = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chi2_red</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span><span class="p">):</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">20s</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Pipeline">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Pipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Data sets, model functions and fitting (port of SASstudio's Pipeline)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assignments</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># model index -&gt; dataset index</span>
+
+<div class="viewcode-block" id="Pipeline.add_dataset">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.add_dataset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">q_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Add a file (read with :func:`pysasfit.core.load_data`) or a tuple (q, I, sigma[, dq])."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..core.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_data</span>
+
+            <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">dq</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">q_scale</span><span class="o">=</span><span class="n">q_scale</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="o">*</span><span class="n">rest</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">dq</span> <span class="o">=</span> <span class="n">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">rest</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"q"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="s2">"I"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="s2">"sigma"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="s2">"dq"</span><span class="p">:</span> <span class="n">dq</span><span class="p">})</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.add_model">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.add_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assignments</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="k">return</span> <span class="n">m</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.assign">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.assign">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assignments</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span></div>
+
+
+    <span class="c1"># ----------------------------------------------------------- parameters</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""'background', 'scale.&lt;i&gt;', or '&lt;i&gt;.&lt;ff|sd|sq&gt;.&lt;name or p&lt;k&gt;&gt;' -&gt; (getter, setter)."""</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">addr</span> <span class="o">==</span> <span class="s2">"background"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">background</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"only a constant background can be fitted this way"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">background</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"background"</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">addr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"bg.A"</span><span class="p">,</span> <span class="s2">"bg.alpha"</span><span class="p">):</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="s2">"bg_"</span> <span class="o">+</span> <span class="n">addr</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+            <span class="k">return</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">addr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"pol."</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.fitting</span><span class="w"> </span><span class="kn">import</span> <span class="n">locate</span>
+
+            <span class="k">return</span> <span class="n">locate</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">addr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"scale"</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">return</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">scales</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">scales</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">contributions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">function_for</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"contribution </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has no </span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">ScatteringContribution</span><span class="o">.</span><span class="n">_index</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">vec</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">vec</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="Pipeline.get">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_address</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">addr</span><span class="p">)[</span><span class="mi">0</span><span class="p">]()</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.set">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.set">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_address</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">addr</span><span class="p">)[</span><span class="mi">1</span><span class="p">](</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.evaluate">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">assignments</span><span class="p">[</span><span class="n">model</span><span class="p">]][</span><span class="s2">"q"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.fit">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.model.Pipeline.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">q_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Least-squares fit of ``parameters`` (addresses, see :meth:`_address`) of model ``model``.</span>
+
+<span class="sd">        Errors are sqrt(diag(J^T J)^-1), multiplied by sqrt(chi2/(M-n)) if</span>
+<span class="sd">        ``scale_errors`` (SASfit reports them without that factor).</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">least_squares</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">assignments</span><span class="p">[</span><span class="n">model</span><span class="p">]]</span>
+        <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"q"</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s2">"sigma"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">q_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sel</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;=</span> <span class="n">q_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="n">q_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_address</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">]</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">acc</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">resid</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">setter</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+                <span class="n">setter</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">-</span> <span class="n">I</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">least_squares</span><span class="p">(</span><span class="n">resid</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">),</span> <span class="n">x_scale</span><span class="o">=</span><span class="s2">"jac"</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">resid</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">chi2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">fun</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">dof</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">x0</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>  <span class="c1"># column-scaled covariance: parameters may differ by many orders of magnitude</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">jac</span><span class="p">)</span>
+            <span class="n">dcol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">dcol</span><span class="p">[</span><span class="n">dcol</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">Js</span> <span class="o">=</span> <span class="n">J</span> <span class="o">/</span> <span class="n">dcol</span>
+            <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">Js</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Js</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">dcol</span><span class="p">,</span> <span class="n">dcol</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">chi2</span> <span class="o">/</span> <span class="n">dof</span> <span class="k">if</span> <span class="n">scale_errors</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FitResult</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">parameters</span><span class="p">),</span> <span class="n">r</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="n">chi2</span><span class="p">,</span> <span class="n">chi2</span> <span class="o">/</span> <span class="n">dof</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">model</span><span class="p">]</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">r</span><span class="o">.</span><span class="n">success</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">r</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Pipeline:"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">):</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">" model </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> (data set </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assignments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">), background </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">background</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">scales</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">contributions</span><span class="p">)):</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   [</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">] x</span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">):</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">" data set </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">d</span><span class="p">[</span><span class="s1">'q'</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> points, q = </span><span class="si">{</span><span class="n">d</span><span class="p">[</span><span class="s1">'q'</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> .. </span><span class="si">{</span><span class="n">d</span><span class="p">[</span><span class="s1">'q'</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

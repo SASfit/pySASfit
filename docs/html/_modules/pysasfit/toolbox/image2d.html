@@ -1,0 +1,485 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.toolbox.image2d &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.toolbox.image2d</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.toolbox.image2d</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Reduced 2D scattering images for pyTOOLbox: display now, analysis later (sector and azimuthal</span>
+<span class="sd">averages, A(q) + B(q) sin²ψ decomposition, box projections, sums of several images).</span>
+
+<span class="sd">An :class:`Image2D` holds the image, its statistical uncertainty, the mask and the geometry</span>
+<span class="sd">(beam centre in pixels, pixel size, detector distance, wavelength), from which q, qx, qy and the</span>
+<span class="sd">azimuth ψ of every pixel follow. Frame of pySASfit (docs/conventions.md): +x horizontal, to the right</span>
+<span class="sd">in the views (which show the detector as seen looking towards the sample), +y up; ψ = 0 along +x,</span>
+<span class="sd">counter-clockwise, as in pySASred. The raw columns of SANS-I / SANS-LLB images run towards -x</span>
+<span class="sd">(``column_sign`` = -1; pixel views are mirrored accordingly).</span>
+
+<span class="sd">Sources (:func:`read_images`, :func:`image_from_reduced`):</span>
+
+<span class="sd">* pySASred 2D NXcanSAS (``*_2d.h5``: I, Idev, Qx, Qy, Mask, SASdetector with the beam centre)</span>
+<span class="sd">* other NXcanSAS 2D files with Qx, Qy (beam centre estimated from q = 0)</span>
+<span class="sd">* BerSANS 2D files (``Type=SANSDAni``, e.g. ``D0082130.008``): no beam centre in the file; give it</span>
+<span class="sd">  with :meth:`Image2D.set_geometry` (pixel 7.5 mm of SANS-I by default), else pixel axes only</span>
+<span class="sd">* pySASred results in memory (single runs and rows of the reduction table)</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Image2D"</span><span class="p">,</span> <span class="s2">"read_images"</span><span class="p">,</span> <span class="s2">"image_from_reduced"</span><span class="p">,</span> <span class="s2">"SANS_I_PIXEL_M"</span><span class="p">]</span>
+
+<span class="n">SANS_I_PIXEL_M</span> <span class="o">=</span> <span class="mf">0.0075</span>
+
+
+<div class="viewcode-block" id="Image2D">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Image2D</span><span class="p">:</span>
+    <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                              <span class="c1"># (ny, nx)</span>
+    <span class="n">dI</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                           <span class="c1"># bool, True = not valid</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">centre_px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># (x, y) 0-based</span>
+    <span class="n">pixel_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">SD_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">wavelength_A</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">entry</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">_qxy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># given q (1/nm) when the geometry is unknown</span>
+    <span class="n">column_sign</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>                  <span class="c1"># lab x per +1 column (SINQ raw arrays: -1)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..sasred.legacy</span><span class="w"> </span><span class="kn">import</span> <span class="n">rename_keys</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">rename_keys</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">)</span>                <span class="c1"># files written before coll / SD (L1_m, L2_m)</span>
+        <span class="k">if</span> <span class="n">new</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">:</span>                        <span class="c1"># in place: readers keep filling the same dict</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------ naming</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">entry</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry</span> <span class="k">else</span> <span class="n">b</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">geometry_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">coll</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coll_m"</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coll_m"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Setup/Collimation"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">coll</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"coll </span><span class="si">{</span><span class="n">coll</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> m"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SD </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"λ </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> nm"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"pixels"</span>
+
+    <span class="c1"># ------------------------------------------------------------------ geometry</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_q</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centre_px</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Image2D.set_geometry">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.set_geometry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">centre_px</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pixel_m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">SD_m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set (or correct) the geometry; q and ψ then follow from it."""</span>
+        <span class="k">if</span> <span class="n">centre_px</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">centre_px</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">centre_px</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">centre_px</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">pixel_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pixel_m</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pixel_m</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">pixel_m</span><span class="p">))</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">pixel_m</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">pixel_m</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">SD_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">SD_m</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">wavelength_A</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength_A</span><span class="p">)</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centre_px</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Image2D.qxy">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.qxy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""qx, qy (1/nm) of every pixel (flat detector perpendicular to the beam)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_q</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"geometry unknown: give beam centre, pixel size, distance and wavelength"</span><span class="p">)</span>
+        <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">iy</span><span class="p">,</span> <span class="n">ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ny</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nx</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_sign</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">ix</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">centre_px</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">iy</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">centre_px</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">tth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">tth</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>          <span class="c1"># 1/nm</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">r</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span> <span class="o">/</span> <span class="n">r</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">r</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">y</span> <span class="o">/</span> <span class="n">r</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">q</span> <span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="Image2D.q">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.q">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">q</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qxy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Image2D.psi_deg">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.psi_deg">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">psi_deg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Azimuth ψ in degrees, 0…360, 0 = +x (horizontal, right in the view towards the sample),</span>
+<span class="sd">        counter-clockwise."""</span>
+        <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qxy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">qy</span><span class="p">,</span> <span class="n">qx</span><span class="p">))</span> <span class="o">%</span> <span class="mf">360.0</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">columns_run_left</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when qx decreases with the column index (SINQ raw arrays): the views mirror the columns."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qxy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">qx</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">qx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">qx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_sign</span> <span class="o">&lt;</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Image2D.q_extent">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.q_extent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">q_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""(qx at column 0 edge, qx at last column edge, qy min, qy max) of the pixel edges, 1/nm, for imshow</span>
+<span class="sd">        (the first two in column order: decreasing when the columns run towards -x)."""</span>
+        <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qxy</span><span class="p">()</span>
+        <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="n">qx</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">qx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="n">qy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">qy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ny</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">qx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">-</span> <span class="n">dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">qx</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">qy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">-</span> <span class="n">dy</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">qy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Image2D.valid">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.Image2D.valid">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ------------------------------------------------------------------------------------- readers</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_dec</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">_dec</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">v</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_num</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_nxcansas</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Image2D</span><span class="p">]:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">en</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">dn</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canSAS_class"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)))</span> <span class="o">==</span> <span class="s2">"SASdata"</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="s2">"I"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d</span> <span class="ow">or</span> <span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span>
+                <span class="n">unc</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"uncertainties"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"Idev"</span><span class="p">)))</span>
+                <span class="n">dI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">unc</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span> <span class="k">if</span> <span class="n">unc</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="s2">"mask_bits"</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"mask_bits"</span><span class="p">][()])</span> <span class="o">!=</span> <span class="mi">0</span>
+                <span class="k">elif</span> <span class="s2">"Mask"</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"Mask"</span><span class="p">][()])</span> <span class="o">!=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">meta</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"title"</span><span class="p">][()]))</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">Image2D</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">dI</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">"nxcansas-2d"</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">entry</span><span class="o">=</span><span class="n">en</span><span class="p">,</span>
+                              <span class="n">unit</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sasred_unit"</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"units"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)))))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canSAS_class"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)))</span>
+                    <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"SASprocess"</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"metadata"</span><span class="p">,):</span>
+                            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="n">key</span><span class="p">][()])))</span>
+                                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                                    <span class="k">pass</span>
+                        <span class="k">if</span> <span class="s2">"parameters"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">p</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">][()]))</span>
+                                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">):</span>
+                                    <span class="n">meta</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span>
+                            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                                <span class="k">pass</span>
+                    <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"SASsample"</span> <span class="ow">and</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+                        <span class="n">meta</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"name"</span><span class="p">][()])))</span>
+                    <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"SASinstrument"</span><span class="p">:</span>
+                        <span class="n">det</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="ow">and</span>
+                                    <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canSAS_class"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)))</span> <span class="o">==</span> <span class="s2">"SASdetector"</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">det</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">gv</span> <span class="o">=</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">_num</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="n">k2</span><span class="p">][()]))</span> <span class="k">for</span> <span class="n">k2</span> <span class="ow">in</span> <span class="n">det</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">det</span><span class="p">[</span><span class="n">k2</span><span class="p">],</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)}</span>
+                            <span class="k">if</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beam_center_x"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beam_center_y"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">img</span><span class="o">.</span><span class="n">centre_px</span> <span class="o">=</span> <span class="p">(</span><span class="n">gv</span><span class="p">[</span><span class="s2">"beam_center_x"</span><span class="p">],</span> <span class="n">gv</span><span class="p">[</span><span class="s2">"beam_center_y"</span><span class="p">])</span>
+                            <span class="k">if</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"x_pixel_size"</span><span class="p">):</span>
+                                <span class="n">img</span><span class="o">.</span><span class="n">pixel_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">gv</span><span class="p">[</span><span class="s2">"x_pixel_size"</span><span class="p">],</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"y_pixel_size"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gv</span><span class="p">[</span><span class="s2">"x_pixel_size"</span><span class="p">])</span>
+                            <span class="n">img</span><span class="o">.</span><span class="n">SD_m</span> <span class="o">=</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SDD"</span><span class="p">)</span>
+                            <span class="n">img</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">=</span> <span class="n">gv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wavelength"</span><span class="p">)</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">..sasred.legacy</span><span class="w"> </span><span class="kn">import</span> <span class="n">rename_keys</span>
+                <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rename_keys</span><span class="p">(</span><span class="n">meta</span><span class="p">))</span>
+                <span class="n">meta</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">SD_m</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SD_m"</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">img</span><span class="o">.</span><span class="n">SD_m</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"SD_m"</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">img</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wavelength_A"</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">img</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"wavelength_A"</span><span class="p">])</span>
+                <span class="n">from_sasred</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"name"</span> <span class="ow">in</span> <span class="n">g</span> <span class="ow">and</span>
+                                  <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="s2">"name"</span><span class="p">][()]))</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"pySASred"</span><span class="p">)</span> <span class="ow">and</span>
+                                  <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canSAS_class"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)))</span> <span class="o">==</span> <span class="s2">"SASprocess"</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                <span class="n">framed</span> <span class="o">=</span> <span class="s2">"pysasfit_frame"</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">attrs</span>
+                <span class="n">qxy</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="s2">"Qx"</span> <span class="ow">in</span> <span class="n">d</span> <span class="ow">and</span> <span class="s2">"Qy"</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="n">u</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_dec</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"Qx"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"units"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"1/nm"</span><span class="p">)))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="mf">10.0</span> <span class="k">if</span> <span class="s2">"ang"</span> <span class="ow">in</span> <span class="n">u</span> <span class="ow">or</span> <span class="n">u</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"1/a"</span><span class="p">,</span> <span class="s2">"a^-1"</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span>
+                    <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"Qx"</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">f</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"Qy"</span><span class="p">][()],</span> <span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">f</span>
+                    <span class="k">if</span> <span class="n">qx</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">from_sasred</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">framed</span><span class="p">:</span>      <span class="c1"># pySASred before 2026-11-23: Qx of the other sign</span>
+                            <span class="n">qx</span> <span class="o">=</span> <span class="o">-</span><span class="n">qx</span>
+                            <span class="n">meta</span><span class="p">[</span><span class="s2">"note"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Qx sign corrected (pySASred file written before 2026-11-23)"</span>
+                        <span class="n">qxy</span> <span class="o">=</span> <span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">qxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">qxy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">img</span><span class="o">.</span><span class="n">column_sign</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">qxy</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">qxy</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+                <span class="k">elif</span> <span class="n">from_sasred</span><span class="p">:</span>
+                    <span class="n">img</span><span class="o">.</span><span class="n">column_sign</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">img</span><span class="o">.</span><span class="n">has_q</span> <span class="ow">and</span> <span class="n">qxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">img</span><span class="o">.</span><span class="n">_qxy</span> <span class="o">=</span> <span class="n">qxy</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="n">_FLOAT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_bersans</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image2D</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">sec</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">blocks</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"%"</span><span class="p">):</span>
+            <span class="n">sec</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">sec</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Counts"</span><span class="p">,</span> <span class="s2">"Errors"</span><span class="p">):</span>
+            <span class="n">blocks</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">sec</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">"="</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">meta</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sec</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">k</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[A-Za-z]"</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"File/DataSizeX"</span><span class="p">))</span> <span class="ow">or</span> <span class="mi">128</span><span class="p">)</span>
+    <span class="n">ny</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"File/DataSizeY"</span><span class="p">))</span> <span class="ow">or</span> <span class="mi">128</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">arr</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+        <span class="c1"># fixed-width numbers may touch: "4.329e-01-2.141e-01"</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_FLOAT</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))])</span>
+        <span class="k">return</span> <span class="n">v</span><span class="p">[:</span> <span class="n">nx</span> <span class="o">*</span> <span class="n">ny</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>          <span class="c1"># same orientation as the SANS-I HDF counts</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">arr</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="s2">"Counts"</span><span class="p">])</span>
+    <span class="n">dI</span> <span class="o">=</span> <span class="n">arr</span><span class="p">(</span><span class="n">blocks</span><span class="p">[</span><span class="s2">"Errors"</span><span class="p">])</span> <span class="k">if</span> <span class="s2">"Errors"</span> <span class="ow">in</span> <span class="n">blocks</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">meta</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Sample/SampleName"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="n">SD</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Setup/SD"</span><span class="p">))</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Setup/Lambda"</span><span class="p">))</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">Image2D</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">dI</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">"bersans-2d"</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span>
+                  <span class="n">unit</span><span class="o">=</span><span class="s2">"1/cm/sr (BerSANS)"</span><span class="p">,</span> <span class="n">pixel_m</span><span class="o">=</span><span class="p">(</span><span class="n">SANS_I_PIXEL_M</span><span class="p">,</span> <span class="n">SANS_I_PIXEL_M</span><span class="p">),</span>
+                  <span class="n">SD_m</span><span class="o">=</span><span class="n">SD</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="o">=</span><span class="mi">10</span> <span class="o">*</span> <span class="n">lam</span> <span class="k">if</span> <span class="n">lam</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">kx</span><span class="p">,</span> <span class="n">ky</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"History/BeamcenterX"</span><span class="p">,</span> <span class="s2">"History/BeamcenterY"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Setup/BeamcenterX"</span><span class="p">,</span> <span class="s2">"Setup/BeamcenterY"</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kx</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ky</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">centre_px</span> <span class="o">=</span> <span class="p">(</span><span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="n">kx</span><span class="p">])</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">_num</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="n">ky</span><span class="p">])</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>      <span class="c1"># BerSANS counts from 1</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">img</span>
+
+
+<div class="viewcode-block" id="read_images">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.read_images">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_images</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Image2D</span><span class="p">]:</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sig</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">"</span><span class="se">\x89</span><span class="s2">HDF"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_read_nxcansas</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"</span><span class="si">%F</span><span class="s2">ile"</span> <span class="ow">in</span> <span class="n">head</span> <span class="ow">and</span> <span class="s2">"SANSDAni"</span> <span class="ow">in</span> <span class="n">head</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_read_bersans</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">: not a 2D NXcanSAS or BerSANS 2D file"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="image_from_reduced">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.image2d.image_from_reduced">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">image_from_reduced</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image2D</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""2D image of a pySASred result in memory (:class:`~pysasfit.sasred.reduce.ReducedRun`,</span>
+<span class="sd">    single run or table row, or :class:`~pysasfit.sasred.absolute.Reduced2D`)."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..sasred.io.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_metadata</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">reduced</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">raw</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">flags</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">run_metadata</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="n">meta</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">raw</span><span class="o">.</span><span class="n">sample_name</span>
+    <span class="k">if</span> <span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">):</span>
+        <span class="n">meta</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span>
+    <span class="n">ps</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">pixel_size_m</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">key</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">image</span>
+    <span class="n">gqx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">qx</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">cs</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">gqx</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">gqx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">gqx</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">gqx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> \
+        <span class="p">(</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">gqx</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">gqx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Image2D</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="nb">float</span><span class="p">),</span>
+                   <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"pySASred:</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"pySASred (memory)"</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">column_sign</span><span class="o">=</span><span class="n">cs</span><span class="p">,</span>
+                   <span class="n">unit</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                   <span class="n">centre_px</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beam_center_px"</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)))),</span>
+                   <span class="n">pixel_m</span><span class="o">=</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">ps</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ps</span><span class="p">),</span> <span class="n">SD_m</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">SD_m</span><span class="p">),</span>
+                   <span class="n">wavelength_A</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

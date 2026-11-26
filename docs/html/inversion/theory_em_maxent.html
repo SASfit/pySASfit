@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EM, maximum entropy and signed kernels &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Uncertainty of the recovered distribution" href="theory_uncertainty.html" />
+    <link rel="prev" title="Regularization and choice of the regularization strength" href="theory_regularization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Usage (library)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="theory.html">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory_forward_model.html">Forward model, data and information content</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_discretization.html">Discretization of the integral</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_regularization.html">Regularization and choice of the regularization strength</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">EM, maximum entropy and signed kernels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#expectationmaximization-richardsonlucy">Expectation–maximization (Richardson–Lucy)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#em-smoothing-em-discrepancy">EM + smoothing (<code class="docutils literal notranslate"><span class="pre">em_discrepancy</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#biggsandrews-acceleration">Biggs–Andrews acceleration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#em-maxent-maxent-em">EM + MaxEnt (<code class="docutils literal notranslate"><span class="pre">maxent_em</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#maximum-entropy-hansen-s-functional-hansen-maxent">Maximum entropy, Hansen’s functional (<code class="docutils literal notranslate"><span class="pre">hansen_maxent</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#em-for-signed-kernels-em-general-signed-kernel">EM for signed kernels (<code class="docutils literal notranslate"><span class="pre">em_general_signed_kernel</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="theory_uncertainty.html">Uncertainty of the recovered distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_investigation.html">Development history and findings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#notation">Notation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#main-references">Main references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+          <li class="breadcrumb-item"><a href="theory.html">Theory</a></li>
+      <li class="breadcrumb-item active">EM, maximum entropy and signed kernels</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/theory_em_maxent.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="em-maximum-entropy-and-signed-kernels">
+<h1>EM, maximum entropy and signed kernels<a class="headerlink" href="#em-maximum-entropy-and-signed-kernels" title="Link to this heading"></a></h1>
+<section id="expectationmaximization-richardsonlucy">
+<h2>Expectation–maximization (Richardson–Lucy)<a class="headerlink" href="#expectationmaximization-richardsonlucy" title="Link to this heading"></a></h2>
+<p>For a non-negative kernel <span class="math notranslate nohighlight">\(A_{ij}\ge0\)</span> and non-negative unknowns,
+the EM algorithm maximizes the Poisson log-likelihood</p>
+<div class="math notranslate nohighlight">
+\[\ell(\mathbf x) = \sum_i \left[ b_i\ln(\mathbf A\mathbf x)_i - (\mathbf A\mathbf x)_i\right],\]</div>
+<p>equivalently it minimizes the Kullback–Leibler divergence
+<span class="math notranslate nohighlight">\(\mathrm{KL}(\mathbf b\,\|\,\mathbf A\mathbf x)\)</span>. The stationarity
+condition <span class="math notranslate nohighlight">\(\partial\ell/\partial x_j = 0\)</span> for <span class="math notranslate nohighlight">\(x_j&gt;0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\sum_i A_{ij}\frac{b_i}{(\mathbf A\mathbf x)_i} = \sum_i A_{ij},\]</div>
+<p>is turned into the multiplicative fixed-point iteration (Kohlbrecher &amp;
+Bressler 2022, eq. 36–37)</p>
+<div class="math notranslate nohighlight" id="equation-em">
+<span class="eqno">(1)<a class="headerlink" href="#equation-em" title="Link to this equation"></a></span>\[x_j^{(k+1)} = x_j^{(k)}\;
+\frac{\displaystyle\sum_i A_{ij}\, b_i/(\mathbf A\mathbf x^{(k)})_i}
+     {\displaystyle\sum_i A_{ij}} .\]</div>
+<p>Each step keeps <span class="math notranslate nohighlight">\(\mathbf x\ge0\)</span> and does not decrease
+<span class="math notranslate nohighlight">\(\ell\)</span>. Columns with <span class="math notranslate nohighlight">\(\sum_iA_{ij}=0\)</span> (e.g. <span class="math notranslate nohighlight">\(r=0\)</span> with
+<span class="math notranslate nohighlight">\(\alpha&gt;0\)</span>) are left unchanged. The iteration converges slowly and,
+run to convergence without regularization, ends in a noisy maximum
+likelihood solution; early stopping acts as an uncontrolled regularizer
+(“semi-convergence”). All EM solvers here therefore run to convergence
+and regularize explicitly.</p>
+<p>Stopping criterion: <span class="math notranslate nohighlight">\(\|\mathbf x^{(k+1)}-\mathbf x^{(k)}\|_2\le\)</span>
+<code class="docutils literal notranslate"><span class="pre">tol</span></code> (SASfit’s <code class="docutils literal notranslate"><span class="pre">gNorm</span></code>), for the accelerated iteration the relative
+change of <span class="math notranslate nohighlight">\(\|\mathbf x\|\)</span>.</p>
+</section>
+<section id="em-smoothing-em-discrepancy">
+<h2>EM + smoothing (<code class="docutils literal notranslate"><span class="pre">em_discrepancy</span></code>)<a class="headerlink" href="#em-smoothing-em-discrepancy" title="Link to this heading"></a></h2>
+<p>After every EM step the solution is smoothed with the tridiagonal operator
+(eq. 41–46)</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf S^{(h)} = \begin{pmatrix}
+1-h &amp; h \\
+h &amp; 1-2h &amp; h\\
+&amp; \ddots &amp; \ddots &amp; \ddots\\
+&amp;&amp; h &amp; 1-2h &amp; h\\
+&amp;&amp;&amp; h &amp; 1-h\end{pmatrix},\qquad
+\mathbf x^{(k+1)} = \mathbf S^{(h)}\,\mathrm{EM}(\mathbf x^{(k)}),\end{split}\]</div>
+<p><span class="math notranslate nohighlight">\(0&lt;h\lesssim0.3\)</span>; rows sum to one, so the smoothing conserves
+<span class="math notranslate nohighlight">\(\sum_jx_j\)</span> and positivity. (The optional <em>double smoothing</em> also
+smooths <span class="math notranslate nohighlight">\(\ln\mathbf x\)</span> before the step,
+<span class="math notranslate nohighlight">\(\mathbf x\leftarrow\exp(\mathbf S^{(h)}\ln\mathbf x)\)</span>.) The fixed
+point balances the EM correction against the diffusion-like smoothing;
+<span class="math notranslate nohighlight">\(h\)</span> plays the role of <span class="math notranslate nohighlight">\(\lambda\)</span>. It is chosen by the
+discrepancy principle (start <span class="math notranslate nohighlight">\(h=0.3\)</span>, floor <span class="math notranslate nohighlight">\(10^{-9}\)</span>) or the
+L-curve corner.</p>
+</section>
+<section id="biggsandrews-acceleration">
+<h2>Biggs–Andrews acceleration<a class="headerlink" href="#biggsandrews-acceleration" title="Link to this heading"></a></h2>
+<p>All EM-type iterations are accelerated by vector extrapolation (Biggs &amp;
+Andrews 1997; <a class="reference internal" href="api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.acceleration.biggs_andrews" title="pysasfit.inversion.solvers.acceleration.biggs_andrews"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.solvers.acceleration.biggs_andrews()</span></code></a>,
+ported from SASfit’s fixed-point solver). With the fixed-point map
+<span class="math notranslate nohighlight">\(\mathcal T\)</span> and the last updates
+<span class="math notranslate nohighlight">\(\mathbf g_{n} = \mathcal T(\mathbf y_{n})-\mathbf y_{n}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\alpha_n = \frac{\mathbf g_{n-1}\cdot\mathbf g_{n-2}}{\mathbf g_{n-2}\cdot\mathbf g_{n-2}},
+\qquad |\alpha_n|\le\frac{n-1}{n+2},\]</div>
+<div class="math notranslate nohighlight">
+\[\mathbf y_n = \mathbf x_n + \alpha_n(\mathbf x_n-\mathbf x_{n-1})
++ \tfrac12\alpha_n^2(\mathbf x_n-2\mathbf x_{n-1}+\mathbf x_{n-2}),
+\qquad \mathbf x_{n+1} = \mathcal T(\mathbf y_n),\]</div>
+<p>(second order, <code class="docutils literal notranslate"><span class="pre">kin_set_maa=2</span></code>; order 1 drops the last term, order 0 is
+plain Picard iteration). For non-negative problems <span class="math notranslate nohighlight">\(\mathbf y_n\)</span> is
+clipped to <span class="math notranslate nohighlight">\(\ge0\)</span> before <span class="math notranslate nohighlight">\(\mathcal T\)</span> is applied. The fixed
+point is unchanged; on the JAC 2022 benchmark the iteration count drops
+from more than 200 000 to about 2 800.</p>
+</section>
+<section id="em-maxent-maxent-em">
+<h2>EM + MaxEnt (<code class="docutils literal notranslate"><span class="pre">maxent_em</span></code>)<a class="headerlink" href="#em-maxent-maxent-em" title="Link to this heading"></a></h2>
+<p>SASfit’s DR_EM_ME (Kohlbrecher &amp; Bressler 2022, eq. 47–55) adds an
+entropy correction to each EM step,</p>
+<div class="math notranslate nohighlight">
+\[S(\mathbf x,\mathbf m) = \sum_j\left[-x_j\ln\frac{x_j}{m_j} + x_j - m_j\right],
+\qquad
+\mathbf x^{(k+1)} = \mathbf x^{(k)} + \Delta\mathbf x^{(k)}_{EM} + \Delta\mathbf s^{(k)} .\]</div>
+<dl>
+<dt>Constant prior</dt><dd><p><span class="math notranslate nohighlight">\(m_j=\bar b/N\)</span> fixed and</p>
+<div class="math notranslate nohighlight">
+\[\Delta s_j = \lambda\,x_j\left[-\ln\frac{x_j}{m_j}
++ \frac{\sum_l x_l\ln(x_l/m_l)}{\sum_l x_l}\right],\]</div>
+<p>the gradient of <span class="math notranslate nohighlight">\(S\)</span> in the EM metric (multiplied by <span class="math notranslate nohighlight">\(x_j\)</span>),
+projected such that <span class="math notranslate nohighlight">\(\sum_j\Delta s_j=0\)</span>.</p>
+</dd>
+<dt>Adaptive prior</dt><dd><p>The prior is the current solution smoothed with a Gaussian point
+spread function (Horne 1985),</p>
+<div class="math notranslate nohighlight">
+\[m_i = \sum_j\Pi_{ij}x_j,\qquad
+\Pi_{ij} = \frac{1}{c_i}\exp\!\left[-\frac{(i-j)^2}{2\sigma^2}\right],
+\quad\sum_j\Pi_{ij}=1,\]</div>
+<p>(<span class="math notranslate nohighlight">\(\sigma^2=1\)</span> grid step squared) and</p>
+<div class="math notranslate nohighlight">
+\[\Delta s_j = \lambda\,x_j\left[\frac{\sum_l x_l\ln(x_l/m_l)}{\sum_l x_l}
+- \ln\frac{x_j}{m_j} - 1 + \sum_i\Pi_{ij}\frac{x_i}{m_i}\right].\]</div>
+<p>Entropy relative to a smoothed version of itself acts as a
+smoothness prior.</p>
+</dd>
+</dl>
+<p><span class="math notranslate nohighlight">\(\lambda\)</span> is chosen from 24 values between <span class="math notranslate nohighlight">\(10^{-9}\)</span> and 1 as
+the one with <span class="math notranslate nohighlight">\(\chi^2_r\)</span> closest to 1, every trial run to convergence.</p>
+</section>
+<section id="maximum-entropy-hansen-s-functional-hansen-maxent">
+<h2>Maximum entropy, Hansen’s functional (<code class="docutils literal notranslate"><span class="pre">hansen_maxent</span></code>)<a class="headerlink" href="#maximum-entropy-hansen-s-functional-hansen-maxent" title="Link to this heading"></a></h2>
+<p>Following Hansen &amp; Elfving (<code class="docutils literal notranslate"><span class="pre">maxent.m</span></code> of Regularization Tools) but with
+statistical weights and a flat default model <span class="math notranslate nohighlight">\(m\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-hmaxent">
+<span class="eqno">(2)<a class="headerlink" href="#equation-hmaxent" title="Link to this equation"></a></span>\[F(\mathbf x) = \sum_i\frac{\left[(\mathbf A\mathbf x)_i-b_i\right]^2}{\sigma_i^2}
++ \lambda^2\sum_j x_j\ln\frac{x_j}{m},\qquad x_j&gt;0 .\]</div>
+<div class="math notranslate nohighlight">
+\[\nabla F = 2\tilde{\mathbf A}^T(\tilde{\mathbf A}\mathbf x-\tilde{\mathbf b})
++ \lambda^2\left(1+\ln\frac{\mathbf x}{m}\right),\qquad
+\nabla^2F = 2\tilde{\mathbf A}^T\tilde{\mathbf A}
++ \lambda^2\,\mathrm{diag}(1/x_j).\]</div>
+<ul class="simple">
+<li><p>Default model: the constant that best fits the data,
+<span class="math notranslate nohighlight">\(m = \frac{\mathbf a^T\tilde{\mathbf b}}{\mathbf a^T\mathbf a}\)</span>,
+<span class="math notranslate nohighlight">\(a_i = \sum_j\tilde A_{ij}\)</span>.</p></li>
+<li><p>Minimization: bound-constrained L-BFGS-B
+(<span class="math notranslate nohighlight">\(x_j\ge10^{-30}m\)</span>) in variables scaled by
+<span class="math notranslate nohighlight">\(s_j=\sqrt{(\nabla^2F)_{jj}}\)</span> at <span class="math notranslate nohighlight">\(\mathbf x=m\)</span>, followed by a
+Newton polish on the free components (fraction-to-boundary 0.99,
+Armijo backtracking). Without the polish L-BFGS-B stops in the flat
+valley of the ill-conditioned <span class="math notranslate nohighlight">\(j_0\)</span> problem with <span class="math notranslate nohighlight">\(\chi^2_r\)</span>
+off by several percent and non-monotonic in <span class="math notranslate nohighlight">\(\lambda\)</span>.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\lambda^2\)</span> by the bidirectional discrepancy principle, warm-
+starting each trial from the previous solution.</p></li>
+</ul>
+<p>The original non-linear CG transcription of <code class="docutils literal notranslate"><span class="pre">maxent.m</span></code> (kept as
+<code class="docutils literal notranslate"><span class="pre">hansen_maxent.solve</span></code>) caps each step where the first component reaches
+zero and has no active-set handling; on test.dat it stopped after 2–18
+iterations at <span class="math notranslate nohighlight">\(F=71\,049\)</span> where the minimum of the same functional is
+<span class="math notranslate nohighlight">\(F=165\)</span>.</p>
+</section>
+<section id="em-for-signed-kernels-em-general-signed-kernel">
+<h2>EM for signed kernels (<code class="docutils literal notranslate"><span class="pre">em_general_signed_kernel</span></code>)<a class="headerlink" href="#em-for-signed-kernels-em-general-signed-kernel" title="Link to this heading"></a></h2>
+<p>The <span class="math notranslate nohighlight">\(j_0\)</span> kernel and signed <span class="math notranslate nohighlight">\(p(r)\)</span> violate both assumptions of
+<a class="reference internal" href="#equation-em">(1)</a>. Chae, Martin &amp; Walker (2019, Sec. 6) reduce the general problem
+to a non-negative one in two steps.</p>
+<dl>
+<dt>Shift (signed solution, their eq. 10)</dt><dd><p>With a constant <span class="math notranslate nohighlight">\(t&gt;\max|p|\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\tilde p = p + t \ge 0,\qquad
+\tilde b_i = b_i + t\sum_j |A_{ij}| ,\]</div>
+</dd>
+<dt>Kernel split (signed kernel, their eq. 12)</dt><dd><p><span class="math notranslate nohighlight">\(\mathbf A = \mathbf A^+ - \mathbf A^-\)</span> with
+<span class="math notranslate nohighlight">\(\mathbf A^\pm\ge0\)</span> (pointwise positive and negative parts),
+extended kernel and unknown</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\mathbf K = \left[\mathbf A^+\ \ \mathbf A^-\right]\in\mathbb R^{M\times2N}_{\ge0},
+\qquad
+\mathbf u = \begin{pmatrix}\mathbf p + t\\ -\mathbf p + t\end{pmatrix}\ge0,
+\qquad \mathbf K\mathbf u = \tilde{\mathbf b} .\end{split}\]</div>
+<p>EM <a class="reference internal" href="#equation-em">(1)</a> is applied to <span class="math notranslate nohighlight">\((\mathbf K,\tilde{\mathbf b})\)</span>. The
+extended problem has more solutions than those of structure
+<span class="math notranslate nohighlight">\([\mathbf p,-\mathbf p]\)</span>, so after each step the structure is
+restored from the first half, <span class="math notranslate nohighlight">\(\mathbf p\leftarrow\mathbf u_{1:N}-t\)</span>
+(an antisymmetrized variant is available). <span class="math notranslate nohighlight">\(|p_j|\)</span> is clipped to
+<span class="math notranslate nohighlight">\(0.999\,t\)</span>. Default <span class="math notranslate nohighlight">\(t = 10\max_j|p^{ARLS}_j|\)</span> from a quick
+ARLS estimate; results are nearly independent of <span class="math notranslate nohighlight">\(t\)</span> once it
+exceeds <span class="math notranslate nohighlight">\(\max|p|\)</span>.</p>
+</dd>
+<dt><span class="math notranslate nohighlight">\(\chi^2\)</span> row weighting (2026-10-10)</dt><dd><p>EM minimizes <span class="math notranslate nohighlight">\(\mathrm{KL}(\tilde{\mathbf b}\|\mathbf K\mathbf u)
+\approx\sum_i(\mathbf K\mathbf u-\tilde{\mathbf b})_i^2/(2\tilde b_i)\)</span>:
+the implicit weights are <span class="math notranslate nohighlight">\(1/\tilde b_i\)</span>. After the shift
+<span class="math notranslate nohighlight">\(\tilde b_i\approx t\sum_j|A_{ij}|\)</span> is dominated by the shift; for
+<span class="math notranslate nohighlight">\(j_0\)</span> the row sums do not decay with <span class="math notranslate nohighlight">\(q\)</span>, and the real signal
+at high <span class="math notranslate nohighlight">\(q\)</span> is only <span class="math notranslate nohighlight">\(10^{-5}\)</span>–<span class="math notranslate nohighlight">\(10^{-4}\)</span> of
+<span class="math notranslate nohighlight">\(\tilde b_i\)</span> – EM is blind to these data (test.dat:
+<span class="math notranslate nohighlight">\(\chi^2_r\ge5200\)</span> without smoothing, for any <span class="math notranslate nohighlight">\(t\)</span>). Scaling
+each row by</p>
+<div class="math notranslate nohighlight">
+\[w_i = \frac{\tilde b_i}{\sigma_i^2}:\qquad
+\mathbf K\to\mathrm{diag}(w)\mathbf K,\quad
+\tilde{\mathbf b}\to\mathrm{diag}(w)\tilde{\mathbf b},\]</div>
+<p>keeps the kernel non-negative and changes the misfit to</p>
+<div class="math notranslate nohighlight">
+\[\sum_i\frac{w_i^2(\mathbf K\mathbf u-\tilde{\mathbf b})_i^2}{2w_i\tilde b_i}
+= \sum_i\frac{(\mathbf K\mathbf u-\tilde{\mathbf b})_i^2}{2\sigma_i^2}
+= \tfrac12\chi^2(\mathbf p),\]</div>
+<p>because <span class="math notranslate nohighlight">\(\mathbf K\mathbf u-\tilde{\mathbf b}=\mathbf A\mathbf p-\mathbf b\)</span>.
+The fixed point then fits the data within their errors.</p>
+</dd>
+<dt>Acceleration safeguard</dt><dd><p>With the first-half rebuild the iteration is no longer a monotone EM
+map, and Biggs–Andrews extrapolation can drift (13 spline
+coefficients: <span class="math notranslate nohighlight">\(\chi^2_r\)</span> 1.68 to 260). If the accelerated run ends
+unconverged with <span class="math notranslate nohighlight">\(\chi^2_r&gt;1.05\times\)</span> the best iterate, plain
+Picard iteration continues from the best iterate
+(<code class="docutils literal notranslate"><span class="pre">acceleration_fallback</span></code> in the diagnostics).</p>
+</dd>
+<dt>Regularization options</dt><dd><p><em>smoothing</em> – <span class="math notranslate nohighlight">\(\mathbf p\leftarrow\mathbf S^{(h)}\mathbf p\)</span> after
+each step, <span class="math notranslate nohighlight">\(h\)</span> by the discrepancy principle (floor
+<span class="math notranslate nohighlight">\(10^{-7}\)</span>).</p>
+<p><em>MaxEnt</em> – the entropy of a signed <span class="math notranslate nohighlight">\(p\)</span> is defined through the
+two-channel representation <span class="math notranslate nohighlight">\(p = h_+ - h_-\)</span>, <span class="math notranslate nohighlight">\(h_\pm\ge0\)</span>,
+with default model <span class="math notranslate nohighlight">\(m\)</span> for both channels (Skilling &amp; Gull);
+eliminating the channels gives</p>
+<div class="math notranslate nohighlight">
+\[S_\pm(\mathbf p) = \sum_j\left[\psi_j - 2m - p_j\,\mathrm{asinh}\frac{p_j}{2m}\right],
+\qquad \psi_j=\sqrt{p_j^2+4m^2},
+\qquad \frac{\partial S_\pm}{\partial p_j} = -\mathrm{asinh}\frac{p_j}{2m}.\]</div>
+<p>In analogy to SASfit’s <span class="math notranslate nohighlight">\(\Delta s = \lambda\,x\,\partial S/\partial x\)</span>
+the metric <span class="math notranslate nohighlight">\(\psi_j\)</span> is used, and each EM step is followed by</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}p_j \leftarrow p_j + \lambda\,\psi_j\left[\tau_j - \mathrm{asinh}\frac{p_j}{2m}\right],
+\qquad
+\tau_j = \begin{cases} 0 &amp; \text{constant prior}\\
+\mathrm{asinh}\dfrac{(\boldsymbol\Pi\mathbf p)_j}{2m} &amp; \text{adaptive prior}\end{cases}\end{split}\]</div>
+<p>For <span class="math notranslate nohighlight">\(|p|\ll m\)</span> this is a ridge pull <span class="math notranslate nohighlight">\(-\lambda p\)</span> (towards 0
+or towards <span class="math notranslate nohighlight">\(\boldsymbol\Pi\mathbf p\)</span>), for <span class="math notranslate nohighlight">\(|p|\gg m\)</span> the
+usual MaxEnt behaviour <span class="math notranslate nohighlight">\(-\lambda|p|\ln(|p|/m)\)</span>. Default
+<span class="math notranslate nohighlight">\(m=0.1\max|p^{ARLS}|\)</span>; <span class="math notranslate nohighlight">\(\lambda\)</span> by the bidirectional
+discrepancy principle (start <span class="math notranslate nohighlight">\(10^{-5}\)</span>, range
+<span class="math notranslate nohighlight">\(10^{-12}\)</span>–1). A first attempt applying SASfit’s correction to
+the shifted <span class="math notranslate nohighlight">\(\mathbf u\)</span> with prior <span class="math notranslate nohighlight">\(t\)</span> failed: the entropy
+then degenerates to a ridge with scale <span class="math notranslate nohighlight">\(t\)</span>, and the adaptive
+variant diverged.</p>
+</dd>
+</dl>
+<p>Results (test.dat, <span class="math notranslate nohighlight">\(j_0\)</span>, correlation with the Bayesian-evidence <span class="math notranslate nohighlight">\(p(r)\)</span>):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>setup</p></th>
+<th class="head"><p>regularization</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\chi^2_r\)</span></p></th>
+<th class="head"><p>correlation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>95-point grid</p></td>
+<td><p>smoothing</p></td>
+<td><p>1.01</p></td>
+<td><p>0.994</p></td>
+</tr>
+<tr class="row-odd"><td><p>95-point grid</p></td>
+<td><p>MaxEnt, adaptive</p></td>
+<td><p>1.00</p></td>
+<td><p>0.994</p></td>
+</tr>
+<tr class="row-even"><td><p>95-point grid</p></td>
+<td><p>MaxEnt, constant</p></td>
+<td><p>not converged</p></td>
+<td><p><span class="math notranslate nohighlight">\(\approx\)</span> 0.93</p></td>
+</tr>
+<tr class="row-odd"><td><p>20 log B-splines</p></td>
+<td><p>smoothing</p></td>
+<td><p>1.00</p></td>
+<td><p>0.9998</p></td>
+</tr>
+<tr class="row-even"><td><p>20 log B-splines</p></td>
+<td><p>MaxEnt, adaptive</p></td>
+<td><p>1.00</p></td>
+<td><p>0.9998</p></td>
+</tr>
+<tr class="row-odd"><td><p>20 log B-splines</p></td>
+<td><p>MaxEnt, constant</p></td>
+<td><p>0.99</p></td>
+<td><p>0.9996</p></td>
+</tr>
+<tr class="row-even"><td><p>13 log B-splines (n = 15)</p></td>
+<td><p>smoothing</p></td>
+<td><p>1.87</p></td>
+<td><p>0.995</p></td>
+</tr>
+</tbody>
+</table>
+<p>The constant prior pulls towards zero, which does not damp the
+oscillating components that the data do not determine (slow null-space
+modes), and converges slowly on point grids. With the sphere kernel the
+signed EM fits (<span class="math notranslate nohighlight">\(\chi^2_r=1\)</span>) but gives a clearly negative
+<span class="math notranslate nohighlight">\(N(R)\)</span> (minimum <span class="math notranslate nohighlight">\(\approx-0.6\times\)</span> maximum); for size
+distributions the positive EM solvers are the right choice.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory_regularization.html" class="btn btn-neutral float-left" title="Regularization and choice of the regularization strength" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory_uncertainty.html" class="btn btn-neutral float-right" title="Uncertainty of the recovered distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

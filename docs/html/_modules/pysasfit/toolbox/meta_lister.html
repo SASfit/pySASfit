@@ -1,0 +1,1055 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.toolbox.meta_lister &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.toolbox.meta_lister</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.toolbox.meta_lister</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">HDF Metadata Lister (pyTOOLbox tab; from ``tools/hdf_meta_lister.py``)</span>
+<span class="sd">----------------------------------------------------------------------</span>
+<span class="sd">Reads metadata (attributes and small datasets) from HDF5 files named</span>
+<span class="sd">&lt;instr&gt;&lt;year&gt;n&lt;number&gt;.hdf (e.g. sans2026n052752.hdf), lists the selected</span>
+<span class="sd">entries in a table, copies it to the clipboard (tab separated, ready for a</span>
+<span class="sd">spreadsheet) and saves it as Excel, CSV or plain text.</span>
+
+<span class="sd">Values in the table can be edited (double-click or F2). Edited cells are</span>
+<span class="sd">highlighted and are only written into the HDF files when you press</span>
+<span class="sd">"Write changed values to HDF files" (optionally with a .bak backup).</span>
+
+<span class="sd">Requirements:  pip install pysasfit[gui,toolbox]  (PySide6, h5py; openpyxl only for Excel export)</span>
+
+<span class="sd">All settings (folder, instrument, year, number range, the list of known</span>
+<span class="sd">entries and which of them are selected) are stored in ``toolbox_meta_lister.json``</span>
+<span class="sd">next to the pySASfit preferences file and restored at the next start (the file</span>
+<span class="sd">``~/.hdf_meta_lister.json`` of the stand-alone script is read once if it exists).</span>
+<span class="sd">The largest dataset still counted as metadata and the number of digits of</span>
+<span class="sd">floating-point values are in Settings -&gt; Preferences -&gt; pyTOOLbox.</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtCore</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qt</span><span class="p">,</span> <span class="n">Signal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtGui</span><span class="w"> </span><span class="kn">import</span> <span class="n">QColor</span><span class="p">,</span> <span class="n">QKeySequence</span><span class="p">,</span> <span class="n">QShortcut</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QAbstractItemView</span><span class="p">,</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QCheckBox</span><span class="p">,</span> <span class="n">QFileDialog</span><span class="p">,</span> <span class="n">QFrame</span><span class="p">,</span>
+    <span class="n">QGroupBox</span><span class="p">,</span> <span class="n">QHBoxLayout</span><span class="p">,</span> <span class="n">QHeaderView</span><span class="p">,</span> <span class="n">QLabel</span><span class="p">,</span> <span class="n">QLineEdit</span><span class="p">,</span>
+    <span class="n">QMessageBox</span><span class="p">,</span> <span class="n">QPushButton</span><span class="p">,</span> <span class="n">QScrollArea</span><span class="p">,</span> <span class="n">QSplitter</span><span class="p">,</span>
+    <span class="n">QTableWidget</span><span class="p">,</span> <span class="n">QTableWidgetItem</span><span class="p">,</span> <span class="n">QVBoxLayout</span><span class="p">,</span> <span class="n">QWidget</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MetaLister"</span><span class="p">,</span> <span class="s2">"collect_entries"</span><span class="p">,</span> <span class="s2">"write_values"</span><span class="p">,</span> <span class="s2">"short_names"</span><span class="p">,</span> <span class="s2">"to_native"</span><span class="p">,</span> <span class="s2">"column_group"</span><span class="p">]</span>
+
+<span class="n">OLD_CONFIG_FILE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".hdf_meta_lister.json"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">config_file</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">settings_path</span><span class="p">()),</span> <span class="s2">"toolbox_meta_lister.json"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_legacy_config_file</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Settings file of the lister when the tool was called pySASbox (read once if present)."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">settings_path</span><span class="p">()),</span> <span class="s2">"sasbox_meta_lister.json"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">max_dataset_elements</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Larger datasets (images, histograms) are not metadata."""</span>
+    <span class="k">return</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"toolbox.lister.max_elements"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">float_digits</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"toolbox.lister.float_digits"</span><span class="p">)</span>
+
+<span class="n">OLD_PREFIX</span> <span class="o">=</span> <span class="s2">"old_"</span>          <span class="c1"># prefix of the entry that keeps the original value</span>
+<span class="n">CHANGED_COLOR</span> <span class="o">=</span> <span class="n">QColor</span><span class="p">(</span><span class="s2">"#ffd966"</span><span class="p">)</span>   <span class="c1"># edited, not yet written (black text on yellow)</span>
+
+
+<span class="c1"># ----------------------------------------------------------------- helpers</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArrayText</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Text form of a multi-element array value; shown, but not editable."""</span>
+
+
+<div class="viewcode-block" id="to_native">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.to_native">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_native</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Convert h5py/numpy values into plain python values (int/float/str)."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">to_native</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ArrayText</span><span class="p">(</span><span class="s2">"["</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">to_native</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="s2">"]"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">to_native</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">ArrayText</span><span class="p">(</span><span class="s2">"["</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">to_native</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"]"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">float_digits</span><span class="p">())</span>   <span class="c1"># all floating point numbers: n digits after "."</span>
+    <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="short_names">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.short_names">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">short_names</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Column names: last path component only (e.g. '/entry/sample/temp' -&gt; 'temp').</span>
+<span class="sd">    If two selected entries share the same last name, parent folders are</span>
+<span class="sd">    prepended until the names are unique."""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="o">-</span><span class="n">depth</span><span class="p">[</span><span class="n">i</span><span class="p">]:])</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))]</span>
+        <span class="n">dup</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">n</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">depth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="n">depth</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">dup</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dup</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">names</span></div>
+
+
+
+<div class="viewcode-block" id="column_group">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.column_group">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">column_group</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Group a listed entry belongs to: the HDF group holding it, e.g. '/entry1/SANS/attenuator/selection'</span>
+<span class="sd">    -&gt; 'attenuator', '/entry1/sample/name' -&gt; 'sample', '/entry1/SANS/detector@x' -&gt; 'detector'."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"@"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"@"</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">""</span></div>
+
+
+
+<div class="viewcode-block" id="collect_entries">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.collect_entries">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_entries</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return {entry_key: value} for all attributes and small datasets.</span>
+<span class="sd">    Keys: '/group/dataset' for datasets, '/group@attribute' for attributes."""</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">nmax</span> <span class="o">=</span> <span class="n">max_dataset_elements</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">add_attrs</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_native</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">visit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+            <span class="n">full</span> <span class="o">=</span> <span class="s2">"/"</span> <span class="o">+</span> <span class="n">name</span>
+            <span class="n">add_attrs</span><span class="p">(</span><span class="n">full</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="n">nmax</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"V"</span><span class="p">:</span>
+                        <span class="n">out</span><span class="p">[</span><span class="n">full</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_native</span><span class="p">(</span><span class="n">obj</span><span class="p">[()])</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="n">add_attrs</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">visititems</span><span class="p">(</span><span class="n">visit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">replace_string_dataset</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">raw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A fixed-length string dataset cannot hold a longer text in place. Create a</span>
+<span class="sd">    new dataset with a long enough fixed length (same shape, same attributes),</span>
+<span class="sd">    then replace the old one under the same name. The new dataset is built under</span>
+<span class="sd">    a temporary name first, so the old one is only removed when the new one exists."""</span>
+    <span class="n">parent_path</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">base</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">parent_path</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">]</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="s2">"__new_tmp"</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="sa">f</span><span class="s2">"S</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span> <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">new</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">parent</span><span class="p">[</span><span class="n">base</span><span class="p">]</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="n">parent</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">parent</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span>
+        <span class="k">raise</span>
+
+
+<div class="viewcode-block" id="write_values">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.write_values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_values</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write new values into an HDF5 file (opened read/write).</span>
+<span class="sd">    changes: {entry_key: python value (int, float or str)}.</span>
+<span class="sd">    Before an entry is changed, its original value is stored as a new entry</span>
+<span class="sd">    'old_&lt;name&gt;' (same group / same object, same type). An already existing</span>
+<span class="sd">    'old_&lt;name&gt;' is left untouched, so it keeps the very first original value.</span>
+<span class="sd">    The storage type of numeric entries is kept. Returns {entry_key: error text}</span>
+<span class="sd">    for the entries that could not be written (empty dict = all written)."""</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r+"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">changes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">"@"</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>                                  <span class="c1"># attribute</span>
+                    <span class="n">target</span><span class="p">,</span> <span class="n">attr</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"@"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">target</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">]</span>
+                    <span class="n">old_name</span> <span class="o">=</span> <span class="n">OLD_PREFIX</span> <span class="o">+</span> <span class="n">attr</span>
+                    <span class="k">if</span> <span class="n">old_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>               <span class="c1"># keep the original value</span>
+                        <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">old_name</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">],</span>
+                                         <span class="n">dtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get_id</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">old_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span><span class="o">.</span><span class="n">dtype</span>
+                        <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">old_dtype</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>                                           <span class="c1"># dataset</span>
+                    <span class="n">ds</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="n">parent</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">base</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+                    <span class="n">old_name</span> <span class="o">=</span> <span class="n">OLD_PREFIX</span> <span class="o">+</span> <span class="n">base</span>
+                    <span class="k">if</span> <span class="n">old_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">[</span><span class="n">parent</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">]:</span>        <span class="c1"># keep the original value</span>
+                        <span class="n">f</span><span class="p">[</span><span class="n">parent</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="n">parent</span> <span class="ow">or</span> <span class="s2">"/"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">old_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"S"</span><span class="p">:</span>                <span class="c1"># fixed-length string</span>
+                            <span class="n">raw</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span><span class="p">:</span>
+                                <span class="c1"># fixed length too small: store as a new, longer</span>
+                                <span class="c1"># fixed-length string dataset (same name, shape, attributes)</span>
+                                <span class="n">replace_string_dataset</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">raw</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">ds</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>                                   <span class="c1"># variable-length string</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">ds</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                                <span class="n">ds</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">val</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">ds</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">errors</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">errors</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">config_file</span><span class="p">(),</span> <span class="n">_legacy_config_file</span><span class="p">(),</span> <span class="n">OLD_CONFIG_FILE</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">save_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">config_file</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">fh</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Could not save config:"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------- GUI</span>
+<div class="viewcode-block" id="MetaLister">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaLister</span><span class="p">(</span><span class="n">QWidget</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The lister as a widget (a tab of the pyTOOLbox window)."""</span>
+
+    <span class="c1">#: double-click on a file name: (absolute path)</span>
+    <span class="n">open_file_requested</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">"HDF Metadata Lister"</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">()</span>
+
+        <span class="c1"># entry key -&gt; selected (True = list, False = skip); keeps insertion order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"entries"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entry_widgets</span> <span class="o">=</span> <span class="p">{}</span>          <span class="c1"># key -&gt; (row widget, check box: listed or not)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>                <span class="c1"># single-line names (used for copy / save)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="p">[]</span>                  <span class="c1"># unit of each column ("" if none), from the @units attribute</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="p">[]</span>                 <span class="c1"># group of each column (attenuator, beam_stop, detector, ...)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>                   <span class="c1"># current values (edits included)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>                   <span class="c1"># entry keys of the listed columns (after "file")</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>                  <span class="c1"># HDF file of each row</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>             <span class="c1"># (row, col) cells whose entry is absent in that file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="o">=</span> <span class="p">{}</span>                <span class="c1"># (row, col) -&gt; new value, not yet written to the file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="p">{}</span>               <span class="c1"># (row, col) -&gt; value as read from the file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalid</span> <span class="o">=</span> <span class="kc">False</span>            <span class="c1"># set by on_item_changed when a typed value is rejected</span>
+
+        <span class="c1"># ---- file selection</span>
+        <span class="n">files_box</span> <span class="o">=</span> <span class="n">QGroupBox</span><span class="p">(</span><span class="s2">"Files"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"folder"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="n">browse</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Browse..."</span><span class="p">)</span>
+        <span class="n">browse</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">browse</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"instr"</span><span class="p">,</span> <span class="s2">"sans"</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">110</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"year"</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">70</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_from"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">90</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_to"</span><span class="p">,</span> <span class="mi">999999</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">90</span><span class="p">)</span>
+
+        <span class="n">r1</span> <span class="o">=</span> <span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="n">r1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">"Folder:"</span><span class="p">))</span>
+        <span class="n">r1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">r1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">browse</span><span class="p">)</span>
+        <span class="n">r2</span> <span class="o">=</span> <span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Instrument:"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Year:"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s2">"Number from:"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span><span class="p">),</span> <span class="p">(</span><span class="s2">"to:"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span><span class="p">)):</span>
+            <span class="n">r2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">QLabel</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+            <span class="n">r2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">r2</span><span class="o">.</span><span class="n">addStretch</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">fl</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">files_box</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span>
+        <span class="n">fl</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+
+        <span class="c1"># ---- left: entry selection (a check box per entry)</span>
+        <span class="n">left_box</span> <span class="o">=</span> <span class="n">QGroupBox</span><span class="p">(</span><span class="s2">"Entries to list"</span><span class="p">)</span>
+        <span class="n">scan_btn</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Scan files for entries"</span><span class="p">)</span>
+        <span class="n">scan_btn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scan</span><span class="p">)</span>
+        <span class="n">all_btn</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"All"</span><span class="p">)</span>
+        <span class="n">all_btn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_all</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">none_btn</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"None"</span><span class="p">)</span>
+        <span class="n">none_btn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_all</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">scan_btn</span><span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">all_btn</span><span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">none_btn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span> <span class="o">=</span> <span class="n">QLineEdit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="o">.</span><span class="n">setPlaceholderText</span><span class="p">(</span><span class="s2">"filter entries ..."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="o">.</span><span class="n">setClearButtonEnabled</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="o">.</span><span class="n">textChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_filter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scroll</span> <span class="o">=</span> <span class="n">QScrollArea</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scroll</span><span class="o">.</span><span class="n">setWidgetResizable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scroll</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">left_box</span><span class="p">)</span>
+        <span class="n">ll</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">bar</span><span class="p">)</span>
+        <span class="n">ll</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="p">)</span>
+        <span class="n">ll</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scroll</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># ---- right: listing table (values editable)</span>
+        <span class="n">right_box</span> <span class="o">=</span> <span class="n">QGroupBox</span><span class="p">(</span><span class="s2">"Listing  (double-click / F2 edits a value; double-click a file name opens it "</span>
+                              <span class="s2">"in the HDF5 viewer)"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">QTableWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setEditTriggers</span><span class="p">(</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">EditTrigger</span><span class="o">.</span><span class="n">DoubleClicked</span> <span class="o">|</span>
+                                   <span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">EditTrigger</span><span class="o">.</span><span class="n">EditKeyPressed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setSelectionBehavior</span><span class="p">(</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">SelectionBehavior</span><span class="o">.</span><span class="n">SelectRows</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setSelectionMode</span><span class="p">(</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">SelectionMode</span><span class="o">.</span><span class="n">ExtendedSelection</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setAlternatingRowColors</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># high contrast independent of the system (dark/light) theme:</span>
+        <span class="c1"># black text on white / very light grey rows, light-blue selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span>
+            <span class="s2">"QTableWidget { background-color: #ffffff; alternate-background-color: #eef2f7;"</span>
+            <span class="s2">" color: #000000; gridline-color: #c8ced6;"</span>
+            <span class="s2">" selection-background-color: #b3d7ff; selection-color: #000000; }"</span><span class="p">)</span>
+        <span class="n">hh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">horizontalHeader</span><span class="p">()</span>
+        <span class="n">hh</span><span class="o">.</span><span class="n">setDefaultAlignment</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">AlignmentFlag</span><span class="o">.</span><span class="n">AlignCenter</span><span class="p">)</span>
+        <span class="n">hh</span><span class="o">.</span><span class="n">setSectionResizeMode</span><span class="p">(</span><span class="n">QHeaderView</span><span class="o">.</span><span class="n">ResizeMode</span><span class="o">.</span><span class="n">ResizeToContents</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">itemChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_item_changed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">cellDoubleClicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_double_click</span><span class="p">)</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">QShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Copy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">setContext</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShortcutContext</span><span class="o">.</span><span class="n">WidgetShortcut</span><span class="p">)</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">activated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy_clipboard</span><span class="p">(</span><span class="n">selection_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">QShortcut</span><span class="p">(</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Paste</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">setContext</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShortcutContext</span><span class="o">.</span><span class="n">WidgetShortcut</span><span class="p">)</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">activated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paste_clipboard</span><span class="p">)</span>
+        <span class="n">rl</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">right_box</span><span class="p">)</span>
+        <span class="n">rl</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>
+
+        <span class="n">splitter</span> <span class="o">=</span> <span class="n">QSplitter</span><span class="p">()</span>
+        <span class="n">splitter</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">left_box</span><span class="p">)</span>
+        <span class="n">splitter</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">right_box</span><span class="p">)</span>
+        <span class="n">splitter</span><span class="o">.</span><span class="n">setStretchFactor</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">splitter</span><span class="o">.</span><span class="n">setStretchFactor</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">splitter</span><span class="o">.</span><span class="n">setSizes</span><span class="p">([</span><span class="mi">430</span><span class="p">,</span> <span class="mi">820</span><span class="p">])</span>
+
+        <span class="c1"># ---- bottom buttons</span>
+        <span class="n">gen</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Generate listing"</span><span class="p">)</span>
+        <span class="n">gen</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">)</span>
+        <span class="n">cp</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Copy to clipboard"</span><span class="p">)</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy_clipboard</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">sv</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Save as Excel / CSV / Text..."</span><span class="p">)</span>
+        <span class="n">sv</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_file</span><span class="p">)</span>
+        <span class="n">pb</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Paste from clipboard"</span><span class="p">)</span>
+        <span class="n">pb</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Pastes the clipboard (one value per line, tab = next column) "</span>
+                      <span class="s2">"into the table, starting at the current cell (Ctrl+V)"</span><span class="p">)</span>
+        <span class="n">pb</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paste_clipboard</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Write changed values to HDF files"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Writes all highlighted (edited) values into the HDF files"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_changes_to_files</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">"Ready."</span><span class="p">)</span>
+        <span class="n">bottom</span> <span class="o">=</span> <span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">pycode</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">pycode</span><span class="o">.</span><span class="n">button</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">python_code</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">cp</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">sv</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">pb</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addSpacing</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">files_box</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">splitter</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">bottom</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_entry_list</span><span class="p">()</span>
+
+    <span class="c1"># ---- helpers</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_double_click</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open_file_requested</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">[</span><span class="n">r</span><span class="p">])</span>
+
+<div class="viewcode-block" id="MetaLister.set_status">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.set_status">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">processEvents</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.warn">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.warn">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">warn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="n">QMessageBox</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ---- entry list</span>
+<div class="viewcode-block" id="MetaLister.rebuild_entry_list">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.rebuild_entry_list">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebuild_entry_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">container</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span>
+        <span class="n">vl</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+        <span class="n">vl</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">vl</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entry_widgets</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">sel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"@units"</span><span class="p">):</span>          <span class="c1"># units go into the column headers, not into columns</span>
+                <span class="k">continue</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">QWidget</span><span class="p">()</span>
+            <span class="n">hl</span> <span class="o">=</span> <span class="n">QHBoxLayout</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">cb</span> <span class="o">=</span> <span class="n">QCheckBox</span><span class="p">()</span>                     <span class="c1"># checked: listed; no text, little space</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">sel</span><span class="p">))</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"list this entry"</span><span class="p">)</span>
+            <span class="n">cb</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">on</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">on</span><span class="p">))</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">cb</span><span class="p">)</span>
+            <span class="n">hl</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">vl</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entry_widgets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">cb</span><span class="p">)</span>
+        <span class="n">vl</span><span class="o">.</span><span class="n">addStretch</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scroll</span><span class="o">.</span><span class="n">setWidget</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply_filter</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.apply_filter">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.apply_filter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">needle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_widgets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">setVisible</span><span class="p">(</span><span class="n">needle</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.set_all">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.set_all">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">needle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">cb</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_widgets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">needle</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">cb</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ---- file handling</span>
+<div class="viewcode-block" id="MetaLister.browse">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.browse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">browse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="s2">"Folder containing the HDF files"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.matching_files">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.matching_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">matching_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Please select an existing folder."</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Number range must be integers."</span><span class="p">)</span>
+        <span class="n">pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">rf</span><span class="s2">"^</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="si">}</span><span class="s2">n(\d+)\.hdf$"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">and</span> <span class="n">lo</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">:</span>
+                <span class="n">found</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">name</span><span class="p">))</span>
+        <span class="n">found</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">found</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.scan">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.scan">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_files</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"No files"</span><span class="p">,</span> <span class="s2">"No matching files found."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">CursorShape</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">)</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Scanning </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2">) ..."</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">collect_entries</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="n">new</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rebuild_entry_list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Scan done: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="p">)</span><span class="si">}</span><span class="s2"> entries known, </span><span class="si">{</span><span class="n">new</span><span class="si">}</span><span class="s2"> new."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.python_code">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.python_code">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">python_code</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Script: the files of the number range and the ticked entries, listed as a table (pandas when</span>
+<span class="sd">        installed) ("Copy Python code")."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..core.pycode</span><span class="w"> </span><span class="kn">import</span> <span class="n">Script</span><span class="p">,</span> <span class="n">lit</span><span class="p">,</span> <span class="n">path_lit</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"@units"</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Tick the entries to list first."</span><span class="p">)</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">Script</span><span class="p">(</span><span class="s2">"pyTOOLbox"</span><span class="p">,</span> <span class="s2">"HDF metadata listing"</span><span class="p">)</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">imp</span><span class="p">(</span><span class="s2">"import os"</span><span class="p">,</span> <span class="s2">"import re"</span><span class="p">,</span> <span class="s2">"from pysasfit.toolbox.meta_lister import collect_entries"</span><span class="p">)</span>
+        <span class="n">folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="sa">f</span><span class="s2">"folder = </span><span class="si">{</span><span class="n">path_lit</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">folder</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">path_lit</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+               <span class="sa">f</span><span class="s2">"instrument, year = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">!r}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span>
+               <span class="sa">f</span><span class="s2">"first, last = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+               <span class="sa">f</span><span class="s2">"keys = </span><span class="si">{</span><span class="n">lit</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+               <span class="s2">"pat = re.compile(rf'^{re.escape(instrument)}{re.escape(year)}n(</span><span class="se">\\</span><span class="s2">d+)</span><span class="se">\\</span><span class="s2">.hdf$', re.IGNORECASE)"</span><span class="p">,</span>
+               <span class="s2">"files = sorted((int(m.group(1)), name) for name in os.listdir(folder)"</span><span class="p">,</span>
+               <span class="s2">"               if (m := pat.match(name)) and first &lt;= int(m.group(1)) &lt;= last)"</span><span class="p">,</span>
+               <span class="s2">"rows = []"</span><span class="p">,</span>
+               <span class="s2">"for _, name in files:"</span><span class="p">,</span>
+               <span class="s2">"    data = collect_entries(os.path.join(folder, name))"</span><span class="p">,</span>
+               <span class="s2">"    rows.append([name] + [data.get(k, '') for k in keys])"</span><span class="p">,</span>
+               <span class="s2">"try:"</span><span class="p">,</span>
+               <span class="s2">"    import pandas as pd"</span><span class="p">,</span>
+               <span class="s2">"    table = pd.DataFrame(rows, columns=['file'] + keys)"</span><span class="p">,</span>
+               <span class="s2">"    print(table.to_string())"</span><span class="p">,</span>
+               <span class="s2">"except ImportError:"</span><span class="p">,</span>
+               <span class="s2">"    for row in rows:"</span><span class="p">,</span>
+               <span class="s2">"        print('</span><span class="se">\\</span><span class="s2">t'.join(str(v) for v in row))"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">text</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ---- listing</span>
+<div class="viewcode-block" id="MetaLister.generate">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.generate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"@units"</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Nothing selected"</span><span class="p">,</span> <span class="s2">"Select at least one entry (tick it in the list)."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="ow">and</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="s2">"Unsaved changes"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span><span class="si">}</span><span class="s2"> edited value(s) have not been written to the HDF "</span>
+                <span class="s2">"files and will be lost. Continue?"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matching_files</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"No files"</span><span class="p">,</span> <span class="s2">"No matching files found."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"file"</span><span class="p">]</span> <span class="o">+</span> <span class="n">short_names</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">column_group</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">missing</span> <span class="o">=</span> <span class="p">[],</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">CursorShape</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reading </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">r</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2">) ..."</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">collect_entries</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="n">u</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">@units"</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">u</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">c</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+                    <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"ERROR: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fill_table</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_write_button</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> files listed."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.fill_table">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.fill_table">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fill_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Headers: the group (attenuator, beam_stop, detector, sample, monitor1, ...) over the name,</span>
+        <span class="c1"># the unit in brackets below. Copied / saved headers are one line: "name [unit]".</span>
+        <span class="n">any_unit</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+        <span class="n">heads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">grp</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)):</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="n">heads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">grp</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">last</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">any_unit</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setColumnCount</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setHorizontalHeaderLabels</span><span class="p">(</span><span class="n">heads</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="n">QTableWidgetItem</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+                <span class="n">editable</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">missing</span>
+                            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="n">ArrayText</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">editable</span><span class="p">:</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">flags</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemFlag</span><span class="o">.</span><span class="n">ItemIsEditable</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">resizeColumnsToContents</span><span class="p">()</span>   <span class="c1"># narrowest width that shows everything</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">horizontalHeader</span><span class="p">()</span><span class="o">.</span><span class="n">setMinimumHeight</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">horizontalHeader</span><span class="p">()</span><span class="o">.</span><span class="n">sizeHint</span><span class="p">()</span><span class="o">.</span><span class="n">height</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ---- editing values</span>
+<div class="viewcode-block" id="MetaLister.on_item_changed">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.on_item_changed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_item_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">row</span><span class="p">(),</span> <span class="n">item</span><span class="o">.</span><span class="n">column</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">])</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">"."</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"an integer"</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"a number"</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_invalid</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">' is not </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> - value not changed."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new</span> <span class="o">==</span> <span class="n">old</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemDataRole</span><span class="o">.</span><span class="n">BackgroundRole</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">old</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">old</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">old</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">[(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="n">new</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">setBackground</span><span class="p">(</span><span class="n">CHANGED_COLOR</span><span class="p">)</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">resizeColumnToContents</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_write_button</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.paste_clipboard">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.paste_clipboard">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">paste_clipboard</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Paste clipboard text into the table like a spreadsheet: one line per row</span>
+<span class="sd">        (file), tab-separated values go to the following columns, starting at the</span>
+<span class="sd">        current cell. Every value is checked like a typed value; empty values,</span>
+<span class="sd">        non-editable cells and cells outside the table are skipped. Nothing is</span>
+<span class="sd">        written to the HDF files until 'Write changed values' is used."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">QApplication</span><span class="o">.</span><span class="n">clipboard</span><span class="p">()</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">grid</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">grid</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s2">"Clipboard is empty."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">r0</span><span class="p">,</span> <span class="n">c0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">currentRow</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">currentColumn</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">r0</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">c0</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s2">"Click the first target cell, then paste."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="n">invalid</span> <span class="o">=</span> <span class="n">skipped</span> <span class="o">=</span> <span class="n">beyond</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">r0</span> <span class="o">+</span> <span class="n">i</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">rowCount</span><span class="p">():</span>
+                <span class="n">beyond</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c0</span> <span class="o">+</span> <span class="n">j</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"</span><span class="se">\r</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">val</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="k">continue</span>                              <span class="c1"># empty -&gt; leave value unchanged</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">columnCount</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">flags</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">Qt</span><span class="o">.</span><span class="n">ItemFlag</span><span class="o">.</span><span class="n">ItemIsEditable</span><span class="p">):</span>
+                    <span class="n">skipped</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">before</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_invalid</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invalid</span><span class="p">:</span>
+                    <span class="n">invalid</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">item</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">!=</span> <span class="n">before</span><span class="p">:</span>
+                    <span class="n">changed</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Pasted: </span><span class="si">{</span><span class="n">changed</span><span class="si">}</span><span class="s2"> value(s) changed"</span>
+        <span class="k">if</span> <span class="n">invalid</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="n">invalid</span><span class="si">}</span><span class="s2"> invalid (kept)"</span>
+        <span class="k">if</span> <span class="n">skipped</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="n">skipped</span><span class="si">}</span><span class="s2"> skipped (not editable)"</span>
+        <span class="k">if</span> <span class="n">beyond</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="n">beyond</span><span class="si">}</span><span class="s2"> line(s) beyond the last file"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s2">". Not yet written to the HDF files."</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.update_write_button">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.update_write_button">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_write_button</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_btn</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Write changed values to HDF files (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">n</span>
+                               <span class="k">else</span> <span class="s2">"Write changed values to HDF files"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> edited value(s) - not yet written to the HDF files."</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.write_changes_to_files">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.write_changes_to_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_changes_to_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">})</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">"Write changed values to HDF files"</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Icon</span><span class="o">.</span><span class="n">Question</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Overwrite </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span><span class="si">}</span><span class="s2"> value(s) in </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2"> HDF file(s)?</span><span class="se">\n\n</span><span class="s2">"</span>
+                    <span class="s2">"The files are modified in place. The storage type of numbers is kept.</span><span class="se">\n</span><span class="s2">"</span>
+                    <span class="s2">"Each original value is first saved as a new entry old_&lt;name&gt; "</span>
+                    <span class="s2">"(unless old_&lt;name&gt; already exists - it is then left untouched)."</span><span class="p">)</span>
+        <span class="n">backup</span> <span class="o">=</span> <span class="n">QCheckBox</span><span class="p">(</span><span class="s2">"Keep a backup copy of each changed file (&lt;name&gt;.hdf.bak)"</span><span class="p">)</span>
+        <span class="n">backup</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setCheckBox</span><span class="p">(</span><span class="n">backup</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setStandardButtons</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">Yes</span> <span class="o">|</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">No</span><span class="p">)</span>
+        <span class="n">box</span><span class="o">.</span><span class="n">setDefaultButton</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">No</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">box</span><span class="o">.</span><span class="n">exec</span><span class="p">()</span> <span class="o">!=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply_pending</span><span class="p">(</span><span class="n">backup</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.apply_pending">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.apply_pending">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">make_backup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="p">[]</span>                                  <span class="c1"># messages</span>
+        <span class="n">written</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">CursorShape</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">by_row</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">by_row</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="p">{})[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">cells</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_row</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">[</span><span class="n">r</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Writing </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">by_row</span><span class="p">)</span><span class="si">}</span><span class="s2">) ..."</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">make_backup</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s2">".bak"</span><span class="p">):</span>
+                        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">".bak"</span><span class="p">)</span>   <span class="c1"># never overwrites an older backup</span>
+                    <span class="n">errors</span> <span class="o">=</span> <span class="n">write_values</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>                       <span class="c1"># file locked, read-only, ...</span>
+                    <span class="n">errors</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cells</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cells</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                        <span class="n">failed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">errors</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">written</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemDataRole</span><span class="o">.</span><span class="n">BackgroundRole</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_write_button</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">written</span><span class="si">}</span><span class="s2"> value(s) written to the HDF files."</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span><span class="si">}</span><span class="s2"> failed (still highlighted)."</span> <span class="k">if</span> <span class="n">failed</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Some values could not be written"</span><span class="p">,</span>
+                      <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">failed</span><span class="p">[:</span><span class="mi">15</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">..."</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">15</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">written</span><span class="p">,</span> <span class="n">failed</span></div>
+
+
+    <span class="c1"># ---- export</span>
+<div class="viewcode-block" id="MetaLister.clean">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.clean">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\r</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.column_titles">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.column_titles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">column_titles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""One-line column titles for copy / save: "name [unit]"."""</span>
+        <span class="n">units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">c</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" [</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">u</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">units</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.as_text">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.as_text">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rows</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_titles</span><span class="p">())]</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.copy_clipboard">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.copy_clipboard">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_clipboard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selection_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span>
+        <span class="k">if</span> <span class="n">selection_only</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">i</span><span class="o">.</span><span class="n">row</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">selectionModel</span><span class="p">()</span><span class="o">.</span><span class="n">selectedRows</span><span class="p">()})</span>
+            <span class="k">if</span> <span class="n">idx</span><span class="p">:</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">clipboard</span><span class="p">()</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_text</span><span class="p">(</span><span class="n">rows</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows copied (tab separated) - paste into your spreadsheet."</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.save_file">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.save_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="n">QMessageBox</span><span class="o">.</span><span class="n">information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Empty"</span><span class="p">,</span> <span class="s2">"Generate a listing first."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">flt</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="s2">"Save listing"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"Excel (*.xlsx);;CSV (*.csv);;Plain text, tab separated (*.txt)"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".xlsx"</span><span class="p">,</span> <span class="s2">".csv"</span><span class="p">,</span> <span class="s2">".txt"</span><span class="p">):</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="s2">".csv"</span> <span class="k">if</span> <span class="s2">"csv"</span> <span class="ow">in</span> <span class="n">flt</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">else</span> <span class="s2">".txt"</span> <span class="k">if</span> <span class="s2">"txt"</span> <span class="ow">in</span> <span class="n">flt</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">else</span> <span class="s2">".xlsx"</span>
+            <span class="n">path</span> <span class="o">+=</span> <span class="n">ext</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".xlsx"</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">openpyxl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Workbook</span>
+                <span class="n">wb</span> <span class="o">=</span> <span class="n">Workbook</span><span class="p">()</span>
+                <span class="n">ws</span> <span class="o">=</span> <span class="n">wb</span><span class="o">.</span><span class="n">active</span>
+                <span class="n">ws</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">"Metadata"</span>
+                <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_titles</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+                    <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">r</span><span class="p">])</span>
+                <span class="n">wb</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".csv"</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8-sig"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                    <span class="n">w</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+                    <span class="n">w</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_titles</span><span class="p">())</span>
+                    <span class="n">w</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                    <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Saved </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"openpyxl missing"</span><span class="p">,</span> <span class="s2">"Excel export needs:  pip install openpyxl"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Save failed"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ---- persistence</span>
+<div class="viewcode-block" id="MetaLister.persist">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.persist">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">persist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">from_edit</span><span class="o">.</span><span class="n">text</span><span class="p">()),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_edit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">999999</span>
+        <span class="n">save_config</span><span class="p">({</span>
+            <span class="s2">"folder"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder_edit</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="s2">"instr"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">instr_edit</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="s2">"year"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">year_edit</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="s2">"num_from"</span><span class="p">:</span> <span class="n">lo</span><span class="p">,</span>
+            <span class="s2">"num_to"</span><span class="p">:</span> <span class="n">hi</span><span class="p">,</span>
+            <span class="s2">"entries"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span><span class="p">),</span>
+        <span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="MetaLister.may_close">
+<a class="viewcode-back" href="../../../toolbox/api.html#pysasfit.toolbox.meta_lister.MetaLister.may_close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">may_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""False when the user wants to keep edited values that are not yet written."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending</span> <span class="ow">and</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="s2">"Unsaved changes"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span><span class="si">}</span><span class="s2"> edited value(s) have not been written to the HDF "</span>
+                <span class="s2">"files. Quit anyway?"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">StandardButton</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

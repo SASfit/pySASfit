@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.acceleration &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.acceleration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.acceleration</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Generic fixed-point acceleration, extracted from Joachim's own</span>
+<span class="sd">pyOZgui/src/pyozgui/biggsAndrewsOZsolver.py (Biggs &amp; Andrews 1997 vector</span>
+<span class="sd">extrapolation, ported there directly from sasfit_oz_solver.c's own</span>
+<span class="sd">"case BIGGS_ANDREWS:" block). That file's own algorithm is completely</span>
+<span class="sd">problem-agnostic -- it only ever calls a generic fixed_point_operator(x),</span>
+<span class="sd">with no OZ-specific assumption anywhere -- so it is reproduced here as a</span>
+<span class="sd">standalone function usable by any fixed-point iteration in this package</span>
+<span class="sd">(em.py, em_general.py, maxent.py), not just OZ solving.</span>
+
+<span class="sd">Already validated in the source file's own docstring/history (not</span>
+<span class="sd">re-validated here beyond this module's own tests):</span>
+
+<span class="sd">  - KINSetMAA=0 matches plain Picard iteration almost exactly (354 vs 353</span>
+<span class="sd">    steps on a reference case), confirming the order-0 branch correctly</span>
+<span class="sd">    degenerates to unaccelerated fixed-point iteration.</span>
+<span class="sd">  - KINSetMAA=1 and -2 both roughly halve the iteration count versus plain</span>
+<span class="sd">    Picard on that same case.</span>
+<span class="sd">  - Every configuration tested (0, 1, 2, -2) agrees with an independently-</span>
+<span class="sd">    validated GMRES-based solver to within ~1e-12.</span>
+
+<span class="sd">ADAPTATION for this package's use (not present in the OZ version, which</span>
+<span class="sd">has no sign constraint on its Gamma function): EM-family fixed-point maps</span>
+<span class="sd">require a non-negative input. Biggs-Andrews' extrapolation step can</span>
+<span class="sd">overshoot into negative territory, which would corrupt (not just slow)</span>
+<span class="sd">the EM multiplicative update if handed a negative x0 -- see em.em_step's</span>
+<span class="sd">own assumption that its `x` argument is &gt;= 0. `clip_nonnegative=True`</span>
+<span class="sd">(default) clips the extrapolated trial point to a small positive floor</span>
+<span class="sd">before evaluating the fixed-point map there, whenever the map is meant to</span>
+<span class="sd">operate on a non-negative vector (as all the EM-family ones are).</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="AccelerationResult">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.acceleration.AccelerationResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccelerationResult</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">converged</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">n_iterations</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">residual_norm_history</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="biggs_andrews">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.acceleration.biggs_andrews">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">biggs_andrews</span><span class="p">(</span>
+    <span class="n">fixed_point_operator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+    <span class="n">kin_set_maa</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">clip_nonnegative</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">clip_floor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">on_iterate</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AccelerationResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Biggs-Andrews-accelerated fixed-point iteration for x = fixed_point_operator(x).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fixed_point_operator : callable</span>
+<span class="sd">        x -&gt; x_next, the map being accelerated -- e.g. em.em_step (plus smoothing)</span>
+<span class="sd">        wrapped in a small closure by the caller.</span>
+<span class="sd">    x0 : array_like</span>
+<span class="sd">        Initial guess.</span>
+<span class="sd">    max_iterations : int</span>
+<span class="sd">        Hard cap (this function's own "numberOfIterations").</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        Convergence tolerance on the relative change in ``||x||`` between</span>
+<span class="sd">        successive (accepted) iterates -- same criterion</span>
+<span class="sd">        biggsAndrewsOZsolver.py itself uses (not the em.py-family's</span>
+<span class="sd">        absolute ||x_new-x_old|| gNorm test, since this is a</span>
+<span class="sd">        general-purpose accelerator, not specific to this package's own</span>
+<span class="sd">        convention).</span>
+<span class="sd">    kin_set_maa : int</span>
+<span class="sd">        Extrapolation order (``abs(kin_set_maa)``) and step-size formula</span>
+<span class="sd">        choice (sign) -- see module/source docstring. 0 disables</span>
+<span class="sd">        extrapolation (reduces to plain Picard iteration); 2 is a</span>
+<span class="sd">        reasonable default matching the source file's own default.</span>
+<span class="sd">    clip_nonnegative : bool</span>
+<span class="sd">        If True, clip the extrapolated trial point to</span>
+<span class="sd">        &gt;= clip_floor before evaluating fixed_point_operator there (see</span>
+<span class="sd">        module docstring's ADAPTATION note). Set False to reproduce the</span>
+<span class="sd">        original OZ behaviour exactly (no clipping) for a sign-</span>
+<span class="sd">        unconstrained fixed-point map.</span>
+<span class="sd">    clip_floor : float</span>
+<span class="sd">        The non-negativity floor used when clip_nonnegative=True.</span>
+<span class="sd">    on_iterate : callable, optional</span>
+<span class="sd">        Callback(x_accepted) invoked once per accepted</span>
+<span class="sd">        iterate (including the two warm-up steps), so a caller can record</span>
+<span class="sd">        its own per-iteration diagnostics (e.g. em.py's chi2_r_history)</span>
+<span class="sd">        without this generic module needing to know anything about them.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clip</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">clip_floor</span><span class="p">)</span> <span class="k">if</span> <span class="n">clip_nonnegative</span> <span class="k">else</span> <span class="n">v</span>
+
+    <span class="n">xn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="c1"># Two unaccelerated warm-up fixed-point steps -- needed to have two</span>
+    <span class="c1"># residual-history vectors (gn1, gn2) available before any</span>
+    <span class="c1"># extrapolation can be attempted (matches the source's own two</span>
+    <span class="c1"># hand-unrolled steps before its main loop).</span>
+    <span class="n">xp1</span> <span class="o">=</span> <span class="n">fixed_point_operator</span><span class="p">(</span><span class="n">clip</span><span class="p">(</span><span class="n">xn</span><span class="p">))</span>
+    <span class="n">gn1</span> <span class="o">=</span> <span class="n">xp1</span> <span class="o">-</span> <span class="n">xn</span>
+    <span class="n">xn1</span> <span class="o">=</span> <span class="n">xn</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">xn</span> <span class="o">=</span> <span class="n">xp1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">on_iterate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">on_iterate</span><span class="p">(</span><span class="n">xn</span><span class="p">)</span>
+
+    <span class="n">xp1</span> <span class="o">=</span> <span class="n">fixed_point_operator</span><span class="p">(</span><span class="n">clip</span><span class="p">(</span><span class="n">xn</span><span class="p">))</span>
+    <span class="n">gn2</span> <span class="o">=</span> <span class="n">gn1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">gn1</span> <span class="o">=</span> <span class="n">xp1</span> <span class="o">-</span> <span class="n">xn</span>
+    <span class="n">xn2</span> <span class="o">=</span> <span class="n">xn1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">xn1</span> <span class="o">=</span> <span class="n">xn</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">xn</span> <span class="o">=</span> <span class="n">xp1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">on_iterate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">on_iterate</span><span class="p">(</span><span class="n">xn</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">previous_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">xn</span><span class="p">))</span>
+    <span class="n">residual_history</span> <span class="o">=</span> <span class="p">[</span><span class="n">previous_norm</span><span class="p">]</span>
+    <span class="n">relative_progress</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">while</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">max_iterations</span> <span class="ow">and</span> <span class="n">relative_progress</span> <span class="o">&gt;=</span> <span class="n">tol</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gn1</span><span class="p">,</span> <span class="n">gn2</span><span class="p">))</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gn2</span><span class="p">,</span> <span class="n">gn2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">gamma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kin_set_maa</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">alpha</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">/</span> <span class="n">gamma</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">beta</span> <span class="o">/</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">beta</span> <span class="o">/</span> <span class="n">gamma</span><span class="p">))</span>
+            <span class="n">bound</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mf">2.0</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">bound</span><span class="p">),</span> <span class="o">-</span><span class="n">bound</span><span class="p">)</span>
+
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">kin_set_maa</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">yn</span> <span class="o">=</span> <span class="n">xn</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">order</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">yn</span> <span class="o">=</span> <span class="n">xn</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">xn</span> <span class="o">-</span> <span class="n">xn1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yn</span> <span class="o">=</span> <span class="n">xn</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">xn</span> <span class="o">-</span> <span class="n">xn1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">xn</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">xn1</span> <span class="o">+</span> <span class="n">xn2</span><span class="p">)</span>
+
+        <span class="n">xp1</span> <span class="o">=</span> <span class="n">fixed_point_operator</span><span class="p">(</span><span class="n">clip</span><span class="p">(</span><span class="n">yn</span><span class="p">))</span>
+        <span class="n">gn2</span> <span class="o">=</span> <span class="n">gn1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">gn1</span> <span class="o">=</span> <span class="n">xp1</span> <span class="o">-</span> <span class="n">yn</span>
+        <span class="n">xn2</span> <span class="o">=</span> <span class="n">xn1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xn1</span> <span class="o">=</span> <span class="n">xn</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xn</span> <span class="o">=</span> <span class="n">xp1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">xn</span><span class="p">))</span>
+        <span class="n">relative_progress</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">previous_norm</span> <span class="o">-</span> <span class="n">norm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">norm</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">previous_norm</span> <span class="o">=</span> <span class="n">norm</span>
+        <span class="n">residual_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">on_iterate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">on_iterate</span><span class="p">(</span><span class="n">xn</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">max_iterations</span><span class="p">:</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">AccelerationResult</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">clip</span><span class="p">(</span><span class="n">xn</span><span class="p">),</span> <span class="n">converged</span><span class="o">=</span><span class="n">converged</span><span class="p">,</span> <span class="n">n_iterations</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+                               <span class="n">residual_norm_history</span><span class="o">=</span><span class="n">residual_history</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

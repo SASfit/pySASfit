@@ -1,0 +1,859 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySASmorph: theory and mathematics &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySASmorph: anisotropic data (texture)" href="texture.html" />
+    <link rel="prev" title="pySASmorph: 3D two- and multi-phase morphologies from SAS data" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASmorph</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#method">Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#multi-phase-structures-and-contrast-series">Multi-phase structures and contrast series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#sesans-data">SESANS data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#differences-from-saxsmorph-2-2">Differences from SAXSMorph 2.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#d-panel">3D panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#choosing-the-parameters">Choosing the parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#limits">Limits</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#validation-tests-morph">Validation (tests/morph)</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pySASmorph: theory and mathematics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#two-phase-structures-and-their-scattering">1. Two-phase structures and their scattering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extending-the-data-to-q-0-and-q">2. Extending the data to q = 0 and q = ∞</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exact-sine-transforms">3. Exact sine transforms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-clipped-gaussian-random-field">4. The clipped Gaussian random field</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#spectral-function">5. Spectral function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generating-the-field">6. Generating the field</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checks-against-the-data">7. Checks against the data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#morphology-of-the-voxel-structure">8. Morphology of the voxel structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#several-phases-one-field-several-cuts">9. Several phases: one field, several cuts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#surfaces">10. Surfaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#box-and-grid">11. Box and grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#uniaxial-anisotropy-texture">12. Uniaxial anisotropy (texture)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="texture.html">pySASmorph: anisotropic data (texture)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">pySASmorph: API reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASmorph: 3D two- and multi-phase morphologies from SAS data</a></li>
+      <li class="breadcrumb-item active">pySASmorph: theory and mathematics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/morph/theory.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysasmorph-theory-and-mathematics">
+<h1>pySASmorph: theory and mathematics<a class="headerlink" href="#pysasmorph-theory-and-mathematics" title="Link to this heading"></a></h1>
+<p>This page derives every step of <a class="reference internal" href="index.html"><span class="doc">pySASmorph</span></a> in the order the program runs. Each step names the
+function that implements it. Lengths and q are in the units of the data, e.g. Å and Å⁻¹. Intensities are in the
+units of the data, so absolute values need data on an absolute scale.</p>
+<section id="two-phase-structures-and-their-scattering">
+<h2>1. Two-phase structures and their scattering<a class="headerlink" href="#two-phase-structures-and-their-scattering" title="Link to this heading"></a></h2>
+<p>A two-phase sample has the scattering length density (SLD)</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\eta(\mathbf r) = \rho_1 + \Delta\rho\, \chi(\mathbf r), \qquad
+\chi(\mathbf r) = \begin{cases} 1 &amp; \text{phase 2 (&quot;pore&quot;)}\\ 0 &amp; \text{phase 1 (&quot;solid&quot;)} \end{cases}
+\end{split}\]</div>
+<p>with the volume fraction <span class="math notranslate nohighlight">\(\varphi = \langle\chi\rangle\)</span> of phase 2 and the contrast <span class="math notranslate nohighlight">\(\Delta\rho = \rho_2-\rho_1\)</span>.</p>
+<p><strong>Two-point function.</strong> The two-point probability <span class="math notranslate nohighlight">\(S_2(r) = \langle \chi(\mathbf 0)\chi(\mathbf r)\rangle\)</span> of an
+isotropic sample falls from <span class="math notranslate nohighlight">\(S_2(0) = \varphi\)</span> to <span class="math notranslate nohighlight">\(S_2(\infty) = \varphi^2\)</span>. The normalised correlation function
+of Debye and Bueche (1949) is</p>
+<div class="math notranslate nohighlight">
+\[
+\gamma(r) = \frac{\langle \delta\eta(\mathbf 0)\,\delta\eta(\mathbf r)\rangle}{\langle\delta\eta^2\rangle}
+          = \frac{S_2(r)-\varphi^2}{\varphi(1-\varphi)}, \qquad \gamma(0) = 1 .
+\]</div>
+<p><strong>Scattering.</strong> The macroscopic cross-section is its Fourier transform:</p>
+<div class="math notranslate nohighlight">
+\[
+I(q) = 4\pi\,\Delta\rho^2\,\varphi(1-\varphi) \int_0^\infty r^2\,\gamma(r)\,\frac{\sin qr}{qr}\,\mathrm dr .
+\]</div>
+<p>The inverse transform gives <span class="math notranslate nohighlight">\(\gamma\)</span> from the data:</p>
+<div class="math notranslate nohighlight">
+\[
+\gamma(r) = \frac{1}{Q}\int_0^\infty q^2 I(q)\,\frac{\sin qr}{qr}\,\mathrm dq .
+\]</div>
+<p>Here <span class="math notranslate nohighlight">\(Q\)</span> is the <strong>invariant</strong> (Porod 1951):</p>
+<div class="math notranslate nohighlight">
+\[
+Q = \int_0^\infty q^2 I(q)\,\mathrm dq = 2\pi^2\,\Delta\rho^2\,\varphi(1-\varphi) .
+\]</div>
+<p><strong>Sharp interfaces.</strong> A sharp interface of area <span class="math notranslate nohighlight">\(S\)</span> per volume <span class="math notranslate nohighlight">\(V\)</span> gives Porod’s law. It also fixes the slope of
+<span class="math notranslate nohighlight">\(\gamma\)</span> at the origin (Debye, Anderson and Brumberger 1957):</p>
+<div class="math notranslate nohighlight">
+\[
+I(q) \xrightarrow{q\to\infty} \frac{K}{q^4}, \quad K = 2\pi\,\Delta\rho^2\,\frac SV,
+\qquad\qquad
+\gamma(r) \simeq 1 - \frac{S/V}{4\varphi(1-\varphi)}\,r \quad (r\to 0) .
+\]</div>
+<p>Dividing <span class="math notranslate nohighlight">\(K\)</span> by <span class="math notranslate nohighlight">\(Q\)</span> removes the contrast:</p>
+<div class="math notranslate nohighlight">
+\[
+\frac SV = \pi\,\varphi(1-\varphi)\,\frac KQ
+\qquad\text{({func}`~pysasfit.morph.statistics.specific_surface_porod`).}
+\]</div>
+<p><strong>Contrast from the invariant.</strong> For a known <span class="math notranslate nohighlight">\(\varphi\)</span> the invariant gives the contrast in the units of the data
+(<a class="reference internal" href="api.html#pysasfit.morph.scattering.contrast_from_invariant" title="pysasfit.morph.scattering.contrast_from_invariant"><code class="xref py py-func docutils literal notranslate"><span class="pre">contrast_from_invariant()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+\Delta\rho^2 = Q / \bigl(2\pi^2\varphi(1-\varphi)\bigr) .
+\]</div>
+<p>All back-calculated curves use this contrast, so they are on the scale of the data. Conversely, with absolute
+data (<span class="math notranslate nohighlight">\(I\)</span> in cm⁻¹) and a known <span class="math notranslate nohighlight">\(\Delta\rho\)</span> in cm⁻², <span class="math notranslate nohighlight">\(\varphi(1-\varphi) = Q/(2\pi^2\Delta\rho^2)\)</span> gives the
+volume fraction. The program takes the root <span class="math notranslate nohighlight">\(\le \tfrac12\)</span>
+(<a class="reference internal" href="api.html#pysasfit.morph.pipeline.porosity_from_invariant" title="pysasfit.morph.pipeline.porosity_from_invariant"><code class="xref py py-func docutils literal notranslate"><span class="pre">porosity_from_invariant()</span></code></a>). <span class="math notranslate nohighlight">\(Q\)</span> is converted with 10²⁴ for q in Å⁻¹ and 10²¹ for
+q in nm⁻¹.</p>
+</section>
+<section id="extending-the-data-to-q-0-and-q">
+<h2>2. Extending the data to q = 0 and q = ∞<a class="headerlink" href="#extending-the-data-to-q-0-and-q" title="Link to this heading"></a></h2>
+<p>The transforms need <span class="math notranslate nohighlight">\(I(q)\)</span> on the whole q axis (<a class="reference internal" href="api.html#pysasfit.morph.extrapolation.extrapolate" title="pysasfit.morph.extrapolation.extrapolate"><code class="xref py py-func docutils literal notranslate"><span class="pre">extrapolate()</span></code></a>).</p>
+<p><strong>Background and Porod law.</strong> The Porod law, with an optional flat background <span class="math notranslate nohighlight">\(B\)</span>, is fitted to the Porod range.
+The fit is linear in <span class="math notranslate nohighlight">\(q^4\)</span>, by weighted least squares with the weights <span class="math notranslate nohighlight">\(w = 1/(\sigma q^4)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+I\,q^4 = K + B\,q^4 .
+\]</div>
+<p><span class="math notranslate nohighlight">\(B\)</span> is then subtracted from all data. <span class="math notranslate nohighlight">\(B\)</span> can also be fixed by hand, and then it is subtracted before <span class="math notranslate nohighlight">\(K\)</span> is
+fitted. The parameter uncertainties are the least-squares covariance, scaled by <span class="math notranslate nohighlight">\(\chi^2_\text{red}\)</span> when that is
+larger than 1.</p>
+<p><strong>The Porod range.</strong> It is given by hand (the last N points, or <span class="math notranslate nohighlight">\(q \ge q_\text{min}\)</span>) or chosen automatically
+(<a class="reference internal" href="api.html#pysasfit.morph.extrapolation.auto_porod_range" title="pysasfit.morph.extrapolation.auto_porod_range"><code class="xref py py-func docutils literal notranslate"><span class="pre">auto_porod_range()</span></code></a>); the former default was the last 15 %, at least 5 points.
+The automatic choice works in three steps:</p>
+<ol class="arabic">
+<li><p><strong>Candidates.</strong> Every start <span class="math notranslate nohighlight">\(q_i\)</span> from 40 % of the points on (up to 60 candidates, at least 6 points) is fitted.
+With <span class="math notranslate nohighlight">\(\varepsilon_j = (I_j - Kq_j^{-4} - B)/\sigma_j\)</span> (relative residuals without errors) it gets</p>
+<div class="math notranslate nohighlight">
+\[
+   \chi^2_i = \frac{1}{N_i-p}\sum_{j\ge i}\varepsilon_j^2, \qquad
+   \rho_i = \frac{\sum_j \delta_j\,\delta_{j+1}}{\sum_j\delta_j^2},\quad \delta_j = \varepsilon_j - \bar\varepsilon .
+   \]</div>
+<p><span class="math notranslate nohighlight">\(\rho_i\)</span> is the lag-1 autocorrelation of the residuals.</p>
+</li>
+<li><p><strong>Acceptance.</strong> A start is acceptable when two conditions hold:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\chi^2_i \le 1.5\,\min_k\chi^2_k\)</span>, or <span class="math notranslate nohighlight">\(\chi^2_i \le 2\)</span> with error bars;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\rho_i &lt; \max(0.15,\ 3/\sqrt{N_i})\)</span>, i.e. no trend beyond 3σ of white noise.</p></li>
+</ul>
+<p>A range reaching into the non-Porod region leaves residuals of one sign even when generous error bars keep
+<span class="math notranslate nohighlight">\(\chi^2\)</span> small. The lowest acceptable <span class="math notranslate nohighlight">\(q_i\)</span> gives the longest range and so the most precise <span class="math notranslate nohighlight">\(K\)</span> and <span class="math notranslate nohighlight">\(B\)</span>; if no
+start is acceptable, the best fit is taken.</p>
+</li>
+<li><p><strong>No clear Porod regime.</strong> The report warns in three cases:</p>
+<ul class="simple">
+<li><p>the best <span class="math notranslate nohighlight">\(\chi^2 &gt; 6\)</span> with error bars;</p></li>
+<li><p>the range spans less than a factor 1.5 in q, so <span class="math notranslate nohighlight">\(K\)</span> and <span class="math notranslate nohighlight">\(B\)</span> cannot be separated;</p></li>
+<li><p><span class="math notranslate nohighlight">\(Kq_i^{-4} &lt; |B|\)</span> at the start, so the “fit” is a constant.</p></li>
+</ul>
+</li>
+</ol>
+<p>A fitted <span class="math notranslate nohighlight">\(B\)</span> also absorbs part of the next term of the Porod expansion (e.g. <span class="math notranslate nohighlight">\(\propto q^{-6}\)</span>) near the start of
+the range.</p>
+<p><strong>Low q.</strong> The first points (default 10) give the extrapolation from q = 0 to <span class="math notranslate nohighlight">\(q_\text{min}\)</span>, on 40 nodes
+(<a class="reference internal" href="api.html#pysasfit.morph.extrapolation.fit_low_q" title="pysasfit.morph.extrapolation.fit_low_q"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit_low_q()</span></code></a>).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>method</p></th>
+<th class="head"><p>model</p></th>
+<th class="head"><p>fit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Guinier</p></td>
+<td><p><span class="math notranslate nohighlight">\(I_0\,e^{-q^2R_g^2/3}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\ln I = a + b\,q^2\)</span>, weights <span class="math notranslate nohighlight">\(I/\sigma\)</span>; <span class="math notranslate nohighlight">\(R_g^2 = -3b\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>linear</p></td>
+<td><p><span class="math notranslate nohighlight">\(a + b\,q\)</span></p></td>
+<td><p>weights <span class="math notranslate nohighlight">\(1/\sigma\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>constant</p></td>
+<td><p><span class="math notranslate nohighlight">\(\bar I = \sum I\sigma^{-2} / \sum\sigma^{-2}\)</span></p></td>
+<td><p>–</p></td>
+</tr>
+</tbody>
+</table>
+<p>Guinier falls back to constant when <span class="math notranslate nohighlight">\(b \ge 0\)</span> or some <span class="math notranslate nohighlight">\(I \le 0\)</span>. Linear falls back to constant when <span class="math notranslate nohighlight">\(a \le 0\)</span>.</p>
+<p><strong>Between data points.</strong> The program inserts 4 extra nodes per interval, with <span class="math notranslate nohighlight">\(I\)</span> interpolated linearly in
+<span class="math notranslate nohighlight">\(\log I\)</span> against <span class="math notranslate nohighlight">\(\log q\)</span> (linearly where <span class="math notranslate nohighlight">\(I \le 0\)</span>). On the resulting nodes <span class="math notranslate nohighlight">\(q_0 &lt; \dots &lt; q_N\)</span> the function</p>
+<div class="math notranslate nohighlight">
+\[
+u(q) = q\,I(q)
+\]</div>
+<p>is treated as <strong>piecewise linear</strong>. Beyond <span class="math notranslate nohighlight">\(q_N\)</span> the Porod law <span class="math notranslate nohighlight">\(K q^{-4}\)</span> holds up to infinity.</p>
+<p><strong>Invariant.</strong> The invariant is exact for this interpolant, with the Porod tail integrated analytically
+(<a class="reference internal" href="api.html#pysasfit.morph.extrapolation.ExtrapolatedCurve.invariant" title="pysasfit.morph.extrapolation.ExtrapolatedCurve.invariant"><code class="xref py py-attr docutils literal notranslate"><span class="pre">invariant</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+Q = \sum_i \int_{q_i}^{q_{i+1}} q\,u(q)\,\mathrm dq + \frac{K}{q_N} .
+\]</div>
+<p>The program reports the share <span class="math notranslate nohighlight">\(K/(q_N Q)\)</span> of the Porod tail. Above 20 % the q range is probably too short.</p>
+</section>
+<section id="exact-sine-transforms">
+<h2>3. Exact sine transforms<a class="headerlink" href="#exact-sine-transforms" title="Link to this heading"></a></h2>
+<p>Every isotropic transform in pySASmorph has the form <span class="math notranslate nohighlight">\(T(r) = \int_{x_0}^{x_N} u(x)\sin(xr)\,\mathrm dx\)</span> with <span class="math notranslate nohighlight">\(u\)</span>
+piecewise linear (<a class="reference internal" href="api.html#pysasfit.morph.transforms.sine_transform_pl" title="pysasfit.morph.transforms.sine_transform_pl"><code class="xref py py-func docutils literal notranslate"><span class="pre">sine_transform_pl()</span></code></a>). For example, <span class="math notranslate nohighlight">\(Q\gamma(r) = T(r)/r\)</span> with
+<span class="math notranslate nohighlight">\(u = qI\)</span>.</p>
+<p><strong>Exact formula.</strong> On a segment <span class="math notranslate nohighlight">\([a,b]\)</span> with slope <span class="math notranslate nohighlight">\(s\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+\int_a^b u(x)\sin(xr)\,\mathrm dx
+= \frac{u_a\cos ar - u_b\cos br}{r} + s\,\frac{\sin br - \sin ar}{r^2} .
+\]</div>
+<p>Summed over the segments, the first term telescopes to <span class="math notranslate nohighlight">\(\bigl(u_0\cos x_0 r - u_N\cos x_N r\bigr)/r\)</span>. This
+Filon-type quadrature is exact for the interpolant at any <span class="math notranslate nohighlight">\(r\)</span>. It needs no points per oscillation. A trapezoid
+rule on the data grid breaks down once <span class="math notranslate nohighlight">\(r\,\Delta q \sim 1\)</span>; that is where the ripple of SAXSMorph’s <span class="math notranslate nohighlight">\(\Gamma(r)\)</span>
+and <span class="math notranslate nohighlight">\(f(k)\)</span> comes from.</p>
+<p><strong>Small r.</strong> For <span class="math notranslate nohighlight">\(r\,x_N &lt; 0.05\)</span> the closed form loses digits by cancellation. The program then uses the Taylor
+series with the exact moments <span class="math notranslate nohighlight">\(m_n = \int x^n u\,\mathrm dx\)</span> of the interpolant
+(<a class="reference internal" href="api.html#pysasfit.morph.transforms.moments_pl" title="pysasfit.morph.transforms.moments_pl"><code class="xref py py-func docutils literal notranslate"><span class="pre">moments_pl()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+T(r) = r\,m_1 - \frac{r^3 m_3}{3!} + \frac{r^5 m_5}{5!} - \frac{r^7 m_7}{7!} .
+\]</div>
+<p><strong>Porod tail.</strong> The tail <span class="math notranslate nohighlight">\(I = Kq^{-4}\)</span> for <span class="math notranslate nohighlight">\(q&gt;q_N\)</span> contributes, with the sine integral <span class="math notranslate nohighlight">\(\mathrm{Si}\)</span>
+(<a class="reference internal" href="api.html#pysasfit.morph.transforms.porod_tail" title="pysasfit.morph.transforms.porod_tail"><code class="xref py py-func docutils literal notranslate"><span class="pre">porod_tail()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+\int_{q_N}^\infty q^2\,\frac{K}{q^4}\,\frac{\sin qr}{qr}\,\mathrm dq = K\,r\,J_3(q_N r),
+\qquad
+J_3(a) = \int_a^\infty \frac{\sin x}{x^3}\,\mathrm dx
+       = \frac{\sin a}{2a^2} + \frac{\cos a}{2a} - \frac12\Bigl(\frac\pi2 - \mathrm{Si}(a)\Bigr) .
+\]</div>
+<p>Its limit at <span class="math notranslate nohighlight">\(r = 0\)</span> is <span class="math notranslate nohighlight">\(K/q_N\)</span>, the Porod part of the invariant.</p>
+</section>
+<section id="the-clipped-gaussian-random-field">
+<h2>4. The clipped Gaussian random field<a class="headerlink" href="#the-clipped-gaussian-random-field" title="Link to this heading"></a></h2>
+<p><strong>Gaussian random field.</strong> <span class="math notranslate nohighlight">\(\psi(\mathbf r)\)</span> is a statistically homogeneous and isotropic Gaussian random field
+with zero mean, unit variance and correlation function</p>
+<div class="math notranslate nohighlight">
+\[
+g(r) = \langle\psi(\mathbf 0)\,\psi(\mathbf r)\rangle, \qquad g(0) = 1 .
+\]</div>
+<p><strong>Level cut.</strong> Cutting it at the level <span class="math notranslate nohighlight">\(\alpha\)</span> gives a two-phase structure (Cahn 1965; Berk 1987, 1991):</p>
+<div class="math notranslate nohighlight">
+\[
+\chi(\mathbf r) = H\bigl(\psi(\mathbf r)-\alpha\bigr), \qquad
+\varphi = P(\psi&gt;\alpha) = \tfrac12\operatorname{erfc}\bigl(\alpha/\sqrt2\bigr),\quad
+\alpha = \sqrt2\,\operatorname{erfc}^{-1}(2\varphi) .
+\]</div>
+<p><strong>Two-point function of the cut field.</strong> <span class="math notranslate nohighlight">\(\psi(\mathbf 0)\)</span> and <span class="math notranslate nohighlight">\(\psi(\mathbf r)\)</span> are bivariate normal with
+correlation <span class="math notranslate nohighlight">\(g\)</span>. With the bivariate normal density <span class="math notranslate nohighlight">\(\phi_2\)</span>, Plackett’s identity (1954) states</p>
+<div class="math notranslate nohighlight">
+\[
+\frac{\partial}{\partial t}\,P\bigl(\psi_1&gt;a,\ \psi_2&gt;b\bigr)\Big|_{\operatorname{corr}=t} = \phi_2(a,b;t),
+\qquad
+\phi_2(a,b;t) = \frac{1}{2\pi\sqrt{1-t^2}}\exp\!\Bigl[-\frac{a^2+b^2-2tab}{2(1-t^2)}\Bigr] .
+\]</div>
+<p>At <span class="math notranslate nohighlight">\(t = 0\)</span> the two values are independent and <span class="math notranslate nohighlight">\(S_2 = \varphi^2\)</span>. Integrating from there gives</p>
+<div class="math notranslate nohighlight">
+\[
+S_2(r)-\varphi^2 = F\bigl(g(r)\bigr),\qquad
+F(g) = \frac{1}{2\pi}\int_0^{g}\frac{e^{-\alpha^2/(1+t)}}{\sqrt{1-t^2}}\,\mathrm dt
+     = \frac{1}{2\pi}\int_0^{\arcsin g} e^{-\alpha^2/(1+\sin\theta)}\,\mathrm d\theta .
+\]</div>
+<p><strong>Implementation.</strong> <span class="math notranslate nohighlight">\(F\)</span> is tabulated in <span class="math notranslate nohighlight">\(\theta = \arcsin g\)</span> on 20 001 points, where the integrand has no end-point
+singularity, and integrated by cumulative Simpson (<a class="reference internal" href="api.html#pysasfit.morph.correlation.LevelCut" title="pysasfit.morph.correlation.LevelCut"><code class="xref py py-class docutils literal notranslate"><span class="pre">LevelCut</span></code></a>).</p>
+<p><strong>End values.</strong> They are the exact orthant probabilities. At <span class="math notranslate nohighlight">\(g = 1\)</span> the two points coincide. At <span class="math notranslate nohighlight">\(g = -1\)</span>
+<span class="math notranslate nohighlight">\(\psi(\mathbf r) = -\psi(\mathbf 0)\)</span>, so both values exceed <span class="math notranslate nohighlight">\(\alpha\)</span> only between <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(-\alpha\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+F(1) = \varphi(1-\varphi), \qquad F(-1) = -\min(\varphi,1-\varphi)^2,
+\qquad F(g) = \frac{\arcsin g}{2\pi}\ \ (\varphi=\tfrac12).
+\]</div>
+<p><strong>Inversion.</strong> Setting the model equal to the data, <span class="math notranslate nohighlight">\(S_2-\varphi^2 = \varphi(1-\varphi)\gamma\)</span>, gives the field
+correlation:</p>
+<div class="math notranslate nohighlight">
+\[
+g(r) = F^{-1}\bigl(\varphi(1-\varphi)\,\gamma(r)\bigr) .
+\]</div>
+<p><span class="math notranslate nohighlight">\(F\)</span> is monotonic. It is inverted by interpolation in the table (θ as a function of F), then <span class="math notranslate nohighlight">\(g = \sin\theta\)</span>.
+Values of <span class="math notranslate nohighlight">\(\varphi(1-\varphi)\gamma\)</span> outside <span class="math notranslate nohighlight">\([F(-1), F(1)]\)</span> cannot come from any level-cut field. They are
+clipped and counted (<code class="xref py py-attr docutils literal notranslate"><span class="pre">clipped</span></code>). Many clipped points mean a wrong
+<span class="math notranslate nohighlight">\(\varphi\)</span>, a wrong background, or a structure that is not a level cut.</p>
+<p><strong>Interfaces of the cut field.</strong> Near <span class="math notranslate nohighlight">\(g = 1\)</span> the integrand is <span class="math notranslate nohighlight">\(\simeq e^{-\alpha^2/2}/\sqrt{2(1-t)}\)</span>, so</p>
+<div class="math notranslate nohighlight">
+\[
+F(1)-F(g) \simeq \frac{e^{-\alpha^2/2}}{2\pi}\sqrt{2(1-g)} .
+\]</div>
+<p>A smooth field has <span class="math notranslate nohighlight">\(g \simeq 1 + \tfrac12 g''(0)\,r^2\)</span>. Then <span class="math notranslate nohighlight">\(1-\gamma\)</span> is linear in <span class="math notranslate nohighlight">\(r\)</span>, which is Porod
+behaviour. Comparison with §1 gives the interface area of the level surfaces:</p>
+<div class="math notranslate nohighlight">
+\[
+\frac SV = \frac2\pi\,\sqrt{-g''(0)}\;e^{-\alpha^2/2} .
+\]</div>
+<p>This is twice Rice’s (1944) number of level crossings per unit length; the factor 2 is the stereological
+relation <span class="math notranslate nohighlight">\(S/V = 2P_L\)</span>. Data that fall off more slowly than <span class="math notranslate nohighlight">\(q^{-4}\)</span> (rough or fractal interfaces) need a
+non-smooth <span class="math notranslate nohighlight">\(g\)</span> and lie outside the model.</p>
+</section>
+<section id="spectral-function">
+<h2>5. Spectral function<a class="headerlink" href="#spectral-function" title="Link to this heading"></a></h2>
+<p>The field is built from its spectral function, the 3D Fourier transform of <span class="math notranslate nohighlight">\(g\)</span>
+(<a class="reference internal" href="api.html#pysasfit.morph.correlation.spectral_function" title="pysasfit.morph.correlation.spectral_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">spectral_function()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+f(k) = 4\pi\int_0^\infty r^2\,g(r)\,\frac{\sin kr}{kr}\,\mathrm dr,
+\qquad
+g(r) = \frac{1}{2\pi^2}\int_0^\infty k^2 f(k)\,\frac{\sin kr}{kr}\,\mathrm dk .
+\]</div>
+<p>It is computed with the transform of §3, with <span class="math notranslate nohighlight">\(u = r\,g\)</span>.</p>
+<p><strong>Wave-vector distribution.</strong> Its distribution of magnitudes is normalised by <span class="math notranslate nohighlight">\(g(0) = 1\)</span>
+(<a class="reference internal" href="api.html#pysasfit.morph.correlation.wavevector_distribution" title="pysasfit.morph.correlation.wavevector_distribution"><code class="xref py py-func docutils literal notranslate"><span class="pre">wavevector_distribution()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+P(k) = \frac{k^2 f(k)}{2\pi^2}, \qquad \int_0^\infty P(k)\,\mathrm dk = 1 .
+\]</div>
+<p>Negative values of <span class="math notranslate nohighlight">\(P\)</span> are set to zero. A valid correlation function has <span class="math notranslate nohighlight">\(f \ge 0\)</span> (Bochner), so negative values
+signal an inconsistent <span class="math notranslate nohighlight">\(g\)</span>.</p>
+<p><strong>r grid.</strong> <span class="math notranslate nohighlight">\(g\)</span> is evaluated on a uniform grid (<code class="docutils literal notranslate"><span class="pre">pipeline._r_grid</span></code>):</p>
+<ul class="simple">
+<li><p><strong>Range:</strong> from 0 to <span class="math notranslate nohighlight">\(r_\text{max} = 1.02\cdot\tfrac{\sqrt3}{2}L\)</span>, half the box diagonal.</p></li>
+<li><p><strong>Step:</strong> <span class="math notranslate nohighlight">\(\Delta r = \min\bigl(a/4,\ \pi/(16\,q_\text{max})\bigr)\)</span>, so that the model <span class="math notranslate nohighlight">\(I(q)\)</span> is accurate up to
+<span class="math notranslate nohighlight">\(q_\text{max}\)</span>.</p></li>
+</ul>
+<p>A warning is given when <span class="math notranslate nohighlight">\(|\gamma(r_\text{max})| &gt; 0.05\)</span>, i.e. when the correlations extend beyond the box.</p>
+</section>
+<section id="generating-the-field">
+<h2>6. Generating the field<a class="headerlink" href="#generating-the-field" title="Link to this heading"></a></h2>
+<p>The box has edge <span class="math notranslate nohighlight">\(L\)</span> with <span class="math notranslate nohighlight">\(n^3\)</span> voxels of size <span class="math notranslate nohighlight">\(a = L/n\)</span> (<a class="reference internal" href="api.html#module-pysasfit.morph.grf" title="pysasfit.morph.grf"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.grf</span></code></a>).</p>
+<section id="fft-spectral-synthesis-default">
+<h3>FFT spectral synthesis (default)<a class="headerlink" href="#fft-spectral-synthesis-default" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="api.html#pysasfit.morph.grf.field_fft" title="pysasfit.morph.grf.field_fft"><code class="xref py py-func docutils literal notranslate"><span class="pre">field_fft()</span></code></a> follows the circulant-embedding idea (Dietrich and Newsam 1997):</p>
+<ol class="arabic">
+<li><p><strong>Sample <span class="math notranslate nohighlight">\(g\)</span> on the grid.</strong> <span class="math notranslate nohighlight">\(g\)</span> is sampled at the minimum-image distance of every voxel to the origin. This
+periodises <span class="math notranslate nohighlight">\(g\)</span> on the torus of edge <span class="math notranslate nohighlight">\(L\)</span>; beyond <span class="math notranslate nohighlight">\(r_\text{max}\)</span>, <span class="math notranslate nohighlight">\(g = 0\)</span>.</p></li>
+<li><p><strong>Power spectrum.</strong> <span class="math notranslate nohighlight">\(S(\mathbf k) = \operatorname{Re}\,\mathrm{DFT}[g]\)</span> on exactly the grid wave vectors
+<span class="math notranslate nohighlight">\(\mathbf k = 2\pi\mathbf m/L\)</span>. Negative values, which come from a truncated or inconsistent <span class="math notranslate nohighlight">\(g\)</span>, are set to
+zero. Their share of <span class="math notranslate nohighlight">\(\sum|S|\)</span> is reported as <code class="docutils literal notranslate"><span class="pre">negative_power</span></code>.</p></li>
+<li><p><strong>Field.</strong> With white Gaussian noise <span class="math notranslate nohighlight">\(w\)</span> on the grid:</p>
+<div class="math notranslate nohighlight">
+\[
+   \psi = \mathrm{IFFT}\bigl[\sqrt{S}\;\mathrm{FFT}(w)\bigr],
+   \]</div>
+<p>then shifted to mean 0 and scaled to variance 1.</p>
+</li>
+</ol>
+<p>The covariance of <span class="math notranslate nohighlight">\(\psi\)</span> on the grid is then exactly the periodised <span class="math notranslate nohighlight">\(g\)</span>, apart from the discarded negative power.
+The cost is <span class="math notranslate nohighlight">\(O(n^3\log n)\)</span>. The field is periodic, so <span class="math notranslate nohighlight">\(L\)</span> must span several correlation lengths.</p>
+</section>
+<section id="random-waves-berk-saxsmorph">
+<h3>Random waves (Berk; SAXSMorph)<a class="headerlink" href="#random-waves-berk-saxsmorph" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="api.html#pysasfit.morph.grf.field_cosine" title="pysasfit.morph.grf.field_cosine"><code class="xref py py-func docutils literal notranslate"><span class="pre">field_cosine()</span></code></a>, with <code class="docutils literal notranslate"><span class="pre">method=&quot;cosine&quot;</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[
+\psi(\mathbf r) = \sqrt{\frac{2}{N_w}}\sum_{i=1}^{N_w}\cos(\mathbf k_i\cdot\mathbf r + \phi_i) .
+\]</div>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(|\mathbf k_i|\)</span> is drawn from <span class="math notranslate nohighlight">\(P(k)\)</span> by inverse CDF. SAXSMorph uses rejection sampling.</p></li>
+<li><p>The directions are uniform on the sphere and the phases <span class="math notranslate nohighlight">\(\phi_i\)</span> uniform in <span class="math notranslate nohighlight">\([0, 2\pi)\)</span>.</p></li>
+</ul>
+<p>For <span class="math notranslate nohighlight">\(N_w\to\infty\)</span> the field is Gaussian with correlation <span class="math notranslate nohighlight">\(g\)</span>. It is not periodic. The cost is
+<span class="math notranslate nohighlight">\(O(N_w n^3)\)</span>. The share of <span class="math notranslate nohighlight">\(|\mathbf k_i| &gt; \pi/a\)</span>, which the grid cannot represent, is reported.</p>
+</section>
+<section id="the-cut">
+<h3>The cut<a class="headerlink" href="#the-cut" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="api.html#pysasfit.morph.grf.level_cut" title="pysasfit.morph.grf.level_cut"><code class="xref py py-func docutils literal notranslate"><span class="pre">level_cut()</span></code></a> has two modes:</p>
+<ul class="simple">
+<li><p><strong>Quantile (default):</strong> the cut is at the empirical <span class="math notranslate nohighlight">\((1-\varphi)\)</span>-quantile of the voxel values, so the voxel
+porosity equals <span class="math notranslate nohighlight">\(\varphi\)</span> exactly.</p></li>
+<li><p><strong>α:</strong> the cut is at the theoretical level <span class="math notranslate nohighlight">\(\alpha\)</span>, so the voxel porosity fluctuates around <span class="math notranslate nohighlight">\(\varphi\)</span>.</p></li>
+</ul>
+</section>
+</section>
+<section id="checks-against-the-data">
+<h2>7. Checks against the data<a class="headerlink" href="#checks-against-the-data" title="Link to this heading"></a></h2>
+<p><strong>Level-cut model</strong> (<a class="reference internal" href="api.html#pysasfit.morph.scattering.levelcut_intensity" title="pysasfit.morph.scattering.levelcut_intensity"><code class="xref py py-func docutils literal notranslate"><span class="pre">levelcut_intensity()</span></code></a>). This is the ensemble average of the
+model with the reconstructed <span class="math notranslate nohighlight">\(g\)</span>. It equals the data wherever <span class="math notranslate nohighlight">\(\gamma\)</span> could be inverted without clipping:</p>
+<div class="math notranslate nohighlight">
+\[
+I_\text{lc}(q) = \Delta\rho^2\,4\pi\int_0^{r_\text{max}} r^2\,F\bigl(g(r)\bigr)\,\frac{\sin qr}{qr}\,\mathrm dr .
+\]</div>
+<p>With measurement errors the report gives
+<span class="math notranslate nohighlight">\(\chi^2 = \frac1N\sum\bigl[(I_\text{lc}-I)/\sigma\bigr]^2\)</span> over the data points used (mean square, not divided by
+degrees of freedom).</p>
+<p><strong>Voxel structure</strong> (<a class="reference internal" href="api.html#pysasfit.morph.scattering.voxel_intensity" title="pysasfit.morph.scattering.voxel_intensity"><code class="xref py py-func docutils literal notranslate"><span class="pre">voxel_intensity()</span></code></a>). This is what one realisation scatters:</p>
+<div class="math notranslate nohighlight">
+\[
+I_\text{vox}(q) = \Delta\rho^2\,\frac{a^3}{n^3}\,\Bigl\langle\bigl|\mathrm{DFT}[\chi-\bar\chi]\bigr|^2\Bigr\rangle_{|\mathbf k|\approx q} .
+\]</div>
+<p>It is averaged in shells of width <span class="math notranslate nohighlight">\(2\pi/L\)</span>; the half-space rfft planes are weighted twice. Expect speckle at
+low q, from the few wave vectors per shell, and voxel effects near <span class="math notranslate nohighlight">\(\pi/a\)</span>.</p>
+</section>
+<section id="morphology-of-the-voxel-structure">
+<h2>8. Morphology of the voxel structure<a class="headerlink" href="#morphology-of-the-voxel-structure" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api.html#module-pysasfit.morph.statistics" title="pysasfit.morph.statistics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.statistics</span></code></a> and <a class="reference internal" href="api.html#pysasfit.morph.multiphase.interface_areas" title="pysasfit.morph.multiphase.interface_areas"><code class="xref py py-func docutils literal notranslate"><span class="pre">interface_areas()</span></code></a> compute:</p>
+<ul>
+<li><p><strong>Interface area.</strong></p>
+<div class="math notranslate nohighlight">
+\[
+  \frac SV = \frac23\,\frac{N_\text{faces}\,a^2}{n^3a^3},
+  \]</div>
+<p>with <span class="math notranslate nohighlight">\(N_\text{faces}\)</span> the voxel faces between unlike neighbours (periodic box). A staircase surface overestimates
+the area by the mean of <span class="math notranslate nohighlight">\(|n_x|+|n_y|+|n_z|\)</span> over isotropic normals, which is <span class="math notranslate nohighlight">\(3/2\)</span>; hence the factor <span class="math notranslate nohighlight">\(2/3\)</span>.
+Compare with <span class="math notranslate nohighlight">\(S/V\)</span> from Porod (§1).</p>
+</li>
+<li><p><strong>Clusters.</strong> Connected components of each phase with 6-connectivity, the largest cluster’s share, and their
+number.</p></li>
+<li><p><strong>Percolation</strong> along x, y and z: a cluster touches both opposite faces of the box.</p></li>
+<li><p><strong>Bicontinuous</strong> (as SAXSMorph): each phase has a cluster that percolates in all three directions.</p></li>
+<li><p><strong>Degree of connectivity</strong> (as SAXSMorph): <span class="math notranslate nohighlight">\((N_\text{largest pore}+N_\text{largest solid})/n^3\)</span>.</p></li>
+</ul>
+</section>
+<section id="several-phases-one-field-several-cuts">
+<h2>9. Several phases: one field, several cuts<a class="headerlink" href="#several-phases-one-field-several-cuts" title="Link to this heading"></a></h2>
+<section id="ordered-phases">
+<h3>Ordered phases<a class="headerlink" href="#ordered-phases" title="Link to this heading"></a></h3>
+<p><a class="reference internal" href="api.html#module-pysasfit.morph.multiphase" title="pysasfit.morph.multiphase"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.multiphase</span></code></a>. The same field is cut at <span class="math notranslate nohighlight">\(N-1\)</span> levels <span class="math notranslate nohighlight">\(\alpha_1&lt;\dots&lt;\alpha_{N-1}\)</span>. Phase <span class="math notranslate nohighlight">\(i\)</span>
+occupies <span class="math notranslate nohighlight">\(\alpha_i&lt;\psi&lt;\alpha_{i+1}\)</span>, with <span class="math notranslate nohighlight">\(\alpha_0 = -\infty\)</span> and <span class="math notranslate nohighlight">\(\alpha_N = \infty\)</span>. The phases are therefore
+<em>ordered</em>: phase <span class="math notranslate nohighlight">\(i\)</span> touches only <span class="math notranslate nohighlight">\(i\pm1\)</span>. A middle phase is a layer between its neighbours, e.g. a film, a
+shell or a wetting layer. The fractions fix the levels, with <span class="math notranslate nohighlight">\(\Phi\)</span> the standard normal distribution function:</p>
+<div class="math notranslate nohighlight">
+\[
+\alpha_k = \Phi^{-1}\Bigl(\sum_{i&lt;k}\varphi_i\Bigr) .
+\]</div>
+</section>
+<section id="sld-correlation">
+<h3>SLD correlation<a class="headerlink" href="#sld-correlation" title="Link to this heading"></a></h3>
+<p>With the SLD jumps <span class="math notranslate nohighlight">\(D_k = \rho_k-\rho_{k-1}\)</span> the SLD is</p>
+<div class="math notranslate nohighlight">
+\[
+\rho(\psi) = \rho_0 + \sum_k D_k\,H(\psi-\alpha_k) .
+\]</div>
+<p>Plackett’s identity (§4) applied to every pair of cuts gives the SLD correlation:</p>
+<div class="math notranslate nohighlight">
+\[
+C(r) = \langle\delta\rho(\mathbf 0)\,\delta\rho(\mathbf r)\rangle
+     = \sum_{k,l} D_k D_l\, B\bigl(\alpha_k,\alpha_l;g(r)\bigr),\qquad
+B(a,b;g) = \int_0^g \phi_2(a,b;t)\,\mathrm dt .
+\]</div>
+<p>It starts from</p>
+<div class="math notranslate nohighlight">
+\[
+C(0) = \sum_i\varphi_i\rho_i^2 - \Bigl(\sum_i\varphi_i\rho_i\Bigr)^2 .
+\]</div>
+<ul class="simple">
+<li><p><strong>Special cases:</strong> one cut reduces to §4; a single phase between two cuts is the two-cut model of Berk (1991),
+Roberts (1997) and Arleth et al. (2001).</p></li>
+<li><p><strong>Implementation:</strong> <span class="math notranslate nohighlight">\(B\)</span> is tabulated in <span class="math notranslate nohighlight">\(\theta = \arcsin t\)</span>, like <span class="math notranslate nohighlight">\(F\)</span>.</p></li>
+<li><p><strong>Invariant:</strong> <span class="math notranslate nohighlight">\(Q_m = s\cdot 2\pi^2 C_m(0)\)</span>. The unit factor <span class="math notranslate nohighlight">\(s\)</span> is <span class="math notranslate nohighlight">\(10^{-4}\)</span> (q in Å⁻¹) or <span class="math notranslate nohighlight">\(10^{-1}\)</span> (q in
+nm⁻¹), for SLDs in 10⁻⁶ Å⁻² and <span class="math notranslate nohighlight">\(I\)</span> in cm⁻¹.</p></li>
+</ul>
+</section>
+<section id="several-contrasts">
+<h3>Several contrasts<a class="headerlink" href="#several-contrasts" title="Link to this heading"></a></h3>
+<p>Curve <span class="math notranslate nohighlight">\(m\)</span> has its own SLDs and gives</p>
+<div class="math notranslate nohighlight">
+\[
+\gamma_m(r) = C_m(r)/C_m(0) \quad\text{(data)},\qquad G_m(g) = C_m(g)/C_m(0) \quad\text{(model)} .
+\]</div>
+<p><strong>Common field correlation.</strong> At every <span class="math notranslate nohighlight">\(r\)</span> it minimises the weighted misfit
+(<a class="reference internal" href="api.html#pysasfit.morph.multiphase.joint_g" title="pysasfit.morph.multiphase.joint_g"><code class="xref py py-func docutils literal notranslate"><span class="pre">joint_g()</span></code></a>):</p>
+<div class="math notranslate nohighlight">
+\[
+g(r) = \arg\min_g \sum_m w_m\bigl[\gamma_m(r) - G_m(g)\bigr]^2 .
+\]</div>
+<p>The minimum is searched on a fine <span class="math notranslate nohighlight">\(g\)</span> grid, so it works where <span class="math notranslate nohighlight">\(G_m\)</span> is not monotonic.</p>
+<p><strong>Rescaling.</strong> For two or more curves each <span class="math notranslate nohighlight">\(\gamma_m\)</span> may be rescaled by <span class="math notranslate nohighlight">\(\lambda_m\)</span>. This allows for an invariant
+that is a few per cent off when a curve does not reach its Porod regime:</p>
+<div class="math notranslate nohighlight">
+\[
+\lambda_m = \frac{\sum_r G_m(g)\,\gamma_m}{\sum_r\gamma_m^2} .
+\]</div>
+<p><span class="math notranslate nohighlight">\(\lambda_m\)</span> is clipped to <span class="math notranslate nohighlight">\([0.8, 1.25]\)</span>, and <span class="math notranslate nohighlight">\(g\)</span> and <span class="math notranslate nohighlight">\(\lambda\)</span> are iterated. Corrections above 10 % are reported.</p>
+<p><strong>Fitting the fractions</strong> (<a class="reference internal" href="api.html#pysasfit.morph.multiphase.fit_fractions" title="pysasfit.morph.multiphase.fit_fractions"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit_fractions()</span></code></a>):</p>
+<ul class="simple">
+<li><p><strong>Parametrisation:</strong> <span class="math notranslate nohighlight">\(\varphi_i = e^{x_i}/\sum e^{x_j}\)</span> with <span class="math notranslate nohighlight">\(x_0 = 0\)</span>, minimised by Nelder–Mead.</p></li>
+<li><p><strong>Objective:</strong> the profile misfit <span class="math notranslate nohighlight">\(\sum_m w_m\,\overline{(\gamma_m - G_m)^2}\)</span>, plus <span class="math notranslate nohighlight">\(10^{-2}\sum_m w_m
+\bigl[\ln\frac{Q_m}{2\pi^2C_m(0)} - c\bigr]^2\)</span>.</p></li>
+<li><p><strong>Invariant offset <span class="math notranslate nohighlight">\(c\)</span>:</strong> the weighted mean of the logarithms when all curves share one intensity scale (only
+the ratios count), or <span class="math notranslate nohighlight">\(\ln s\)</span> for absolute data.</p></li>
+<li><p><strong>Weight:</strong> with <span class="math notranslate nohighlight">\(10^{-2}\)</span>, a 10 % invariant mismatch counts as an rms <span class="math notranslate nohighlight">\(\gamma\)</span> misfit of 0.01.</p></li>
+<li><p><strong>Accuracy:</strong> the shapes alone fix the fractions only weakly, to a few hundredths in the tests.</p></li>
+</ul>
+<p><strong>Interfaces between phases.</strong> <span class="math notranslate nohighlight">\(S_{ij}/V\)</span> is found by the face count of §8, for every pair of phases <span class="math notranslate nohighlight">\(i&lt;j\)</span>.
+Non-neighbouring phases touch only where a layer is thinner than a voxel.</p>
+</section>
+<section id="sesans-curves">
+<h3>SESANS curves<a class="headerlink" href="#sesans-curves" title="Link to this heading"></a></h3>
+<p>Spin-echo SANS (Rekveldt 1996; Andersson et al. 2008) measures the projection of the same SLD correlation function
+<span class="math notranslate nohighlight">\(C(r)\)</span> (with <span class="math notranslate nohighlight">\(I(Q) = 4\pi\int r^2 C(r)\,\frac{\sin Qr}{Qr}\,\mathrm dr\)</span>) along the beam:</p>
+<div class="math notranslate nohighlight">
+\[
+G(\delta) - G(0) = \frac{1}{2\pi}\int_0^\infty I(Q)\,[J_0(Q\delta) - 1]\,Q\,\mathrm dQ
+ = 2\int_\delta^\infty C(r)\,\frac{r\,\mathrm dr}{\sqrt{r^2-\delta^2}} - 2\int_0^\infty C(r)\,\mathrm dr ,
+\]</div>
+<p>in <span class="math notranslate nohighlight">\([\text{length}]^{-2}\,\text{cm}^{-1}\)</span> for <span class="math notranslate nohighlight">\(I\)</span> in cm⁻¹, as the <code class="docutils literal notranslate"><span class="pre">.ses</span></code> files give it (<span class="math notranslate nohighlight">\(P/P_0 = e^{\lambda^2 t\,[G(\delta)-G(0)]}\)</span>).</p>
+<p><strong>Forward model</strong> (<a class="reference internal" href="api.html#pysasfit.morph.sesans.projection_matrix" title="pysasfit.morph.sesans.projection_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">projection_matrix()</span></code></a>). For <span class="math notranslate nohighlight">\(C\)</span> piecewise linear on the r grid
+the Abel integrals are elementary,
+<span class="math notranslate nohighlight">\(\int \frac{r\,\mathrm dr}{\sqrt{r^2-\delta^2}} = \sqrt{r^2-\delta^2}\)</span> and
+<span class="math notranslate nohighlight">\(\int \frac{r^2\,\mathrm dr}{\sqrt{r^2-\delta^2}} = \tfrac12\bigl[r\sqrt{r^2-\delta^2} + \delta^2\ln(r+\sqrt{r^2-\delta^2})\bigr]\)</span>,
+so <span class="math notranslate nohighlight">\(G = A\,C\)</span> is exact, square-root singularity included (DAB: <span class="math notranslate nohighlight">\(2\delta K_1(\delta/\xi) - 2\xi\)</span> to <span class="math notranslate nohighlight">\(10^{-5}\)</span>; the
+Hankel transform of pySASstudio agrees to its own accuracy, <span class="math notranslate nohighlight">\(3\cdot10^{-4}\)</span>).</p>
+<p><strong>Inversion</strong> (<a class="reference internal" href="api.html#pysasfit.morph.sesans.invert_sesans" title="pysasfit.morph.sesans.invert_sesans"><code class="xref py py-func docutils literal notranslate"><span class="pre">invert_sesans()</span></code></a>). <span class="math notranslate nohighlight">\(C\)</span> on <span class="math notranslate nohighlight">\(r=0\)</span> and 59 geometric nodes from
+<span class="math notranslate nohighlight">\(\delta_{\min}/3\)</span> to <span class="math notranslate nohighlight">\(1.2\,\delta_{\max}\)</span> (<span class="math notranslate nohighlight">\(C = 0\)</span> beyond) solves
+<span class="math notranslate nohighlight">\(\min\,\lVert W(AC-G)\rVert^2 + \alpha\lVert DC\rVert^2\)</span> (<span class="math notranslate nohighlight">\(W = 1/\sigma_G\)</span>, <span class="math notranslate nohighlight">\(D\)</span> second differences, plus a pin of the
+last node), <span class="math notranslate nohighlight">\(\alpha\)</span> by the discrepancy principle (the largest <span class="math notranslate nohighlight">\(\alpha\)</span> with <span class="math notranslate nohighlight">\(\chi^2 \le 1\)</span>; GCV without errors).
+<span class="math notranslate nohighlight">\(\gamma_\text{SESANS}(r) = C(r)/C(0)\)</span> is interpolated monotonically (PCHIP): kinks in <span class="math notranslate nohighlight">\(\gamma\)</span> would become kinks in
+<span class="math notranslate nohighlight">\(g\)</span> and spurious intensity at high <span class="math notranslate nohighlight">\(q\)</span>.</p>
+<p><strong>Use in the reconstruction.</strong></p>
+<ul class="simple">
+<li><p><em>SESANS only:</em> the <span class="math notranslate nohighlight">\(\gamma\)</span> of the SESANS curves enter the joint fit of §9 like scattering curves (their
+normalisation <span class="math notranslate nohighlight">\(\lambda_m\)</span> may lie between 0.05 and 20, as <span class="math notranslate nohighlight">\(C(0)\)</span> is extrapolated below <span class="math notranslate nohighlight">\(\delta_{\min}\)</span>).</p></li>
+<li><p><em>With scattering curves:</em> a pointwise compromise between a SESANS <span class="math notranslate nohighlight">\(\gamma\)</span> and a scattering <span class="math notranslate nohighlight">\(\gamma\)</span> is no
+transform pair of either, and the intensity at high <span class="math notranslate nohighlight">\(q\)</span> reacts strongly to that (tests: <span class="math notranslate nohighlight">\(\chi^2 \sim 10^3\)</span>).
+Instead, <span class="math notranslate nohighlight">\(g_\text{SESANS}\)</span> is found from the SESANS curves alone, set smoothly to 0 beyond the largest <span class="math notranslate nohighlight">\(r\)</span> at which
+their <span class="math notranslate nohighlight">\(\gamma\)</span> exceeds its uncertainty, and every scattering curve is <strong>extended below its <span class="math notranslate nohighlight">\(q_{\min}\)</span> by the
+level-cut model of <span class="math notranslate nohighlight">\(g_\text{SESANS}\)</span></strong> for its own SLD set, scaled to its first points. This replaces the Guinier
+or constant extrapolation, which misses the invariant of structures larger than <span class="math notranslate nohighlight">\(\pi/q_{\min}\)</span>. <span class="math notranslate nohighlight">\(g(r)\)</span> then follows
+from the extended scattering curves (exactly a transform pair of each), and the SESANS curves are a check:
+<span class="math notranslate nohighlight">\(G_\text{model} = s\,A\,C_m(g)\)</span> with one scale <span class="math notranslate nohighlight">\(s\)</span> fitted, <span class="math notranslate nohighlight">\(\chi^2\)</span> reported (absolute data: <span class="math notranslate nohighlight">\(s\)</span> against
+<span class="math notranslate nohighlight">\(10^{-4}\)</span> for Å, <span class="math notranslate nohighlight">\(10^{-1}\)</span> for nm).</p></li>
+<li><p><em>Voxel structure:</em> <a class="reference internal" href="api.html#pysasfit.morph.sesans.voxel_correlation" title="pysasfit.morph.sesans.voxel_correlation"><code class="xref py py-func docutils literal notranslate"><span class="pre">voxel_correlation()</span></code></a> (autocorrelation of the SLD map, radial
+average up to <span class="math notranslate nohighlight">\(L/2\)</span>), projected with <span class="math notranslate nohighlight">\(A\)</span>.</p></li>
+</ul>
+<p>In the test (domains of 1500 Å, scattering data from <span class="math notranslate nohighlight">\(q = 0.01\)</span> Å⁻¹, SESANS from 50 to 8000 Å) the scattering curve
+alone misses the invariant by 40 % and <span class="math notranslate nohighlight">\(g\)</span> by 0.23; with the SESANS curve <span class="math notranslate nohighlight">\(g\)</span> is right to 0.04,
+<span class="math notranslate nohighlight">\(\chi^2 = 0.07\)</span> (scattering) and 1.9 (SESANS).</p>
+</section>
+</section>
+<section id="surfaces">
+<h2>10. Surfaces<a class="headerlink" href="#surfaces" title="Link to this heading"></a></h2>
+<p>The 3D panel and the STL export draw iso-surfaces by marching cubes (Lorensen and Cline 1987;
+<a class="reference internal" href="api.html#module-pysasfit.morph.surface" title="pysasfit.morph.surface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.surface</span></code></a>). Three sources are possible:</p>
+<ul class="simple">
+<li><p><strong>Exact cut:</strong> the field <span class="math notranslate nohighlight">\(\psi\)</span> at the cut level, i.e. the smooth interface of the model. For a middle phase it
+is the pair of level surfaces.</p></li>
+<li><p><strong>Smoothed voxels:</strong> the voxel matrix smoothed with a Gaussian of 0.8 voxel.</p></li>
+<li><p><strong>Voxels as exported.</strong></p></li>
+</ul>
+<p>The volume is padded with one layer of the other phase, so the surface is closed at the box faces and at the
+clipping plane.</p>
+</section>
+<section id="box-and-grid">
+<h2>11. Box and grid<a class="headerlink" href="#box-and-grid" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Box size:</strong> by default <span class="math notranslate nohighlight">\(L = 5\cdot 2\pi/q^*\)</span>, with <span class="math notranslate nohighlight">\(q^*\)</span> the maximum of the Kratky plot <span class="math notranslate nohighlight">\(q^2I\)</span>, but at most
+<span class="math notranslate nohighlight">\(n\cdot 2\pi/q_\text{max}\)</span> (<a class="reference internal" href="api.html#pysasfit.morph.pipeline.suggest_box" title="pysasfit.morph.pipeline.suggest_box"><code class="xref py py-func docutils literal notranslate"><span class="pre">suggest_box()</span></code></a>).</p></li>
+<li><p><strong>Voxel size:</strong> the finest structure the data resolve is about <span class="math notranslate nohighlight">\(\pi/q_\text{max}\)</span>. A warning is given when
+<span class="math notranslate nohighlight">\(\pi/a &lt; q_\text{max}\)</span>.</p></li>
+<li><p><strong>Correlations:</strong> <span class="math notranslate nohighlight">\(\gamma(r)\)</span> must have decayed within half the box diagonal (warning, §5).</p></li>
+</ul>
+</section>
+<section id="uniaxial-anisotropy-texture">
+<h2>12. Uniaxial anisotropy (texture)<a class="headerlink" href="#uniaxial-anisotropy-texture" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api.html#module-pysasfit.morph.anisotropic" title="pysasfit.morph.anisotropic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.anisotropic</span></code></a>; usage on <a class="reference internal" href="texture.html"><span class="doc">pySASmorph: anisotropic data (texture)</span></a>.</p>
+<section id="the-level-cut-holds-direction-by-direction">
+<h3>The level cut holds direction by direction<a class="headerlink" href="#the-level-cut-holds-direction-by-direction" title="Link to this heading"></a></h3>
+<p>Nothing in §4 needs isotropy. <span class="math notranslate nohighlight">\(\psi(\mathbf 0)\)</span> and <span class="math notranslate nohighlight">\(\psi(\mathbf r)\)</span> are bivariate normal with correlation
+<span class="math notranslate nohighlight">\(g(\mathbf r)\)</span> for every vector <span class="math notranslate nohighlight">\(\mathbf r\)</span>, so</p>
+<div class="math notranslate nohighlight">
+\[
+S_2(\mathbf r)-\varphi^2 = F\bigl(g(\mathbf r)\bigr), \qquad g(\mathbf r) = F^{-1}\bigl(\varphi(1-\varphi)\,\gamma(\mathbf r)\bigr) .
+\]</div>
+<p>The FFT synthesis of §6 works with any <span class="math notranslate nohighlight">\(g(\mathbf r)\)</span> sampled on the grid
+(<a class="reference internal" href="api.html#pysasfit.morph.anisotropic.field_from_grid_correlation" title="pysasfit.morph.anisotropic.field_from_grid_correlation"><code class="xref py py-func docutils literal notranslate"><span class="pre">field_from_grid_correlation()</span></code></a>). What changes is how <span class="math notranslate nohighlight">\(\gamma(\mathbf r)\)</span> is
+obtained from the data.</p>
+</section>
+<section id="uniaxial-symmetry-one-2d-pattern-is-enough">
+<h3>Uniaxial symmetry: one 2D pattern is enough<a class="headerlink" href="#uniaxial-symmetry-one-2d-pattern-is-enough" title="Link to this heading"></a></h3>
+<p>Take a sample symmetric about an axis <span class="math notranslate nohighlight">\(\hat{\mathbf e}\)</span> in the detector plane, at the angle <span class="math notranslate nohighlight">\(\psi\)</span> from <span class="math notranslate nohighlight">\(q_x\)</span>. Its
+intensity depends only on <span class="math notranslate nohighlight">\(q\)</span> and</p>
+<div class="math notranslate nohighlight">
+\[
+\mu = |\hat{\mathbf q}\cdot\hat{\mathbf e}| ,
+\]</div>
+<p>since centrosymmetry folds <span class="math notranslate nohighlight">\(\mu\)</span> to <span class="math notranslate nohighlight">\([0,1]\)</span>. At small angles the detector plane (<span class="math notranslate nohighlight">\(q_z = 0\)</span>) contains <span class="math notranslate nohighlight">\(\hat{\mathbf
+e}\)</span>, so its points have every <span class="math notranslate nohighlight">\(\mu\)</span>, and the 2D pattern determines <span class="math notranslate nohighlight">\(I(q,\mu)\)</span> completely. Along and across the
+axis:</p>
+<div class="math notranslate nohighlight">
+\[
+q_\parallel = q_x\cos\psi + q_y\sin\psi, \qquad q_\perp = -q_x\sin\psi + q_y\cos\psi .
+\]</div>
+</section>
+<section id="model-b-legendre-components-and-the-plane-wave-expansion">
+<h3>Model B: Legendre components and the plane-wave expansion<a class="headerlink" href="#model-b-legendre-components-and-the-plane-wave-expansion" title="Link to this heading"></a></h3>
+<p><strong>Components.</strong> The intensity is expanded in even Legendre polynomials:</p>
+<div class="math notranslate nohighlight">
+\[
+I(q,\mu) = \sum_{l=0,2,\dots}^{l_\text{max}} I_l(q)\,P_l(\mu) .
+\]</div>
+<p>The <span class="math notranslate nohighlight">\(I_l\)</span> are found by weighted least squares in q bins
+(<a class="reference internal" href="api.html#pysasfit.morph.anisotropic.legendre_components" title="pysasfit.morph.anisotropic.legendre_components"><code class="xref py py-func docutils literal notranslate"><span class="pre">legendre_components()</span></code></a>). Two details matter:</p>
+<ul class="simple">
+<li><p><strong>Bin flattening:</strong> each pixel is first moved to the bin’s mean q along the azimuthal mean
+<span class="math notranslate nohighlight">\(I_\text{ref}(q)\)</span>. Otherwise the correlation of q and μ inside a bin on a square pixel grid appears as a
+spurious anisotropy.</p></li>
+<li><p><strong>Coverage:</strong> a bin uses only as many orders as its μ coverage supports (occupied tenths of [0, 1], minus one).
+Bins without full coverage are left out.</p></li>
+</ul>
+<p><strong>Correlation components.</strong> With the plane-wave expansion
+<span class="math notranslate nohighlight">\(e^{i\mathbf q\cdot\mathbf r} = \sum_l (2l+1)\,i^l j_l(qr)\,P_l(\hat{\mathbf q}\cdot\hat{\mathbf r})\)</span> and the
+addition theorem, <span class="math notranslate nohighlight">\(\int P_l(\hat{\mathbf q}\cdot\hat{\mathbf e})\,P_{l'}(\hat{\mathbf q}\cdot\hat{\mathbf r})\,
+\mathrm d\Omega_q = \frac{4\pi}{2l+1}\delta_{ll'}P_l(\hat{\mathbf r}\cdot\hat{\mathbf e})\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+C(\mathbf r) = \frac{1}{(2\pi)^3}\int I(\mathbf q)\,e^{i\mathbf q\cdot\mathbf r}\,\mathrm d^3q
+            = \sum_l C_l(r)\,P_l(\hat{\mathbf r}\cdot\hat{\mathbf e}),
+\qquad
+C_l(r) = \frac{(-1)^{l/2}}{2\pi^2}\int_0^\infty q^2 I_l(q)\,j_l(qr)\,\mathrm dq .
+\]</div>
+<p>Then <span class="math notranslate nohighlight">\(\gamma(\mathbf r) = C(\mathbf r)/C_0(0)\)</span>.</p>
+<p><strong>The isotropic part.</strong> Only <span class="math notranslate nohighlight">\(l = 0\)</span> contributes to the invariant:</p>
+<div class="math notranslate nohighlight">
+\[
+\int I\,\mathrm d^3q = 4\pi Q_0, \qquad Q_0 = \int q^2 I_0\,\mathrm dq = 2\pi^2\Delta\rho^2\varphi(1-\varphi),
+\]</div>
+<p>so the contrast and <span class="math notranslate nohighlight">\(S/V\)</span> (from <span class="math notranslate nohighlight">\(K_0\)</span>) follow as in §1. <span class="math notranslate nohighlight">\(C_0\)</span> is the transform of §3, with the flat background
+B, the low-q extrapolation and the Porod tail all applied to <span class="math notranslate nohighlight">\(I_0\)</span>.</p>
+<p><strong>Higher orders, <span class="math notranslate nohighlight">\(l \ge 2\)</span>.</strong> <span class="math notranslate nohighlight">\(I_l\)</span> is extended in three ranges:</p>
+<ul class="simple">
+<li><p>below the data as <span class="math notranslate nohighlight">\(I_l(q_1)(q/q_1)^2\)</span> (the anisotropy vanishes at <span class="math notranslate nohighlight">\(q = 0\)</span>);</p></li>
+<li><p>within the data, linearly;</p></li>
+<li><p>beyond the data as <span class="math notranslate nohighlight">\(K_l q^{-4}\)</span>, with <span class="math notranslate nohighlight">\(K_l\)</span> fitted on the Porod range.</p></li>
+</ul>
+<p>The finite part is integrated on a fine uniform grid. The tail is analytic:</p>
+<div class="math notranslate nohighlight">
+\[
+\int_{q_N}^\infty q^2\,\frac{K_l}{q^4}\,j_l(qr)\,\mathrm dq = K_l\,r\int_{q_Nr}^\infty\frac{j_l(x)}{x^2}\,\mathrm dx,
+\qquad
+\int_0^\infty\frac{j_l(x)}{x^2}\,\mathrm dx = \frac{\sqrt\pi}{8}\,\frac{\Gamma\bigl(\frac{l-1}{2}\bigr)}{\Gamma\bigl(\frac{l+4}{2}\bigr)}
+\quad (l\ge2),
+\]</div>
+<p>e.g. π/16 for l = 2 (<a class="reference internal" href="api.html#pysasfit.morph.anisotropic.spherical_transform" title="pysasfit.morph.anisotropic.spherical_transform"><code class="xref py py-func docutils literal notranslate"><span class="pre">spherical_transform()</span></code></a>).</p>
+</section>
+<section id="model-a-affine-stretch">
+<h3>Model A: affine stretch<a class="headerlink" href="#model-a-affine-stretch" title="Link to this heading"></a></h3>
+<p>An isotropic structure stretched by <span class="math notranslate nohighlight">\(\lambda\)</span> along the axis, <span class="math notranslate nohighlight">\(\eta(\mathbf r) = \eta_\text{iso}(M^{-1}\mathbf r)\)</span>
+with <span class="math notranslate nohighlight">\(M = \operatorname{diag}(\lambda, 1, 1)\)</span>, has</p>
+<div class="math notranslate nohighlight">
+\[
+\gamma(\mathbf r) = \gamma_\text{iso}\Bigl(\sqrt{r_\parallel^2/\lambda^2 + r_\perp^2}\Bigr),
+\qquad
+I(\mathbf q) = \lambda\,I_\text{iso}\Bigl(\sqrt{\lambda^2 q_\parallel^2 + q_\perp^2}\Bigr) .
+\]</div>
+<p><strong>Fitting λ and the axis</strong> (<a class="reference internal" href="api.html#pysasfit.morph.anisotropic.fit_affine" title="pysasfit.morph.anisotropic.fit_affine"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit_affine()</span></code></a>). Both are fitted by collapsing
+<span class="math notranslate nohighlight">\(\log I\)</span> onto one curve of <span class="math notranslate nohighlight">\(q_\text{eff}\)</span>. The misfit is the weighted scatter of <span class="math notranslate nohighlight">\(\log I\)</span> about its mean in
+quantile bins of <span class="math notranslate nohighlight">\(q_\text{eff}\)</span>:</p>
+<ul class="simple">
+<li><p>first a grid search over λ ∈ [0.2, 5];</p></li>
+<li><p>then Nelder–Mead in (ln λ, ψ).</p></li>
+</ul>
+<p>The collapsed curve <span class="math notranslate nohighlight">\(I/\lambda\)</span> against <span class="math notranslate nohighlight">\(q_\text{eff}\)</span> goes through the isotropic pipeline. Its invariant equals
+<span class="math notranslate nohighlight">\(Q_0\)</span>, because <span class="math notranslate nohighlight">\(\int I\,\mathrm d^3q\)</span> is invariant under the stretch.</p>
+<p><strong>Which axis.</strong> In the plane, λ along ψ and 1/λ along ψ + 90° give the same ellipses. They differ in 3D, because
+the structure is rotationally symmetric about the chosen axis. The choice of axis therefore decides the 3D
+structure.</p>
+</section>
+<section id="field-model-and-checks">
+<h3>Field, model and checks<a class="headerlink" href="#field-model-and-checks" title="Link to this heading"></a></h3>
+<ul>
+<li><p><strong>g on the grid.</strong> <span class="math notranslate nohighlight">\(g(r,\mu)\)</span> is tabulated on the r grid of §5 and 65 values of μ. The grid vectors take their
+value by bilinear interpolation. The axis is the box x axis.</p></li>
+<li><p><strong>Level-cut model.</strong> <span class="math notranslate nohighlight">\(c(r,\mu) = F(g(r,\mu))\)</span> is projected onto Legendre polynomials by 64-point
+Gauss–Legendre quadrature in μ. A uniform rule fails here, because <span class="math notranslate nohighlight">\(c\)</span> has a cusp at r = 0. Then</p>
+<div class="math notranslate nohighlight">
+\[
+  I^\text{lc}_l(q) = \Delta\rho^2\,4\pi\,(-1)^{l/2}\int_0^{r_\text{max}} r^2\,c_l(r)\,j_l(qr)\,\mathrm dr,
+  \qquad c_l(r) = (2l+1)\int_0^1 c(r,\mu)\,P_l(\mu)\,\mathrm d\mu ,
+  \]</div>
+<p>up to <span class="math notranslate nohighlight">\(l = 12\)</span>. χ² is taken over all pixels in the q range.</p>
+</li>
+<li><p><strong>Voxel structure.</strong> The components come from all 3D wave vectors of <span class="math notranslate nohighlight">\(|\mathrm{DFT}[\chi-\bar\chi]|^2\)</span>, with
+μ = |k_x|/k.</p></li>
+<li><p><strong>Texture measures</strong> (<a class="reference internal" href="api.html#pysasfit.morph.anisotropic.chord_lengths" title="pysasfit.morph.anisotropic.chord_lengths"><code class="xref py py-func docutils literal notranslate"><span class="pre">chord_lengths()</span></code></a>):</p>
+<ul class="simple">
+<li><p>the share of the interface faces normal to x, y and z (1/3 each when isotropic);</p></li>
+<li><p>the mean chord length of each phase along each axis, <span class="math notranslate nohighlight">\(\varphi\,n^3a/(N_d/2)\)</span>, where <span class="math notranslate nohighlight">\(N_d\)</span> is the number of
+faces normal to axis <span class="math notranslate nohighlight">\(d\)</span>.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<p><strong>Scattering by two-phase media</strong></p>
+<ul class="simple">
+<li><p>P. Debye, A. M. Bueche, <em>J. Appl. Phys.</em> <strong>20</strong> (1949) 518 – correlation function and scattering.</p></li>
+<li><p>P. Debye, H. R. Anderson, H. Brumberger, <em>J. Appl. Phys.</em> <strong>28</strong> (1957) 679 – random two-phase media, S/V from
+the slope of γ at the origin.</p></li>
+<li><p>G. Porod, <em>Kolloid-Z.</em> <strong>124</strong> (1951) 83; <strong>125</strong> (1952) 51 – the invariant and the q⁻⁴ law.</p></li>
+<li><p>A. Guinier, G. Fournet, <em>Small-Angle Scattering of X-Rays</em>, Wiley (1955).</p></li>
+<li><p>O. Glatter, O. Kratky (eds.), <em>Small Angle X-ray Scattering</em>, Academic Press (1982).</p></li>
+</ul>
+<p><strong>Gaussian random fields and level crossings</strong></p>
+<ul class="simple">
+<li><p>S. O. Rice, <em>Bell Syst. Tech. J.</em> <strong>23</strong> (1944) 282; <strong>24</strong> (1945) 46 – level crossings of Gaussian processes.</p></li>
+<li><p>R. L. Plackett, <em>Biometrika</em> <strong>41</strong> (1954) 351 – derivative of the bivariate normal distribution with respect to
+the correlation.</p></li>
+<li><p>J. W. Cahn, <em>J. Chem. Phys.</em> <strong>42</strong> (1965) 93 – level surfaces of Gaussian waves as models of spinodal
+structures.</p></li>
+<li><p>R. J. Adler, <em>The Geometry of Random Fields</em>, Wiley (1981).</p></li>
+</ul>
+<p><strong>Level-cut (clipped) Gaussian field models</strong></p>
+<ul class="simple">
+<li><p>N. F. Berk, <em>Phys. Rev. Lett.</em> <strong>58</strong> (1987) 2718; <em>Phys. Rev. A</em> <strong>44</strong> (1991) 5069 – scattering of level-cut
+fields, random-wave construction, two-cut (boundary-layer) model.</p></li>
+<li><p>M. Teubner, <em>Europhys. Lett.</em> <strong>14</strong> (1991) 403 – level surfaces of Gaussian fields and microemulsions.</p></li>
+<li><p>A. P. Roberts, M. Teubner, <em>Phys. Rev. E</em> <strong>51</strong> (1995) 4141 – properties of materials modelled by Gaussian
+random fields.</p></li>
+<li><p>A. P. Roberts, M. A. Knackstedt, <em>Phys. Rev. E</em> <strong>54</strong> (1996) 2313.</p></li>
+<li><p>A. P. Roberts, <em>Phys. Rev. E</em> <strong>55</strong> (1997) R1286 – two-cut and intersection models and their two-point functions.</p></li>
+<li><p>J. A. Quintanilla, <em>Modelling Simul. Mater. Sci. Eng.</em> <strong>15</strong> (2007) S337.</p></li>
+</ul>
+<p><strong>Reconstruction from two-point statistics</strong></p>
+<ul class="simple">
+<li><p>B. Ingham, H. Li, E. L. Allen, M. F. Toney, <em>J. Appl. Cryst.</em> <strong>44</strong> (2011) 221, doi:10.1107/S0021889810048557 –
+SAXSMorph.</p></li>
+<li><p>C. L. Y. Yeong, S. Torquato, <em>Phys. Rev. E</em> <strong>57</strong> (1998) 495 – reconstructing random media.</p></li>
+<li><p>S. Torquato, <em>Random Heterogeneous Materials</em>, Springer (2002).</p></li>
+</ul>
+<p><strong>Several phases and contrasts</strong></p>
+<ul class="simple">
+<li><p>L. Arleth, S. Marčelja, T. Zemb, <em>J. Chem. Phys.</em> <strong>115</strong> (2001) 3923 – two level cuts for asymmetric
+microemulsions (surfactant film), SANS.</p></li>
+<li><p>C. J. Gommes, A. P. Roberts, <em>Phys. Rev. E</em> <strong>77</strong> (2008) 041409; C. J. Gommes, <em>J. Appl. Cryst.</em> <strong>46</strong> (2013)
+493 – plurigaussian three-phase models, in situ SAS; C. J. Gommes, <em>Microporous Mesoporous Mater.</em> <strong>257</strong> (2018)
+62 – review of stochastic models.</p></li>
+<li><p>S. Kronenberger et al., <em>Soft Matter</em> (2024), doi:10.1039/d4sm00721b – three-phase polymer structures from two
+independent fields, anisotropic 2D data.</p></li>
+</ul>
+<p><strong>SESANS</strong></p>
+<ul class="simple">
+<li><p>M. T. Rekveldt, <em>Nucl. Instrum. Methods B</em> <strong>114</strong> (1996) 366 – spin-echo small-angle neutron scattering.</p></li>
+<li><p>R. Andersson, L. F. van Heijkamp, I. M. de Schepper, W. G. Bouwman, <em>J. Appl. Cryst.</em> <strong>41</strong> (2008) 868 – the
+SESANS correlation function and its relation to SANS.</p></li>
+</ul>
+<p><strong>Anisotropy (§12)</strong></p>
+<ul class="simple">
+<li><p>The plane-wave (Rayleigh) expansion and the addition theorem of spherical harmonics: e.g. G. B. Arfken,
+H. J. Weber, F. E. Harris, <em>Mathematical Methods for Physicists</em>, Academic Press.</p></li>
+<li><p>The closed form of <span class="math notranslate nohighlight">\(\int_0^\infty x^\mu j_l(x)\,\mathrm dx\)</span>: I. S. Gradshteyn, I. M. Ryzhik, <em>Table of
+Integrals, Series, and Products</em>, 6.561.</p></li>
+</ul>
+<p><strong>Numerical methods</strong></p>
+<ul class="simple">
+<li><p>L. N. G. Filon, <em>Proc. R. Soc. Edinburgh</em> <strong>49</strong> (1928) 38 – quadrature of oscillatory integrals.</p></li>
+<li><p>C. R. Dietrich, G. N. Newsam, <em>SIAM J. Sci. Comput.</em> <strong>18</strong> (1997) 1088 – circulant embedding for Gaussian
+random fields.</p></li>
+<li><p>W. E. Lorensen, H. E. Cline, <em>Computer Graphics (SIGGRAPH ‘87)</em> <strong>21</strong> (1987) 163 – marching cubes.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="pySASmorph: 3D two- and multi-phase morphologies from SAS data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="texture.html" class="btn btn-neutral float-right" title="pySASmorph: anisotropic data (texture)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

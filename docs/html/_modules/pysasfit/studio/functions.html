@@ -1,0 +1,410 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.functions &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.functions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.functions</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Calling SASfit model functions from Python.</span>
+
+<span class="sd">    from pysasfit import studio</span>
+<span class="sd">    sphere = studio.function("ff_sphere")</span>
+<span class="sd">    I = sphere(q, R=50.0, eta=1.0)            # vectorised over q, named or positional parameters</span>
+<span class="sd">    F = sphere.amplitude(q, R=50.0, eta=1.0)  # the '_f' function (non-squared amplitude)</span>
+<span class="sd">    V = sphere.volume(50.0, R=50.0, dist=0)   # the '_v' function</span>
+
+<span class="sd">A function is either a compiled SASfit plugin (described by the plugin</span>
+<span class="sd">headers, see :mod:`pysasfit.studio.headers`) or a Python plugin:</span>
+
+<span class="sd">* a file ``sasstudio_&lt;name&gt;.py`` in one of :func:`pysasfit.studio.paths.python_plugin_dirs`</span>
+<span class="sd">  (format: ``templates/python_plugin.py``), or</span>
+<span class="sd">* functions registered at run time with :func:`register_python_function`, among them the SasView models of the</span>
+<span class="sd">  ``sasmodels`` package (``ff_sv_&lt;name&gt;``, ``sq_sv_&lt;name&gt;``, :mod:`pysasfit.studio.sasmodels_bridge`).</span>
+
+<span class="sd">A Python callable with the attribute ``vectorized = True`` gets the whole x array at once.</span>
+
+<span class="sd">Python plugins take precedence, so a C plugin can be overridden for testing.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">headers</span><span class="p">,</span> <span class="n">paths</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._ctypes</span><span class="w"> </span><span class="kn">import</span> <span class="n">FUNC_ONE</span><span class="p">,</span> <span class="n">FUNC_VOL</span><span class="p">,</span> <span class="n">MAXPAR</span><span class="p">,</span> <span class="n">SasfitParam</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"SASfitError"</span><span class="p">,</span>
+    <span class="s2">"SASfitFunction"</span><span class="p">,</span>
+    <span class="s2">"function"</span><span class="p">,</span>
+    <span class="s2">"register_python_function"</span><span class="p">,</span>
+    <span class="s2">"unregister_python_function"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="SASfitError">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SASfitError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when a SASfit function sets ``param-&gt;errStatus``."""</span></div>
+
+
+
+<span class="n">_PYTHON_FUNCTIONS</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="register_python_function">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.register_python_function">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_python_function</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">intensity</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s2">""</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make a Python function available as SASfit function ``name``.</span>
+
+<span class="sd">    ``name`` carries the type prefix: ``ff_...``, ``sq_...`` or ``sd_...``. The</span>
+<span class="sd">    callables are ``intensity(x, p)``, ``amplitude(x, p)`` and</span>
+<span class="sd">    ``volume(x, p, dist)`` with ``p`` the parameter vector (length MAXPAR).</span>
+<span class="sd">    ``group`` is the menu group of the function, the name of a group defined in a ``*.def`` file</span>
+<span class="sd">    (see :mod:`pysasfit.studio.groups`).</span>
+<span class="sd">    """</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span> <span class="k">if</span> <span class="n">defaults</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
+    <span class="n">pinfo</span> <span class="o">=</span> <span class="p">[</span><span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)]</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">PluginInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span> <span class="ow">or</span> <span class="n">name</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">pinfo</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">)</span>
+    <span class="n">_PYTHON_FUNCTIONS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">intensity</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">volume</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">info</span></div>
+
+
+
+<div class="viewcode-block" id="unregister_python_function">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.unregister_python_function">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unregister_python_function</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">_PYTHON_FUNCTIONS</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_python_plugin</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">short</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">paths</span><span class="o">.</span><span class="n">python_plugin_dirs</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">stem</span> <span class="ow">in</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">short</span><span class="p">):</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sasstudio_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.py"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+                <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pysasfit_studio_plugin_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+                <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+                <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">kind</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+                <span class="n">pars</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="s2">"PARAMETERS"</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="k">else</span> <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pars</span><span class="p">]</span>
+                <span class="n">defs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pars</span><span class="p">]</span>
+                <span class="n">full</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="s2">"_"</span> <span class="ow">in</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">PLUGIN_TYPES</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"ff_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">PluginInfo</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">full</span><span class="p">,</span>
+                    <span class="n">label</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="s2">"LABEL"</span><span class="p">,</span> <span class="n">full</span><span class="p">),</span>
+                    <span class="n">collection</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fn</span><span class="p">),</span>
+                    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">defs</span><span class="p">)],</span>
+                    <span class="n">header</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span>
+                    <span class="n">group</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="s2">"GROUP"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">info</span><span class="p">,</span>
+                    <span class="n">get</span><span class="p">(</span><span class="s2">"scattering_intensity"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get</span><span class="p">(</span><span class="s2">"intensity"</span><span class="p">),</span>
+                    <span class="n">get</span><span class="p">(</span><span class="s2">"scattering_amplitude"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get</span><span class="p">(</span><span class="s2">"amplitude"</span><span class="p">),</span>
+                    <span class="n">get</span><span class="p">(</span><span class="s2">"volume"</span><span class="p">),</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="SASfitFunction">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SASfitFunction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One SASfit model function (form factor, structure factor, size distribution or peak)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">library</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"raise"</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""``language``: None (Python plugins and enabled ports first, then C), "c" (the compiled plugin only, e.g.</span>
+<span class="sd">        as reference for a Python port) or "python"."""</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">,</span> <span class="s2">"python"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"language must be None, 'c' or 'python', not </span><span class="si">{</span><span class="n">language</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PYTHON_FUNCTIONS</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"ff_py_"</span><span class="p">,</span> <span class="s2">"sq_py_"</span><span class="p">,</span> <span class="s2">"sd_py_"</span><span class="p">)):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">ports</span>  <span class="c1"># Python ports of the SASfit plugins</span>
+
+            <span class="n">ports</span><span class="o">.</span><span class="n">register_aliases</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">!=</span> <span class="s2">"c"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PYTHON_FUNCTIONS</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"ff_sv_"</span><span class="p">,</span> <span class="s2">"sq_sv_"</span><span class="p">,</span> <span class="s2">"sd_sv_"</span><span class="p">)):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">sasmodels_bridge</span>  <span class="c1"># SasView (sasmodels)</span>
+
+            <span class="n">sasmodels_bridge</span><span class="o">.</span><span class="n">register_all</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">language</span> <span class="o">!=</span> <span class="s2">"c"</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_PYTHON_FUNCTIONS</span><span class="p">:</span>
+            <span class="n">impl</span> <span class="o">=</span> <span class="n">_PYTHON_FUNCTIONS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cinfo</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">cinfo</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">short</span> <span class="o">=</span> <span class="n">cinfo</span><span class="o">.</span><span class="n">short_name</span> <span class="k">if</span> <span class="n">cinfo</span> <span class="k">else</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">impl</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">"c"</span> <span class="k">else</span> <span class="n">_load_python_plugin</span><span class="p">(</span><span class="n">cinfo</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">cinfo</span> <span class="k">else</span> <span class="n">name</span><span class="p">,</span> <span class="n">short</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">impl</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">cinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no SASfit function '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (try pysasfit.studio.search('</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'))"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">impl</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">language</span> <span class="o">==</span> <span class="s2">"python"</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no Python implementation of '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span>
+        <span class="k">if</span> <span class="n">impl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_py_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_py_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_py_v</span> <span class="o">=</span> <span class="n">impl</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="s2">"python"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">cinfo</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">=</span> <span class="s2">"c"</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_library</span>
+
+            <span class="n">lib</span> <span class="o">=</span> <span class="n">library</span> <span class="ow">or</span> <span class="n">get_library</span><span class="p">()</span>
+            <span class="n">fi</span><span class="p">,</span> <span class="n">ff</span><span class="p">,</span> <span class="n">fv</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">pointers</span><span class="p">(</span><span class="n">cinfo</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">cinfo</span><span class="o">.</span><span class="n">collection</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_c_i</span> <span class="o">=</span> <span class="n">FUNC_ONE</span><span class="p">(</span><span class="n">fi</span><span class="p">)</span> <span class="k">if</span> <span class="n">fi</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_c_f</span> <span class="o">=</span> <span class="n">FUNC_ONE</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span> <span class="k">if</span> <span class="n">ff</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_c_v</span> <span class="o">=</span> <span class="n">FUNC_VOL</span><span class="p">(</span><span class="n">fv</span><span class="p">)</span> <span class="k">if</span> <span class="n">fv</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="c1"># -------------------------------------------------------------- params</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">parameter_names</span>
+
+<div class="viewcode-block" id="SASfitFunction.parameter_vector">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitFunction.parameter_vector">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parameter_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Full parameter vector p[0..MAXPAR-1]: defaults, then positional values, then named ones."""</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">MAXPAR</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">defaults</span>
+        <span class="n">p</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAXPAR</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"at most </span><span class="si">{</span><span class="n">MAXPAR</span><span class="si">}</span><span class="s2"> parameters"</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">named</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">elif</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="n">p</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no parameter '</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">' (parameters: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">error</span>
+        <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">clear_error</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">==</span> <span class="s2">"raise"</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SASfitError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">==</span> <span class="s2">"warn"</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfunc</span><span class="p">,</span> <span class="n">pyfunc</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">==</span> <span class="s2">"python"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pyfunc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> function"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pyfunc</span><span class="p">,</span> <span class="s2">"vectorized"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>  <span class="c1"># e.g. the SasView models: one call for all x</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pyfunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"amplitude"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>  <span class="c1"># complex scattering amplitudes stay complex</span>
+                    <span class="k">return</span> <span class="n">v</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">complex</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">v</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyfunc</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">p</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span> <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cfunc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> function"</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">SasfitParam</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfunc</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">errStatus</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span> <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------- evaluate</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Intensity I(q) (form factor, structure factor, peak) or weight N(x) (size distribution)."""</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_c_i"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_py_i"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"intensity"</span><span class="p">)</span>
+
+    <span class="n">intensity</span> <span class="o">=</span> <span class="fm">__call__</span>
+
+<div class="viewcode-block" id="SASfitFunction.amplitude">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitFunction.amplitude">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amplitude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_c_f"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_py_f"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"amplitude"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SASfitFunction.volume">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitFunction.volume">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Volume with parameter ``dist`` replaced by ``x`` (SASfit ``_v`` convention)."""</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_vector</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="o">==</span> <span class="s2">"python"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_py_v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no volume function"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_py_v</span><span class="p">,</span> <span class="s2">"vectorized"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_py_v</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dist</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">v</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_py_v</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c_v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no volume function"</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">SasfitParam</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c_v</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">),</span> <span class="n">s</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">errStatus</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_check</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span> <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SASfitFunction.evaluate_p">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.SASfitFunction.evaluate_p">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"intensity"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Evaluate with a ready parameter vector ``p`` (used by the model classes)."""</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"intensity"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_c_i"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_py_i"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"amplitude"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_c_f"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_py_f"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"&lt;SASfitFunction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">language</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="function">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.functions.function">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">function</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"raise"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Shorthand for :class:`SASfitFunction` (``errors``: 'raise', 'warn' or 'ignore')."""</span>
+    <span class="k">return</span> <span class="n">SASfitFunction</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

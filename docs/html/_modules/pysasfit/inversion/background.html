@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.background &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.background</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.background</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Background determination: fit I(q) = backgr + c * q^(-alpha) over a</span>
+<span class="sd">user-selectable q-range, then subtract it from the full curve before</span>
+<span class="sd">handing the result to a Fredholm solver.</span>
+
+<span class="sd">This is the piece flagged back in the sasfit-extrapolate-background work</span>
+<span class="sd">as a prerequisite for inversion. Kept deliberately simple (a 3-parameter</span>
+<span class="sd">power-law-plus-constant fit via scipy.optimize.curve_fit) rather than</span>
+<span class="sd">porting sasfit_extrapol.c's full Porod/Guinier/Zimm/OZ extrapolation</span>
+<span class="sd">machinery -- this is the specific model Joachim asked for here</span>
+<span class="sd">(backgr + c*q^-alpha), not a general extrapolation-model library. If a</span>
+<span class="sd">different background functional form is needed later, add a new fit</span>
+<span class="sd">function alongside fit_background rather than generalizing this one</span>
+<span class="sd">prematurely.</span>
+
+<span class="sd">CAVEAT found during development, not theoretical: subtracting this model</span>
+<span class="sd">far outside the q-range it was fit over is dangerous for a power law --</span>
+<span class="sd">a background fit at high q and then subtracted a decade lower in q can</span>
+<span class="sd">end up an order of magnitude LARGER than the actual signal there, because</span>
+<span class="sd">c*q^-alpha amplifies whatever uncertainty alpha has enormously outside the</span>
+<span class="sd">fit range. See BackgroundFitResult.extrapolation_risk() below, which the</span>
+<span class="sd">GUI should check and warn on before subtracting over a much wider range</span>
+<span class="sd">than the fit was done on.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">curve_fit</span>
+
+
+
+<span class="c1">#Evaluation budget of the background curve fit (pySASfit preferences:</span>
+<span class="c1">#inversion.opt.background_maxfev).</span>
+<span class="n">FIT_MAXFEV</span> <span class="o">=</span> <span class="mi">10000</span>
+
+<div class="viewcode-block" id="background_model">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.background_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">background_model</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">backgr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""backgr + c * q^(-alpha)."""</span>
+    <span class="k">return</span> <span class="n">backgr</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">alpha</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BackgroundFitResult">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.BackgroundFitResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BackgroundFitResult</span><span class="p">:</span>
+    <span class="n">backgr</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">c</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">param_errors</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># 1-sigma errors from the covariance diagonal, same order as (backgr, c, alpha)</span>
+    <span class="n">q_min</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">q_max</span><span class="p">:</span> <span class="nb">float</span>
+
+<div class="viewcode-block" id="BackgroundFitResult.evaluate">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.BackgroundFitResult.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Evaluate the fitted background model over an arbitrary q array."""</span>
+        <span class="k">return</span> <span class="n">background_model</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">backgr</span><span class="p">,</span> <span class="mi">0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BackgroundFitResult.subtract">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.BackgroundFitResult.subtract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subtract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""I - fitted background, evaluated at the same q as I."""</span>
+        <span class="k">return</span> <span class="n">I</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BackgroundFitResult.extrapolation_risk">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.BackgroundFitResult.extrapolation_risk">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extrapolation_risk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        A simple diagnostic for how far `q` extends outside the fit range,</span>
+<span class="sd">        in log-q units relative to the fit range's own (log) width -- 0</span>
+<span class="sd">        means q stays within [q_min, q_max], and values &gt;&gt; 1 mean the</span>
+<span class="sd">        background model is being extrapolated well beyond where it was</span>
+<span class="sd">        constrained by data, which for a power law can amplify small</span>
+<span class="sd">        parameter uncertainties enormously (see module docstring). This is</span>
+<span class="sd">        a real, not theoretical, failure mode -- caught during development</span>
+<span class="sd">        when a c*q^-alpha background fit at high q, extrapolated a decade</span>
+<span class="sd">        down to low q, ended up ~30x larger than the actual signal there.</span>
+<span class="sd">        """</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">log_span</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_max</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_min</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log_span</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">below</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_min</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">above</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_max</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">below</span> <span class="o">+</span> <span class="n">above</span><span class="p">)</span> <span class="o">/</span> <span class="n">log_span</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="fit_background">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.background.fit_background">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_background</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">q_min</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">q_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">dI</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">p0</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackgroundFitResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Fit backgr + c*q^-alpha to the data in [q_min, q_max].</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    q, I : full data arrays.</span>
+<span class="sd">    q_min, q_max : the fit range (inclusive) -- e.g. from a GUI range</span>
+<span class="sd">        selector.</span>
+<span class="sd">    dI : optional uncertainties, used as curve_fit's sigma (absolute_sigma=True)</span>
+<span class="sd">        if given.</span>
+<span class="sd">    p0 : tuple, optional</span>
+<span class="sd">        Initial guess (backgr, c, alpha). If not given, a heuristic guess is constructed from the data in the fit range:</span>
+<span class="sd">        backgr ~ min(I) in range, alpha ~ 4 (Porod-like default), c solved</span>
+<span class="sd">        from the highest-q point in range given that alpha and backgr guess.</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;=</span> <span class="n">q_min</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="n">q_max</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Need at least 3 data points in the fit range [</span><span class="si">{</span><span class="n">q_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">q_max</span><span class="si">}</span><span class="s2">]; "</span>
+            <span class="sa">f</span><span class="s2">"found </span><span class="si">{</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+    <span class="n">q_fit</span><span class="p">,</span> <span class="n">I_fit</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">dI</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="k">if</span> <span class="n">dI</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">p0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">backgr_guess</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">I_fit</span><span class="p">))</span>
+        <span class="n">alpha_guess</span> <span class="o">=</span> <span class="mf">4.0</span>
+        <span class="n">q_hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">q_fit</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">q_fit</span><span class="p">)])</span>
+        <span class="n">I_hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">I_fit</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">q_fit</span><span class="p">)])</span>
+        <span class="n">c_guess</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">I_hi</span> <span class="o">-</span> <span class="n">backgr_guess</span><span class="p">)</span> <span class="o">*</span> <span class="n">q_hi</span><span class="o">**</span><span class="n">alpha_guess</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">)</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="p">(</span><span class="n">backgr_guess</span><span class="p">,</span> <span class="n">c_guess</span><span class="p">,</span> <span class="n">alpha_guess</span><span class="p">)</span>
+
+    <span class="n">popt</span><span class="p">,</span> <span class="n">pcov</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span>
+        <span class="n">background_model</span><span class="p">,</span> <span class="n">q_fit</span><span class="p">,</span> <span class="n">I_fit</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="n">p0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span>
+        <span class="n">absolute_sigma</span><span class="o">=</span><span class="n">sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">maxfev</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">FIT_MAXFEV</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">perr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">pcov</span><span class="p">))</span> <span class="k">if</span> <span class="n">pcov</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">pcov</span><span class="p">))</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">BackgroundFitResult</span><span class="p">(</span>
+        <span class="n">backgr</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">c</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">alpha</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">popt</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+        <span class="n">param_errors</span><span class="o">=</span><span class="n">perr</span><span class="p">,</span> <span class="n">q_min</span><span class="o">=</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="o">=</span><span class="n">q_max</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

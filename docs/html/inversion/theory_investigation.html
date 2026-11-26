@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development history and findings &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="References" href="references.html" />
+    <link rel="prev" title="Uncertainty of the recovered distribution" href="theory_uncertainty.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Usage (library)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="theory.html">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory_forward_model.html">Forward model, data and information content</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_discretization.html">Discretization of the integral</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_regularization.html">Regularization and choice of the regularization strength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_em_maxent.html">EM, maximum entropy and signed kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_uncertainty.html">Uncertainty of the recovered distribution</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Development history and findings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-null-space-of-the-second-difference-penalty">The null space of the second-difference penalty</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#regional-overfitting-at-high-q">Regional overfitting at high <span class="math notranslate nohighlight">\(q\)</span></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bootstrap-with-forced-chi-2-r-1">Bootstrap with forced <span class="math notranslate nohighlight">\(\chi^2_r=1\)</span></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hansen-maxent">Hansen MaxEnt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#signed-em">Signed EM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#few-grid-points">Few grid points</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reduced-solver-list">Reduced solver list</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#non-negativity-is-not-a-default">Non-negativity is not a default</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#open-questions">Open questions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#notation">Notation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#main-references">Main references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+          <li class="breadcrumb-item"><a href="theory.html">Theory</a></li>
+      <li class="breadcrumb-item active">Development history and findings</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/theory_investigation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="development-history-and-findings">
+<h1>Development history and findings<a class="headerlink" href="#development-history-and-findings" title="Link to this heading"></a></h1>
+<p>This chapter keeps the reasoning behind the present methods – including
+what was tried and discarded – for anyone extending the package. All
+numbers refer to <code class="docutils literal notranslate"><span class="pre">tests/data/test.dat</span></code> (bilognormal spheres with modes
+near 60 and 180 nm, <span class="math notranslate nohighlight">\(q\)</span> in nm<sup>-1</sup>, 91 log-spaced points,
+background <span class="math notranslate nohighlight">\(\approx0.1\)</span>) unless stated otherwise.</p>
+<section id="the-null-space-of-the-second-difference-penalty">
+<h2>The null space of the second-difference penalty<a class="headerlink" href="#the-null-space-of-the-second-difference-penalty" title="Link to this heading"></a></h2>
+<p>With the <span class="math notranslate nohighlight">\(j_0\)</span> kernel and the plain second-difference penalty, GCV,
+the L-curve and the evidence all gave <span class="math notranslate nohighlight">\(\chi^2_r\)</span> in the hundreds
+(EM + smoothing 586, Tikhonov + GCV 34 600). Constants and linear ramps
+are not penalized, and with a kernel condition number of
+<span class="math notranslate nohighlight">\(\sim10^{16}\)</span> these free directions are enough to make every
+criterion choose an oscillating solution. Hansen’s (2000) boundary terms
+remove the null space (condition number of <span class="math notranslate nohighlight">\(\mathbf L^T\mathbf L\)</span>
+<span class="math notranslate nohighlight">\(\sim9\times10^3\)</span>) and gave a clean evidence maximum.</p>
+</section>
+<section id="regional-overfitting-at-high-q">
+<h2>Regional overfitting at high <span class="math notranslate nohighlight">\(q\)</span><a class="headerlink" href="#regional-overfitting-at-high-q" title="Link to this heading"></a></h2>
+<p>A good overall <span class="math notranslate nohighlight">\(\chi^2_r\)</span> hid an unbalanced fit: with the Hansen
+penalty on the 95-point grid the high-<span class="math notranslate nohighlight">\(q\)</span> third of the data had
+<span class="math notranslate nohighlight">\(\chi^2\approx0.02\)</span> (the fit followed the noise), the low-<span class="math notranslate nohighlight">\(q\)</span>
+third about 0.8. Scans that each held everything else fixed ruled out the
+obvious causes:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\lambda\)</span>: no value gave all three regions near 1 at once.</p></li>
+<li><p><span class="math notranslate nohighlight">\(D_{max}\)</span>: 500 nm was too small (low-<span class="math notranslate nohighlight">\(q\)</span> <span class="math notranslate nohighlight">\(\chi^2\)</span>
+3.35 to 0.8 up to <span class="math notranslate nohighlight">\(D_{max}\approx800\)</span>), which led to the
+suggestion <span class="math notranslate nohighlight">\(D_{max}=\pi/q_{min}\)</span>; the high-<span class="math notranslate nohighlight">\(q\)</span> value stayed
+at 0.02 for every <span class="math notranslate nohighlight">\(D_{max}\)</span>.</p></li>
+<li><p>number of grid points above <span class="math notranslate nohighlight">\(\approx75\)</span> and <span class="math notranslate nohighlight">\(r_{min}\)</span>:
+no effect.</p></li>
+</ul>
+<p>Two attempted fixes, now retired:</p>
+<ul class="simple">
+<li><p><strong>Two-segment</strong> <span class="math notranslate nohighlight">\(\lambda\)</span> (independent <span class="math notranslate nohighlight">\(\lambda\)</span> for low
+and high <span class="math notranslate nohighlight">\(r\)</span>, chosen by a two-hyperparameter evidence search):
+within 0.3–0.6 % of the single-<span class="math notranslate nohighlight">\(\lambda\)</span> result, never improved
+the high-<span class="math notranslate nohighlight">\(q\)</span> fit. The <span class="math notranslate nohighlight">\(j_0\)</span> kernel couples every data
+point to the whole <span class="math notranslate nohighlight">\(r\)</span> range, so the noise-following component is
+not localized in <span class="math notranslate nohighlight">\(r\)</span>.</p></li>
+<li><p><strong>Hann-tapered boundary</strong> (<span class="math notranslate nohighlight">\(p=w(r)\,p_{free}\)</span> with a raised-cosine
+roll-off over the last quarter of <span class="math notranslate nohighlight">\([0,D_{max}]\)</span>): moved the
+high-<span class="math notranslate nohighlight">\(q\)</span> <span class="math notranslate nohighlight">\(\chi^2\)</span> from 0.023 to 0.21, but needed a ridge
+stabilizer, and was superseded by the B-spline representation.</p></li>
+</ul>
+<p>The explanation is Shannon undersampling of log-spaced data
+(<a class="reference internal" href="theory_forward_model.html"><span class="doc">Forward model, data and information content</span></a>): at high <span class="math notranslate nohighlight">\(q\)</span> there are only 0.45 data
+points per Shannon channel, so a model with one free parameter per channel
+can follow every point. Reducing the number of free parameters with a
+B-spline basis (<a class="reference internal" href="theory_discretization.html"><span class="doc">Discretization of the integral</span></a>) brings the high-<span class="math notranslate nohighlight">\(q\)</span>
+<span class="math notranslate nohighlight">\(\chi^2\)</span> to about 1 for every solver and increases the normalized
+evidence (<span class="math notranslate nohighlight">\(\ln Z\)</span> from <span class="math notranslate nohighlight">\(-153.0\)</span> to <span class="math notranslate nohighlight">\(-118.8\)</span>). The retired solvers remain
+callable by their old keys (<code class="docutils literal notranslate"><span class="pre">RETIRED_SOLVERS</span></code>) but are no longer
+offered.</p>
+</section>
+<section id="bootstrap-with-forced-chi-2-r-1">
+<h2>Bootstrap with forced <span class="math notranslate nohighlight">\(\chi^2_r=1\)</span><a class="headerlink" href="#bootstrap-with-forced-chi-2-r-1" title="Link to this heading"></a></h2>
+<p>The bootstrap exploded (std of <span class="math notranslate nohighlight">\(p\)</span> up to 400) when combined with
+forced <span class="math notranslate nohighlight">\(\chi^2_r=1\)</span>, because the replicates were centred on the
+noisy data. Fixed by centring on the fit and by the <span class="math notranslate nohighlight">\(\lambda\)</span> floor
+(<a class="reference internal" href="theory_uncertainty.html"><span class="doc">Uncertainty of the recovered distribution</span></a>).</p>
+</section>
+<section id="hansen-maxent">
+<h2>Hansen MaxEnt<a class="headerlink" href="#hansen-maxent" title="Link to this heading"></a></h2>
+<p>The CG transcription of <code class="docutils literal notranslate"><span class="pre">maxent.m</span></code> jammed at the positivity bound and
+the registry wrapper ignored <span class="math notranslate nohighlight">\(\sigma_i\)</span>; replaced by weighted
+L-BFGS-B with a Newton polish and the discrepancy principle
+(<a class="reference internal" href="theory_em_maxent.html"><span class="doc">EM, maximum entropy and signed kernels</span></a>).</p>
+</section>
+<section id="signed-em">
+<h2>Signed EM<a class="headerlink" href="#signed-em" title="Link to this heading"></a></h2>
+<p>Three problems were found and fixed on 2026-10-10: the shifted KL misfit
+was blind to the high-<span class="math notranslate nohighlight">\(q\)</span> data (fixed by <span class="math notranslate nohighlight">\(\chi^2\)</span> row
+weighting), Biggs–Andrews extrapolation could drift away from the fixed
+point (safeguard), and too coarse quadrature with few grid points
+(<a class="reference internal" href="theory_discretization.html#equation-nquad">(5)</a>). MaxEnt regularization with a positive/negative entropy was
+added as an alternative to smoothing.</p>
+</section>
+<section id="few-grid-points">
+<h2>Few grid points<a class="headerlink" href="#few-grid-points" title="Link to this heading"></a></h2>
+<p>A uniform point grid with step <span class="math notranslate nohighlight">\(&gt;\pi/q_{max}\)</span> undersamples the
+<span class="math notranslate nohighlight">\(j_0\)</span> kernel (<span class="math notranslate nohighlight">\(\chi^2_r\)</span> 460–840 for <span class="math notranslate nohighlight">\(N\le45\)</span>); this
+affects every solver. The fine quadrature of the node and spline
+representations removes the limitation; with cubic interpolation 30
+uniform points suffice (<span class="math notranslate nohighlight">\(\chi^2_r\)</span> 1.18).</p>
+</section>
+<section id="reduced-solver-list">
+<h2>Reduced solver list<a class="headerlink" href="#reduced-solver-list" title="Link to this heading"></a></h2>
+<p>Solvers that differed in a single setting were merged and given options
+(e.g. EM + smoothing with discrepancy principle or L-curve, Bayesian
+evidence with three penalties); the B-spline solvers were replaced by the
+generic B-spline option. Old keys are mapped by <code class="docutils literal notranslate"><span class="pre">SOLVER_ALIASES</span></code>.</p>
+</section>
+<section id="non-negativity-is-not-a-default">
+<h2>Non-negativity is not a default<a class="headerlink" href="#non-negativity-is-not-a-default" title="Link to this heading"></a></h2>
+<p><span class="math notranslate nohighlight">\(p(r)\ge0\)</span> holds only for homogeneous contrast. For core–shell,
+multilayer or contrast-variation systems <span class="math notranslate nohighlight">\(p(r)\)</span> has negative parts
+that carry structural information. Non-negativity is therefore only used
+where it is part of the method (EM, MaxEnt, ARLS <span class="math notranslate nohighlight">\(\ge0\)</span>) and
+never imposed on the signed solvers.</p>
+</section>
+<section id="open-questions">
+<h2>Open questions<a class="headerlink" href="#open-questions" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Automatic choice of the number of B-spline coefficients and of the knot
+spacing (e.g. by the normalized evidence).</p></li>
+<li><p>Penalties scaled by the node spacing (smoothness in <span class="math notranslate nohighlight">\(r\)</span> rather
+than in the index) for non-uniform point grids.</p></li>
+<li><p>The default level <span class="math notranslate nohighlight">\(m\)</span> of the signed MaxEnt is a heuristic.</p></li>
+<li><p>Moore’s sine-series basis for the PDDF.</p></li>
+<li><p>Whether the quoted <span class="math notranslate nohighlight">\(\sigma_i\)</span> of test.dat are well calibrated at
+high <span class="math notranslate nohighlight">\(q\)</span>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory_uncertainty.html" class="btn btn-neutral float-left" title="Uncertainty of the recovered distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="references.html" class="btn btn-neutral float-right" title="References" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

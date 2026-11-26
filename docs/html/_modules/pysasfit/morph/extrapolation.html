@@ -1,0 +1,461 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.morph.extrapolation &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.morph.extrapolation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.morph.extrapolation</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Extrapolation of I(q) to q = 0 and q = infinity, and the scattering invariant.</span>
+
+<span class="sd">The correlation function needs the intensity over the whole q axis. As in</span>
+<span class="sd">SAXSMorph (Ingham et al. 2011) the measured range is extended</span>
+
+<span class="sd">* to q -&gt; 0 by a Guinier, linear or constant extrapolation fitted to the first</span>
+<span class="sd">  points (``low_q``), and</span>
+<span class="sd">* to q -&gt; infinity by Porod's law I = K q^-4 fitted to the last points, optionally</span>
+<span class="sd">  together with a flat background B (I = K q^-4 + B; B is then subtracted from all</span>
+<span class="sd">  data).</span>
+
+<span class="sd">Unlike SAXSMorph the Porod tail is not cut at a finite q (q = 100 there) but</span>
+<span class="sd">integrated analytically to infinity (:func:`pysasfit.morph.transforms.porod_tail`).</span>
+
+<span class="sd">Between data points I(q) is interpolated log-log (``refine`` extra points per</span>
+<span class="sd">interval); the transforms then treat u(q) = q I(q) as piecewise linear on these</span>
+<span class="sd">nodes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">moments_pl</span><span class="p">,</span> <span class="n">porod_tail</span><span class="p">,</span> <span class="n">sine_transform_pl</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ExtrapolatedCurve"</span><span class="p">,</span> <span class="s2">"extrapolate"</span><span class="p">,</span> <span class="s2">"fit_porod"</span><span class="p">,</span> <span class="s2">"fit_low_q"</span><span class="p">,</span> <span class="s2">"auto_porod_range"</span><span class="p">]</span>
+
+<span class="n">LOW_Q_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"guinier"</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"constant"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wls</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Weighted linear least squares: coefficients and their covariance."""</span>
+    <span class="n">Aw</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">yw</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">coef</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">Aw</span><span class="p">,</span> <span class="n">yw</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Aw</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">yw</span> <span class="o">-</span> <span class="n">Aw</span> <span class="o">@</span> <span class="n">coef</span>
+        <span class="n">dof</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span> <span class="o">@</span> <span class="n">res</span><span class="p">)</span> <span class="o">/</span> <span class="n">dof</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">coef</span><span class="p">,</span> <span class="n">cov</span>
+
+
+<div class="viewcode-block" id="fit_porod">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.fit_porod">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_porod</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_background</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Fit I = K q^-4 (+ B) to the given points. Returns (K, dK, B, dB).</span>
+
+<span class="sd">    Linearised as I q^4 = K + B q^4 (weights q^4 / sigma).</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s</span><span class="p">)):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s</span><span class="p">))</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">I</span> <span class="o">*</span> <span class="n">q</span> <span class="o">**</span> <span class="mi">4</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span> <span class="n">q</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fit_background</span><span class="p">:</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">q</span> <span class="o">**</span> <span class="mi">4</span><span class="p">])</span>
+        <span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">_wls</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))),</span> <span class="nb">float</span><span class="p">(</span><span class="n">B</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">K</span><span class="p">,),</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">_wls</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span></div>
+
+
+
+<div class="viewcode-block" id="auto_porod_range">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.auto_porod_range">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">auto_porod_range</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_background</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">min_points</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">start_fraction</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+                     <span class="n">chi2_ok</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">max_candidates</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Start of the Porod range chosen from the data.</span>
+
+<span class="sd">    For every candidate start q_i (from ``start_fraction`` of the points on, at least ``min_points`` points</span>
+<span class="sd">    left) the law I = K q^-4 (+ B) is fitted to q &gt;= q_i, with its reduced chi^2 (relative scatter when no</span>
+<span class="sd">    sigma is given) and the lag-1 autocorrelation rho of its residuals. A candidate is acceptable when its</span>
+<span class="sd">    chi^2 is at most ``tolerance`` times the smallest chi^2 of all candidates, or at most ``chi2_ok`` (with</span>
+<span class="sd">    sigma), and its residuals show no trend (rho below 3/sqrt(N), at least 0.15: a range reaching into the</span>
+<span class="sd">    non-Porod region leaves</span>
+<span class="sd">    residuals of one sign, even when generous error bars keep chi^2 small). The chosen start is the</span>
+<span class="sd">    **lowest** acceptable q_i: the longest range on which the law still describes the data, which gives the</span>
+<span class="sd">    most precise K and B. The data show no clear Porod regime (``info['clear'] = False``, with a message) if</span>
+<span class="sd">    even the best candidate has chi^2 &gt; 3 chi2_ok (with sigma), if the chosen range spans less than a factor</span>
+<span class="sd">    1.5 in q (K and B cannot be separated), or if at the start of the chosen range the</span>
+<span class="sd">    Porod term K q^-4 is smaller than the background (then the "fit" is a constant, not Porod's law).</span>
+
+<span class="sd">    Returns (index of the first point, info) with the candidates (q_start, K, B, chi2) in ``info``."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">))</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">npar</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">fit_background</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">start_fraction</span><span class="p">),</span> <span class="n">n</span> <span class="o">-</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_points</span><span class="p">,</span> <span class="n">npar</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;=</span> <span class="n">lo</span><span class="p">:</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_candidates</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+    <span class="n">cand</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">starts</span><span class="p">:</span>
+        <span class="n">K</span><span class="p">,</span> <span class="n">dK</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">dB</span> <span class="o">=</span> <span class="n">fit_porod</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">:],</span> <span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">:],</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">:],</span> <span class="n">fit_background</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="o">-</span> <span class="n">K</span> <span class="o">*</span> <span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span> <span class="o">-</span> <span class="n">B</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+        <span class="n">chi2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span> <span class="o">@</span> <span class="n">res</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="n">npar</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">res</span> <span class="o">-</span> <span class="n">res</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">*</span> <span class="n">d</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="n">d</span><span class="p">),</span> <span class="mf">1e-300</span><span class="p">))</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">cand</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">K</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">chi2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">rho</span><span class="p">))</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cand</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="p">{</span><span class="s2">"mode"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"clear"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"candidates"</span><span class="p">:</span> <span class="n">cand</span><span class="p">,</span> <span class="s2">"chi2"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                                 <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"no candidate gives K &gt; 0"</span><span class="p">}</span>
+    <span class="n">cmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ok</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">no_trend</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>            <span class="c1"># lag-1 autocorrelation within 3 sigma of white noise (sigma ~ 1/sqrt(N))</span>
+        <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">c</span><span class="p">[</span><span class="mi">4</span><span class="p">])))</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ok</span> <span class="k">if</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">tolerance</span> <span class="o">*</span> <span class="n">cmin</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">c</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">chi2_ok</span><span class="p">))</span> <span class="ow">and</span> <span class="n">no_trend</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">good</span><span class="p">:</span>                <span class="c1"># no range without a trend: the best fit</span>
+        <span class="n">good</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+    <span class="n">chosen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">good</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">cmin</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">chi2_ok</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"no clear Porod regime: best chi2_red = </span><span class="si">{</span><span class="n">cmin</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">elif</span> <span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1.5</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"no clear Porod regime: the law holds only on q = </span><span class="si">{</span><span class="n">chosen</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ... </span><span class="si">{</span><span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> (less than a "</span>
+               <span class="s2">"factor 1.5): K and B are poorly separated"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">chosen</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"no clear Porod regime: at the start of the range (q = </span><span class="si">{</span><span class="n">chosen</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">) the Porod term K q^-4 is "</span>
+               <span class="sa">f</span><span class="s2">"smaller than the background B = </span><span class="si">{</span><span class="n">chosen</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="p">{</span><span class="s2">"mode"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"clear"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">msg</span><span class="p">,</span> <span class="s2">"candidates"</span><span class="p">:</span> <span class="n">cand</span><span class="p">,</span> <span class="s2">"chi2"</span><span class="p">:</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                       <span class="s2">"chi2_min"</span><span class="p">:</span> <span class="n">cmin</span><span class="p">,</span> <span class="s2">"q_start"</span><span class="p">:</span> <span class="n">chosen</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"message"</span><span class="p">:</span> <span class="n">msg</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="fit_low_q">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.fit_low_q">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_low_q</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"guinier"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Low-q extrapolation fitted to the given (first) points.</span>
+
+<span class="sd">    Returns (method actually used, callable I_ext(q), info dict). Guinier falls back to</span>
+<span class="sd">    constant if the fit gives Rg^2 &lt;= 0 or non-positive intensities; linear falls back</span>
+<span class="sd">    to constant if the extrapolated I(0) is negative (as in SAXSMorph).</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="n">s</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"guinier"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_wls</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">q</span> <span class="o">**</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="n">I</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">I0</span><span class="p">,</span> <span class="n">Rg</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span> <span class="o">*</span> <span class="n">b</span><span class="p">))</span>
+            <span class="k">return</span> <span class="s2">"guinier"</span><span class="p">,</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">I0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">Rg</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">{</span><span class="s2">"I0"</span><span class="p">:</span> <span class="n">I0</span><span class="p">,</span> <span class="s2">"Rg"</span><span class="p">:</span> <span class="n">Rg</span><span class="p">}</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">"constant"</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"linear"</span> <span class="ow">and</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_wls</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">q</span><span class="p">]),</span> <span class="n">I</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">x</span><span class="p">),</span> <span class="p">{</span><span class="s2">"I0"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="s2">"slope"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)}</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">"constant"</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"guinier"</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"constant"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"constant"</span><span class="p">,</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">const</span><span class="p">)),</span> <span class="p">{</span><span class="s2">"I0"</span><span class="p">:</span> <span class="n">const</span><span class="p">}</span>
+    <span class="k">return</span> <span class="s2">"none"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{}</span></div>
+
+
+
+<div class="viewcode-block" id="ExtrapolatedCurve">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.ExtrapolatedCurve">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExtrapolatedCurve</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""I(q) over the whole q axis: nodes with u(q) = q I(q) (piecewise linear) and a Porod tail."""</span>
+
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                  <span class="c1"># nodes, from 0 (or the first data point) to q_N</span>
+    <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>                  <span class="c1"># intensity at the nodes (background B subtracted)</span>
+    <span class="n">K</span><span class="p">:</span> <span class="nb">float</span>                       <span class="c1"># Porod constant of the tail I = K q^-4 for q &gt; q_N</span>
+    <span class="n">dK</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">B</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>                 <span class="c1"># flat background subtracted from the data</span>
+    <span class="n">dB</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">low_q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"none"</span>
+    <span class="n">low_q_info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">q_data</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>   <span class="c1"># data range actually used</span>
+    <span class="n">porod_range</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">B_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"none"</span>           <span class="c1"># 'fitted', 'fixed' or 'none'</span>
+    <span class="n">porod_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"last 15 %"</span>  <span class="c1"># 'auto', 'points', 'qmin' or 'last 15 %'</span>
+    <span class="n">porod_info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">u</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qN</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">invariant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Q = integral_0^inf q^2 I(q) dq (nodes + analytic Porod tail K / q_N)."""</span>
+        <span class="k">return</span> <span class="n">moments_pl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">qN</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">porod_invariant_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Share of the invariant that comes from the Porod tail (large = data range too short)."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">qN</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">invariant</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+<div class="viewcode-block" id="ExtrapolatedCurve.debye_transform">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.ExtrapolatedCurve.debye_transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">debye_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""integral_0^inf q^2 I(q) sin(qr)/(qr) dq  (= Q gamma(r))."""</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">nz</span> <span class="o">=</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">nz</span><span class="p">]</span> <span class="o">=</span> <span class="n">moments_pl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">nz</span><span class="p">]</span> <span class="o">=</span> <span class="n">sine_transform_pl</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="n">nz</span><span class="p">])</span> <span class="o">/</span> <span class="n">r</span><span class="p">[</span><span class="n">nz</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">porod_tail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">qN</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="ExtrapolatedCurve.gamma">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.ExtrapolatedCurve.gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Normalised correlation function gamma(r) = (1/Q) integral q^2 I sin(qr)/(qr) dq, gamma(0) = 1."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">debye_transform</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">invariant</span></div>
+
+
+<div class="viewcode-block" id="ExtrapolatedCurve.evaluate">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.ExtrapolatedCurve.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Extrapolated intensity at arbitrary q (log-log between nodes, Porod beyond q_N)."""</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qN</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">m</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">qN</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">*</span> <span class="n">q</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span> <span class="o">**</span> <span class="o">-</span><span class="mi">4</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refine_loglog</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">refine</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Insert ``refine`` points per interval, I interpolated log-log (linear where I &lt;= 0)."""</span>
+    <span class="k">if</span> <span class="n">refine</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">refine</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">refine</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">lq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">qi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">lq</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">lq</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">I</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">li</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">I</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">I</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">]</span>
+                         <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))[:,</span> <span class="kc">None</span><span class="p">]),</span>
+                  <span class="n">I</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">qi</span> <span class="o">-</span> <span class="n">q</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">q</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">I</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">qq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">q</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">qi</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]])</span>
+    <span class="n">II</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">I</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">li</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">I</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]])</span>
+    <span class="k">return</span> <span class="n">qq</span><span class="p">,</span> <span class="n">II</span>
+
+
+<div class="viewcode-block" id="extrapolate">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.extrapolation.extrapolate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extrapolate</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">low_q</span><span class="o">=</span><span class="s2">"guinier"</span><span class="p">,</span> <span class="n">low_q_points</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">low_q_nodes</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">porod_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">porod_qmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_background</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">refine</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">porod_auto</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Extend background-subtracted data to the whole q axis.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    q, I, sigma : the measured curve as arrays (sigma optional, used as fit weights)</span>
+<span class="sd">    qmin, qmax : range of q used (default: all)</span>
+<span class="sd">    low_q : 'guinier' (default), 'linear', 'constant' or 'none' (no points below q_min)</span>
+<span class="sd">    low_q_points : number of first points the low-q extrapolation is fitted to</span>
+<span class="sd">    low_q_nodes : nodes of the extrapolation between q = 0 and q_min</span>
+<span class="sd">    porod_points / porod_qmin : the Porod law is fitted to the last ``porod_points``</span>
+<span class="sd">        points or to all points with q &gt;= ``porod_qmin``; without either: the range chosen by</span>
+<span class="sd">        :func:`auto_porod_range` (``porod_auto``) or the last 15 %, at least 5</span>
+<span class="sd">    fit_background : fit I = K q^-4 + B and subtract B</span>
+<span class="sd">    background : fixed flat background B subtracted before everything (used when ``fit_background``</span>
+<span class="sd">        is False; manual correction)</span>
+<span class="sd">    refine : extra log-log interpolated nodes per interval between measured points</span>
+<span class="sd">    K : fixed Porod constant (skips the fit); 0 switches the tail off</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">qmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">q</span> <span class="o">&gt;=</span> <span class="n">qmin</span>
+    <span class="k">if</span> <span class="n">qmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">&amp;=</span> <span class="n">q</span> <span class="o">&lt;=</span> <span class="n">qmax</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">s</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"at least 8 data points are needed in the selected q range"</span><span class="p">)</span>
+    <span class="c1"># ---- Porod</span>
+    <span class="n">B_fixed</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">fit_background</span><span class="p">)</span> <span class="ow">and</span> <span class="n">background</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">background</span> <span class="o">!=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">B_fixed</span><span class="p">:</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">background</span><span class="p">)</span>
+    <span class="n">pinfo</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">porod_qmin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">q</span> <span class="o">&gt;=</span> <span class="n">porod_qmin</span>
+        <span class="n">pmode</span> <span class="o">=</span> <span class="s2">"qmin"</span>
+    <span class="k">elif</span> <span class="n">porod_points</span><span class="p">:</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">pm</span><span class="p">[</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">porod_points</span><span class="p">),</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">):]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">pmode</span> <span class="o">=</span> <span class="s2">"points"</span>
+    <span class="k">elif</span> <span class="n">porod_auto</span> <span class="ow">and</span> <span class="n">K</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">i0</span><span class="p">,</span> <span class="n">pinfo</span> <span class="o">=</span> <span class="n">auto_porod_range</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">fit_background</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">B_fixed</span><span class="p">)</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">pm</span><span class="p">[</span><span class="n">i0</span><span class="p">:]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">pmode</span> <span class="o">=</span> <span class="s2">"auto"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mf">0.15</span> <span class="o">*</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">)))</span>
+        <span class="n">pm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">pm</span><span class="p">[</span><span class="o">-</span><span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">):]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">pmode</span> <span class="o">=</span> <span class="s2">"last 15 %"</span>
+    <span class="k">if</span> <span class="n">pm</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fewer than 3 points in the Porod range"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">K</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">K</span><span class="p">,</span> <span class="n">dK</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">dB</span> <span class="o">=</span> <span class="n">fit_porod</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">pm</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">pm</span><span class="p">],</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">s</span><span class="p">[</span><span class="n">pm</span><span class="p">],</span> <span class="n">fit_background</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">B_fixed</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dK</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">dB</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">-</span> <span class="n">B</span>
+    <span class="k">if</span> <span class="n">B_fixed</span><span class="p">:</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">dB</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">background</span><span class="p">),</span> <span class="mf">0.0</span>
+    <span class="c1"># ---- low q</span>
+    <span class="n">n0</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">low_q_points</span><span class="p">),</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">used</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">fit_low_q</span><span class="p">(</span><span class="n">q</span><span class="p">[:</span><span class="n">n0</span><span class="p">],</span> <span class="n">I</span><span class="p">[:</span><span class="n">n0</span><span class="p">],</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">s</span><span class="p">[:</span><span class="n">n0</span><span class="p">],</span> <span class="n">low_q</span><span class="p">)</span>
+    <span class="n">qq</span><span class="p">,</span> <span class="n">II</span> <span class="o">=</span> <span class="n">_refine_loglog</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">refine</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fun</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">q0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">low_q_nodes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">qq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">q0</span><span class="p">,</span> <span class="n">qq</span><span class="p">])</span>
+        <span class="n">II</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">fun</span><span class="p">(</span><span class="n">q0</span><span class="p">),</span> <span class="n">II</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">ExtrapolatedCurve</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">qq</span><span class="p">,</span> <span class="n">I</span><span class="o">=</span><span class="n">II</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="n">dK</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">dK</span><span class="p">),</span> <span class="n">B</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">B</span><span class="p">),</span> <span class="n">dB</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">dB</span><span class="p">),</span> <span class="n">low_q</span><span class="o">=</span><span class="n">used</span><span class="p">,</span>
+                             <span class="n">low_q_info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span> <span class="n">q_data</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])),</span>
+                             <span class="n">porod_range</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">pm</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">pm</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])),</span>
+                             <span class="n">B_mode</span><span class="o">=</span><span class="s2">"fixed"</span> <span class="k">if</span> <span class="n">B_fixed</span> <span class="k">else</span> <span class="p">(</span><span class="s2">"fitted"</span> <span class="k">if</span> <span class="n">fit_background</span> <span class="k">else</span> <span class="s2">"none"</span><span class="p">),</span>
+                             <span class="n">porod_mode</span><span class="o">=</span><span class="n">pmode</span><span class="p">,</span> <span class="n">porod_info</span><span class="o">=</span><span class="n">pinfo</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

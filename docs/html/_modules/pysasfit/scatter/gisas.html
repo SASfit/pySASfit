@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.scatter.gisas &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.scatter.gisas</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.scatter.gisas</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""GISAS in the distorted wave Born approximation for axisymmetric particles (axis along z)</span>
+<span class="sd">sitting on a substrate (four-term DWBA with Fresnel T/R of the substrate; particle at z=0).</span>
+
+<span class="sd">Particle amplitude A(q_par, q_z) for Sphere / Ellipsoid (semi-axis nu*R along z) / Cylinder</span>
+<span class="sd">(axis along z).  Size distribution: Schulz-Zimm via quadrature over R with V^2 weighting.</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sphere</span><span class="p">,</span> <span class="n">Ellipsoid</span><span class="p">,</span> <span class="n">Cylinder</span><span class="p">,</span> <span class="n">Disk</span><span class="p">,</span> <span class="n">SizeQuad</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLOCK</span>
+
+
+<div class="viewcode-block" id="fresnel">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.gisas.fresnel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fresnel</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Fresnel reflection/transmission amplitudes of a vacuum/substrate interface, grazing angle alpha.</span>
+<span class="sd">    n = 1 - delta + i beta."""</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">delta</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">kz</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="n">kzs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n2</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">kz</span> <span class="o">-</span> <span class="n">kzs</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">kz</span> <span class="o">+</span> <span class="n">kzs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">r</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_amp</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">qpar</span><span class="p">,</span> <span class="n">qz</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">qpar</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mi">0</span> <span class="o">*</span> <span class="n">qz</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">Sphere</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">mono</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">qpar</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">qz</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span><span class="p">,</span> <span class="s1">'F'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">Ellipsoid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">mono</span><span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">qpar</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">nu</span> <span class="o">*</span> <span class="n">qz</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="s1">'F'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">Cylinder</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">mono</span><span class="p">(</span><span class="n">qpar</span> <span class="o">*</span> <span class="n">R</span><span class="p">,</span> <span class="s1">'F'</span><span class="p">)</span> <span class="o">*</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mono</span><span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">nu</span> <span class="o">*</span> <span class="n">qz</span> <span class="o">*</span> <span class="n">R</span><span class="p">,</span> <span class="s1">'F'</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"DWBA: unsupported shape"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="dwba">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.gisas.dwba">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dwba</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">qy_par</span><span class="p">,</span> <span class="n">alpha_i</span><span class="p">,</span> <span class="n">alpha_f</span><span class="p">,</span> <span class="n">two_theta_f</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">buried</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Returns (I_diffuse_incoherent_part_P, |&lt;A&gt;|^2 coherent part) per particle, both normalised</span>
+<span class="sd">    to a particle of unit volume amplitude; arrays follow the shape of alpha_f/two_theta_f.</span>
+<span class="sd">    Use  I = P + beta_ratio*(Z-1)*Fcoh  with Fcoh = |&lt;A_dwba&gt;|^2 for the lattice-coupled term."""</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">wavelength</span>
+    <span class="n">af</span><span class="p">,</span> <span class="n">tf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha_f</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">two_theta_f</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="n">ri</span><span class="p">,</span> <span class="n">ti</span> <span class="o">=</span> <span class="n">fresnel</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+    <span class="n">rf</span><span class="p">,</span> <span class="n">tf_</span> <span class="o">=</span> <span class="n">fresnel</span><span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+    <span class="n">kiz</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">)</span>
+    <span class="n">kfz</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">af</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">buried</span><span class="p">:</span>   <span class="c1"># particles inside a film of index n2 = 1 - delta (SI Sect. 9): Snell's law for the angles</span>
+        <span class="n">n2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">delta</span>
+        <span class="n">kiz</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">)</span> <span class="o">/</span> <span class="n">n2</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">)))</span>
+        <span class="n">kfz</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">af</span><span class="p">)</span> <span class="o">/</span> <span class="n">n2</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span><span class="p">)))</span>
+    <span class="n">qx</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">af</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">tf</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">))</span>
+    <span class="n">qy</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">af</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">tf</span><span class="p">)</span>
+    <span class="n">qpar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">)</span>
+    <span class="n">terms</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">tf_</span><span class="p">,</span> <span class="n">kfz</span> <span class="o">-</span> <span class="p">(</span><span class="o">-</span><span class="n">kiz</span><span class="p">)),</span> <span class="p">(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">rf</span><span class="p">,</span> <span class="o">-</span><span class="n">kfz</span> <span class="o">+</span> <span class="n">kiz</span><span class="p">),</span> <span class="p">(</span><span class="n">ri</span> <span class="o">*</span> <span class="n">tf_</span><span class="p">,</span> <span class="n">kfz</span> <span class="o">-</span> <span class="n">kiz</span><span class="p">),</span> <span class="p">(</span><span class="n">ri</span> <span class="o">*</span> <span class="n">rf</span><span class="p">,</span> <span class="o">-</span><span class="n">kfz</span> <span class="o">-</span> <span class="n">kiz</span><span class="p">)]</span>
+    <span class="c1"># note: q_z(+) = kfz + kiz etc. (k_i,z = -kiz, so q = kf - ki)</span>
+    <span class="n">terms</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">tf_</span><span class="p">,</span> <span class="n">kfz</span> <span class="o">+</span> <span class="n">kiz</span><span class="p">),</span> <span class="p">(</span><span class="n">ti</span> <span class="o">*</span> <span class="n">rf</span><span class="p">,</span> <span class="o">-</span><span class="n">kfz</span> <span class="o">+</span> <span class="n">kiz</span><span class="p">),</span> <span class="p">(</span><span class="n">ri</span> <span class="o">*</span> <span class="n">tf_</span><span class="p">,</span> <span class="n">kfz</span> <span class="o">-</span> <span class="n">kiz</span><span class="p">),</span> <span class="p">(</span><span class="n">ri</span> <span class="o">*</span> <span class="n">rf</span><span class="p">,</span> <span class="o">-</span><span class="n">kfz</span> <span class="o">-</span> <span class="n">kiz</span><span class="p">)]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">s_w</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">((</span><span class="n">shape</span><span class="o">.</span><span class="n">sP</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">),</span> <span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">sF</span><span class="p">,</span> <span class="s1">'F'</span><span class="p">)):</span>
+        <span class="n">sq</span> <span class="o">=</span> <span class="n">SizeQuad</span><span class="p">(</span><span class="n">shape</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">s_w</span><span class="p">)</span>
+        <span class="n">Asum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">qz</span> <span class="ow">in</span> <span class="n">terms</span><span class="p">:</span>
+            <span class="n">Asum</span> <span class="o">=</span> <span class="n">Asum</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">_amp</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">qpar</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">qz</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">shape</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="n">sq</span><span class="o">.</span><span class="n">xi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">'P'</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">'P'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Asum</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sq</span><span class="o">.</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">'Fcoh'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">Asum</span> <span class="o">*</span> <span class="n">sq</span><span class="o">.</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">'qx'</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">'qy'</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">'qpar'</span><span class="p">]</span> <span class="o">=</span> <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">,</span> <span class="n">qpar</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------------------</span>
+<span class="c1"># Specular and incident-plane diffuse scattering (SI Eq. S.9.2) and total GISAS intensity</span>
+<span class="c1"># ----------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="S_diffuse">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.gisas.S_diffuse">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">S_diffuse</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="n">qz</span><span class="p">,</span> <span class="n">sigma_z</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">rmax_factor</span><span class="o">=</span><span class="mf">40.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Incident-plane diffuse scattering.  h = 1/2 &amp; cutoff=False: analytic expression</span>
+<span class="sd">    S = A pi/(qr^2 + A^2 qz^4/4)^(3/2), A = 2 sigma^2/xi^(2h).  cutoff=True: numerical Hankel integral</span>
+<span class="sd">    S = 2 pi/qz^2 exp(-qz^2 s^2) int (exp(qz^2 s^2 exp(-(R/xi)^2h)) - 1) J0(qr R) R dR."""</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="nb">float</span><span class="p">);</span> <span class="n">qz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qz</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">xi</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cutoff</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">h</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-12</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">quad</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">j0</span>
+            <span class="n">qr_b</span><span class="p">,</span> <span class="n">qz_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="n">qz</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">qr_b</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">R</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qz_b</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="n">R</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">j0</span><span class="p">(</span><span class="n">qr_b</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">R</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">qz_b</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">quad</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">800</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">qr</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">A</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">qz</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span> <span class="o">**</span> <span class="mf">1.5</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">quad</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">j0</span>
+    <span class="n">qr_b</span><span class="p">,</span> <span class="n">qz_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="n">qz</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">qr_b</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
+        <span class="n">qzz</span><span class="p">,</span> <span class="n">qrr</span> <span class="o">=</span> <span class="n">qz_b</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">qr_b</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">R</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="n">qzz</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_z</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">R</span> <span class="o">/</span> <span class="n">xi</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">))))</span> <span class="o">*</span> <span class="n">j0</span><span class="p">(</span><span class="n">qrr</span> <span class="o">*</span> <span class="n">R</span><span class="p">)</span> <span class="o">*</span> <span class="n">R</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">quad</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rmax_factor</span> <span class="o">*</span> <span class="n">xi</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">2000</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">qzz</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qzz</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">val</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="S_specular">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.gisas.S_specular">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">S_specular</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="n">qz</span><span class="p">,</span> <span class="n">alpha_i</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">sigma_z</span><span class="p">,</span> <span class="n">width_r</span><span class="p">,</span> <span class="n">width_z</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Specular reflection 4 pi^2 |R|^2/qz^2 exp(-qz^2 sigma^2) delta(qr) delta(qz-2 k sin ai); the</span>
+<span class="sd">    delta functions are represented by normalised Gaussians of widths (width_r, width_z)."""</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">wavelength</span>
+    <span class="n">Ri</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fresnel</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+    <span class="n">qzr</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Ri</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">qzr</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qzr</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sigma_z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">g</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qr</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">width_r</span><span class="p">)</span> <span class="o">*</span> <span class="n">g</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qz</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-</span> <span class="n">qzr</span><span class="p">,</span> <span class="n">width_z</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="gisas_intensity">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.gisas.gisas_intensity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gisas_intensity</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">alpha_i</span><span class="p">,</span> <span class="n">alpha_f</span><span class="p">,</span> <span class="n">two_theta_f</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                    <span class="n">lattice</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_z</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">spec_widths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">buried</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Total GISAS intensity per particle:  I = &lt;P&gt;_DWBA + Fcoh (Z-1) G  (lattice optional)</span>
+<span class="sd">    + |T_i|^2 |T_f|^2 [S_spec + S_diff]  (if sigma_z and xi given; S_spec also needs spec_widths).</span>
+<span class="sd">    Returns dict with 'I', 'qx','qy','qz' and components."""</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">wavelength</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">dwba</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">alpha_i</span><span class="p">,</span> <span class="n">alpha_f</span><span class="p">,</span> <span class="n">two_theta_f</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">buried</span><span class="o">=</span><span class="n">buried</span><span class="p">)</span>
+    <span class="n">af</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha_f</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">qz</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">af</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">))</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s1">'P'</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">lattice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">lattice</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s1">'qx'</span><span class="p">],</span> <span class="n">o</span><span class="p">[</span><span class="s1">'qy'</span><span class="p">],</span> <span class="n">qz</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s1">'qx'</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">o</span><span class="p">[</span><span class="s1">'qy'</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">qz</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">+</span> <span class="n">o</span><span class="p">[</span><span class="s1">'Fcoh'</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">Z</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">lattice</span><span class="o">.</span><span class="n">G_dw</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">I_particles</span><span class="o">=</span><span class="n">I</span><span class="p">,</span> <span class="o">**</span><span class="n">o</span><span class="p">,</span> <span class="n">qz</span><span class="o">=</span><span class="n">qz</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sigma_z</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">xi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">Ti</span> <span class="o">=</span> <span class="n">fresnel</span><span class="p">(</span><span class="n">alpha_i</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">Tf</span> <span class="o">=</span> <span class="n">fresnel</span><span class="p">(</span><span class="n">af</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Ti</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Tf</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">Sd</span> <span class="o">=</span> <span class="n">S_diffuse</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s1">'qpar'</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s1">'qy'</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-300</span><span class="p">)</span> <span class="o">*</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">o</span><span class="p">[</span><span class="s1">'qx'</span><span class="p">],</span> <span class="n">qz</span><span class="p">,</span> <span class="n">sigma_z</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="c1"># incident plane: q_r = q_x (|qy| ~ 0 -&gt; in-plane component along the beam)</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">'S_diff'</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">Sd</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">+</span> <span class="n">res</span><span class="p">[</span><span class="s1">'S_diff'</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">spec_widths</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Ss</span> <span class="o">=</span> <span class="n">S_specular</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s1">'qx'</span><span class="p">],</span> <span class="n">qz</span><span class="p">,</span> <span class="n">alpha_i</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">sigma_z</span><span class="p">,</span> <span class="o">*</span><span class="n">spec_widths</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">[</span><span class="s1">'S_spec'</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">Ss</span>
+            <span class="n">I</span> <span class="o">=</span> <span class="n">I</span> <span class="o">+</span> <span class="n">res</span><span class="p">[</span><span class="s1">'S_spec'</span><span class="p">]</span>
+    <span class="n">res</span><span class="p">[</span><span class="s1">'I'</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

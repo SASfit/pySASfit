@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.hansen_maxent &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.hansen_maxent</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.hansen_maxent</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Maximum entropy regularization via nonlinear conjugate gradient, per</span>
+<span class="sd">Hansen &amp; Elfving's maxent.m in regu.zip (the genuine Regularization Tools</span>
+<span class="sd">package, found 2026-09-23). This is a SECOND, independently-formulated</span>
+<span class="sd">MaxEnt solver, deliberately kept separate from maxent.py's EM-based</span>
+<span class="sd">constant/adaptive-prior implementation (which matches SASfit's</span>
+<span class="sd">DR_EM_ME_const/adaptive, JAC 2022 eq. 47-55) -- they are NOT the same</span>
+<span class="sd">algorithm:</span>
+
+<span class="sd">  - maxent.py (SASfit/JAC-2022 style): minimizes via the EM/Lucy-Richardson</span>
+<span class="sd">    multiplicative fixed-point update, with an *additive* entropy</span>
+<span class="sd">    correction term each iteration, entropy defined relative to an</span>
+<span class="sd">    explicit prior m: S = sum[-x ln(x/m) + x - m].</span>
+<span class="sd">  - This module (Hansen/Elfving style): minimizes</span>
+
+<span class="sd">    .. code-block:: text</span>
+
+<span class="sd">        ||A x - b||^2 + lambda^2 * x^T log(w .* x)</span>
+
+<span class="sd">    directly via nonlinear conjugate-gradient descent with a step-length</span>
+<span class="sd">    control that keeps x positive at every iteration (no separate EM step</span>
+<span class="sd">    at all) -- entropy here is x^T log(w.*x) (relative to a fixed weight</span>
+<span class="sd">    vector w, not an evolving prior).</span>
+
+<span class="sd">Transcribed as closely as practical from the actual maxent.m source</span>
+<span class="sd">(nonlinear CG with "soft" line search via a secant root-finder on</span>
+<span class="sd">phi(alpha) = p^T g(x + alpha*p), and a positivity-preserving step-length</span>
+<span class="sd">bound alpha_right = min(-x_i/p_i) over i where p_i&lt;0). Some MATLAB-specific</span>
+<span class="sd">bookkeeping (the `data`/`X` iteration-history outputs) is dropped since</span>
+<span class="sd">Python callers can just inspect SolverResult's histories instead.</span>
+
+<span class="sd">NOT yet cross-checked numerically against MATLAB output -- transcribed</span>
+<span class="sd">from source, not validated against a reference run.</span>
+
+<span class="sd">VERIFIED (2026-09-23): the analytical gradient matches a finite-difference</span>
+<span class="sd">gradient of the true objective to 1.5e-7 relative error -- the gradient/</span>
+<span class="sd">objective transcription itself is correct.</span>
+
+<span class="sd">PERFORMANCE FINDING, not a (confirmed) bug: on our SAS kernel (condition</span>
+<span class="sd">number ~1e16), this unpreconditioned nonlinear-CG algorithm converges</span>
+<span class="sd">prematurely to a poor point regardless of lambda -- chi2_r stuck around</span>
+<span class="sd">2e5 and best-case correlation only ~0.65 on the synthetic sphere test,</span>
+<span class="sd">worse than every other solver in this package. Hansen's own test problems</span>
+<span class="sd">(shaw, phillips, baart, gravity, heat, in this same regu.zip) are</span>
+<span class="sd">deliberately only moderately ill-conditioned; this plain nonlinear CG with</span>
+<span class="sd">no preconditioning may simply not be robust enough for a kernel this</span>
+<span class="sd">poorly conditioned, unlike EM's multiplicative update (which has better</span>
+<span class="sd">implicit scale-handling) or the SVD/filter-factor methods (which handle</span>
+<span class="sd">arbitrary conditioning by construction). I have not ruled out a subtler</span>
+<span class="sd">bug in the line-search bookkeeping, but the gradient check plus the</span>
+<span class="sd">lambda-insensitivity of the failure (same behavior across two orders of</span>
+<span class="sd">magnitude in lambda) points at a robustness limit rather than a</span>
+<span class="sd">correctness bug in the parts I've verified.</span>
+
+<span class="sd">DIAGNOSIS (2026-10-10) -- why the CG solver failed, and the replacement:</span>
+<span class="sd">  * The transcription is faithful: compared line by line with maxent.m from</span>
+<span class="sd">    regu.zip (PerChristianHansen folder) -- no difference in the algorithm.</span>
+<span class="sd">  * The CG iteration jams at the positivity bound. Its step-length control</span>
+<span class="sd">    caps every step at the point where the first component would reach zero</span>
+<span class="sd">    and has no active-set handling, so one component is driven to ~1e-18,</span>
+<span class="sd">    1e-34, ... and the next admissible step is ~1e-23 long; the "step too</span>
+<span class="sd">    small" test then ends the loop. On test.dat it stopped after 2-18</span>
+<span class="sd">    iterations at F=71049 where the true minimum of the SAME objective is</span>
+<span class="sd">    F=165 (sphere kernel, lambda^2=0.01, 1/dI-weighted). Hansen's own test</span>
+<span class="sd">    problems are only mildly ill-conditioned, where this rarely happens.</span>
+<span class="sd">  * The registry wrapper also ignored dI (unweighted ||Ax-b||^2) and used a</span>
+<span class="sd">    fixed lambda grid 1e-3..1, at which the entropy term is negligible</span>
+<span class="sd">    against a residual of order ||A||^2 -- so the log barrier that should</span>
+<span class="sd">    keep x away from zero had no effect.</span>
+<span class="sd">  * Replacement: solve_lbfgsb() minimizes the same functional on the</span>
+<span class="sd">    1/dI-weighted system with entropy relative to a flat prior level m</span>
+<span class="sd">    (w = 1/m), by bound-constrained L-BFGS-B (scipy) preconditioned with the</span>
+<span class="sd">    diagonal of the Hessian at x = m. It reaches the lowest objective value</span>
+<span class="sd">    found by any method tested (damped Newton, log-variable L-BFGS) at every</span>
+<span class="sd">    lambda on both kernels, in 0.1-1 s. With lambda chosen by the</span>
+<span class="sd">    discrepancy principle it reaches chi2_r=1 with the correct peak</span>
+<span class="sd">    (sphere kernel: volume-weighted peak 77-84 nm).</span>
+<span class="sd">  * solve() (the CG transcription) is kept for reference only.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverResult</span><span class="p">,</span> <span class="n">chi2_r</span>
+
+
+
+<span class="c1">#L-BFGS-B settings of solve_lbfgsb (pySASfit preferences: inversion.opt.lbfgs_*).</span>
+<span class="n">LBFGS_DEFAULTS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ftol</span><span class="o">=</span><span class="mf">1e-16</span><span class="p">,</span> <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">,</span> <span class="n">maxcor</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+
+<div class="viewcode-block" id="flat_prior_level">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.hansen_maxent.flat_prior_level">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">flat_prior_level</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Constant x = m that best fits the data in the 1/dI-weighted sense;</span>
+<span class="sd">    used as the MaxEnt default model (w = 1/m) and starting point."""</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">*</span> <span class="n">w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">a1</span> <span class="o">@</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">a1</span> <span class="o">@</span> <span class="n">a1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mf">1e-30</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_newton_polish</span><span class="p">(</span><span class="n">Aw</span><span class="p">,</span> <span class="n">bw</span><span class="p">,</span> <span class="n">lam2</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Finish the L-BFGS-B result with exact Newton steps on the free</span>
+<span class="sd">    components (x &gt; 1e3*eps), fraction-to-boundary 0.99 and Armijo</span>
+<span class="sd">    backtracking. Needed for strongly ill-conditioned kernels (j0/PDDF on</span>
+<span class="sd">    test.dat): L-BFGS-B stops in the flat valley with F nearly optimal but</span>
+<span class="sd">    chi2_r still off by several percent and not monotonic in lambda."""</span>
+    <span class="n">AtA</span><span class="p">,</span> <span class="n">Atb</span> <span class="o">=</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Aw</span><span class="p">,</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">bw</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">F</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">Aw</span> <span class="o">@</span> <span class="n">x</span> <span class="o">-</span> <span class="n">bw</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">m</span><span class="p">)))</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">AtA</span> <span class="o">@</span> <span class="n">x</span> <span class="o">-</span> <span class="n">Atb</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">m</span><span class="p">))</span>
+        <span class="n">fr</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">g</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fr</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">AtA</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">fr</span><span class="p">,</span> <span class="n">fr</span><span class="p">)]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">lam2</span> <span class="o">/</span> <span class="n">x</span><span class="p">[</span><span class="n">fr</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">d_f</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">g</span><span class="p">[</span><span class="n">fr</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">fr</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_f</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.99</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="n">neg</span><span class="p">]))</span> <span class="k">if</span> <span class="n">neg</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">while</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mf">1e-12</span><span class="p">:</span>
+            <span class="n">xn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">a</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">F</span><span class="p">(</span><span class="n">xn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fn</span> <span class="o">&lt;=</span> <span class="n">f</span> <span class="o">+</span> <span class="mf">1e-4</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">g</span> <span class="o">@</span> <span class="n">d</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">a</span> <span class="o">*=</span> <span class="mf">0.5</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fn</span> <span class="o">&lt;</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="n">fn</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">xn</span><span class="p">,</span> <span class="n">fn</span>
+        <span class="k">if</span> <span class="n">rel</span> <span class="o">&lt;</span> <span class="mf">1e-15</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">max_steps</span>
+
+
+<div class="viewcode-block" id="solve_lbfgsb">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.hansen_maxent.solve_lbfgsb">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_lbfgsb</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">db</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">m</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100_000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Minimize  sum(((A x - b)/db)^2) + lam2 * x^T log(x/m)  over x &gt; 0.</span>
+
+<span class="sd">    Hansen/Elfving's maximum-entropy functional (maxent.m) with rows</span>
+<span class="sd">    weighted by 1/db and entropy relative to a flat default model m</span>
+<span class="sd">    (m=None -&gt; flat_prior_level). Bound-constrained L-BFGS-B with the</span>
+<span class="sd">    variables scaled by sqrt(diag(Hessian)) at x=m; x &gt;= m*1e-30.</span>
+<span class="sd">    """</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">Aw</span><span class="p">,</span> <span class="n">bw</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">b</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">flat_prior_level</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="mf">1e-30</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Aw</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">/</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">x_start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">eps</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fg</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="n">s</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">Aw</span> <span class="o">@</span> <span class="n">x</span> <span class="o">-</span> <span class="n">bw</span>
+        <span class="n">lx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span> <span class="o">@</span> <span class="n">r</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">lx</span><span class="p">))</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">r</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">lx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="p">,</span> <span class="n">g</span> <span class="o">/</span> <span class="n">s</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+        <span class="n">fg</span><span class="p">,</span> <span class="n">x_start</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"L-BFGS-B"</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="p">[(</span><span class="n">eps</span> <span class="o">*</span> <span class="n">si</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">si</span> <span class="ow">in</span> <span class="n">s</span><span class="p">],</span>
+        <span class="n">options</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="n">max_iterations</span><span class="p">,</span> <span class="n">maxfun</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">max_iterations</span><span class="p">,</span>
+                     <span class="n">ftol</span><span class="o">=</span><span class="n">LBFGS_DEFAULTS</span><span class="p">[</span><span class="s2">"ftol"</span><span class="p">],</span> <span class="n">gtol</span><span class="o">=</span><span class="n">LBFGS_DEFAULTS</span><span class="p">[</span><span class="s2">"gtol"</span><span class="p">],</span>
+                     <span class="n">maxcor</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">LBFGS_DEFAULTS</span><span class="p">[</span><span class="s2">"maxcor"</span><span class="p">])),</span>
+    <span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">s</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">n_newton</span> <span class="o">=</span> <span class="n">_newton_polish</span><span class="p">(</span><span class="n">Aw</span><span class="p">,</span> <span class="n">bw</span><span class="p">,</span> <span class="n">lam2</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="n">fitted_b</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">SolverResult</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">fitted_b</span><span class="o">=</span><span class="n">fitted_b</span><span class="p">,</span> <span class="n">n_iterations</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">nit</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_newton</span><span class="p">,</span>
+        <span class="n">chi2_r_history</span><span class="o">=</span><span class="p">[</span><span class="n">chi2_r</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">fitted_b</span><span class="p">,</span> <span class="n">db</span><span class="p">)],</span> <span class="n">roughness_history</span><span class="o">=</span><span class="p">[],</span>
+        <span class="n">converged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">)</span> <span class="ow">or</span> <span class="n">res</span><span class="o">.</span><span class="n">nit</span> <span class="o">&lt;</span> <span class="n">max_iterations</span><span class="p">,</span>
+        <span class="n">diagnostics</span><span class="o">=</span><span class="p">{</span><span class="s2">"lambda2"</span><span class="p">:</span> <span class="n">lam2</span><span class="p">,</span> <span class="s2">"prior_level"</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">),</span>
+                     <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"MaxEnt (Hansen functional), weighted, L-BFGS-B"</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_phi_and_z</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">phi0</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    phi(alpha) = p^T g(x + alpha p), computed via the CG recurrence used in</span>
+<span class="sd">    maxent.m rather than by re-evaluating the full gradient (matches the</span>
+<span class="sd">    source's `z = log(1+alpha*p./x)` / `phi = phi0 + 2*alpha*gamma + lam2*p'*z`).</span>
+<span class="sd">    """</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">phi0</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">gamma</span> <span class="o">+</span> <span class="n">lam2</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">@</span> <span class="n">z</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">phi</span><span class="p">,</span> <span class="n">z</span>
+
+
+<div class="viewcode-block" id="solve">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.hansen_maxent.solve">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">150</span><span class="p">,</span>
+    <span class="n">min_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
+    <span class="n">flat_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+    <span class="n">flat_range</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Hansen/Elfving MaxEnt: minimize ||Ax-b||^2 + lambda^2 * x^T log(w.*x)</span>
+<span class="sd">    via nonlinear CG with a positivity-preserving soft line search.</span>
+
+<span class="sd">    Parameters mirror maxent.m's defaults (flat=1e-3, flatrange=10,</span>
+<span class="sd">    maxit=150, minstep=1e-12, sigma=0.5, tau0=1e-3).</span>
+<span class="sd">    """</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lam</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"lambda must be positive"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>  <span class="c1"># matches the actual code default (nargin&lt;5 -&gt; ones(n,1)),</span>
+                          <span class="c1"># NOT the docstring comment's norm(b)/norm(A,1) formula --</span>
+                          <span class="c1"># a real discrepancy in Hansen's own file; the code wins.</span>
+
+    <span class="n">l2</span> <span class="o">=</span> <span class="n">lam</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">Ax</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">Ax</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">x</span><span class="p">))</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="n">g</span>
+    <span class="n">phi0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span> <span class="o">@</span> <span class="n">g</span><span class="p">)</span>
+
+    <span class="n">chi2_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">F_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">dF</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">delta_x_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># ensures we enter the loop at least once</span>
+
+    <span class="k">while</span> <span class="n">delta_x_norm</span> <span class="o">&gt;</span> <span class="n">min_step</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">dF</span> <span class="o">&gt;</span> <span class="n">flat_tol</span> <span class="ow">and</span> <span class="n">it</span> <span class="o">&lt;</span> <span class="n">max_iterations</span> <span class="ow">and</span> <span class="n">phi0</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">it</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">Ap</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">p</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Ap</span> <span class="o">@</span> <span class="n">Ap</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Ap</span>
+
+        <span class="c1"># --- soft line search: bracket then refine root of phi(alpha)=0 ---</span>
+        <span class="n">alpha_left</span><span class="p">,</span> <span class="n">phi_left</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">phi0</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">alpha_right</span> <span class="o">=</span> <span class="o">-</span><span class="n">phi0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">neg</span> <span class="o">=</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">0</span>
+            <span class="n">alpha_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span> <span class="o">/</span> <span class="n">p</span><span class="p">[</span><span class="n">neg</span><span class="p">])</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha_right</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">x</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+            <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">alpha_right</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">delta</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha_right</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">x</span>
+                <span class="n">delta</span> <span class="o">*=</span> <span class="mi">2</span>
+
+        <span class="n">phi_right</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">_phi_and_z</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">alpha_right</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="n">phi0</span><span class="p">)</span>
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">alpha_right</span><span class="p">,</span> <span class="n">phi_right</span>
+
+        <span class="k">if</span> <span class="n">phi_right</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">p</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">g_new</span> <span class="o">=</span> <span class="n">g</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">v</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">g_new</span> <span class="o">@</span> <span class="n">g_new</span><span class="p">)</span>
+            <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">g</span> <span class="o">@</span> <span class="n">g_new</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">phi</span> <span class="o">-</span> <span class="n">phi0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tau</span> <span class="o">=</span> <span class="n">tau0</span>
+            <span class="n">u</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span>
+            <span class="k">while</span> <span class="n">u</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">t</span><span class="p">:</span>
+                <span class="k">while</span> <span class="nb">abs</span><span class="p">(</span><span class="n">phi</span> <span class="o">/</span> <span class="n">phi0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tau</span><span class="p">:</span>
+                    <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha_left</span> <span class="o">*</span> <span class="n">phi_right</span> <span class="o">-</span> <span class="n">alpha_right</span> <span class="o">*</span> <span class="n">phi_left</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">phi_right</span> <span class="o">-</span> <span class="n">phi_left</span><span class="p">)</span>
+                    <span class="n">phi</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">_phi_and_z</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="n">phi0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">phi</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">alpha_right</span><span class="p">,</span> <span class="n">phi_right</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">phi</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">alpha_left</span><span class="p">,</span> <span class="n">phi_left</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">phi</span>
+                <span class="n">g_new</span> <span class="o">=</span> <span class="n">g</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="n">z</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">v</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">g_new</span> <span class="o">@</span> <span class="n">g_new</span><span class="p">)</span>
+                <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">g</span> <span class="o">@</span> <span class="n">g_new</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">phi</span> <span class="o">-</span> <span class="n">phi0</span><span class="p">)</span>
+                <span class="n">u</span> <span class="o">=</span> <span class="o">-</span><span class="n">t</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">phi</span>
+                <span class="n">tau</span> <span class="o">/=</span> <span class="mi">10</span>
+
+        <span class="n">g</span> <span class="o">=</span> <span class="n">g_new</span>
+        <span class="n">delta_x</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">p</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">delta_x</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="n">g</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">p</span>
+        <span class="n">phi0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span> <span class="o">@</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">delta_x_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">delta_x</span><span class="p">))</span>
+
+        <span class="n">fitted_b</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+        <span class="n">chi2_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chi2_r</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">fitted_b</span><span class="p">,</span> <span class="n">db</span><span class="p">))</span>
+        <span class="n">entropy_term</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">x</span><span class="p">))</span>
+        <span class="n">residual_norm2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">fitted_b</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">F_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">residual_norm2</span> <span class="o">+</span> <span class="n">l2</span> <span class="o">*</span> <span class="n">entropy_term</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">it</span> <span class="o">&lt;=</span> <span class="n">flat_range</span><span class="p">:</span>
+            <span class="n">dF</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dF</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">F_history</span><span class="p">[</span><span class="n">it</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">F_history</span><span class="p">[</span><span class="n">it</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">flat_range</span><span class="p">])</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">F_history</span><span class="p">[</span><span class="n">it</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">fitted_b</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">SolverResult</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+        <span class="n">fitted_b</span><span class="o">=</span><span class="n">fitted_b</span><span class="p">,</span>
+        <span class="n">n_iterations</span><span class="o">=</span><span class="n">it</span><span class="p">,</span>
+        <span class="n">chi2_r_history</span><span class="o">=</span><span class="n">chi2_history</span><span class="p">,</span>
+        <span class="n">roughness_history</span><span class="o">=</span><span class="p">[],</span>  <span class="c1"># not tracked by this algorithm's own logic</span>
+        <span class="n">converged</span><span class="o">=</span><span class="n">it</span> <span class="o">&lt;</span> <span class="n">max_iterations</span><span class="p">,</span>
+        <span class="n">diagnostics</span><span class="o">=</span><span class="p">{</span><span class="s2">"lambda"</span><span class="p">:</span> <span class="n">lam</span><span class="p">,</span> <span class="s2">"F_history"</span><span class="p">:</span> <span class="n">F_history</span><span class="p">,</span> <span class="s2">"method"</span><span class="p">:</span> <span class="s2">"Hansen CG MaxEnt (maxent.m)"</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,622 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The graphical interface &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The generic polydisperse tab" href="generic_polydisperse_tab.html" />
+    <link rel="prev" title="ozLib — manual and quick reference" href="manual.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyOZsolver</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="manual.html">ozLib — manual and quick reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The graphical interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#adding-a-tab">Adding a tab</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#session-files">Session files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#during-a-fit">During a fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reading-the-parameter-panel">Reading the parameter panel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#choosing-a-solver">Choosing a solver</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grid-size-and-points-per-tab-0">Grid size and points per σ (tab 0)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picard-mann-iteration-and-the-damping-a">Picard / Mann iteration and the damping a</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deflate-if-s-q-0">Deflate if S(Q)&lt;0</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-against-a-second-solver">Verify against a second solver</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#choosing-a-fitter">Choosing a fitter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hover-help">Hover help</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generic_polydisperse_tab.html">The generic polydisperse tab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html">Changes since pyOZgui</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#where-to-start">Where to start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#a-note-on-the-two-halves">A note on the two halves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#report-and-manuscript">Report and manuscript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#citing">Citing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Ornstein–Zernike</a></li>
+      <li class="breadcrumb-item active">The graphical interface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/oz/gui.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="the-graphical-interface">
+<h1>The graphical interface<a class="headerlink" href="#the-graphical-interface" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit-oz</span></code> (<code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.main_window</span></code>) opens a notebook of tabs. The solver tab is built in, the rest are
+registered in <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.main_window.EXTRA_TABS</span></code> and each is isolated by <code class="docutils literal notranslate"><span class="pre">try/except</span></code>, so an
+import failure costs that one tab and nothing else.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>tab</p></th>
+<th class="head"><p>purpose</p></th>
+<th class="head"><p>session file</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>0: OZ solver</strong></p></td>
+<td><p>one-component OZ, any potential and closure</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.oz</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>1: Polydisperse (any potential)</strong></p></td>
+<td><p>polydisperse S(Q) and I(Q), fitting to data</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.oz1</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>2: RY Polydisperse Yukawa</strong></p></td>
+<td><p>charge-coupled Yukawa under Rogers–Young</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.oz2</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>3: Mixture validation</strong></p></td>
+<td><p>numerical against analytic references</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.oz3</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>The number in each label comes from the widget’s own <code class="docutils literal notranslate"><span class="pre">SESSION_TAB_INDEX</span></code>, not
+from its position in the registry — if a tab fails to import the others shift
+up, and the label must keep matching what that tab’s own files claim.</p>
+<figure class="align-default" id="id1">
+<img alt="The polydisperse tab with data loaded and a computed result" src="../_images/gui_controls.png" style="width: 100%;" />
+<figcaption>
+<p><span class="caption-text">The polydisperse tab. Each fittable quantity carries its value, a <em>vary</em>
+checkbox and its own pair of bounds on one row; parameters that do not apply
+to the current model are greyed across all four fields rather than hidden, so
+the layout does not reflow as options are toggled. The exact result is drawn
+together with all six approximation schemes and the measured data.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id2">
+<img alt="The approximation-error panel" src="../_images/gui_error.png" style="width: 100%;" />
+<figcaption>
+<p><span class="caption-text">The approximation-error panel, for the same system. This is the comparison
+the software exists to make routine: the relative error of each scheme
+against the exact result, at the state point actually being fitted rather
+than at one taken from a paper. Note that the monodisperse and decoupling
+approximations improve steeply at high Q while the pair-sum schemes plateau
+near 1 per cent — which of them is acceptable depends on the Q range.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id3">
+<img alt="The mixture validation tab" src="../_images/gui_mixture_validation.png" style="width: 100%;" />
+<figcaption>
+<p><span class="caption-text">The mixture validation tab, which sets the numerical solver against analytic
+references and reports the coarse/fine ratio rather than only the size of the
+disagreement. Ordinary grid error falls roughly fourfold for a fourfold
+refinement; an error that does <em>not</em> shrink is a defect rather than
+resolution, which is how a fault giving every pair in a mixture the same hard
+core was eventually found.</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id4">
+<img alt="The RY polydisperse Yukawa tab" src="../_images/gui_ry_yukawa.png" style="width: 100%;" />
+<figcaption>
+<p><span class="caption-text">The RY Polydisperse Yukawa tab. It is kept alongside the generic tab rather
+than subsumed by it because it carries per-distribution parameter fields —
+Gamma and Beta with their own shapes — which the generic route cannot
+express while everything there is pinned to (mean, srel).</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p><strong>These are generated, not collected.</strong> <code class="docutils literal notranslate"><span class="pre">tools/gui_screenshots.py</span></code> (pyOZgui, Tk version) recreated
+all four; screenshots rot faster than any other kind of documentation, and a
+stale one is worse than none because it teaches an interface that no longer
+exists.</p>
+<hr class="docutils" />
+<section id="adding-a-tab">
+<h2>Adding a tab<a class="headerlink" href="#adding-a-tab" title="Link to this heading"></a></h2>
+<p>One line in <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.main_window.EXTRA_TABS</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="s2">"my_module"</span><span class="p">,</span> <span class="s2">"MyTabClass"</span><span class="p">,</span> <span class="s2">"My tab"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The class is a plain <code class="docutils literal notranslate"><span class="pre">QtWidgets.QWidget</span></code> (Qt port; see <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.qtkit</span></code> for the Tk-style variables and dialogs). Inheriting <code class="docutils literal notranslate"><span class="pre">PolydisperseTabControls</span></code> adds
+the standard button row, run history, session save/load and export; a tab that
+does not inherit it, as the mixture tab does not, simply carries its own.</p>
+<p>For a session file, set <code class="docutils literal notranslate"><span class="pre">SESSION_TAB_INDEX</span></code> and <code class="docutils literal notranslate"><span class="pre">SESSION_TAB_NAME</span></code> on the
+class and provide <code class="docutils literal notranslate"><span class="pre">sessionState()</span></code> / <code class="docutils literal notranslate"><span class="pre">restoreSessionState()</span></code>. The mixin calls
+those only if they exist.</p>
+</section>
+<hr class="docutils" />
+<section id="session-files">
+<h2>Session files<a class="headerlink" href="#session-files" title="Link to this heading"></a></h2>
+<p>A save writes settings, the measured data including its resolution column,
+which parameters were free, any edited bounds, and the last fit result —
+everything needed to resume. It does <strong>not</strong> write the computed runs: those
+are regenerated by pressing Compute, and storing them was expensive out of all
+proportion. One partial structure factor is shaped (nQ, p, p), which at 200
+q-points and 40 classes is 320 000 values per run; thirty runs produced a
+196 MB file, enough to fill a disk after a few saves. Without them, and
+indented for legibility, the same session is 23 kB.</p>
+<p><strong>Saves are per tab, not global.</strong> The tabs hold different models with
+different parameter sets, so one combined file would be a bag of unrelated
+sessions and loading it would overwrite work in tabs you were not thinking
+about. The extension carries the tab index (<code class="docutils literal notranslate"><span class="pre">.oz1</span></code>, <code class="docutils literal notranslate"><span class="pre">.oz2</span></code>, <code class="docutils literal notranslate"><span class="pre">.oz3</span></code>) and the
+tab <em>name</em> is written inside and checked on load — a mismatch is refused
+outright. Without that check, loading another tab’s file would set whichever
+entries happened to share a name and silently ignore the rest, producing a
+state half one model and half another and reporting success.</p>
+<p>Edited bounds travel with the file deliberately: a limit narrowed from an
+independent measurement is knowledge about the sample rather than a
+preference.</p>
+</section>
+<hr class="docutils" />
+<section id="during-a-fit">
+<h2>During a fit<a class="headerlink" href="#during-a-fit" title="Link to this heading"></a></h2>
+<p>The plot and the parameter entries update about <strong>once a second</strong> with the
+<em>best point so far</em> — not the current trial point, which wanders and is
+alarming without being informative. A parameter walking steadily toward a
+bound, or refusing to move at all, is visible long before the fit ends.</p>
+<p>The state is also written to <code class="docutils literal notranslate"><span class="pre">restore.oz1</span></code> beside the data file at the same
+rate, so a crash or a mistaken Interrupt does not lose a long fit. It goes
+next to the data file, or failing that next to the session file, whichever is
+writable; only if neither is are you asked where to put it.</p>
+<p><strong>Interrupt</strong> stops the fit between evaluations and returns the best point
+found, not whatever was being probed. Whether the <code class="docutils literal notranslate"><span class="pre">bumps</span></code> and NLopt back ends
+honour it has not been verified — worth knowing before starting a <code class="docutils literal notranslate"><span class="pre">dream</span></code> run
+that may take hours.</p>
+</section>
+<hr class="docutils" />
+<section id="reading-the-parameter-panel">
+<h2>Reading the parameter panel<a class="headerlink" href="#reading-the-parameter-panel" title="Link to this heading"></a></h2>
+<p>Each fittable quantity has its value, a <strong>vary</strong> checkbox and its own pair of
+bounds on one row. Parameters that do not apply to the current model are
+greyed across all four fields rather than hidden, so the layout does not
+reflow as options are toggled.</p>
+<p><strong>The bounds are editable and are shown for a reason.</strong> A parameter pinned at
+a limit is a result — the data want to go where the model forbids — and that
+is invisible if the limit is. The built-in limits are the maximum <em>domain</em>: an
+edited bound may narrow the range, never widen it, and a value outside its own
+bounds is refused rather than silently clipped.</p>
+<p><strong>What is solved rather than fitted.</strong> Scale, background and the power-law
+amplitude enter the intensity linearly, so they are obtained exactly by
+weighted least squares at every iteration and never reach the nonlinear
+optimiser. Ticking them means “solve and show me”; unticking means “hold at
+the entry value”. A <strong>negative background</strong> is worth attention: it is the only
+term that can move the curve vertically, so it absorbs whatever the shape
+cannot match, and a negative one means the model overshoots.</p>
+<p><strong>The contrast is fitted as a ratio.</strong> The absolute scattering length
+densities are perfectly correlated with the scale, so their magnitude carries
+no information; what the data determine is ρ_shell/ρ_core, and above all its
+sign. Fitting the ratio also makes it refine at all — in cm⁻² an SLD is ~10¹⁰
+and <code class="docutils literal notranslate"><span class="pre">least_squares</span></code> stops on its gradient test after one evaluation at that
+magnitude, returning the starting value with a meaningless uncertainty.</p>
+</section>
+<hr class="docutils" />
+<section id="choosing-a-solver">
+<h2>Choosing a solver<a class="headerlink" href="#choosing-a-solver" title="Link to this heading"></a></h2>
+<p>Prefer a <strong>fixed-point</strong> method. Near a fold the Jacobian is singular and the
+Newton–Krylov family is drawn onto negative-compressibility branches exactly
+where the fold lies. Measured at one Lennard-Jones state: the fixed-point
+family found g_max = 2.16 with min S(Q) = +0.21; the Newton–Krylov family
+found 1.13 and 1.22 with min S(Q) ≈ −38, all with residuals below 10⁻¹¹. They
+are all correct answers; one is physical.</p>
+<section id="grid-size-and-points-per-tab-0">
+<h3>Grid size and points per σ (tab 0)<a class="headerlink" href="#grid-size-and-points-per-tab-0" title="Link to this heading"></a></h3>
+<p><em>Gridsize</em> n sets N = 2ⁿ − 1 radial points (“auto”: n = 12, N = 4095). <em>Points per σ</em> sets the number of points
+per hard-sphere diameter (“auto”: 100). The grey text next to each field shows the value that “auto” stands
+for. Next to <em>Points per σ</em> it also shows the real-space range that follows, N / (points per σ) diameters: for
+example “= 100 (auto), r up to 40.95 σ”. More points per σ resolve the contact region better but shorten the
+range at fixed n. Slowly decaying potentials (small-κ Yukawa, DLVO tails) need a larger n.</p>
+</section>
+<section id="picard-mann-iteration-and-the-damping-a">
+<h3>Picard / Mann iteration and the damping a<a class="headerlink" href="#picard-mann-iteration-and-the-damping-a" title="Link to this heading"></a></h3>
+<p><strong>Picard / Mann iteration</strong> (tabs 0, 1 and 3; called “Picard iteration” before, and the old name is still
+accepted in scripts and saved files) iterates the closure map T with a damping a:</p>
+<p>x_{n+1} = (1 − a)·x_n + a·T(x_n),  0 &lt; a ≤ 1.</p>
+<ul class="simple">
+<li><p><strong>a = 1</strong> is plain Picard. It is the fastest form, but it diverges above about φ = 0.42 for hard spheres.
+Measured on a 1023-point grid, the iteration count grows geometrically and then the residual stays at 1.1
+instead of decreasing. A density ramp does not help: the map is no longer a contraction, so the basin of
+attraction has vanished rather than moved.</p></li>
+<li><p><strong>a &lt; 1</strong> is Mann’s iteration (Mann 1953; Krasnoselskii for a constant a). Each step moves only part of the
+way to T(x). This damps the oscillation that makes Picard diverge. It costs about 1/a times more
+iterations, and the iteration limit is scaled by 1/a automatically (see below).</p></li>
+</ul>
+<p><strong>The damping must satisfy 0 &lt; a ≤ 1.</strong> a = 0 would never move, and a &gt; 1 over-relaxes, which amplifies the
+oscillation. The field turns red for any other value, and <em>calculate</em> refuses it. <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> and the
+solver class raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> for it, and the preference cannot be set outside the range.</p>
+<section id="iteration-limit-n-a">
+<h4>Iteration limit: N/a<a class="headerlink" href="#iteration-limit-n-a" title="Link to this heading"></a></h4>
+<p>Tab 0 has no field for the iteration limit. The limit comes from the preferences (Settings → Preferences →
+Ornstein–Zernike → “OZ solvers”):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>solver</p></th>
+<th class="head"><p>limit</p></th>
+<th class="head"><p>preference</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>accelerated solvers (SUNDIALS, Anderson, MDIIS, Biggs–Andrews, Newton–Krylov)</p></td>
+<td><p>N_acc (factory 600)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Picard / Mann</p></td>
+<td><p>⌈N/a⌉, N factory 5000</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations_picard</span></code> (the limit for a = 1)</p></td>
+</tr>
+</tbody>
+</table>
+<p>A damped step covers only the fraction a of the way to T(x). The number of iterations needed therefore grows
+as 1/a: for hard spheres (PY, φ = 0.53) every converging a needs about 4170/a iterations (table below). The
+Picard / Mann solver uses the configured N as the limit for a = 1 and runs up to ⌈N/a⌉ iterations. With the
+factory N = 5000, that is 5000 at a = 1, 10000 at a = 0.5, and 25000 at a = 0.2. A grey line below the damping
+field shows the limit that the next calculation will use, for example “iteration limit 25000 = 5000/a
+(Preferences)”. The same scaling applies when a script passes <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> to <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code>, and to the
+limits of the polydisperse and mixture tabs. In every case the number given is the limit for a = 1.</p>
+<p>The scaling keeps the effort per unit of progress the same. It does not raise N itself. If a state needs more
+than N iterations already at the equivalent of a = 1 (φ = 0.53: about 4200), raise N in the preferences. With
+the former factory value N = 3000 a run at a = 0.2 stopped at 15000, while about 20100–20900 are needed.
+That, and the damped Picard / Mann verifier (below), is why the factory value is now 5000.</p>
+<p>Measured for hard spheres under PY on a 1023-point grid (tab 0, no verification):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>φ</p></th>
+<th class="head"><p>a</p></th>
+<th class="head"><p>iterations</p></th>
+<th class="head"><p>result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.30</p></td>
+<td><p>1 / 0.7 / 0.5 / 0.3</p></td>
+<td><p>337 / 487 / 687 / 1154</p></td>
+<td><p>g_max = 2.321659 for every a</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.45</p></td>
+<td><p>1</p></td>
+<td><p>20000 (limit)</p></td>
+<td><p>not converged; g_max = 3.73 at the stop</p></td>
+</tr>
+<tr class="row-even"><td><p>0.45</p></td>
+<td><p>0.7 / 0.5 / 0.3</p></td>
+<td><p>2311 / 3240 / 5408</p></td>
+<td><p>g_max = 3.963328, the same as scipy Anderson</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.50</p></td>
+<td><p>0.5 / 0.3</p></td>
+<td><p>5776 / 9635</p></td>
+<td><p>g_max = 4.868661</p></td>
+</tr>
+<tr class="row-even"><td><p>0.55</p></td>
+<td><p>0.3</p></td>
+<td><p>17917</p></td>
+<td><p>g_max = 6.092301</p></td>
+</tr>
+</tbody>
+</table>
+<p>The damping does not change the solution, only whether and how fast it is reached.</p>
+<p><strong>A result that seems to depend on a is an unfinished iteration.</strong> Hard spheres, PY, φ = 0.53, default grid
+(4095 points), compared with scipy Anderson (g_max = 5.556220, S(0) = 0.01149):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>a</p></th>
+<th class="head"><p>1000 iterations (the tab’s former default limit)</p></th>
+<th class="head"><p>100000 iterations</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>not converged, g_max = 6.77</p></td>
+<td><p>not converged (oscillates)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.9 / 0.8 / 0.7</p></td>
+<td><p>not converged, g_max = 5.11 / 5.22 / 5.67</p></td>
+<td><p>not converged (oscillates)</p></td>
+</tr>
+<tr class="row-even"><td><p>0.6 / 0.5 / 0.4</p></td>
+<td><p>not converged, g_max = 5.49 / 5.45 / 5.37</p></td>
+<td><p>converged in 6943 / 8334 / 10420, g_max = 5.556220</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.3 / 0.2 / 0.1</p></td>
+<td><p>not converged, g_max = 5.23 / 4.95 / 4.35</p></td>
+<td><p>converged in 13898 / 20852 / 41715, g_max = 5.556220</p></td>
+</tr>
+</tbody>
+</table>
+<p>Two things limit a:</p>
+<ul class="simple">
+<li><p><strong>a too large</strong> (here a ≥ 0.7): the damped map still overshoots, and the iteration oscillates for ever.</p></li>
+<li><p><strong>a small</strong>: the iteration converges, but it needs about 4170/a iterations at this density. With a fixed
+limit of 1000 it stopped far from the solution, and a smaller a stopped farther away. The limit now
+scales as N/a, so a smaller a no longer runs out of iterations sooner, provided N ≳ 4200.</p></li>
+</ul>
+<p>Every converged run gives the same solution, to 5·10⁻¹⁰ in S(Q). The iterate at the limit is not a solution.
+The tab therefore marks such a run “[NOT CONVERGED]” in its label and shows a warning with the last relative
+progress. It also stores the flag in the <code class="docutils literal notranslate"><span class="pre">.oz</span></code> file. If you see this, raise
+<code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations_picard</span></code> (or <code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations</span></code> for the other solvers) in the preferences;
+if the run still does not converge, lower a. With “verify against a second solver” on, the disagreement message now says
+whether a run did not converge, instead of suggesting a second root.</p>
+<p><strong>In tab 0</strong> the field <em>damping a</em> sits below the solver choice. Its start value comes from
+Settings → Preferences → Ornstein–Zernike → <code class="docutils literal notranslate"><span class="pre">oz.solve.mann_alpha</span></code> (factory 1). The field is greyed for the
+other solvers, which control their own step and would ignore it. When a &lt; 1, the automatic run label ends in
+“Mann a=…”. The solver and the damping are written to the saved <code class="docutils literal notranslate"><span class="pre">.oz</span></code> file, so a result can be reproduced.
+When Picard / Mann serves as the verifier for another solver, it uses its own damping,
+<code class="docutils literal notranslate"><span class="pre">oz.solve.verify_mann_alpha</span></code> (see “Verify against a second solver” below). Tabs 1 and 3 have the same field.</p>
+<p>The convergence test is on the residual ‖T(x) − x‖/‖x‖, not on the damped step a·‖T(x) − x‖. Testing the
+step would stop 1/a times too early. At a = 1 the two are the same, so plain Picard results are unchanged.</p>
+</section>
+</section>
+<section id="deflate-if-s-q-0">
+<h3>Deflate if S(Q)&lt;0<a class="headerlink" href="#deflate-if-s-q-0" title="Link to this heading"></a></h3>
+<p>Present on every tab, defaulting to 0 (no retry). The <em>check</em> itself always runs: a result with min S(Q) &lt; 0 is
+marked “[S(Q)&lt;0]” in the run list and a warning explains it; this setting decides whether the solver then
+searches for a physical root. S(Q) is a variance and cannot be
+negative, but nothing about the iteration detects a negative one: a solver
+can converge to a residual of 10⁻¹³, report success, and sit on a
+negative-compressibility branch. <code class="docutils literal notranslate"><span class="pre">tools/residual_check.py</span></code> finds all four
+Newton–Krylov variants doing exactly that at one Lennard-Jones state point,
+at min S(Q) = −38.96, where every fixed-point solver finds the correct root.</p>
+<p>Each attempt excludes one more root and re-solves with <strong>the same solver</strong>.
+Switching to the other family would often work — the two favour different
+branches — but it would hand back a result from a solver you did not choose,
+and rely on a bias that happens to hold where it has been tested. If no
+physical root is reachable the error lists every root found with its
+min S(Q), because past a spinodal there may be none and that is information
+rather than a failure.</p>
+<p><strong>On the polydisperse tab it governs Compute only, never Fit.</strong> An optimiser
+wanders into unphysical territory as a matter of course, and rescuing some of
+those points and not others makes chi-squared jump between neighbouring
+parameter values — least squares assumes a smooth residual. Fit first, then
+recompute at the fitted parameters with this on if the answer looks wrong.</p>
+</section>
+<section id="verify-against-a-second-solver">
+<h3>Verify against a second solver<a class="headerlink" href="#verify-against-a-second-solver" title="Link to this heading"></a></h3>
+<p>On tab 0, on by default. The result is cross-checked against an independent
+solver from a cold start before being returned; the log says
+<code class="docutils literal notranslate"><span class="pre">verifying</span> <span class="pre">with</span> <span class="pre">&lt;name&gt;</span></code>, and the result returned is always your chosen
+solver’s. It costs roughly eight times the solve — 0.0049 s against 0.0396 s
+— which is why it can be switched off for a parameter sweep. For ordinary
+use leave it on: a converged residual is not evidence the answer is right,
+and this is the only check that catches a solver landing on a different root.</p>
+<p><strong>Residual check.</strong> Every calculation also re-applies the closure map to the returned solution. If the
+relative residual exceeds <code class="docutils literal notranslate"><span class="pre">oz.solve.residual_tolerance</span></code> (factory 10⁻⁶), the run is marked “[NOT CONVERGED]”
+even when the solver reported success; the warning gives the residual. See the manual, “The independent
+residual check”.</p>
+<p><strong>Which verifier.</strong> A verifier must be <em>independent</em> of the solver it checks, or the two can share a failure
+mode and agree on a wrong answer. The verifiers are tried in this order:</p>
+<ol class="arabic simple">
+<li><p><strong>Biggs–Andrews.</strong> A fixed-point method with vector extrapolation.</p></li>
+<li><p><strong>Picard / Mann, damped</strong> with a = <code class="docutils literal notranslate"><span class="pre">oz.solve.verify_mann_alpha</span></code> (factory 0.5). Its limit is the Picard
+limit / a.</p></li>
+</ol>
+<p>A verifier from the <strong>same algorithm family</strong> as the chosen solver is skipped:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>family</p></th>
+<th class="head"><p>solvers</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Anderson/DIIS</p></td>
+<td><p>SUNDIALS Fixed-Point (Anderson), scipy Anderson, MDIIS</p></td>
+</tr>
+<tr class="row-odd"><td><p>vector extrapolation</p></td>
+<td><p>Biggs–Andrews</p></td>
+</tr>
+<tr class="row-even"><td><p>Picard/Mann</p></td>
+<td><p>Picard / Mann iteration</p></td>
+</tr>
+<tr class="row-odd"><td><p>Newton–Krylov</p></td>
+<td><p>scipy and SUNDIALS Newton–Krylov</p></td>
+</tr>
+</tbody>
+</table>
+<p>Some members of the same family are deliberately not used as verifiers:</p>
+<ul class="simple">
+<li><p><strong>MDIIS and scipy Anderson</strong> are never used to verify the default solver. Pulay’s DIIS (MDIIS) and Anderson
+mixing are algebraically equivalent, so they would be the same method checking itself. MDIIS also fails at
+φ = 0.58, where KIN_FP converges.</p></li>
+<li><p><strong>Newton–Krylov</strong> methods are never verifiers. Near a fold they land on negative-compressibility roots
+(min S(Q) ≈ −38 at a Lennard-Jones state where every fixed-point method finds the physical root).</p></li>
+</ul>
+<p><strong>Only a converged verifier counts.</strong> A verifier that stops at its iteration limit is no reference, so the
+next one is tried. Each verifier uses its own limit from the preferences.</p>
+<p>Picard / Mann is damped because Biggs–Andrews does not converge for dense hard spheres: at φ = 0.53 it fails
+even with 20000 iterations. Undamped Picard fails there too, so before this change a dense state had no
+working verifier. Damped with a = 0.5, Picard / Mann needs about 8300 iterations at φ = 0.53. The Picard limit
+was therefore raised from 3000 to 5000, which gives 10000 at a = 0.5. With this, the default solver at
+φ = 0.53 is verified by Picard / Mann, with a difference of 1.4·10⁻¹⁰.</p>
+<p><strong>If no verifier converges,</strong> the result is still shown, marked “[UNVERIFIED]”, with a warning that lists
+what each verifier did. This is not a disagreement. A real disagreement between two converged solvers is
+still an error, and the result is not shown. In scripts, <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> raises <code class="docutils literal notranslate"><span class="pre">VerificationUnavailable</span></code>
+with the unverified result as <code class="docutils literal notranslate"><span class="pre">.result</span></code>. A verified result records the verifier in <code class="docutils literal notranslate"><span class="pre">OZResult.verifiedWith</span></code>
+and the relative difference in <code class="docutils literal notranslate"><span class="pre">verificationDifference</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="choosing-a-fitter">
+<h2>Choosing a fitter<a class="headerlink" href="#choosing-a-fitter" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">scipy</span> <span class="pre">least_squares</span></code> is right for routine work — a bounded trust region
+converging in some thirty model evaluations. The alternatives cost far more,
+because every evaluation is a full OZ solve: 0.05 s for one component but
+2.5 s at seven size classes.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>fitter</p></th>
+<th class="head"><p>evaluations</p></th>
+<th class="head"><p>at 2.5 s each</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>least_squares</p></td>
+<td><p>~30</p></td>
+<td><p>~1 minute</p></td>
+</tr>
+<tr class="row-odd"><td><p>amoeba</p></td>
+<td><p>~200</p></td>
+<td><p>~8 minutes</p></td>
+</tr>
+<tr class="row-even"><td><p>de</p></td>
+<td><p>~2000</p></td>
+<td><p>~1.5 hours</p></td>
+</tr>
+<tr class="row-odd"><td><p>dream</p></td>
+<td><p>~10000+</p></td>
+<td><p>~7 hours</p></td>
+</tr>
+</tbody>
+</table>
+<p>They earn their place in two situations: <code class="docutils literal notranslate"><span class="pre">dream</span></code> samples a posterior and
+returns a correlation matrix, which is the only honest way to see how many of
+eleven nominally free parameters the data actually determine; and a population
+method can cross between minima that a local one cannot. Run them once on a
+converged fit, and reduce the size classes first.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">bumps</span> <span class="pre">lm</span></code> ignores bounds</strong> — it is scipy’s Levenberg–Marquardt, which has
+no bounded variant. Most parameters here are bounded, so the bound fields grey
+out and a warning appears when it is selected.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">nlopt</span> <span class="pre">...</span> <span class="pre">(constrained)</span></code></strong> exists for one thing: constraints relating
+several parameters, which no box bound can express. The concrete one is that
+the shell must fit inside the smallest core class, ΔR &lt; R(1 − n·s). Without
+it an unconstrained fit on synthetic data drove the shell to 0.84 against a
+limit of 0.63 — thicker than the core it sits on — while the constrained fit
+found the right answer with a <em>lower</em> χ².</p>
+</section>
+<hr class="docutils" />
+<section id="hover-help">
+<h2>Hover help<a class="headerlink" href="#hover-help" title="Link to this heading"></a></h2>
+<p>Every entry shows a line in the box at the foot of the panel. The text stays
+on the last thing hovered rather than blanking as the cursor moves, and the
+box is sized for its longest entry so the panel does not shift underneath the
+pointer.</p>
+</section>
+<hr class="docutils" />
+<section id="settings">
+<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h2>
+<p>Grid exponent k, points per diameter, iteration budget and transform type sit
+in a dialog rather than the main panel, being set once for a study. N is
+entered as the exponent and shown as a derived value, so an inefficient grid
+cannot be chosen by accident: a DST-I goes through an FFT of length 2(N+1) and
+wants N = 2^k − 1, a DST-IV is a length-N transform and wants N = 2^k, and
+choosing by hand made the second-order transform benchmark <em>slower</em> than the
+first-order one for some time.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="manual.html" class="btn btn-neutral float-left" title="ozLib — manual and quick reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generic_polydisperse_tab.html" class="btn btn-neutral float-right" title="The generic polydisperse tab" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

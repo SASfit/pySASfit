@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The cross-section formula and its simplifications &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Grouping and summing repeated runs" href="grouping.html" />
+    <link rel="prev" title="Reduction steps and uncertainties" href="reduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASred</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#status">Status</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usage.html">Using the pySASred window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="masks.html">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">The cross-section formula and its simplifications</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-general-formula">The general formula</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bersans">BerSANS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#simplifications-one-by-one">Simplifications, one by one</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#strong-scatterers-and-multiple-scattering">Strong scatterers and multiple scattering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#water-at-two-distances">Water at two distances</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-the-vifor-transmission-runs-show">What the Vifor transmission runs show</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASred: SANS data reduction</a></li>
+      <li class="breadcrumb-item active">The cross-section formula and its simplifications</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/formula.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="the-cross-section-formula-and-its-simplifications">
+<h1>The cross-section formula and its simplifications<a class="headerlink" href="#the-cross-section-formula-and-its-simplifications" title="Link to this heading"></a></h1>
+<p>pySASred follows the general formula of Strunz, Šaroun, Keiderling, Wiedenmann &amp; Przenioslo,
+<em>General formula for determination of cross-section from measured SANS intensities</em>,
+J. Appl. Cryst. <strong>33</strong> (2000) 829–833. BerSANS (Keiderling, HMI Berlin) is based on the same
+derivation but makes simplifications. pySASred keeps the general form and records every
+simplification it applies in the notes of the result.</p>
+<section id="the-general-formula">
+<h2>The general formula<a class="headerlink" href="#the-general-formula" title="Link to this heading"></a></h2>
+<p>For pixel ij, with all intensities already corrected for dead time and normalised to the monitor
+(eq. 8 of the paper):</p>
+<div class="math notranslate nohighlight">
+\[\left[\frac{d\Sigma}{d\Omega}(Q_{ij})\right]_S =
+\frac{\dfrac{I_{S}-I_{Cd}}{T_{EB}\,T_{Si}} - \dfrac{I_{EB}-I_{Cd}}{T_{EB}}\,(1-p_{cS})}
+     {\dfrac{I_{H2O}-I_{Cd,H2O}}{T_{EC}\,\tau_{H2O}} - \dfrac{I_{EC}-I_{Cd,H2O}}{T_{EC}}}
+\; K_0\,\frac{t_{H2O}-\tau_{H2O}}{4\pi\,\tau_{H2O}\,d_S}\,
+\frac{\Delta\Omega_{ij,H2O}}{\Delta\Omega_{ij}}\, r
+\;-\; \frac{1}{1-p_{iS}}\left[\frac{d\Sigma}{d\Omega}\right]_{INC}\]</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>symbol</p></th>
+<th class="head"><p>meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>t_S</p></td>
+<td><p>transmission for absorption and large-angle coherent (Bragg) scattering</p></td>
+</tr>
+<tr class="row-odd"><td><p>T_Si = t_S (1 − p_iS)</p></td>
+<td><p>absorption and incoherent scattering: the <strong>wide-angle</strong> transmission (plateau of T(α))</p></td>
+</tr>
+<tr class="row-even"><td><p>τ_S = T_Si (1 − p_cS)</p></td>
+<td><p>total removal transmission: the transmission through the <strong>beam spot</strong> only</p></td>
+</tr>
+<tr class="row-odd"><td><p>p_cS = d_S ∫ dΣ/dΩ dΩ</p></td>
+<td><p>probability of at least one coherent small-angle scattering event</p></td>
+</tr>
+<tr class="row-even"><td><p>T_EB, T_EC</p></td>
+<td><p>transmission of the substrate / container / sample environment, of the empty water cell</p></td>
+</tr>
+<tr class="row-odd"><td><p>K0</p></td>
+<td><p>forward excess of water in a flat cell (≈ 1.4 at 6 Å for 1 mm, mostly multiple scattering)</p></td>
+</tr>
+<tr class="row-even"><td><p>r = I_prim,H2O / I_prim</p></td>
+<td><p>primary beam with the water collimation / with the sample collimation</p></td>
+</tr>
+<tr class="row-odd"><td><p>ΔΩ_ij,H2O / ΔΩ_ij</p></td>
+<td><p>pixel solid angles at the water and the sample distance</p></td>
+</tr>
+</tbody>
+</table>
+<p>Two transmissions with different meaning appear: the sample is divided by T_Si, the background
+is multiplied by (1 − p_cS). Only for p_cS ≈ 0 is T_Si = τ_S and the familiar formula recovered;
+with τ_S in the sample term (eq. 9, aqueous samples) the whole curve is shifted by (1 − p_cS).
+The formula is an integral equation for the cross-section, because p_cS is its integral.</p>
+</section>
+<section id="bersans">
+<h2>BerSANS<a class="headerlink" href="#bersans" title="Link to this heading"></a></h2>
+<p>BerSANS (manual: program SANSAniDo, eq. 2) computes</p>
+<div class="math notranslate nohighlight">
+\[\frac{d\sigma}{d\Omega}_{ij} =
+\frac{\dfrac{S_{ij}-Cd_{ij}}{T(S)}\,A(S) - \dfrac{SB_{ij}-Cd_{ij}}{T(SB)}\,(1-p(S))}
+     {\dfrac{W_{ij}-Cd_{ij}}{T(W)} - \dfrac{WB_{ij}-Cd_{ij}}{T(WB)}}
+\;\frac{\text{ScalingFactor}(W)}{\text{ScalingFactor}(S)}\]</div>
+<p>with the transmissions T = Σ(S − Cd)/Σ(EH − Cd) over a selectable detector rectangle, an attenuation
+factor A(S) and a scattering probability p(S) given by the user (defaults 1 and 0), and scaling
+factors that hold the illuminated volumes (thickness × aperture area) and, in the tutorial, a
+geometry factor col² · sd² for water measured at another distance. The water scaling factor of its
+<em>Calculate</em> button is A_W (1 − T_W/T_WB)/(4π T_W) (times g(λ) by hand): the denominator is the
+transmission of water + cell T_W, where Strunz et al. have τ_H2O = T_W/T_EC (see <a class="reference internal" href="reduction.html"><span class="doc">Reduction steps and uncertainties</span></a>,
+instrument file <code class="docutils literal notranslate"><span class="pre">water.denominator</span></code>).</p>
+</section>
+<section id="simplifications-one-by-one">
+<h2>Simplifications, one by one<a class="headerlink" href="#simplifications-one-by-one" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>item</p></th>
+<th class="head"><p>Strunz et al.</p></th>
+<th class="head"><p>BerSANS</p></th>
+<th class="head"><p>pySASred (✓ done, ○ planned)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>meaning of the sample transmission</p></td>
+<td><p>T_Si (wide angle) in eq. 8, τ_S in eq. 9</p></td>
+<td><p>one T(S), whose meaning depends on the detector area chosen</p></td>
+<td><p>✓ both from the same run (<a class="reference internal" href="api.html#pysasfit.sasred.core.scattering_strength.aperture_transmission" title="pysasfit.sasred.core.scattering_strength.aperture_transmission"><code class="xref py py-func docutils literal notranslate"><span class="pre">aperture_transmission()</span></code></a>): T(α), plateau T_Si, beam spot τ_UL; ○ the mode stored with the value</p></td>
+</tr>
+<tr class="row-odd"><td><p>(1 − p_cS) on the background</p></td>
+<td><p>required</p></td>
+<td><p>p(S), default 0</p></td>
+<td><p>✓ p_cS from the transmission (lower limit), from the curve (with extrapolation) or self-consistent, regime (<a class="reference internal" href="api.html#pysasfit.sasred.core.scattering_strength.assess" title="pysasfit.sasred.core.scattering_strength.assess"><code class="xref py py-func docutils literal notranslate"><span class="pre">assess()</span></code></a>); ○ used in the reduction</p></td>
+</tr>
+<tr class="row-even"><td><p>container / substrate</p></td>
+<td><p>T_EB in both terms</p></td>
+<td><p>in T(S) when it is measured against the empty beam, not against the empty cell</p></td>
+<td><p>○ T_EB kept separate</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cd background</p></td>
+<td><p>separate Cd for the water geometry</p></td>
+<td><p>one Cadmium</p></td>
+<td><p>○ separate when the water was measured at another collimation or distance</p></td>
+</tr>
+<tr class="row-even"><td><p>water standard</p></td>
+<td><p>K0 (t − τ)/(4π τ d) gives the absolute scale</p></td>
+<td><p>ScalingFactor(W) = g A_W (1 − τ)/(4π T_W): denominator water + cell; volume ratio in the scaling factors</p></td>
+<td><p>✓ K0 = g(λ) with its uncertainty as a systematic source; denominator T_W (BerSANS, SANS-I default) or τ_W (<code class="docutils literal notranslate"><span class="pre">water.denominator</span></code>); illuminated areas A_W/A_S (✓ efficiency from water)</p></td>
+</tr>
+<tr class="row-odd"><td><p>water at another distance</p></td>
+<td><p>ΔΩ_ij,H2O/ΔΩ_ij per pixel and r</p></td>
+<td><p>col² · sd² (on-axis, fixed apertures)</p></td>
+<td><p>✓ exact pixel solid angles; ○ r from the collimation, with an uncertainty</p></td>
+</tr>
+<tr class="row-even"><td><p>K(λ0, 2θ)</p></td>
+<td><p>constant for 2θ ≤ 15°</p></td>
+<td><p>—</p></td>
+<td><p>○ same assumption, stated in the notes</p></td>
+</tr>
+<tr class="row-odd"><td><p>λ dependence of the detector efficiency for inelastic water scattering</p></td>
+<td><p>in K0</p></td>
+<td><p>—</p></td>
+<td><p>○ in K0 (not separated)</p></td>
+</tr>
+<tr class="row-even"><td><p>incoherent term of the sample</p></td>
+<td><p>not subtracted, fitted as a constant later</p></td>
+<td><p>same</p></td>
+<td><p>same</p></td>
+</tr>
+<tr class="row-odd"><td><p>dead time</p></td>
+<td><p>before everything</p></td>
+<td><p>global: τ Σ I / t over the detector</p></td>
+<td><p>✓ global or per tube</p></td>
+</tr>
+<tr class="row-even"><td><p>uncertainties</p></td>
+<td><p>—</p></td>
+<td><p>partial derivatives of the intensities only; transmissions, scaling and attenuation factors exact</p></td>
+<td><p>✓ exact first-order propagation of every source, systematic ones flagged</p></td>
+</tr>
+<tr class="row-odd"><td><p>summing runs</p></td>
+<td><p>—</p></td>
+<td><p>all selected files</p></td>
+<td><p>✓ grouping with precisions plus an equivalence check (<a class="reference internal" href="grouping.html"><span class="doc">Grouping and summing repeated runs</span></a>)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="strong-scatterers-and-multiple-scattering">
+<h2>Strong scatterers and multiple scattering<a class="headerlink" href="#strong-scatterers-and-multiple-scattering" title="Link to this heading"></a></h2>
+<p>The weaker the sample, the closer the simplified formula comes to the general one. pySASred
+therefore asks, per sample, how strongly it scatters and guides the reduction accordingly
+(<a class="reference internal" href="api.html#module-pysasfit.sasred.core.scattering_strength" title="pysasfit.sasred.core.scattering_strength"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.sasred.core.scattering_strength</span></code></a>):</p>
+<ol class="arabic">
+<li><p><strong>Transmission over growing apertures.</strong> From the direct-beam runs with and without the sample,
+T(α) is summed over discs of growing radius. The beam spot gives τ_UL (an upper limit of τ_S:
+neutrons scattered into the spot are always counted), the plateau gives T_Si, and
+1 − τ_UL/T_Si ≤ p_cS. When T still rises at the detector edge, T_Si is a lower limit. The
+beam-independent background (Cd run, or a flat level from the outer half of the empty beam) must
+be subtracted first, otherwise the large discs drift towards T = 1. For strongly incoherent
+samples, incoherent scattering into the detector (≈ (1 − T_Si)/T_Si · α/4π, more for water-like
+samples in flat cells) sets the smallest p_cS that can be seen. The radial average of both runs
+per ring shows where the scattered neutrons land (sample − τ_UL · empty).</p></li>
+<li><p><strong>p_cS from the cross-section.</strong> After a first reduction, p_cS = d ∫ dΣ/dΩ dΩ with a Guinier
+extrapolation to q = 0 and a Porod tail; the extrapolated share is reported. For single
+scattering p_cS ∝ d λ².</p></li>
+<li><p><strong>Regime.</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>p_cS</p></th>
+<th class="head"><p>regime</p></th>
+<th class="head"><p>formula and actions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>&lt; 0.05</p></td>
+<td><p>weak</p></td>
+<td><p>eq. 9 with p_cS ≈ 0 (the BerSANS default); beam-spot transmission adequate</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.05 – 0.3</p></td>
+<td><p>moderate</p></td>
+<td><p>eq. 8 with p_cS on the background; wide-angle transmission; iterate reduce → p_cS → reduce</p></td>
+</tr>
+<tr class="row-even"><td><p>&gt; 0.3</p></td>
+<td><p>strong</p></td>
+<td><p>the curve is a multiple-scattering curve (Schelten &amp; Schmatz 1980): I(0), Rg and the invariant are not those of single scattering; τ_S cannot be measured; p_cS from the model; thickness or wavelength series; thinner sample</p></td>
+</tr>
+</tbody>
+</table>
+<p>The suggested thickness or wavelength for p_cS = 0.1 is given. When the background is a large
+part of the signal near the beam stop (substrates, windows, measurements without beam stop), a
+wrong (1 − p_cS) changes the shape, not only the scale (Strunz et al., fig. 2).</p>
+</li>
+<li><p><strong>Multiple-scattering check.</strong> Runs of the same sample at different thickness or wavelength are
+grouped (<a class="reference internal" href="grouping.html"><span class="doc">Grouping and summing repeated runs</span></a>) and compared after division by the thickness: a shape change that
+grows with d λ² is multiple scattering.</p></li>
+<li><p><strong>Self-consistent p_cS.</strong> <a class="reference internal" href="api.html#pysasfit.sasred.core.scattering_strength.self_consistent_probability" title="pysasfit.sasred.core.scattering_strength.self_consistent_probability"><code class="xref py py-func docutils literal notranslate"><span class="pre">self_consistent_probability()</span></code></a>
+solves the integral equation by iteration.</p></li>
+</ol>
+<p>Planned for the pySASred window: a <em>Scattering strength</em> step per sample group: the T(α)
+plot with τ_UL, T_Si and the p_cS limit; p_cS from the curve with its extrapolations; the regime
+with the formula used and the suggested actions; the series check when a thickness or wavelength
+series exists. Every choice (transmission mode, p_cS and its source, regime) goes into the notes of
+the output file.</p>
+</section>
+<section id="water-at-two-distances">
+<h2>Water at two distances<a class="headerlink" href="#water-at-two-distances" title="Link to this heading"></a></h2>
+<p>A sample divided by water measured at the same distance needs no solid-angle correction: ΔΩ_ij
+cancels pixel by pixel, together with the pixel efficiency η_ij. What remains is the angular
+dependence K(2θ) of the water itself (mostly multiple incoherent scattering in the flat cell,
+Strunz et al. section 7). The effects multiply: the water intensity per pixel and monitor is</p>
+<div class="math notranslate nohighlight">
+\[W_{ij} \propto \eta_{ij}\,\Delta\Omega_{ij}\,K(2\theta_{ij})\]</div>
+<p>and the same pixel sees 2θ_a at L_a and 2θ_b at L_b. After dividing each image by its exact
+ΔΩ_ij, the ratio is free of η_ij:</p>
+<div class="math notranslate nohighlight">
+\[\frac{W_{ij,a}/\Delta\Omega_{ij,a}}{W_{ij,b}/\Delta\Omega_{ij,b}} = C\,\frac{K(2\theta_{ij,a})}{K(2\theta_{ij,b})},
+\qquad \ln K(2\theta)/K(0) = \sum_k a_k (2\theta)^{2k}\]</div>
+<p>The logarithm turns the products into the sum that is fitted over all pixels
+(<a class="reference internal" href="api.html#pysasfit.sasred.core.water.compare_water_runs" title="pysasfit.sasred.core.water.compare_water_runs"><code class="xref py py-func docutils literal notranslate"><span class="pre">compare_water_runs()</span></code></a>). In principle C = 1; a constant C ≠ 1
+is something that does not depend on the angle and differs between the distances: a common
+distance offset δ (ΔΩ ∝ 1/(L+δ)²), a dead time too small at the higher rate, or a different primary
+beam per monitor count. K(2θ) can be divided out of the water before the efficiency map is made
+(<code class="docutils literal notranslate"><span class="pre">efficiency_from_runs(...,</span> <span class="pre">water_k=comparison.K)</span></code>).</p>
+<p>Vifor, water 8 m (82280–82292, empty cell 82281–82291) against 2 m (82203, 82251; empty cell
+82204, 82252), 15 129 pixels, χ²/ndf = 1.2:</p>
+<ul class="simple">
+<li><p>K(2θ)/K(0) = exp(−0.293 (2θ)²): 0.9978 at 5°, 0.9911 at 10°, 0.980 at 15° (2θ up to 17° at
+2 m). At 8 m (2θ ≤ 4.5°) the water is flat within 0.2 %; at 2 m a sample normalised by the
+2 m water is about 1–2 % too high at the outer pixels unless K is divided out.</p></li>
+<li><p>C = 1.040 ± 0.001: the 8 m water is 4 % higher per steradian than the 2 m water. A common
+distance offset of +5.3 cm would explain it, or a dead time of 1.7 µs instead of 0.66 µs. The
+samples measured at both distances do not show the rate dependence such a dead time would
+cause (their overlap ratio would rise by about 3 % from 12 to 39 kHz at 2 m; it falls), so the
+dead time is the less likely cause. Water at a third distance, or at 2 m with an attenuator,
+would decide. A distance offset would also explain mismatches between geometries on the absolute
+scale seen before.</p></li>
+<li><p>The offset is applied by default: preference <em>offset added to the recorded distance</em>
+(<code class="docutils literal notranslate"><span class="pre">sasred.detector.distance_offset_mm</span></code>, factory <strong>53 mm</strong>), optionally only for runs started before
+a date (<code class="docutils literal notranslate"><span class="pre">sasred.detector.distance_offset_before</span></code>) once the instrument configuration writes the
+corrected distance. The recorded distance stays <code class="docutils literal notranslate"><span class="pre">RawRun.SD_m</span></code> (run table, grouping, selection,
+labels); the distance to the detection layer <code class="docutils literal notranslate"><span class="pre">RawRun.SD_effective_m</span></code> = recorded + offset is used for
+q and the solid angle, and every reduction notes it. With +53 mm the 8 m and 2 m water agree per
+steradian (C = 1.0001 ± 0.0005) and the water anisotropy becomes K(2θ)/K(0) = 0.997 at 5°, 0.988 at
+10°, 0.974 at 15° (0.993 and 0.984 with the dome divided out).</p></li>
+<li><p><strong>Measuring the offset again</strong>: water (with its empty cell) at several detector distances with the
+same collimation, then <a class="reference internal" href="api.html#pysasfit.sasred.core.water.fit_distance_offset" title="pysasfit.sasred.core.water.fit_distance_offset"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit_distance_offset()</span></code></a>: the images are
+computed with the recorded distances and compared pixel by pixel with the first one (the pixel
+efficiency cancels); δ is fitted together with the water anisotropy. With two distances the primary
+beam per monitor count must be the same; with three or more <code class="docutils literal notranslate"><span class="pre">free_constant=True</span></code> also fits a
+common factor (e.g. another filling of the water cell). Vifor (8 m, 2 m): δ = +53.3 ± 0.8 mm
+(+55.4 mm with the dome divided out). A distance measured by hand to the detection layer (≈ 0.8 cm
+behind the start of the ³He volume at 6 Å) checks it independently; at another wavelength the
+conversion depth part changes (0.88 cm at 4.7 Å, 0.42 cm at 12 Å).</p></li>
+<li><p>Runs 82279 (22 s) and 82294 (84 s) are timer runs stopped long before their 1200 s preset; they
+are now marked as aborted.</p></li>
+</ul>
+</section>
+<section id="what-the-vifor-transmission-runs-show">
+<h2>What the Vifor transmission runs show<a class="headerlink" href="#what-the-vifor-transmission-runs-show" title="Link to this heading"></a></h2>
+<p>Direct beam with the beam stop moved down (bsy = −300 mm, 300 mm from the beam centre) and
+attenuator 1 at 8 m, empty beam 82173, no Cd run:</p>
+<ul class="simple">
+<li><p>In the scattering geometry (bsx, bsy = −27, 1 mm) the beam stop shadow is centred at pixel
+(62.9, 64.1), the direct beam at (61.7, 64.0): the beam stop sits 8.7 mm beside the beam centre
+at 8 m (5.8 mm at 2 m), well inside its shadow.</p></li>
+<li><p>The runs are corrected like scattering runs (dead time, attenuator, monitor). The empty beam has
+the highest rate: dead-time factor 1.0030 against 1.0006 for water, so T comes out 0.24 % lower
+than from the raw counts. Without the attenuator the empty beam would give about 2·10⁶ counts/s,
+far beyond what τ = 0.66 µs allows.</p></li>
+<li><p>The radially averaged runs show the beam spot within about 6 px; outside it both runs fall to a
+flat, beam-independent background of about 1.5·10⁻⁷ per pixel and monitor (≈ 0.6 % of the
+empty-beam counts over the whole detector).</p></li>
+<li><p>Summed over the whole detector without subtracting this background, T_Si comes out up to 1.4 %
+higher than τ_UL for the samples with T ≈ 0.24 (water and the *_1 samples), which would mimic a
+coherent scattering probability. With the flat background subtracted (the default when no Cd run
+is given) T_Si = τ_UL within 0.2 % for every sample: all samples are in the weak regime, and
+<code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> (a central area) is the right transmission for them.</p></li>
+<li><p>EXP-005370-A_2: <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> gives 0.2966, run 82114 at changer position 29.3 mm gives 0.418
+(B_2, C_2, D_2, E_2: 0.419–0.422). The first-night runs of A_2 (position 3.0 mm, next to A_1 at
+0.3 mm) have the transmission of A_1.</p></li>
+<li><p>The A_1 transmission run 82113 was recorded at SD = 7.63 m instead of 8 m.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reduction.html" class="btn btn-neutral float-left" title="Reduction steps and uncertainties" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="grouping.html" class="btn btn-neutral float-right" title="Grouping and summing repeated runs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

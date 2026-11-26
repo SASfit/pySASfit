@@ -1,0 +1,418 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.morph.export &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.morph.export</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.morph.export</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Output of a reconstruction.</span>
+
+<span class="sd">Curves (tab-separated text, as SAXSMorph): ``&lt;base&gt;_newiq.txt`` (extrapolated I(q)),</span>
+<span class="sd">``&lt;base&gt;_gamma.txt``, ``&lt;base&gt;_gr.txt``, ``&lt;base&gt;_spec.txt`` (f(k) and P(k)),</span>
+<span class="sd">``&lt;base&gt;_iq_model.txt`` (data and level-cut model), ``&lt;base&gt;_iq_voxel.txt`` and</span>
+<span class="sd">``&lt;base&gt;_log.txt`` (report and parameters).</span>
+
+<span class="sd">Voxel matrix: VTK legacy structured points (ParaView, PyVista; no dependency),</span>
+<span class="sd">HDF5 (h5py; matrix plus all curves and parameters), TIFF stack (tifffile or</span>
+<span class="sd">Pillow; Fiji/ImageJ, Avizo, Dragonfly), NumPy ``.npy``.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"write_curves"</span><span class="p">,</span> <span class="s2">"write_vtk"</span><span class="p">,</span> <span class="s2">"write_hdf5"</span><span class="p">,</span> <span class="s2">"write_tiff_stack"</span><span class="p">,</span> <span class="s2">"write_npy"</span><span class="p">,</span> <span class="s2">"write_matrix"</span><span class="p">,</span>
+           <span class="s2">"MATRIX_FORMATS"</span><span class="p">,</span> <span class="s2">"write_curves_multi"</span><span class="p">,</span> <span class="s2">"write_hdf5_multi"</span><span class="p">,</span> <span class="s2">"write_labels"</span><span class="p">]</span>
+
+<span class="c1">#: file filter -&gt; extension for the GUI</span>
+<span class="n">MATRIX_FORMATS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"VTK structured points (*.vtk)"</span><span class="p">:</span> <span class="s2">".vtk"</span><span class="p">,</span>
+    <span class="s2">"HDF5 with curves and parameters (*.h5)"</span><span class="p">:</span> <span class="s2">".h5"</span><span class="p">,</span>
+    <span class="s2">"TIFF stack (*.tif)"</span><span class="p">:</span> <span class="s2">".tif"</span><span class="p">,</span>
+    <span class="s2">"NumPy array (*.npy)"</span><span class="p">:</span> <span class="s2">".npy"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_save</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">header</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">),</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"</span><span class="si">%.8g</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span>
+
+
+<div class="viewcode-block" id="write_curves">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_curves">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_curves</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write all curves of ``res`` next to ``base`` (path without extension). Returns the paths."""</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">curve</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_newiq.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">],</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_extrapolated"</span><span class="p">]),</span>
+        <span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_gamma.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">gamma</span><span class="p">],</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">]),</span>
+        <span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_gr.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">],</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"g"</span><span class="p">]),</span>
+        <span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_spec.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">k</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">Pk</span><span class="p">],</span> <span class="p">[</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"f(k)"</span><span class="p">,</span> <span class="s2">"P(k)"</span><span class="p">]),</span>
+    <span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">q_data</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_data</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_levelcut</span><span class="p">]</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_data"</span><span class="p">,</span> <span class="s2">"I_levelcut"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">sigma_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cols</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">sigma_data</span><span class="p">)</span>
+        <span class="n">head</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"sigma"</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_iq_model.txt"</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">head</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">I_voxel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_iq_voxel.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">],</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_voxel"</span><span class="p">]))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_log.txt"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">parameters:</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_log.txt"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="write_vtk">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_vtk">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_vtk</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Binary legacy VTK, STRUCTURED_POINTS, unsigned char 'phase' (1 = pore) on the voxel centres."""</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+    <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">b</span><span class="s2">"# vtk DataFile Version 3.0</span><span class="se">\n</span><span class="s2">SASmorph two-phase structure (1 = pore)</span><span class="se">\n</span><span class="s2">BINARY</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">"DATASET STRUCTURED_POINTS</span><span class="se">\n</span><span class="s2">DIMENSIONS </span><span class="si">{</span><span class="n">nx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ny</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">nz</span><span class="si">}</span><span class="se">\n</span><span class="s2">ORIGIN 0 0 0</span><span class="se">\n</span><span class="s2">"</span>
+                 <span class="sa">f</span><span class="s2">"SPACING </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.8g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.8g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.8g</span><span class="si">}</span><span class="se">\n</span><span class="s2">POINT_DATA </span><span class="si">{</span><span class="n">mat</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+                 <span class="s2">"SCALARS phase unsigned_char 1</span><span class="se">\n</span><span class="s2">LOOKUP_TABLE default</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="c1"># VTK: x varies fastest -&gt; Fortran order of (x, y, z)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s2">"F"</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">b</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="write_hdf5">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_hdf5">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_hdf5</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">include_field</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"creator"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"pysasfit.morph (SASmorph)"</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"report"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"matrix"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"voxel_size"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"meaning"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1 = phase 2 (pore), 0 = solid"</span>
+        <span class="k">if</span> <span class="n">include_field</span> <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">psi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">psi</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"curves"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">arr</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"q_extrapolated"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span><span class="p">),</span> <span class="p">(</span><span class="s2">"I_extrapolated"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">),</span>
+                          <span class="p">(</span><span class="s2">"gamma"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">gamma</span><span class="p">),</span> <span class="p">(</span><span class="s2">"g"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">),</span> <span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">k</span><span class="p">),</span> <span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">f</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Pk"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">Pk</span><span class="p">),</span>
+                          <span class="p">(</span><span class="s2">"q_data"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">q_data</span><span class="p">),</span> <span class="p">(</span><span class="s2">"I_data"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_data</span><span class="p">),</span> <span class="p">(</span><span class="s2">"I_levelcut"</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_levelcut</span><span class="p">)):</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">I_voxel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"q_voxel"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">)</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"I_voxel"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"statistics"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_flat</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">statistics</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"S_over_V_porod"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">S_over_V_porod</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"invariant"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">invariant</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"porod_K"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">K</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flat</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_flat</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="write_tiff_stack">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_tiff_stack">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_tiff_stack</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One 8-bit page per z slice (0 / 255)."""</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">tifffile</span>
+
+        <span class="n">kw</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"imagej"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"resolution"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">a</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">a</span><span class="p">),</span> <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"spacing"</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s2">"axes"</span><span class="p">:</span> <span class="s2">"ZYX"</span><span class="p">}}</span>
+        <span class="n">tifffile</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">"TIFF export needs tifffile or Pillow (pip install tifffile)"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="n">pages</span> <span class="o">=</span> <span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+    <span class="n">pages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">save_all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">append_images</span><span class="o">=</span><span class="n">pages</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"tiff_deflate"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="write_npy">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_npy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_npy</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="write_matrix">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_matrix</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write the voxel matrix in the format given by the extension (.vtk, .h5/.hdf5, .tif/.tiff, .npy)."""</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"labels"</span><span class="p">):</span>                       <span class="c1"># multi-phase result</span>
+        <span class="k">return</span> <span class="n">write_labels</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no voxel matrix: run the reconstruction first"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".vtk"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">write_vtk</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".h5"</span><span class="p">,</span> <span class="s2">".hdf5"</span><span class="p">,</span> <span class="s2">".hdf"</span><span class="p">,</span> <span class="s2">".nxs"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">write_hdf5</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".tif"</span><span class="p">,</span> <span class="s2">".tiff"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">write_tiff_stack</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".npy"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">write_npy</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown matrix format </span><span class="si">{</span><span class="n">ext</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------- multi-phase results</span>
+<div class="viewcode-block" id="write_curves_multi">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_curves_multi">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_curves_multi</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Curves of a :class:`pysasfit.morph.multiphase.MultiResult`: common g(r) and f(k), and per curve</span>
+<span class="sd">    ``&lt;base&gt;_&lt;name&gt;_newiq/_gamma/_iq_model/_iq_voxel.txt``; ``&lt;base&gt;_log.txt``."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_gr.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">],</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"g"</span><span class="p">]),</span>
+           <span class="n">_save</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_spec.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">k</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">Pk</span><span class="p">],</span> <span class="p">[</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"f(k)"</span><span class="p">,</span> <span class="s2">"P(k)"</span><span class="p">])]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">curves</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="s2">"_"</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[^\w.-]+"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"sas"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sesans"</span><span class="p">:</span>     <span class="c1"># SESANS: delta, G - G(0), model, voxel structure</span>
+            <span class="n">cols</span><span class="p">,</span> <span class="n">head</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">q_data</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_data</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_model</span><span class="p">],</span> <span class="p">[</span><span class="s2">"delta"</span><span class="p">,</span> <span class="s2">"G_data"</span><span class="p">,</span> <span class="s2">"G_model"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_data</span><span class="p">)</span>
+                <span class="n">head</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"dG"</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_sesans.txt"</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">head</span><span class="p">))</span>
+            <span class="n">inv</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">inversion</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_C_abel.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">inv</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">inv</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="n">inv</span><span class="o">.</span><span class="n">dC</span><span class="p">],</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"C_abel"</span><span class="p">,</span> <span class="s2">"dC"</span><span class="p">]))</span>
+            <span class="n">sel</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">r</span> <span class="o">&gt;=</span> <span class="n">c</span><span class="o">.</span><span class="n">r_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">r</span> <span class="o">&lt;=</span> <span class="n">c</span><span class="o">.</span><span class="n">r_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_gamma.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">c</span><span class="o">.</span><span class="n">gamma</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">c</span><span class="o">.</span><span class="n">G</span><span class="p">[</span><span class="n">sel</span><span class="p">]],</span>
+                             <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"gamma_abel"</span><span class="p">,</span> <span class="s2">"gamma_model"</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_sesans_voxel.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">],</span> <span class="p">[</span><span class="s2">"delta"</span><span class="p">,</span> <span class="s2">"G_voxel"</span><span class="p">]))</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_newiq.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">I</span><span class="p">],</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_extrapolated"</span><span class="p">]))</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_gamma.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">G</span><span class="p">],</span> <span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"gamma_data"</span><span class="p">,</span> <span class="s2">"gamma_model"</span><span class="p">]))</span>
+        <span class="n">cols</span><span class="p">,</span> <span class="n">head</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">q_data</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_data</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_model</span><span class="p">],</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_data"</span><span class="p">,</span> <span class="s2">"I_model"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cols</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_data</span><span class="p">)</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"sigma"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_iq_model.txt"</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">head</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_save</span><span class="p">(</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">"_iq_voxel.txt"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">],</span> <span class="p">[</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"I_voxel"</span><span class="p">]))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_log.txt"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">()</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">parameters:</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">curves:</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"weight"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+                                              <span class="s2">"kind"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"sas"</span><span class="p">),</span>
+                                              <span class="s2">"sld"</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sld</span><span class="p">]}</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">curves</span><span class="p">],</span>
+                                            <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">base</span> <span class="o">+</span> <span class="s2">"_log.txt"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="write_hdf5_multi">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_hdf5_multi">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_hdf5_multi</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">include_field</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"creator"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"pysasfit.morph (SASmorph, multi-phase)"</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"report"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"labels"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"voxel_size"</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"phases"</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">names</span><span class="p">))</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"levels"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_field</span> <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">psi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">psi</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"g"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">curves</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"curves/"</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">))</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"sld"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sld</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"invariant"</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">invariant</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"norm"</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">norm</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">arr</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"q_data"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">q_data</span><span class="p">),</span> <span class="p">(</span><span class="s2">"I_data"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_data</span><span class="p">),</span> <span class="p">(</span><span class="s2">"I_model"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I_model</span><span class="p">),</span>
+                              <span class="p">(</span><span class="s2">"gamma"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">gamma</span><span class="p">),</span> <span class="p">(</span><span class="s2">"gamma_model"</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">G</span><span class="p">)):</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"q_voxel"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">)</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"I_voxel"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"statistics"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">statistics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"phases"</span><span class="p">,</span> <span class="p">[])):</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_flat</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">statistics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"interfaces"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">f</span><span class="s2">"S/V </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="write_labels">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.export.write_labels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_labels</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Label matrix of a multi-phase result: .vtk (phase index), .h5, .tif (grey levels), .npy."""</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">lab</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">labels</span>
+    <span class="k">if</span> <span class="n">lab</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no voxel matrix: run the reconstruction first"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".vtk"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">write_vtk</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".h5"</span><span class="p">,</span> <span class="s2">".hdf5"</span><span class="p">,</span> <span class="s2">".hdf"</span><span class="p">,</span> <span class="s2">".nxs"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">write_hdf5_multi</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".tif"</span><span class="p">,</span> <span class="s2">".tiff"</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">lab</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">255</span> <span class="o">//</span> <span class="n">n</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">tifffile</span>
+
+            <span class="n">tifffile</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">imagej</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">),</span>
+                             <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"spacing"</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">,</span> <span class="s2">"axes"</span><span class="p">:</span> <span class="s2">"ZYX"</span><span class="p">})</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+            <span class="n">pages</span> <span class="o">=</span> <span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+            <span class="n">pages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">save_all</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">append_images</span><span class="o">=</span><span class="n">pages</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"tiff_deflate"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">".npy"</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lab</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">path</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown matrix format </span><span class="si">{</span><span class="n">ext</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

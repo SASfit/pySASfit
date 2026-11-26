@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grouping and summing repeated runs &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Scripts and output files" href="scripting.html" />
+    <link rel="prev" title="The cross-section formula and its simplifications" href="formula.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASred</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#status">Status</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usage.html">Using the pySASred window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="masks.html">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Grouping and summing repeated runs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#grouping-by-metadata">Grouping by metadata</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#are-the-runs-equivalent">Are the runs equivalent?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-the-vifor-data-show">What the Vifor data show</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#which-runs-were-used-the-reduction-plan">Which runs were used: the reduction plan</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASred: SANS data reduction</a></li>
+      <li class="breadcrumb-item active">Grouping and summing repeated runs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/grouping.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="grouping-and-summing-repeated-runs">
+<h1>Grouping and summing repeated runs<a class="headerlink" href="#grouping-and-summing-repeated-runs" title="Link to this heading"></a></h1>
+<p>BerSANS selects the files of a sample measured under the same conditions with a metadata
+filter: a metadata entry is chosen and given a precision (temperature ± 0.5 K, detector distance
+± 1 %, …), and all selected files are summed. pySASred does the same and then asks the question
+BerSANS leaves open: <strong>are the runs statistically equivalent, or did something happen during the
+measurement</strong> (sedimentation, creaming, aggregation, a bubble, a wrong sample position)?</p>
+<section id="grouping-by-metadata">
+<h2>Grouping by metadata<a class="headerlink" href="#grouping-by-metadata" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api.html#pysasfit.sasred.grouping.group_runs" title="pysasfit.sasred.grouping.group_runs"><code class="xref py py-func docutils literal notranslate"><span class="pre">group_runs()</span></code></a> puts runs into one group when every selected entry
+agrees within its precision:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>precision</p></th>
+<th class="head"><p>meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>equal values (sample name, attenuator)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0.5</span></code></p></td>
+<td><p>the values of a group span at most 0.5 in the unit of the entry</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;1%&quot;</span></code></p></td>
+<td><p>the values span at most 1 %</p></td>
+</tr>
+</tbody>
+</table>
+<p>A group spans at most the precision: 20.0, 20.3, 20.6, 20.9 °C with precision 0.5 give two
+groups, not one chain. The entries of <a class="reference internal" href="api.html#pysasfit.sasred.grouping.FIELDS" title="pysasfit.sasred.grouping.FIELDS"><code class="xref py py-data docutils literal notranslate"><span class="pre">FIELDS</span></code></a> are known
+(sample, SD, coll, wavelength, attenuator, sample-changer position, thickness, detector offset and
+tilt, start time, …); any other entry of the raw file, e.g. a sample environment, is added with
+<a class="reference internal" href="api.html#pysasfit.sasred.grouping.hdf_field" title="pysasfit.sasred.grouping.hdf_field"><code class="xref py py-func docutils literal notranslate"><span class="pre">hdf_field()</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.catalogue</span><span class="w"> </span><span class="kn">import</span> <span class="n">scan_folder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred</span><span class="w"> </span><span class="kn">import</span> <span class="n">grouping</span> <span class="k">as</span> <span class="n">gr</span>
+
+<span class="n">runs</span> <span class="o">=</span> <span class="n">scan_folder</span><span class="p">(</span><span class="n">raw_folder</span><span class="p">)</span>
+<span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"temperature"</span><span class="p">:</span> <span class="n">gr</span><span class="o">.</span><span class="n">hdf_field</span><span class="p">(</span><span class="s2">"entry1/sample/temperature"</span><span class="p">)}</span>   <span class="c1"># mean of a log</span>
+<span class="n">groups</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">group_runs</span><span class="p">(</span><span class="n">runs</span><span class="p">,</span> <span class="p">{</span><span class="s2">"sample"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"SD_m"</span><span class="p">:</span> <span class="s2">"1%"</span><span class="p">,</span> <span class="s2">"wavelength_A"</span><span class="p">:</span> <span class="s2">"2%"</span><span class="p">,</span>
+                              <span class="s2">"attenuator"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"temperature"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+                       <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span> <span class="n">min_runs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">label</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">run_numbers</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The command line does the same: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pysasfit.sasred.grouping</span> <span class="pre">RAW</span> <span class="pre">sample</span> <span class="pre">SD_m=1%</span> <span class="pre">attenuator</span></code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Add <code class="docutils literal notranslate"><span class="pre">sample_position_mm</span></code> with a precision of about 0.5 mm. In the Vifor data of September 2026 it
+separates EXP-005370-A_2: the first night measured changer position 3.0 mm, the repeat 29.3 mm.</p>
+</div>
+</section>
+<section id="are-the-runs-equivalent">
+<h2>Are the runs equivalent?<a class="headerlink" href="#are-the-runs-equivalent" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api.html#pysasfit.sasred.grouping.check_runs" title="pysasfit.sasred.grouping.check_runs"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_runs()</span></code></a> reduces every run of a group with the same beam
+centre, mask, efficiency and q bins and compares the curves I_k(q) with their statistical
+uncertainties (systematic sources such as a transmission are common to all runs and cancel):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>test</p></th>
+<th class="head"><p>what it tells</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>χ² of all runs against the weighted mean, n_q (n−1) degrees of freedom</p></td>
+<td><p>equivalent or not</p></td>
+</tr>
+<tr class="row-odd"><td><p>leave-one-out χ² of each run against the mean of the others (full statistical covariance)</p></td>
+<td><p>which run differs; the worst is removed while it fails (Bonferroni), then the rest is tested again</p></td>
+</tr>
+<tr class="row-even"><td><p>scale model I_k(q) = a_k μ(q)</p></td>
+<td><p>the runs differ by a factor only (shape unchanged)</p></td>
+</tr>
+<tr class="row-odd"><td><p>straight line of a_k and of the mean intensity in low, middle and high q bands versus the mid time of the runs, z = slope / σ</p></td>
+<td><p>a drift, in % per hour</p></td>
+</tr>
+</tbody>
+</table>
+<p>The verdict:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>verdict</p></th>
+<th class="head"><p>meaning</p></th>
+<th class="head"><p>summing</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>equivalent</p></td>
+<td><p>the runs agree within the counting statistics</p></td>
+<td><p>all runs</p></td>
+</tr>
+<tr class="row-odd"><td><p>outlier</p></td>
+<td><p>a few runs differ, the rest agree; noted when they are the first or last runs in time (settling, starting change)</p></td>
+<td><p>without the outliers</p></td>
+</tr>
+<tr class="row-even"><td><p>scale drift</p></td>
+<td><p>same shape, the intensity follows the time: fewer scatterers in the beam (sedimentation, creaming) or a drifting normalisation</p></td>
+<td><p>not without a decision</p></td>
+</tr>
+<tr class="row-odd"><td><p>scale change</p></td>
+<td><p>same shape, different intensity without a trend (with two runs a step and a trend cannot be told apart): thickness, transmission, filling</p></td>
+<td><p>not without a decision</p></td>
+</tr>
+<tr class="row-even"><td><p>shape drift</p></td>
+<td><p>a q band follows the time; low q changing most points to aggregation or size-selective sedimentation</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>shape change</p></td>
+<td><p>different shapes without a monotonic trend</p></td>
+<td><p>no</p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">Equivalence.accepted</span></code> lists the runs that can be summed (empty when a decision is needed);
+<code class="docutils literal notranslate"><span class="pre">summary()</span></code> prints the table per run, <a class="reference internal" href="api.html#pysasfit.sasred.grouping.plot_equivalence" title="pysasfit.sasred.grouping.plot_equivalence"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_equivalence()</span></code></a> shows
+I_k / mean versus q, the bands and the scale versus time, and the χ² per run.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">combined_normalised_counts</span><span class="p">,</span> <span class="n">load_instrument</span>
+
+<span class="n">e</span> <span class="o">=</span> <span class="n">gr</span><span class="o">.</span><span class="n">check_runs</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">beam_centre</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">efficiency</span><span class="o">=</span><span class="n">eff</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+<span class="n">use</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">runs</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">run</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">accepted</span><span class="p">]</span>
+<span class="n">image</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">combined_normalised_counts</span><span class="p">(</span><span class="n">use</span><span class="p">,</span> <span class="n">load_instrument</span><span class="p">(),</span> <span class="n">notes</span><span class="o">=</span><span class="p">[])</span>
+</pre></div>
+</div>
+<section id="a-floor-for-known-instabilities">
+<h3>A floor for known instabilities<a class="headerlink" href="#a-floor-for-known-instabilities" title="Link to this heading"></a></h3>
+<p>With 10⁷ counts per run the statistics resolve changes of 0.1 %; beam and monitor are rarely that
+stable. <code class="docutils literal notranslate"><span class="pre">rel_floor=0.003</span></code> adds 0.3 % of each point in quadrature, so only changes beyond it count.
+The default is 0 (pure counting statistics).</p>
+</section>
+<section id="few-counts">
+<h3>Few counts<a class="headerlink" href="#few-counts" title="Link to this heading"></a></h3>
+<p>The χ² assumes Gaussian errors: use q bins with at least about 20 counts (fewer, wider bins at
+high q), otherwise the χ² is too large for equivalent runs.</p>
+</section>
+</section>
+<section id="what-the-vifor-data-show">
+<h2>What the Vifor data show<a class="headerlink" href="#what-the-vifor-data-show" title="Link to this heading"></a></h2>
+<p>The repeated runs of September 2026 (about 11 h apart) give, with 30 q bins:</p>
+<ul class="simple">
+<li><p>most samples at 2 m and many at 8 m: <em>equivalent</em> (χ²/ndf 0.7–1.7);</p></li>
+<li><p>EXP-005370-A_2: <em>shape change</em>, χ²/ndf ≈ 2·10⁴, the two runs sat at different changer positions;</p></li>
+<li><p>EXP-005370-E_3…E_6 at 8 m: <em>shape change</em>, the lowest q band lost 0.8–1.9 % per hour (≈ 9–20 %
+in 11 h) while high q stayed: aggregation or size-selective sedimentation;</p></li>
+<li><p>D_5, D_6 at 8 m: the first run is the <em>outlier</em>, the two later runs agree;</p></li>
+<li><p>water at 8 m (11 runs): three runs differ by a factor only (scale model p = 0.39), the rest agree.</p></li>
+</ul>
+</section>
+<section id="which-runs-were-used-the-reduction-plan">
+<h2>Which runs were used: the reduction plan<a class="headerlink" href="#which-runs-were-used-the-reduction-plan" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api.html#pysasfit.sasred.plan.build_plan" title="pysasfit.sasred.plan.build_plan"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_plan()</span></code></a> puts it all in one table per configuration (SD, λ, coll):
+the role of every group (sample, sample background, water, empty cell, empty beam, blocked beam
+(Cd)), its runs, the runs that are summed, the outliers and the check, plus the roles that are
+missing. Roles come from the sample names (<code class="docutils literal notranslate"><span class="pre">H2O</span></code>, <code class="docutils literal notranslate"><span class="pre">EC</span></code>, <code class="docutils literal notranslate"><span class="pre">EB</span></code>, <code class="docutils literal notranslate"><span class="pre">Cd</span></code>/<code class="docutils literal notranslate"><span class="pre">B4C</span></code>, …; change them with
+<code class="docutils literal notranslate"><span class="pre">roles={&quot;EC&quot;:</span> <span class="pre">&quot;sample_background&quot;}</span></code>). Transmission runs are the runs with the beam stop moved out
+of the direct beam, in y (on SANS-I typically bsy = −200 mm or lower) or in x, or out of the
+detection area: its distance from the beam centre on the detector exceeds the preference
+<code class="docutils literal notranslate"><span class="pre">sasred.transmission.beamstop_out_mm</span></code> (100 mm), with or without attenuator. The beam stop motor
+positions are tied to detector pixels by the beam stop shadow in the scattering runs, the beam
+centre comes from the direct-beam runs of the same distance and wavelength
+(<a class="reference internal" href="api.html#pysasfit.sasred.catalogue.beamstop_geometry" title="pysasfit.sasred.catalogue.beamstop_geometry"><code class="xref py py-func docutils literal notranslate"><span class="pre">beamstop_geometry()</span></code></a>). The run table shows <em>trans.</em> or <em>scatt.</em>
+in the column <em>kind</em>, with “?” where the beam stop position and the image disagree (moved out but
+no direct beam in the image, or in place but the direct beam is seen); the plan lists the beam
+stop geometry per configuration, including how far the beam stop sits off the beam centre.
+They are checked by their count rate (0.5 %
+allowed for beam stability), scattering runs with <a class="reference internal" href="api.html#pysasfit.sasred.grouping.check_runs" title="pysasfit.sasred.grouping.check_runs"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_runs()</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred</span><span class="w"> </span><span class="kn">import</span> <span class="n">plan</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">build_plan</span><span class="p">(</span><span class="n">scan_folder</span><span class="p">(</span><span class="n">raw_folder</span><span class="p">),</span> <span class="n">beam_center_px</span><span class="o">=</span><span class="n">centre</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">markdown</span><span class="p">())</span>             <span class="c1"># the table</span>
+<span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"reduction_plan.json"</span><span class="p">)</span>   <span class="c1"># kept with the reduced data; plan.Plan.load(...) reads it back</span>
+</pre></div>
+</div>
+<p>or on the command line: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pysasfit.sasred.plan</span> <span class="pre">RAW</span> <span class="pre">--centre</span> <span class="pre">X</span> <span class="pre">Y</span> <span class="pre">--json</span> <span class="pre">plan.json</span></code>.
+Groups of the same sample at different changer positions are marked (“check which is right”),
+and a missing Cd run, empty cell or water at a configuration is listed under the table. In the
+pySASred window this table is planned as the <em>Runs</em> panel.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="formula.html" class="btn btn-neutral float-left" title="The cross-section formula and its simplifications" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scripting.html" class="btn btn-neutral float-right" title="Scripts and output files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,296 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.io.nxcansas &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.io.nxcansas</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.io.nxcansas</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""NXcanSAS 1D output with full uncertainty information.</span>
+
+<span class="sd">Standard fields: I with @uncertainties = "Idev" (statistical part only),</span>
+<span class="sd">Q with @resolutions = "Qdev" (left out when the resolution was not determined: no direct-beam</span>
+<span class="sd">measurement of the geometry). 2D: Qx, Qy with @resolutions = "Qxdev" / "Qydev" (per pixel). Non-standard</span>
+<span class="sd">additions, all inside SASdata::</span>
+
+<span class="sd">  I_covariance_statistical   (n x n)  covariance of the non-systematic sources</span>
+<span class="sd">  I_systematic/&lt;source&gt;      sensitivity dI/ds of each systematic source,</span>
+<span class="sd">                             with @sigma, @group (fully correlated scale terms)</span>
+<span class="sd">  I_budget/&lt;source&gt;          variance contribution of every source</span>
+
+<span class="sd">Provenance goes to SASprocess: software, version, raw file paths and SHA-256,</span>
+<span class="sd">parameters and notes (for example "uncertainty unknown, not propagated"), and ``metadata``: the</span>
+<span class="sd">header items of the raw run as JSON (:mod:`.metadata`), used to group curves later.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"write_nxcansas_1d"</span><span class="p">,</span> <span class="s2">"write_nxcansas_2d"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_s</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="write_nxcansas_1d">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.io.nxcansas.write_nxcansas_1d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_nxcansas_1d</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">reduced</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">i_unit</span><span class="o">=</span><span class="s2">"arbitrary"</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">"nm"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``units``: "nm" (Q in 1/nm, default) or "A" (Q in 1/angstrom)."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..units</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">_units</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">intensity</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sasentry01"</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasentry01"</span><span class="p">)</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXentry"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASentry"</span><span class="p">),</span>
+                        <span class="s2">"version"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"1.1"</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"sasdata01"</span><span class="p">)})</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"definition"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXcanSAS"</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="n">reduced</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">sample_name</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"run"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasdata01"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXdata"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASdata"</span><span class="p">),</span>
+                        <span class="s2">"signal"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"I"</span><span class="p">),</span> <span class="s2">"I_axes"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"Q"</span><span class="p">),</span> <span class="s2">"Q_indices"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">)})</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Q"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">q_out</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
+        <span class="n">q</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">nexus_q</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reduced</span><span class="o">.</span><span class="n">q_sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"resolutions"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"Qdev"</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Qdev"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">q_out</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">q_sigma</span><span class="p">))</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">nexus_q</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"I"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">I</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">i</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"units"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="n">i_unit</span><span class="p">),</span> <span class="s2">"uncertainties"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"Idev"</span><span class="p">),</span>
+                        <span class="s2">"sasred_unit"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">unit</span><span class="p">)})</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Idev"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">I</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">i_unit</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"I_covariance_statistical"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">I</span><span class="o">.</span><span class="n">covariance</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"I_systematic"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">_select</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">I</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+                                  <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">n</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">I</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"sigma"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">variance</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">"group"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">group</span><span class="p">)})</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"I_budget"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">I</span><span class="o">.</span><span class="n">budget</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"group"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">I</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasprocess01"</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXprocess"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASprocess"</span><span class="p">)})</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"pySASred"</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"raw_file"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"raw_sha256"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"notes"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">notes</span><span class="p">))</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata_json</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">metadata_json</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="s1">'parameters'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>          <span class="c1"># header items of the (first) raw run</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sassample"</span><span class="p">)</span>
+        <span class="n">sm</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXsample"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASsample"</span><span class="p">)})</span>
+        <span class="n">sm</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">reduced</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">sample_name</span><span class="p">)</span></div>
+
+
+
+<span class="c1">#: lab frame of Qx, Qy in pySASred's 2D files (attribute ``pysasfit_frame`` of SASdata)</span>
+<span class="n">FRAME</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"NXcanSAS/McStas: z along the beam, y up, x = y cross z (left as seen from the sample, right in views "</span>
+         <span class="s2">"towards the sample); raw columns run towards -x (2026-11-23)"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="write_nxcansas_2d">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.io.nxcansas.write_nxcansas_2d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_nxcansas_2d</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">reduced</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">"nm"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The 2D image of a reduction (:class:`~pysasfit.sasred.reduce.ReducedRun` or</span>
+<span class="sd">    :class:`~pysasfit.sasred.absolute.Reduced2D`) as NXcanSAS: SASdata with I (ny, nx), Idev</span>
+<span class="sd">    (statistical), Qx, Qy (ny, nx; ``I_axes`` = "Qy,Qx"), Mask (1 = not valid) and the uint32 reason</span>
+<span class="sd">    bits of pySASred (``mask_bits``); SASinstrument/SASdetector with distance, beam centre (pixels)</span>
+<span class="sd">    and pixel size so that q and the azimuth can be recomputed; SASprocess as in 1D with the</span>
+<span class="sd">    header items (``metadata``)."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..units</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">_units</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata_json</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">reduced</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">image</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">r</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+    <span class="n">geo</span><span class="p">,</span> <span class="n">raw</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">raw</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"parameters"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sasentry01"</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasentry01"</span><span class="p">)</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXentry"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASentry"</span><span class="p">),</span>
+                        <span class="s2">"version"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"1.1"</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"sasdata01"</span><span class="p">)})</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"definition"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXcanSAS"</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">title</span> <span class="ow">or</span> <span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">raw</span><span class="o">.</span><span class="n">sample_name</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="s2">"run"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"runs"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasdata01"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXdata"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASdata"</span><span class="p">),</span> <span class="s2">"signal"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"I"</span><span class="p">),</span>
+                        <span class="s2">"I_axes"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"Qy,Qx"</span><span class="p">),</span> <span class="s2">"Qy_indices"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="s2">"Qx_indices"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                        <span class="c1"># pySASfit frame (docs/conventions.md); files without it (before 2026-11-23) have Qx of</span>
+                        <span class="c1"># the opposite sign</span>
+                        <span class="s2">"pysasfit_frame"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="n">FRAME</span><span class="p">)})</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"I"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">i</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"units"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"1/cm"</span> <span class="k">if</span> <span class="s2">"cm"</span> <span class="ow">in</span> <span class="n">unit</span> <span class="ow">and</span> <span class="s2">"sr"</span> <span class="ow">in</span> <span class="n">unit</span> <span class="ow">and</span> <span class="s2">"monitor"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unit</span> <span class="k">else</span>
+                                    <span class="s2">"arbitrary"</span><span class="p">),</span> <span class="s2">"uncertainties"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"Idev"</span><span class="p">),</span> <span class="s2">"sasred_unit"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="n">unit</span><span class="p">)})</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Idev"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="nb">float</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"resolution"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Qx"</span><span class="p">,</span> <span class="n">geo</span><span class="o">.</span><span class="n">qx</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Qy"</span><span class="p">,</span> <span class="n">geo</span><span class="o">.</span><span class="n">qy</span><span class="p">)):</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">q_out</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+            <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">nexus_q</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"resolutions"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="s2">"dev"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># per pixel: sigma along the detector axes (standard), along / across q and the q_x-q_y</span>
+            <span class="c1"># correlation (non-standard, for 2D smearing with the full Gaussian)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Qxdev"</span><span class="p">,</span> <span class="s2">"qx_dev"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Qydev"</span><span class="p">,</span> <span class="s2">"qy_dev"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Qdev_parallel"</span><span class="p">,</span> <span class="s2">"q_parallel_dev"</span><span class="p">),</span>
+                           <span class="p">(</span><span class="s2">"Qdev_perpendicular"</span><span class="p">,</span> <span class="s2">"q_perpendicular_dev"</span><span class="p">)):</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">u</span><span class="o">.</span><span class="n">q_out</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">float</span><span class="p">)),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">_s</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">nexus_q</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Qxy_correlation"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">"rho_xy"</span><span class="p">],</span> <span class="nb">float</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"Mask"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="n">mask</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">),</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">"mask_bits"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">"gzip"</span><span class="p">)</span>
+        <span class="n">ins</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasinstrument"</span><span class="p">)</span>
+        <span class="n">ins</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXinstrument"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASinstrument"</span><span class="p">)})</span>
+        <span class="n">det</span> <span class="o">=</span> <span class="n">ins</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasdetector"</span><span class="p">)</span>
+        <span class="n">det</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXdetector"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASdetector"</span><span class="p">)})</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"SDD"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">geo</span><span class="o">.</span><span class="n">SD_m</span><span class="p">)</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"SDD"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"m"</span><span class="p">)</span>
+        <span class="n">bc</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beam_center_px"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"beam_center_x"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"beam_center_y"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bc</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"beam_center_x"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="p">[</span><span class="s2">"beam_center_y"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"pixel"</span><span class="p">)</span>
+        <span class="n">ps</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">pixel_size_m</span>
+        <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">ps</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="k">else</span> <span class="n">ps</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"x_pixel_size"</span><span class="p">],</span> <span class="n">det</span><span class="p">[</span><span class="s2">"y_pixel_size"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">px</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">py</span><span class="p">)</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"x_pixel_size"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">det</span><span class="p">[</span><span class="s2">"y_pixel_size"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"m"</span><span class="p">)</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"wavelength"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">)</span>
+        <span class="n">det</span><span class="p">[</span><span class="s2">"wavelength"</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">"units"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"angstrom"</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sassample"</span><span class="p">)</span>
+        <span class="n">sm</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXsample"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASsample"</span><span class="p">)})</span>
+        <span class="n">sm</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">raw</span><span class="o">.</span><span class="n">sample_name</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">"sasprocess01"</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"NX_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"NXprocess"</span><span class="p">),</span> <span class="s2">"canSAS_class"</span><span class="p">:</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"SASprocess"</span><span class="p">)})</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"pySASred"</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"date"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"raw_file"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">par</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"notes"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"notes"</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]))</span>
+        <span class="n">p</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_s</span><span class="p">(</span><span class="n">metadata_json</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">par</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

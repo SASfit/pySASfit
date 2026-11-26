@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.seb.ps_worm &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.seb.ps_worm</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.seb.ps_worm</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Form factor of the worm-like chain with excluded volume: Pedersen &amp; Schurtenberger, Macromolecules 29 (1996)</span>
+<span class="sd">7602 ("method 3" with excluded volume), with the corrections of Chen, Butler &amp; Magid, Langmuir 22 (2006) 6539.</span>
+
+<span class="sd">NumPy port (vectorised in q) of the C implementation in sasmodels (models/lib/wrc_cyl.c, public domain), same</span>
+<span class="sd">constants and branches. L contour length, b Kuhn length.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"sk_wr"</span><span class="p">,</span> <span class="s2">"rg2_ev"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="rg2_ev">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.ps_worm.rg2_ev">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rg2_ev</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rg^2 with the expansion factor alpha^2 = [1 + (x/3.12)^2 + (x/8.67)^3]^(0.176/3), x = L/b (PS eq 15)."""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">L</span> <span class="o">/</span> <span class="n">b</span>
+    <span class="n">alphasq</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.027284681130835e-01</span> <span class="o">+</span> <span class="mf">1.534414548417740e-03</span> <span class="o">*</span> <span class="n">x</span><span class="p">))</span> <span class="o">**</span> <span class="mf">5.866666666666667e-02</span>
+    <span class="k">return</span> <span class="n">alphasq</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="mf">6.0</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rg2_short</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">L</span>
+    <span class="k">return</span> <span class="n">rg2_ev</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="mf">0.75</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">/</span> <span class="n">r</span><span class="p">))))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_w</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">1.523</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.1477</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sdebye</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.25</span>
+    <span class="n">xl</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="p">(((((</span><span class="mf">1.</span> <span class="o">/</span> <span class="mf">75600.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">0.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mf">15.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> \
+        <span class="p">(((((</span><span class="mf">1.</span> <span class="o">/</span> <span class="mf">5040.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mf">15.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">2.</span> <span class="o">/</span> <span class="mf">5.</span><span class="p">)</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span>
+    <span class="n">xh</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="n">xh</span><span class="p">)</span> <span class="o">+</span> <span class="n">xh</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">xh</span> <span class="o">*</span> <span class="n">xh</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sexv</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span><span class="p">,</span> <span class="n">C3</span><span class="p">,</span> <span class="n">miu</span> <span class="o">=</span> <span class="mf">1.22</span><span class="p">,</span> <span class="mf">0.4288</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.651</span><span class="p">,</span> <span class="mf">0.585</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rg2_ev</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+    <span class="n">qr_miu</span> <span class="o">=</span> <span class="n">qr</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">miu</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">_w</span><span class="p">(</span><span class="n">qr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_sdebye</span><span class="p">(</span><span class="n">qr</span> <span class="o">*</span> <span class="n">qr</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">w</span> <span class="o">*</span> <span class="p">((</span><span class="n">C3</span> <span class="o">*</span> <span class="n">qr_miu</span> <span class="o">+</span> <span class="n">C2</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_miu</span> <span class="o">+</span> <span class="n">C1</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_miu</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sexv_new</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">L</span> <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ref</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rg2_ev</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+    <span class="n">qr2</span> <span class="o">=</span> <span class="n">qr</span> <span class="o">*</span> <span class="n">qr</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="mf">3.06</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span> <span class="o">/</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.44</span> <span class="k">if</span> <span class="n">ref</span> <span class="o">/</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mf">10.0</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">t9</span> <span class="o">=</span> <span class="n">C</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="n">L</span> <span class="o">*</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qr2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">11.0</span> <span class="o">+</span> <span class="mf">7.0</span> <span class="o">/</span> <span class="n">qr2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">7.0</span> <span class="o">/</span> <span class="n">qr2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">15.0</span>
+    <span class="n">s0</span> <span class="o">=</span> <span class="n">_sexv</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">sr</span> <span class="o">=</span> <span class="n">_sexv</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">qdel</span> <span class="o">=</span> <span class="p">(</span><span class="n">_sexv</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="mf">1.05</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">sr</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="mf">0.05</span><span class="p">)</span>     <span class="c1"># branch chosen at the reference length</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">_w</span><span class="p">(</span><span class="n">qr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">qdel</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">t9</span> <span class="o">+</span> <span class="n">s0</span><span class="p">,</span> <span class="n">t9</span> <span class="o">+</span> <span class="n">_sdebye</span><span class="p">(</span><span class="n">qr2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">w</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_a_long</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">L</span> <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ref</span>
+    <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">q0</span> <span class="o">=</span> <span class="mf">4.12</span><span class="p">,</span> <span class="mf">4.42</span><span class="p">,</span> <span class="mf">3.1</span>
+    <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span><span class="p">,</span> <span class="n">C3</span><span class="p">,</span> <span class="n">C4</span><span class="p">,</span> <span class="n">C5</span><span class="p">,</span> <span class="n">miu</span> <span class="o">=</span> <span class="mf">1.22</span><span class="p">,</span> <span class="mf">0.4288</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.651</span><span class="p">,</span> <span class="mf">1.523</span><span class="p">,</span> <span class="mf">0.1477</span><span class="p">,</span> <span class="mf">0.585</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="mf">3.06</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span> <span class="o">/</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.44</span> <span class="k">if</span> <span class="n">ref</span> <span class="o">/</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mf">10.0</span> <span class="k">else</span> <span class="mf">1.0</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">rg2_ev</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+    <span class="n">qr_b</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">r</span> <span class="o">/</span> <span class="n">b</span>
+    <span class="n">qr_b_sq</span> <span class="o">=</span> <span class="n">qr_b</span> <span class="o">*</span> <span class="n">qr_b</span>
+    <span class="n">qr_b_4</span> <span class="o">=</span> <span class="n">qr_b_sq</span> <span class="o">*</span> <span class="n">qr_b_sq</span>
+    <span class="n">qr_b_miu</span> <span class="o">=</span> <span class="n">qr_b</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">miu</span><span class="p">)</span>
+    <span class="n">em1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="n">qr_b_sq</span><span class="p">)</span>
+    <span class="n">sech2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">((</span><span class="n">qr_b</span> <span class="o">-</span> <span class="n">C4</span><span class="p">)</span> <span class="o">/</span> <span class="n">C5</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">_w</span><span class="p">(</span><span class="n">qr_b</span><span class="p">)</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">p1</span> <span class="o">+</span> <span class="n">p2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="n">p1</span> <span class="o">-</span> <span class="n">p2</span><span class="p">))</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">C</span> <span class="o">/</span> <span class="p">(</span><span class="mf">15.0</span> <span class="o">*</span> <span class="n">L</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">14.0</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">em1</span> <span class="o">/</span> <span class="p">(</span><span class="n">q0</span> <span class="o">*</span> <span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">r2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">11.0</span> <span class="o">+</span> <span class="mf">7.0</span> <span class="o">/</span> <span class="n">qr_b_sq</span><span class="p">))</span>
+    <span class="n">t11</span> <span class="o">=</span> <span class="p">((</span><span class="n">C3</span> <span class="o">*</span> <span class="n">qr_b_miu</span> <span class="o">+</span> <span class="n">C2</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_b_miu</span> <span class="o">+</span> <span class="n">C1</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_b_miu</span>
+    <span class="n">t3</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="n">sech2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">C5</span><span class="p">)</span> <span class="o">*</span> <span class="n">t11</span>
+    <span class="n">t4</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="p">(</span><span class="n">em1</span> <span class="o">+</span> <span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">*</span> <span class="n">sech2</span> <span class="o">/</span> <span class="p">(</span><span class="n">C5</span> <span class="o">*</span> <span class="n">qr_b_4</span><span class="p">)</span>
+    <span class="n">t5</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">r</span> <span class="o">*</span> <span class="n">qr_b</span> <span class="o">*</span> <span class="n">em1</span> <span class="o">/</span> <span class="n">qr_b_4</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">t10</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">em1</span> <span class="o">+</span> <span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">/</span> <span class="n">qr_b_4</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">t6</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">t10</span>
+    <span class="n">t7</span> <span class="o">=</span> <span class="n">r</span> <span class="o">*</span> <span class="p">((</span><span class="o">-</span><span class="mf">3.0</span> <span class="o">*</span> <span class="n">C3</span> <span class="o">*</span> <span class="n">qr_b_miu</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">C2</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_b_miu</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">C1</span><span class="p">)</span> <span class="o">*</span> <span class="n">qr_b_miu</span> <span class="o">/</span> <span class="p">(</span><span class="n">miu</span> <span class="o">*</span> <span class="n">qr_b</span><span class="p">)</span>
+    <span class="n">t9</span> <span class="o">=</span> <span class="n">C</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="n">L</span> <span class="o">*</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">11.0</span> <span class="o">+</span> <span class="mf">7.0</span> <span class="o">/</span> <span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">+</span> <span class="mf">7.0</span> <span class="o">/</span> <span class="n">qr_b_sq</span><span class="p">)</span> <span class="o">/</span> <span class="mf">15.0</span>
+    <span class="n">t12</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">L</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">q0</span><span class="p">)</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="n">t3</span> <span class="o">-</span> <span class="n">t4</span> <span class="o">+</span> <span class="n">t5</span> <span class="o">-</span> <span class="n">t6</span> <span class="o">+</span> <span class="n">t7</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">t13</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">L</span> <span class="o">*</span> <span class="n">q0</span><span class="p">)</span> <span class="o">+</span> <span class="n">t9</span> <span class="o">+</span> <span class="n">t10</span> <span class="o">+</span> <span class="n">t11</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">**</span> <span class="n">p1</span> <span class="o">*</span> <span class="n">t13</span> <span class="o">-</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">t12</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">p1</span> <span class="o">/</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">t13</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">t12</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">p1</span> <span class="o">/</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">t13</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a1</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p1</span><span class="p">)</span> <span class="o">+</span> <span class="n">a2</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_short</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">exp_qr_b</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">p1s</span><span class="p">,</span> <span class="n">p2s</span><span class="p">,</span> <span class="n">q0</span><span class="p">):</span>
+    <span class="n">qr2</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">r2</span>
+    <span class="n">b3</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span>
+    <span class="n">q0p</span> <span class="o">=</span> <span class="n">q0</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mf">4.0</span> <span class="o">+</span> <span class="n">p1s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">L</span> <span class="o">*</span> <span class="n">r2</span> <span class="o">*</span> <span class="n">r2</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">q0p</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="mf">8.0</span> <span class="o">*</span> <span class="n">b3</span> <span class="o">*</span> <span class="n">L</span> <span class="o">-</span> <span class="mf">8.0</span> <span class="o">*</span> <span class="n">b3</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">L</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">b3</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">p2s</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">p2s</span> <span class="o">*</span> <span class="n">qr2</span>
+        <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">qr2</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">b3</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">p2s</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">qr2</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">qr2</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">r2</span>
+        <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">exp_qr_b</span> <span class="o">*</span> <span class="n">p2s</span> <span class="o">*</span> <span class="n">qr2</span> <span class="o">*</span> <span class="n">q0</span> <span class="o">*</span> <span class="n">r2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_a_short</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">q0</span><span class="p">):</span>
+    <span class="n">p1s</span><span class="p">,</span> <span class="n">p2s</span> <span class="o">=</span> <span class="mf">5.36</span><span class="p">,</span> <span class="mf">5.62</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="n">_rg2_short</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">r2</span> <span class="o">*</span> <span class="p">(</span><span class="n">q0</span> <span class="o">/</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="n">_short</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">p1s</span><span class="p">,</span> <span class="n">p2s</span><span class="p">,</span> <span class="n">q0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">p1s</span> <span class="o">-</span> <span class="n">p2s</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="o">-</span><span class="n">_short</span><span class="p">(</span><span class="n">r2</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">p2s</span><span class="p">,</span> <span class="n">p1s</span><span class="p">,</span> <span class="n">q0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">p1s</span> <span class="o">-</span> <span class="n">p2s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a1</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p1s</span><span class="p">)</span> <span class="o">+</span> <span class="n">a2</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">p2s</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="sk_wr">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.ps_worm.sk_wr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sk_wr</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Normalised form factor (F(0) = 1) of the worm-like chain with excluded volume (q array, L, b scalars).</span>
+
+<span class="sd">    ``ref``: contour length at which the branches of the piecewise formula are chosen (default L) -- for</span>
+<span class="sd">    derivatives in L, so that L +- h stay on the branches of L."""</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">L</span> <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ref</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="o">&gt;</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mf">3.1</span>
+            <span class="k">if</span> <span class="n">lo</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="n">_sexv_new</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">lo</span><span class="p">],</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">lo</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="n">_a_long</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">],</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q0s</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.9</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">_rg2_short</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="mf">3.0</span><span class="p">)</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="n">q0s</span>
+            <span class="k">if</span> <span class="n">lo</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="n">_sdebye</span><span class="p">((</span><span class="n">q</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">_rg2_short</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">~</span><span class="n">lo</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="n">_a_short</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">~</span><span class="n">lo</span><span class="p">],</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">q0s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

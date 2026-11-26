@@ -1,0 +1,542 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.bayesian_evidence &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.bayesian_evidence</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.bayesian_evidence</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Bayesian evidence for choosing the regularization weight lambda, per</span>
+<span class="sd">Vestergaard &amp; Hansen (2006), "Application of Bayesian analysis to indirect</span>
+<span class="sd">Fourier transformation in small-angle scattering", J. Appl. Cryst. 39,</span>
+<span class="sd">797-804 -- read directly (via pdftotext) from the copy at</span>
+<span class="sd">.../FormFactors4SASfit/In Progress/Expectation Maximation/wf5022.pdf on</span>
+<span class="sd">2026-09-23, not from secondary description.</span>
+
+<span class="sd">Their setup (their eq. 3-6, notation p for the solution vector, their S is</span>
+<span class="sd">our L2 smoothness penalty p^T L^T L p matching their eq. 5, their A = grad-</span>
+<span class="sd">grad S, B = grad-grad (chi2/2))::</span>
+
+<span class="sd">    Q = lambda*S + chi2                                  (eq. 3)</span>
+<span class="sd">    chi2 = sum_i [Im(qi) - I(qi)]^2 / sigma_i^2            (eq. 4)</span>
+<span class="sd">    P(lambda, d) = [lambda^(N-1) (N+1)]^(1/2)</span>
+<span class="sd">                   / [det(lambda*A + B)]^(1/2)</span>
+<span class="sd">                   * exp(-lambda*S - chi2/2)               (eq. 6, evaluated</span>
+<span class="sd">                                                             at p = p_MAP(lambda))</span>
+
+<span class="sd">I initially mis-transcribed eq. 6's denominator as det(A + lambda*B) from a</span>
+<span class="sd">garbled OCR pass; the paper's own later discussion of eq. 8 explicitly says</span>
+<span class="sd">"eigenvalues of lambda*A + B", which fixes the ordering used here.</span>
+
+<span class="sd">CAVEAT I have not resolved: eq. 3 minimizes (lambda*S + chi2) -- no factor</span>
+<span class="sd">of 1/2 on chi2 -- while eq. 6's exponent is (-lambda*S - chi2/2). Taken</span>
+<span class="sd">literally these correspond to different MAP points unless a factor of 2 is</span>
+<span class="sd">being absorbed into lambda's definition between the two equations (a common</span>
+<span class="sd">convention split between "Tikhonov-style" and "Bayesian-style" weightings</span>
+<span class="sd">in this literature). I've implemented internally consistently with eq. 6</span>
+<span class="sd">(MAP point minimizes lambda*S + chi2/2, since that's what makes eq. 6 a</span>
+<span class="sd">normalized-looking posterior), but if you need this to match the paper's</span>
+<span class="sd">lambda values exactly, this factor-of-2 needs checking against the actual</span>
+<span class="sd">typeset paper, not the OCR'd text extraction used here.</span>
+
+<span class="sd">Also implements eq. 8's "number of good parameters":</span>
+
+<span class="sd">    Ng = sum_j  mu_j / (lambda + mu_j)</span>
+
+<span class="sd">where mu_j are the eigenvalues of the generalized eigenvalue problem</span>
+<span class="sd">B v = mu A v (their eq. 8 is the A=I special case, sum mu_j/(lambda+mu_j)</span>
+<span class="sd">with mu_j = eigenvalues of B directly).</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sla</span>
+
+
+<div class="viewcode-block" id="EvidenceResult">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.EvidenceResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvidenceResult</span><span class="p">:</span>
+    <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">log_evidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">p_map</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">n_good_params</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_map_solution</span><span class="p">(</span><span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    p that minimizes lambda*S + chi2/2 = lambda* p^T L^T L p + (1/2) sum_i</span>
+<span class="sd">    [(Kp)_i - b_i]^2/sigma_i^2 -- a linear-Gaussian problem, solved directly</span>
+<span class="sd">    via the normal equations (no need for the SVD machinery here since L</span>
+<span class="sd">    need not be square).</span>
+
+<span class="sd">    ridge: optional tiny additive stabilizer (lam * ridge * I) on top of</span>
+<span class="sd">    L^T L, needed only when L itself has a null space that isn't fully</span>
+<span class="sd">    removed by the data term K^T W K (e.g. the plain second_derivative_</span>
+<span class="sd">    operator's constant+linear null space, when used -- as in the Hann-</span>
+<span class="sd">    tapered solver variant -- without Hansen's boundary-condition fix).</span>
+<span class="sd">    Zero by default, so existing callers are unaffected.</span>
+<span class="sd">    """</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lhs</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span> <span class="o">+</span> <span class="n">ridge</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">+</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>
+    <span class="n">rhs</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="log_evidence">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.log_evidence">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_evidence</span><span class="p">(</span><span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvidenceResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    log P(lambda) up to an additive constant that doesn't depend on lambda</span>
+<span class="sd">    (the (N+1) factor in eq. 6 is lambda-independent and dropped here since</span>
+<span class="sd">    it doesn't affect the argmax over lambda).</span>
+
+<span class="sd">    ridge: see _map_solution's docstring. Passing a nonzero ridge is an</span>
+<span class="sd">    approximation (it adds a tiny bit of extra, physically unmotivated</span>
+<span class="sd">    regularization purely for numerical conditioning) -- keep it as small</span>
+<span class="sd">    as possible while still removing the singularity.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="n">A_hess</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span> <span class="o">+</span> <span class="n">ridge</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>  <span class="c1"># Hessian of S = p^T L^T L p (+ ridge)</span>
+    <span class="n">B_hess</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>  <span class="c1"># Hessian of chi2/2</span>
+
+    <span class="n">p_map</span> <span class="o">=</span> <span class="n">_map_solution</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">ridge</span><span class="o">=</span><span class="n">ridge</span><span class="p">)</span>
+    <span class="n">S_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p_map</span> <span class="o">@</span> <span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span><span class="p">)</span> <span class="o">@</span> <span class="n">p_map</span><span class="p">)</span>
+    <span class="n">chi2_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="n">K</span> <span class="o">@</span> <span class="n">p_map</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">hessian</span> <span class="o">=</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">A_hess</span> <span class="o">+</span> <span class="n">B_hess</span>
+    <span class="n">sign</span><span class="p">,</span> <span class="n">logdet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">hessian</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sign</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logdet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># degenerate/indefinite Hessian -- lambda not viable here</span>
+
+    <span class="n">log_p</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">logdet</span> <span class="o">-</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">S_val</span> <span class="o">-</span> <span class="n">chi2_val</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">eigvals_B</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">B_hess</span><span class="p">,</span> <span class="n">eigvals_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">eigvals_B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">eigvals_B</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># guard tiny negative numerical noise</span>
+    <span class="n">n_good</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eigvals_B</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span> <span class="o">+</span> <span class="n">eigvals_B</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">EvidenceResult</span><span class="p">(</span><span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">,</span> <span class="n">log_evidence</span><span class="o">=</span><span class="n">log_p</span><span class="p">,</span> <span class="n">p_map</span><span class="o">=</span><span class="n">p_map</span><span class="p">,</span> <span class="n">n_good_params</span><span class="o">=</span><span class="n">n_good</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FastEvidence">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.FastEvidence">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FastEvidence</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""log_evidence() for many lambda at the cost of one decomposition</span>
+<span class="sd">    (2026-10-21). Same formula and same results as log_evidence().</span>
+
+<span class="sd">    With P = L^T L + ridge I positive definite (all Hansen penalties; not the</span>
+<span class="sd">    plain 2nd-difference operator without ridge), P = R^T R (Cholesky) and</span>
+<span class="sd">    M = R^-T B R^-1 = V diag(mu) V^T, B = K^T W K::</span>
+
+<span class="sd">        H(lambda) = 2 lambda P + B = R^T (2 lambda I + M) R</span>
+<span class="sd">        log det H = log det P + sum_j log(2 lambda + mu_j)</span>
+<span class="sd">        p_MAP     = R^-1 V diag(1/(2 lambda + mu)) V^T R^-T K^T W b</span>
+
+<span class="sd">    so every lambda costs O(M n) (the explicit residual) instead of an</span>
+<span class="sd">    O(n^3) solve, a slogdet and an eigen-decomposition. ``ok`` is False when</span>
+<span class="sd">    P is not positive definite; callers then use log_evidence(). Each lambda</span>
+<span class="sd">    is checked through the residual of its normal equations; a lambda that</span>
+<span class="sd">    fails the check (small lambda with an ill-conditioned P) is evaluated by</span>
+<span class="sd">    log_evidence() instead (counted in ``n_exact``).</span>
+<span class="sd">    """</span>
+
+    <span class="c1">#: relative residual of the normal equations above which a lambda is</span>
+    <span class="c1">#: evaluated exactly (test.dat, j0 kernel: below 1e-11 the fast ln Z agrees</span>
+    <span class="c1">#: with the exact one to &lt; 1e-3)</span>
+    <span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-11</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ridge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_exact</span> <span class="o">=</span> <span class="n">L</span><span class="p">,</span> <span class="n">ridge</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">K</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">LtL</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LtL</span> <span class="o">=</span> <span class="n">LtL</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">LtL</span> <span class="o">+</span> <span class="n">ridge</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>            <span class="c1"># P = R^T R</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ok</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">B</span><span class="p">,</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rhs_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">))</span>
+        <span class="n">Rinv</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">solve_triangular</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="n">Mm</span> <span class="o">=</span> <span class="n">Rinv</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">B</span> <span class="o">@</span> <span class="n">Rinv</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">Mm</span> <span class="o">+</span> <span class="n">Mm</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">Rinv</span> <span class="o">@</span> <span class="n">V</span>                          <span class="c1"># p = T y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logdetP</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">R</span><span class="p">))))</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eig_B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sla</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">eigvals_only</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ok</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="FastEvidence.exact">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.FastEvidence.exact">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvidenceResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""log_evidence() with the lambda-independent parts precomputed: one</span>
+<span class="sd">        Cholesky factorization of H gives p_MAP and log det H."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_exact</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">cho_factor</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">check_finite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">log_evidence</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">ridge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ridge</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">cho_solve</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">check_finite</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">logdet</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]))))</span>
+        <span class="n">S_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">LtL</span> <span class="o">@</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">chi2_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">@</span> <span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">log_p</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">logdet</span> <span class="o">-</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">S_val</span> <span class="o">-</span> <span class="n">chi2_val</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">n_good</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eig_B</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eig_B</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">EvidenceResult</span><span class="p">(</span><span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">,</span> <span class="n">log_evidence</span><span class="o">=</span><span class="n">log_p</span><span class="p">,</span> <span class="n">p_map</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">n_good_params</span><span class="o">=</span><span class="n">n_good</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FastEvidence.at">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.FastEvidence.at">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EvidenceResult</span><span class="p">:</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">)</span>
+        <span class="c1"># accuracy check: where P (and so R^-1) is ill-conditioned the</span>
+        <span class="c1"># decomposition loses digits at small lambda -- then the exact route</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span> <span class="o">-</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">@</span> <span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">@</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rhs_norm</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>
+        <span class="n">S_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">LtL</span> <span class="o">@</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">chi2_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">@</span> <span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="c1"># log det(lam * 2P + B) = log det(2P) + sum log(lam + mu/2)</span>
+        <span class="n">logdet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logdetP</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">)))</span>
+        <span class="n">log_p</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">logdet</span> <span class="o">-</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">S_val</span> <span class="o">-</span> <span class="n">chi2_val</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">n_good</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eig_B</span> <span class="o">/</span> <span class="p">(</span><span class="n">lam</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eig_B</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">EvidenceResult</span><span class="p">(</span><span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">,</span> <span class="n">log_evidence</span><span class="o">=</span><span class="n">log_p</span><span class="p">,</span> <span class="n">p_map</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">n_good_params</span><span class="o">=</span><span class="n">n_good</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="evidence_search">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.evidence_search">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evidence_search</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lam_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EvidenceResult</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">EvidenceResult</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Evaluate log-evidence over a grid of lambda and return the maximizer.</span>
+<span class="sd">    ridge: see log_evidence's docstring; passed through unchanged, default</span>
+<span class="sd">    0 keeps existing callers' behavior identical."""</span>
+    <span class="n">fe</span> <span class="o">=</span> <span class="n">FastEvidence</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">ridge</span><span class="o">=</span><span class="n">ridge</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fe</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">fe</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="k">for</span> <span class="n">lam</span> <span class="ow">in</span> <span class="n">lam_grid</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">log_evidence</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">ridge</span><span class="o">=</span><span class="n">ridge</span><span class="p">)</span> <span class="k">for</span> <span class="n">lam</span> <span class="ow">in</span> <span class="n">lam_grid</span><span class="p">]</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">log_evidence</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="posterior_covariance">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.posterior_covariance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">posterior_covariance</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ridge</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Laplace-approximation posterior covariance of p around its MAP point,</span>
+<span class="sd">    Cov(p) ~= hessian^-1, where `hessian = lam*A_hess + B_hess` is exactly</span>
+<span class="sd">    the same curvature matrix log_evidence() already builds and takes the</span>
+<span class="sd">    log-determinant of for the evidence score itself -- this is the</span>
+<span class="sd">    standard GNOM/Hansen-IFT way of turning the already-computed evidence</span>
+<span class="sd">    machinery into pointwise error bars on p(r), at essentially zero extra</span>
+<span class="sd">    cost (one matrix inverse at the already-selected best lambda, not a</span>
+<span class="sd">    per-lambda-grid-point cost).</span>
+
+<span class="sd">    Pointwise uncertainty: sigma_j = sqrt(diag(Cov(p)))[j]. This is a</span>
+<span class="sd">    LOCAL/linearized (Gaussian, single-lambda) uncertainty around the MAP</span>
+<span class="sd">    solution -- it does not capture the discrete choice of lambda itself,</span>
+<span class="sd">    nor any nonlinearity from a positivity constraint (this solver family</span>
+<span class="sd">    has none; p is allowed to go negative, consistent with the general-</span>
+<span class="sd">    form Tikhonov formulation used throughout bayesian_evidence_hansen/</span>
+<span class="sd">    _hann_tapered). For a solver-agnostic, nonlinearity-aware alternative</span>
+<span class="sd">    (e.g. for the EM/MaxEnt solvers, or to also propagate lambda-selection</span>
+<span class="sd">    uncertainty), see uncertainty.bootstrap_uncertainty instead.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">A_hess</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L</span> <span class="o">+</span> <span class="n">ridge</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">B_hess</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>
+    <span class="n">hessian</span> <span class="o">=</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">A_hess</span> <span class="o">+</span> <span class="n">B_hess</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">hessian</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BlockEvidenceResult">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.BlockEvidenceResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlockEvidenceResult</span><span class="p">:</span>
+    <span class="n">lams</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">log_evidence</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">p_map</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">n_good_params</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="log_evidence_blocks">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.log_evidence_blocks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_evidence_blocks</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">A_blocks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">n_terms</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">lams</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockEvidenceResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generalization of log_evidence() to K independent regularization</span>
+<span class="sd">    "blocks", each with its own hyperparameter lambda_k -- implemented to</span>
+<span class="sd">    support an adaptive/position-dependent smoothing strength (e.g.</span>
+<span class="sd">    regularization.hansen_smoothness_two_segment's A_lo/A_hi split),</span>
+<span class="sd">    since an empirical scan (tests/diagnose_hansen_lambda_balance.py and</span>
+<span class="sd">    friends, 2026-10-06) showed no single global lambda can give a</span>
+<span class="sd">    well-sized fit across both the low/mid-q and high-q regions on this</span>
+<span class="sd">    kernel.</span>
+
+<span class="sd">    Each A_blocks[k] is an n x n matrix such that the combined penalty is::</span>
+
+<span class="sd">        S(p; lams) = sum_k lams[k] * p^T A_blocks[k] p</span>
+
+<span class="sd">    (NOT a Cholesky factor -- unlike log_evidence's L argument, which</span>
+<span class="sd">    required L^T L = A because that single-block code solved via L</span>
+<span class="sd">    directly; here, with multiple blocks, it's simpler to work with the</span>
+<span class="sd">    A_k matrices themselves).</span>
+
+<span class="sd">    n_terms[k] is the number of independent penalty terms contributed by</span>
+<span class="sd">    block k (regularization.hansen_smoothness_two_segment returns these</span>
+<span class="sd">    as n_lo_terms, n_hi_terms) -- used as the log(lambda_k) prefactor</span>
+<span class="sd">    exponent, chosen so that when every block shares one lambda and</span>
+<span class="sd">    sum(n_terms) == N-1, the combined prefactor</span>
+<span class="sd">    sum_k 0.5*n_terms[k]*log(lam) == 0.5*(N-1)*log(lam) collapses exactly</span>
+<span class="sd">    to log_evidence()'s single-lambda prefactor (itself following</span>
+<span class="sd">    Vestergaard &amp; Hansen (2006) eq. 6). This is the natural</span>
+<span class="sd">    generalization for block-additive, non-overlapping-support priors;</span>
+<span class="sd">    it is NOT a rigorous re-derivation of eq. 6 for the multi-hyperparameter</span>
+<span class="sd">    case (the exact normalizing constant of a sum of non-commuting</span>
+<span class="sd">    precision matrices doesn't factor this cleanly in general), but since</span>
+<span class="sd">    A_lo and A_hi act on disjoint sets of difference terms (see</span>
+<span class="sd">    hansen_smoothness_two_segment's docstring), this split IS exact for</span>
+<span class="sd">    the log(lambda_k) prefactor specifically -- the part that could</span>
+<span class="sd">    otherwise not be reduced to a simple scalar count.</span>
+
+<span class="sd">    Effective-degrees-of-freedom (Ng) generalizes via the standard ridge</span>
+<span class="sd">    formula Ng = trace(H^-1 B) (Hastie &amp; Tibshirani), rather than</span>
+<span class="sd">    log_evidence()'s single-lambda eigenvalue formula (eq. 8), since that</span>
+<span class="sd">    formula is specific to a single scalar lambda; trace(H^-1 B) reduces</span>
+<span class="sd">    to the same quantity when there's only one block.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="n">B_hess</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>  <span class="c1"># Hessian of chi2/2</span>
+
+    <span class="n">A_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">A_k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">lams</span><span class="p">,</span> <span class="n">A_blocks</span><span class="p">):</span>
+        <span class="n">A_total</span> <span class="o">+=</span> <span class="n">lam_k</span> <span class="o">*</span> <span class="n">A_k</span>
+
+    <span class="n">lhs</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A_total</span> <span class="o">+</span> <span class="n">B_hess</span>
+    <span class="n">rhs</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">p_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+
+    <span class="n">chi2_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(((</span><span class="n">K</span> <span class="o">@</span> <span class="n">p_map</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">hessian</span> <span class="o">=</span> <span class="n">lhs</span>  <span class="c1"># == sum_k lam_k * (2*A_k) + B_hess</span>
+    <span class="n">sign</span><span class="p">,</span> <span class="n">logdet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">hessian</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sign</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logdet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+    <span class="n">log_prefactor</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">nt</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lam_k</span><span class="p">)</span> <span class="k">for</span> <span class="n">nt</span><span class="p">,</span> <span class="n">lam_k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">n_terms</span><span class="p">,</span> <span class="n">lams</span><span class="p">))</span>
+    <span class="n">S_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">lam_k</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">p_map</span> <span class="o">@</span> <span class="n">A_k</span> <span class="o">@</span> <span class="n">p_map</span><span class="p">)</span> <span class="k">for</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">A_k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">lams</span><span class="p">,</span> <span class="n">A_blocks</span><span class="p">))</span>
+
+    <span class="n">log_p</span> <span class="o">=</span> <span class="n">log_prefactor</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">logdet</span> <span class="o">-</span> <span class="n">S_total</span> <span class="o">-</span> <span class="n">chi2_val</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">n_good</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">hessian</span><span class="p">,</span> <span class="n">B_hess</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">BlockEvidenceResult</span><span class="p">(</span><span class="n">lams</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">lams</span><span class="p">),</span> <span class="n">log_evidence</span><span class="o">=</span><span class="n">log_p</span><span class="p">,</span> <span class="n">p_map</span><span class="o">=</span><span class="n">p_map</span><span class="p">,</span> <span class="n">n_good_params</span><span class="o">=</span><span class="n">n_good</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="evidence_search_blocks">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.evidence_search_blocks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evidence_search_blocks</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">A_blocks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">n_terms</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">lam_grids</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BlockEvidenceResult</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlockEvidenceResult</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Grid search over the Cartesian product of per-block lambda grids,</span>
+<span class="sd">    maximizing log_evidence_blocks(...). For two blocks (the</span>
+<span class="sd">    lo/hi-segment adaptive-lambda case) with grids of length m each, this</span>
+<span class="sd">    is m^2 evaluations -- keep m modest (~15-25) to stay fast.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">lam_combo</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">lam_grids</span><span class="p">):</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_evidence_blocks</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">A_blocks</span><span class="p">,</span> <span class="n">n_terms</span><span class="p">,</span> <span class="n">lam_combo</span><span class="p">))</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">log_evidence</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="posterior_covariance_blocks">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.posterior_covariance_blocks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">posterior_covariance_blocks</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">A_blocks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">lams</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Multi-block analog of posterior_covariance() above: Laplace-approximation</span>
+<span class="sd">    covariance Cov(p) ~= hessian^-1 at the block-MAP point, where</span>
+<span class="sd">    `hessian = sum_k lam_k*(2*A_k) + B_hess` is exactly the curvature matrix</span>
+<span class="sd">    log_evidence_blocks() already forms and takes the logdet of. Same</span>
+<span class="sd">    caveats as posterior_covariance (local/linearized, doesn't propagate</span>
+<span class="sd">    lambda-selection uncertainty).</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">B_hess</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span><span class="p">)</span>
+    <span class="n">A_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">A_k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">lams</span><span class="p">,</span> <span class="n">A_blocks</span><span class="p">):</span>
+        <span class="n">A_total</span> <span class="o">+=</span> <span class="n">lam_k</span> <span class="o">*</span> <span class="n">A_k</span>
+    <span class="n">hessian</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">A_total</span> <span class="o">+</span> <span class="n">B_hess</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">hessian</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

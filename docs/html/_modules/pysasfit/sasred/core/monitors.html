@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.core.monitors &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.core.monitors</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.core.monitors</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Which neutron monitors sit before and which after the velocity selector.</span>
+
+<span class="sd">A monitor in front of the selector sees the white beam: its ratio to the proton beam</span>
+<span class="sd">(``integrated_beam``, the proton charge) does not change with the wavelength or the selector tilt.</span>
+<span class="sd">A monitor behind the selector sees what the selector passes, and its ratio changes with λ (source</span>
+<span class="sd">spectrum, selector transmission) and with the tilt (flux roughly ∝ dλ/λ). Only a monitor behind the</span>
+<span class="sd">selector cancels a change of the selector setting when the data are normalised by it.</span>
+
+<span class="sd">:func:`selector_test` compares the ratio monitor / proton beam between groups of runs at different</span>
+<span class="sd">(λ, tilt). It needs runs at two or more settings; with one setting it says so.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MonitorTest"</span><span class="p">,</span> <span class="s2">"selector_test"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="MonitorTest">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.monitors.MonitorTest">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitorTest</span><span class="p">:</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">position</span><span class="p">:</span> <span class="nb">str</span>                     <span class="c1"># "before selector" | "after selector" | "undetermined" | "proton beam"</span>
+    <span class="n">ratios</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>    <span class="c1"># (λ Å, tilt °) -&gt; median monitor/proton</span>
+    <span class="n">change</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>            <span class="c1"># max/min − 1 of the group medians</span>
+    <span class="n">noise</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>             <span class="c1"># typical relative scatter within a group</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">after_selector</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"before selector"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"after selector"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MonitorTest.describe">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.monitors.MonitorTest.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> Å/</span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">+g</span><span class="si">}</span><span class="s2">°: </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ratios</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">monitor</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">)</span><span class="si">{</span><span class="s1">'; '</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_setting</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"selector_tilt_deg"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.0</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="selector_test">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.monitors.selector_test">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selector_test</span><span class="p">(</span><span class="n">raws</span><span class="p">,</span> <span class="n">proton</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"integrated_beam"</span><span class="p">,</span> <span class="n">min_runs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                  <span class="n">monitors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">min_counts</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MonitorTest</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Position of every monitor relative to the selector from runs at different (λ, tilt).</span>
+
+<span class="sd">    For each setting the median of monitor/proton is taken (runs with proton charge and at least</span>
+<span class="sd">    ``min_counts`` monitor counts, at least ``min_runs`` runs; a frame of a selector speed scan counts</span>
+<span class="sd">    alone); the scatter within a setting (median relative deviation) is the</span>
+<span class="sd">    noise. The monitor is *before the selector* when the medians of all settings agree within</span>
+<span class="sd">    max(3·noise, 5 %), *after the selector* when they differ by more than max(5·noise, 15 %);</span>
+<span class="sd">    in between, or with fewer than two settings, *undetermined*."""</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>       <span class="c1"># setting -&gt; list of monitor dicts (runs, or frames of a scan)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">fr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"frames"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"scan"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"wavelength_A"</span> <span class="ow">in</span> <span class="n">fr</span><span class="p">:</span>          <span class="c1"># selector speed scan: every frame</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"selector_tilt_deg"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">tilt</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.0</span>
+            <span class="n">fm</span> <span class="o">=</span> <span class="n">fr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"monitors"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">lam</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fr</span><span class="p">[</span><span class="s2">"wavelength_A"</span><span class="p">]):</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fm</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">i</span><span class="p">}</span>
+                <span class="n">m</span><span class="p">[</span><span class="s2">"_frame"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>                                     <span class="c1"># a long frame counts on its own</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">proton</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">lam</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">tilt</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"empty_reason"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">monitors</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">proton</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_setting</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">monitors</span><span class="p">))</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">monitors</span> <span class="ow">or</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">k</span> <span class="k">for</span> <span class="n">ms</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ms</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">m</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">proton</span><span class="p">,</span> <span class="s2">"_frame"</span><span class="p">)})</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MonitorTest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="n">mm</span><span class="p">[</span><span class="n">proton</span><span class="p">]</span> <span class="k">for</span> <span class="n">ms</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">mm</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonitorTest</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"proton beam"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"same counts as </span><span class="si">{</span><span class="n">proton</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">med</span><span class="p">,</span> <span class="n">scat</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">rs</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">proton</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span>
+                          <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_counts</span><span class="p">])</span>          <span class="c1"># a few counts: noise</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_runs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"_frame"</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">)):</span>
+                <span class="k">continue</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">med</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">scat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">med</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonitorTest</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"undetermined"</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"fewer than </span><span class="si">{</span><span class="n">min_counts</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> counts"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">scat</span><span class="p">))</span> <span class="k">if</span> <span class="n">scat</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">med</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonitorTest</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"undetermined"</span><span class="p">,</span> <span class="n">med</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span>
+                                 <span class="s2">"all runs at one wavelength and tilt: needs runs at two settings"</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">change</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">med</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">/</span> <span class="nb">min</span><span class="p">(</span><span class="n">med</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">change</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">noise</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">):</span>
+            <span class="n">pos</span><span class="p">,</span> <span class="n">why</span> <span class="o">=</span> <span class="s2">"before selector"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"ratio to the proton beam constant within </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">change</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> %"</span>
+        <span class="k">elif</span> <span class="n">change</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">noise</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">):</span>
+            <span class="n">pos</span><span class="p">,</span> <span class="n">why</span> <span class="o">=</span> <span class="s2">"after selector"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"ratio to the proton beam changes by </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">change</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> %"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pos</span><span class="p">,</span> <span class="n">why</span> <span class="o">=</span> <span class="s2">"undetermined"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"change </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">change</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> % vs scatter </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">noise</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> %"</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">MonitorTest</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">med</span><span class="p">,</span> <span class="n">change</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span> <span class="n">why</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

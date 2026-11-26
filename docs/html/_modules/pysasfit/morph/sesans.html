@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.morph.sesans &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.morph.sesans</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.morph.sesans</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""SESANS in pySASmorph: the projected correlation function and its inversion.</span>
+
+<span class="sd">Spin-echo SANS measures (Andersson et al., J. Appl. Cryst. 41 (2008) 868)</span>
+
+<span class="sd">    G(delta) - G(0) = 1/(2 pi) integral I(Q) [J0(Q delta) - 1] Q dQ</span>
+<span class="sd">                    = integral [C(sqrt(delta^2 + x^2)) - C(|x|)] dx,</span>
+
+<span class="sd">with C(r) the correlation function of the scattering length density in the units of the data</span>
+<span class="sd">(I(Q) = 4 pi integral C(r) r^2 sin(Qr)/(Qr) dr; I in 1/cm, lengths in the unit of the file:</span>
+<span class="sd">G in [length]^-2 cm^-1, as :func:`pysasfit.core.sesans_io.load_sesans` returns it).</span>
+<span class="sd">The real-space projection is the Abel transform</span>
+
+<span class="sd">    integral C(sqrt(delta^2 + x^2)) dx = 2 integral_delta^inf C(r) r / sqrt(r^2 - delta^2) dr.</span>
+
+<span class="sd">:func:`projection_matrix` evaluates it *exactly* for C piecewise linear on an r grid (the integrals</span>
+<span class="sd">of (a + b r) r / sqrt(r^2 - delta^2) are elementary, the square-root singularity is handled</span>
+<span class="sd">analytically). :func:`invert_sesans` solves G = A C for C on an r grid with a second-</span>
+<span class="sd">difference (Tikhonov) penalty on nodes that follow the spacing of the data, the regularisation chosen by</span>
+<span class="sd">the discrepancy principle (generalised cross-validation without errors); the</span>
+<span class="sd">normalised gamma(r) = C(r)/C(0) of a SESANS curve then enters the joint fit of g(r) of</span>
+<span class="sd">:mod:`pysasfit.morph.multiphase` like the gamma of a scattering curve, on the r range the spin-echo</span>
+<span class="sd">lengths cover. The forward model of a SESANS curve is the projection of the level-cut covariance</span>
+<span class="sd">C(g(r)), with one scale factor fitted.</span>
+
+<span class="sd">For a periodic voxel structure :func:`voxel_correlation` gives C(r) from the autocorrelation of the</span>
+<span class="sd">SLD map (radial average, r &lt; L/2).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"projection_matrix"</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="s2">"invert_sesans"</span><span class="p">,</span> <span class="s2">"SESANSInversion"</span><span class="p">,</span> <span class="s2">"voxel_correlation"</span><span class="p">,</span>
+           <span class="s2">"dab_sesans"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_F1</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span> <span class="o">-</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_F2</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span> <span class="o">-</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">lg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="n">s</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="n">d</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">lg</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_abel_rows</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""P[i, j] = integral_{r &gt;= delta_i} phi_j(r) r / sqrt(r^2 - delta_i^2) dr for the hat functions phi_j</span>
+<span class="sd">    on the nodes r (C = 0 beyond r[-1])."""</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">float</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">r</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">:][</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+    <span class="n">act</span> <span class="o">=</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="n">lo</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">act</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">I1</span> <span class="o">=</span> <span class="n">_F1</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span> <span class="o">-</span> <span class="n">_F1</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+    <span class="c1"># F2 differences: subtract the log of the lower end inside to keep precision</span>
+    <span class="n">I2</span> <span class="o">=</span> <span class="n">_F2</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span> <span class="o">-</span> <span class="n">_F2</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+    <span class="n">I1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">act</span><span class="p">,</span> <span class="n">I1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">I2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">act</span><span class="p">,</span> <span class="n">I2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">delta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">P</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">I1</span> <span class="o">-</span> <span class="n">I2</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span>
+    <span class="n">P</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">I2</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">I1</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span>
+    <span class="k">return</span> <span class="n">P</span>
+
+
+<div class="viewcode-block" id="projection_matrix">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.projection_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">projection_matrix</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A with (A @ C)[i] = G(delta_i) - G(0) for C piecewise linear on the nodes r (C = 0 beyond r[-1])."""</span>
+    <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">_abel_rows</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">-</span> <span class="n">_abel_rows</span><span class="p">([</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">r</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="project">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.project">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""G(delta) - G(0) of the correlation function C(r)."""</span>
+    <span class="k">return</span> <span class="n">projection_matrix</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="dab_sesans">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.dab_sesans">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dab_sesans</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">C0</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Exact G(delta) - G(0) of C(r) = C0 exp(-r/xi): 2 C0 [delta K1(delta/xi) - xi]."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">k1</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">*</span> <span class="n">k1</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">xi</span><span class="p">),</span> <span class="n">xi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">C0</span> <span class="o">*</span> <span class="p">(</span><span class="n">out</span> <span class="o">-</span> <span class="n">xi</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SESANSInversion">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.SESANSInversion">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SESANSInversion</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Result of :func:`invert_sesans`: C on the nodes, its uncertainty, the fit."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">dC</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">dG</span><span class="p">,</span> <span class="n">G_fit</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">chi2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dC</span> <span class="o">=</span> <span class="n">r</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">dC</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dG</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G_fit</span> <span class="o">=</span> <span class="n">delta</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">dG</span><span class="p">,</span> <span class="n">G_fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi2</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">chi2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">C0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<div class="viewcode-block" id="SESANSInversion.gamma">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.SESANSInversion.gamma">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""C(r)/C(0): smooth (PCHIP) interpolation of the nodes, 0 beyond the last node. A smooth curve matters:</span>
+<span class="sd">        kinks in g(r) would show up as spurious intensity at high q."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">PchipInterpolator</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">PchipInterpolator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">False</span><span class="p">)(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">r</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">out</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">C0</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">saturated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""True if G has levelled off at the largest spin-echo lengths (structure inside the delta range)."""</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">)</span> <span class="o">//</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">tail</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dG</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nodes</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">,</span> <span class="n">r_max_factor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""r = 0 and n_nodes - 1 nodes that follow the density of the spin-echo lengths: geometric for log-spaced</span>
+<span class="sd">    data, about uniform for linearly spaced data (instruments that scan delta linearly). Nodes much denser</span>
+<span class="sd">    than the data at small r leave C there undetermined (oscillating, even C(0) &lt; 0) under a penalty on the</span>
+<span class="sd">    node index."""</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">n_nodes</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">r_max_factor</span> <span class="o">*</span> <span class="n">d</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># spin-echo lengths as a function of their rank, extended to lo and hi</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="n">lo</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="n">hi</span><span class="p">]])</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">u</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">x</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="invert_sesans">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.invert_sesans">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">invert_sesans</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">dG</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">alphas</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">r_max_factor</span><span class="o">=</span><span class="mf">1.2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""C(r) from G(delta) - G(0) by Tikhonov-regularised Abel inversion.</span>
+
+<span class="sd">    Nodes: r = 0 and nodes from delta_min/3 to ``r_max_factor`` * delta_max that follow the spacing of the data</span>
+<span class="sd">    (:func:`_nodes`; C = 0 beyond). Penalty: second differences of C over the nodes; alpha over ``alphas`` (default 10^-8 ...</span>
+<span class="sd">    10^4 relative to the scale of A^T W A) by the discrepancy principle (largest alpha with chi2 &lt;= 1) when</span>
+<span class="sd">    errors are given, else by generalised cross-validation.</span>
+<span class="sd">    """</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">G</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">G</span><span class="p">)</span> <span class="k">if</span> <span class="n">dG</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dG</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span> <span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">m</span><span class="p">])):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">G</span><span class="p">[</span><span class="n">m</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.01</span> <span class="o">+</span> <span class="mf">1e-30</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">m</span><span class="p">]),</span> <span class="n">s</span><span class="p">)</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+    <span class="n">d</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">],</span> <span class="n">G</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">o</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"at least 5 SESANS points are needed"</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_nodes</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">,</span> <span class="n">r_max_factor</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">projection_matrix</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">s</span>
+    <span class="n">Aw</span> <span class="o">=</span> <span class="n">A</span> <span class="o">*</span> <span class="n">W</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">yw</span> <span class="o">=</span> <span class="n">G</span> <span class="o">*</span> <span class="n">W</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># pin C to zero smoothly at the far end</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">*</span> <span class="mf">3.0</span><span class="p">])</span>
+    <span class="n">AtA</span> <span class="o">=</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Aw</span>
+    <span class="n">DtD</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">D</span>
+    <span class="n">Aty</span> <span class="o">=</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">yw</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">AtA</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">DtD</span><span class="p">)</span>
+    <span class="n">alphas</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">49</span><span class="p">)</span> <span class="k">if</span> <span class="n">alphas</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alphas</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">sols</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">al</span> <span class="ow">in</span> <span class="n">alphas</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Minv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">AtA</span> <span class="o">+</span> <span class="n">al</span> <span class="o">*</span> <span class="n">DtD</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Minv</span> <span class="o">@</span> <span class="n">Aty</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">Aw</span> <span class="o">@</span> <span class="n">c</span> <span class="o">-</span> <span class="n">yw</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">Aw</span> <span class="o">@</span> <span class="n">Minv</span> <span class="o">@</span> <span class="n">Aw</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">sols</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span> <span class="o">@</span> <span class="n">res</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="n">tr</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">al</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">Minv</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">res</span> <span class="o">@</span> <span class="n">res</span><span class="p">)))</span>
+    <span class="c1"># with errors: the discrepancy principle (the strongest smoothing that still fits within the errors,</span>
+    <span class="c1"># chi2 &lt;= 1), which does not fit the noise; without errors (or if no alpha reaches chi2 = 1): GCV</span>
+    <span class="n">fits</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sols</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">/</span> <span class="n">N</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">]</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">fits</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="p">(</span><span class="n">dG</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fits</span><span class="p">)</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">sols</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">_gcv</span><span class="p">,</span> <span class="n">al</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">Minv</span><span class="p">,</span> <span class="n">rss</span> <span class="o">=</span> <span class="n">best</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">Minv</span> <span class="o">@</span> <span class="n">AtA</span> <span class="o">@</span> <span class="n">Minv</span>
+    <span class="n">G_fit</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="n">SESANSInversion</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov</span><span class="p">),</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">d</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">G_fit</span><span class="p">,</span> <span class="n">al</span><span class="p">,</span> <span class="n">rss</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="voxel_correlation">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.sesans.voxel_correlation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">voxel_correlation</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">r_max</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Radially averaged autocorrelation C(r) = &lt;df(0) df(r)&gt; of a periodic n^3 field (spacing a), r &lt;= r_max</span>
+<span class="sd">    (default L/2). Returns (r, C) with r the bin centres (bins of width a, the first at r = 0)."""</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">f</span> <span class="o">-</span> <span class="n">f</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfftn</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfftn</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">F</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="n">f</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">r_max</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">a</span> <span class="k">if</span> <span class="n">r_max</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">r_max</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">nb</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r_max</span> <span class="o">/</span> <span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="n">nb</span>
+    <span class="n">cnt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">minlength</span><span class="o">=</span><span class="n">nb</span><span class="p">)</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">idx</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="n">corr</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="n">keep</span><span class="p">],</span> <span class="n">minlength</span><span class="o">=</span><span class="n">nb</span><span class="p">)</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">cnt</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nb</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span><span class="p">)[</span><span class="n">good</span><span class="p">],</span> <span class="n">sm</span><span class="p">[</span><span class="n">good</span><span class="p">]</span> <span class="o">/</span> <span class="n">cnt</span><span class="p">[</span><span class="n">good</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

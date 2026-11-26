@@ -1,0 +1,204 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.colorscale &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.colorscale</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.colorscale</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">"""Colour scales for 2D detector images.</span>
+
+<span class="sd">    norm = make_norm("asinh", image)</span>
+<span class="sd">    ax.imshow(image, norm=norm)</span>
+
+<span class="sd">The scales::</span>
+
+<span class="sd">    linear   I</span>
+<span class="sd">    log1p    log(1 + I)       counts: zero stays finite, small counts are spread out</span>
+<span class="sd">    symlog   linear for |I| &lt; 1, logarithmic above (also negative values, e.g. after subtraction)</span>
+<span class="sd">    asinh    asinh(I)         like symlog but smooth at the transition</span>
+
+<span class="sd">The threshold of symlog / asinh (``linear_width``) is 1 in the units of the image,</span>
+<span class="sd">i.e. one count for raw data.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">colors</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SCALES"</span><span class="p">,</span> <span class="s2">"make_norm"</span><span class="p">,</span> <span class="s2">"decorate_colorbar"</span><span class="p">]</span>
+
+<span class="c1">#: key -&gt; label of the colour scales offered on the panels</span>
+<span class="n">SCALES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"linear"</span><span class="p">:</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"log1p"</span><span class="p">:</span> <span class="s2">"log(1+I)"</span><span class="p">,</span> <span class="s2">"symlog"</span><span class="p">:</span> <span class="s2">"symlog"</span><span class="p">,</span> <span class="s2">"asinh"</span><span class="p">:</span> <span class="s2">"asinh"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="make_norm">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.colorscale.make_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_norm</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">linear_width</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``matplotlib.colors.Normalize`` for ``scale`` covering the finite values of ``data``; with</span>
+<span class="sd">    ``valid`` (bool array) only those pixels set the range, e.g. the unmasked pixels of a detector</span>
+<span class="sd">    image, so that a few bright pixels at a badly placed beamstop do not dominate the colours."""</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">valid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+    <span class="n">fin</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span>
+    <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">fin</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span> <span class="k">if</span> <span class="n">fin</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="n">vmin</span><span class="p">:</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">vmin</span> <span class="o">+</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">"linear"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">colors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">"log1p"</span><span class="p">:</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>                               <span class="c1"># log1p is defined for I &gt; -1; images are &gt;= 0</span>
+        <span class="k">return</span> <span class="n">colors</span><span class="o">.</span><span class="n">FuncNorm</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">),</span> <span class="n">vmin</span><span class="o">=</span><span class="n">lo</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">vmax</span><span class="p">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">"symlog"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">colors</span><span class="o">.</span><span class="n">SymLogNorm</span><span class="p">(</span><span class="n">linthresh</span><span class="o">=</span><span class="n">linear_width</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">"asinh"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">colors</span><span class="o">.</span><span class="n">AsinhNorm</span><span class="p">(</span><span class="n">linear_width</span><span class="o">=</span><span class="n">linear_width</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown colour scale '</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">' (one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">SCALES</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decade_label</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"0"</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">v</span><span class="p">))))</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="s2">"-"</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"$</span><span class="si">{</span><span class="n">sign</span><span class="si">}</span><span class="s2">10^</span><span class="se">{{</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">}}</span><span class="s2">$"</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sign</span><span class="si">}{</span><span class="mi">10</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<div class="viewcode-block" id="decorate_colorbar">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.colorscale.decorate_colorbar">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">decorate_colorbar</span><span class="p">(</span><span class="n">cb</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Readable ticks for the non-linear scales: 0 and the decades (also negative ones for</span>
+<span class="sd">    symlog / asinh) inside the colour range; matplotlib's own ticks crowd for log1p and asinh."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.ticker</span><span class="w"> </span><span class="kn">import</span> <span class="n">FixedLocator</span><span class="p">,</span> <span class="n">FuncFormatter</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="s2">"linear"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cb</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">cb</span><span class="o">.</span><span class="n">norm</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">vmin</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">vmax</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">lo</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">hi</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">dec</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.0</span> <span class="o">**</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">top</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">ticks</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">+</span> <span class="n">dec</span> <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dec</span><span class="p">]</span>
+    <span class="n">ticks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ticks</span> <span class="k">if</span> <span class="n">lo</span> <span class="o">-</span> <span class="mf">1e-12</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="n">hi</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ticks</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">FixedLocator</span><span class="p">(</span><span class="n">ticks</span><span class="p">))</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FuncFormatter</span><span class="p">(</span><span class="n">_decade_label</span><span class="p">))</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">FixedLocator</span><span class="p">([]))</span>
+    <span class="k">return</span> <span class="n">cb</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

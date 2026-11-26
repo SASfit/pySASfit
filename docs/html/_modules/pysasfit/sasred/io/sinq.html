@@ -1,0 +1,465 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.io.sinq &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.io.sinq</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.io.sinq</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""SinqNexusSource: read SANS-I raw HDF5 files (correction step 1).</span>
+
+<span class="sd">Missing required header fields raise an error; they are never replaced by</span>
+<span class="sd">defaults silently. Optional fields (absent in older files, e.g. the sample</span>
+<span class="sd">thickness before 2025) are returned as None and listed in `missing_optional`.</span>
+<span class="sd">Units are taken from the `units` attributes and converted: wavelength to</span>
+<span class="sd">Angstrom, distances to m.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"RawRun"</span><span class="p">,</span> <span class="s2">"read_sans_i"</span><span class="p">,</span> <span class="s2">"MissingField"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="MissingField">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.io.sinq.MissingField">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingField</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+
+<span class="n">_LENGTH_TO_M</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"m"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"metre"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"meter"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"mm"</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s2">"cm"</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">}</span>
+<span class="n">_WAVELENGTH_TO_A</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"nm"</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">"angstrom"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"å"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"ang"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="RawRun">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.io.sinq.RawRun">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawRun</span><span class="p">:</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">run</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>            <span class="c1"># (ny, nx), frames summed</span>
+    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">counting_time_s</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">monitors</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>    <span class="c1"># monitor1 ... integrated_beam</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">count_mode</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">wavelength_A</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">dlam_over_lam_fwhm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">coll_m</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">SD_m</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">pixel_size_m</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">detector_offset_m</span><span class="p">:</span> <span class="nb">tuple</span>      <span class="c1"># lateral detector translation (x, y) as stored</span>
+    <span class="n">detector_tilt_deg</span><span class="p">:</span> <span class="nb">float</span>      <span class="c1"># chi_position (to be confirmed as the tilt)</span>
+    <span class="n">attenuator</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">beamstop_xy_mm</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">sample_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sample_position_mm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">sample_thickness_cm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">start_time</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">end_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">missing_optional</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">SD_offset_m</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>      <span class="c1"># distance offset for the geometry (SD_m stays as recorded)</span>
+    <span class="n">beamstop_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>       <span class="c1"># beam stop selector (size/type), SANS/beam_stop/out_flag</span>
+    <span class="n">instrument</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"sans_i"</span>    <span class="c1"># instrument file (instruments/sinq/&lt;instrument&gt;.yaml)</span>
+    <span class="n">preset_monitor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"monitor1"</span>   <span class="c1"># monitor the preset refers to (monitor mode)</span>
+    <span class="n">bank</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                <span class="c1"># detector bank: "" = the (central) area detector; SANS-LLB: "left", "bottom"</span>
+    <span class="n">panels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># SANS-LLB: {name: Panel} of the wide-angle banks (central run only)</span>
+    <span class="n">panel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># the Panel of a bank run (geometry from pixel positions)</span>
+    <span class="n">central_pos_mm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># SANS-LLB: (posx, posy) of the central pixels in the frame of the panels</span>
+    <span class="n">sample_name_in_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># set when the sample name was corrected by hand (names.py)</span>
+    <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                <span class="c1"># role set by hand (names.py); empty: from the sample name</span>
+    <span class="n">selector_tilt_deg</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># Dornier selector tilt (SANS/Dornier-VS/tilt)</span>
+    <span class="n">dlam_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>         <span class="c1"># where dlam_over_lam_fwhm comes from ("selector tilt …", "file header", …)</span>
+    <span class="n">frames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># multi-frame runs: per-frame counting_time_s, monitors, rotation_speed, wavelength_A</span>
+    <span class="n">scan</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                <span class="c1"># a selector speed scan (λ differs between the frames): not reduced</span>
+    <span class="n">excluded</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>            <span class="c1"># excluded by hand (names.py, kept per folder): the reason; not reduced</span>
+    <span class="n">polariser</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>           <span class="c1"># SANSPOL: polariser "in" / "out" (SANS/polarizer/state); "" = not in the file</span>
+    <span class="n">flipper</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>             <span class="c1"># spin flipper "off" / "on": not stored in the files, set by hand or from the</span>
+                                  <span class="c1"># sample name (names.py); "" = unknown</span>
+    <span class="n">flipper_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>      <span class="c1"># "set by hand", "from the sample name", ...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">panel_SD_m</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""SANS-LLB: sample distance of the wide-angle panels (left and bottom move together by design: their</span>
+<span class="sd">        mean; a bank run: its own panel); None for an instrument without panels."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">panel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panel</span><span class="o">.</span><span class="n">distance_m</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">distance_m</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panels</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">if</span> <span class="n">d</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">panel_SD_spread_m</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Difference of the recorded distances of the wide-angle panels (0: as designed)."""</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">distance_m</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panels</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SD_recorded_m</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Sample-detector distance as stored in the file (= SD_m)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">SD_effective_m</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Distance to the detection layer used for q and the solid angle: recorded + offset."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_m</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">SD_offset_m</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty_reason</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Why the run holds no usable data, or "": measuring time 0, no counts on the detector (all banks) or the</span>
+<span class="sd">        normalising monitor (instrument file) at 0. Such runs are skipped by the reduction."""</span>
+        <span class="n">why</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"excluded"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+            <span class="n">why</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"excluded by hand: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">excluded</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"scan"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+            <span class="n">why</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scan</span> <span class="o">+</span> <span class="s2">" – λ differs between the frames"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counting_time_s</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">why</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"measuring time 0 s"</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="p">))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">counts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">panels</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"counts"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">why</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"0 counts"</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span>
+            <span class="n">mname</span> <span class="o">=</span> <span class="n">load_instrument</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="s2">"monitor"</span><span class="p">][</span><span class="s2">"normaliser"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="n">mname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preset_monitor</span>
+        <span class="n">mon</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">monitors</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mon</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">float</span><span class="p">(</span><span class="n">mon</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">why</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2"> 0"</span> <span class="k">if</span> <span class="n">mon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"no </span><span class="si">{</span><span class="n">mname</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">why</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">aborted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Run that stopped before reaching its preset: the monitor count (monitor mode) or the</span>
+<span class="sd">        counting time (timer mode) is below 99 % of the preset."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_mode</span> <span class="o">==</span> <span class="s2">"monitor"</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preset_monitor</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">m</span> <span class="o">&lt;</span> <span class="mf">0.99</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">preset</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"timer"</span><span class="p">,</span> <span class="s2">"time"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">counting_time_s</span> <span class="o">&lt;</span> <span class="mf">0.99</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">preset</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_frames</span><span class="p">(</span><span class="n">run</span><span class="p">:</span> <span class="s2">"RawRun"</span><span class="p">,</span> <span class="n">t_frames</span><span class="p">,</span> <span class="n">frame_monitors</span><span class="p">,</span> <span class="n">rpm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Multi-frame runs: the counts, times and monitors of the frames are summed; the per-frame values</span>
+<span class="sd">    are kept in ``run.frames``. A selector speed scan (rotation speed differing between the frames) has a</span>
+<span class="sd">    different λ in every frame (λ ∝ 1/speed; the stored λ belongs to the last frame): it is marked in</span>
+<span class="sd">    ``run.scan`` and not reduced, but its frames serve the monitor test (core.monitors)."""</span>
+    <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">n_frames</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">frame_monitors</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">rpm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rpm</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">fr</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"counting_time_s"</span><span class="p">:</span> <span class="n">t_frames</span><span class="p">,</span> <span class="s2">"monitors"</span><span class="p">:</span> <span class="n">frame_monitors</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">sp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">sp</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">run</span><span class="o">.</span><span class="n">n_frames</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">sp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">fr</span><span class="p">[</span><span class="s2">"rotation_speed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span>
+        <span class="n">fr</span><span class="p">[</span><span class="s2">"wavelength_A"</span><span class="p">]</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">*</span> <span class="n">sp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">sp</span>
+        <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">1.01</span> <span class="o">*</span> <span class="n">sp</span><span class="o">.</span><span class="n">min</span><span class="p">():</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">scan</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"selector speed scan: </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">n_frames</span><span class="si">}</span><span class="s2"> frames, </span><span class="si">{</span><span class="n">sp</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">sp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> rpm "</span>
+                        <span class="sa">f</span><span class="s2">"(λ </span><span class="si">{</span><span class="n">fr</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">fr</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Å)"</span><span class="p">)</span>
+    <span class="n">run</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">fr</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dlam_from_selector</span><span class="p">(</span><span class="n">run</span><span class="p">:</span> <span class="s2">"RawRun"</span><span class="p">,</span> <span class="n">tilt</span><span class="p">,</span> <span class="n">dlam_header</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""dλ/λ from the selector tilt and the calibration table of the instrument file (it depends only on</span>
+<span class="sd">    the tilt); the header value SANS/monochromator/wavelength_spread when the tilt or the table is missing."""</span>
+    <span class="n">run</span><span class="o">.</span><span class="n">dlam_source</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">dlam_header</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"file header (monochromator/wavelength_spread)"</span>
+    <span class="k">if</span> <span class="n">tilt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">run</span><span class="o">.</span><span class="n">selector_tilt_deg</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tilt</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="p">(</span><span class="n">load_instrument</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">instrument</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wavelength"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selector_tilt"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">table</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..core.resolution</span><span class="w"> </span><span class="kn">import</span> <span class="n">dlam_from_tilt</span>
+    <span class="n">dl</span><span class="p">,</span> <span class="n">note</span> <span class="o">=</span> <span class="n">dlam_from_tilt</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">selector_tilt_deg</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span>
+    <span class="n">run</span><span class="o">.</span><span class="n">dlam_over_lam_fwhm</span> <span class="o">=</span> <span class="n">dl</span>
+    <span class="n">run</span><span class="o">.</span><span class="n">dlam_source</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"selector tilt </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">selector_tilt_deg</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">° (calibration table)"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"; </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">note</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">missing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">path</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">required</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingField</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required field </span><span class="si">{</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> missing"</span><span class="p">)</span>
+        <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">d</span><span class="p">[()]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"units"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">)):</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">v</span><span class="p">,</span> <span class="n">unit</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_length_m</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MissingField</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: no units attribute"</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_LENGTH_TO_M</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: unknown length unit '</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">f</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sha256_of</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">distance_offset_for</span><span class="p">(</span><span class="n">start_time</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Detector distance offset [m] for a run started at ``start_time``: the preference</span>
+<span class="sd">    ``sasred.detector.distance_offset_mm``, applied to runs started before</span>
+<span class="sd">    ``sasred.detector.distance_offset_before`` (YYYY-MM-DD; empty = all runs), so that older files</span>
+<span class="sd">    can be corrected once the instrument configuration writes the corrected distance."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">...core</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">effective</span><span class="p">(</span><span class="s2">"sasred.detector.distance_offset_mm"</span><span class="p">))</span> <span class="o">/</span> <span class="mf">1000.0</span>
+        <span class="n">before</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">effective</span><span class="p">(</span><span class="s2">"sasred.detector.distance_offset_before"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- no settings (scripts, tests)</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">off</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">before</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_time</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">before</span><span class="p">[:</span><span class="mi">10</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">off</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_state_text</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A state string of the file ("in", "out", ...) in lower case; "" when absent."""</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="read_sans_i">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.io.sinq.read_sans_i">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_sans_i</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">checksum</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">distance_offset_m</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawRun</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read a SANS-I HDF file. ``checksum=False`` skips the SHA-256 (fast header</span>
+<span class="sd">    catalogue); a reduction always reads with the checksum.</span>
+
+<span class="sd">    ``distance_offset_m`` is the offset of the detection layer from the recorded detector distance:</span>
+<span class="sd">    ``RawRun.SD_m`` stays as recorded (grouping, selection, labels), ``SD_effective_m`` = recorded +</span>
+<span class="sd">    offset is used for q and the solid angle; None takes it from the preferences</span>
+<span class="sd">    (:func:`distance_offset_for`)."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">"n0*(\d+)\.hdf$"</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cannot get the run number from '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="n">missing</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s2">"entry1"</span><span class="p">]</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/counts"</span><span class="p">)</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="n">n_frames</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">counts</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">n_frames</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">tu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/counting_time"</span><span class="p">)</span>
+        <span class="n">lam</span><span class="p">,</span> <span class="n">lu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/Dornier-VS/lambda"</span><span class="p">)</span>
+        <span class="n">lf</span> <span class="o">=</span> <span class="n">_WAVELENGTH_TO_A</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lu</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">if</span> <span class="n">lu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">lf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wavelength unit '</span><span class="si">{</span><span class="n">lu</span><span class="si">}</span><span class="s2">' unknown or missing"</span><span class="p">)</span>
+        <span class="n">dlam</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/monochromator/wavelength_spread"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">tilt</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/Dornier-VS/tilt"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">SD</span><span class="p">,</span> <span class="n">SDu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/distance"</span><span class="p">)</span>
+        <span class="n">coll</span><span class="p">,</span> <span class="n">collu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/collimator/geometry/size"</span><span class="p">)</span>
+        <span class="n">pxs</span><span class="p">,</span> <span class="n">pxu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/x_pixel_size"</span><span class="p">)</span>
+        <span class="n">pys</span><span class="p">,</span> <span class="n">pyu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/y_pixel_size"</span><span class="p">)</span>
+        <span class="n">dx</span><span class="p">,</span> <span class="n">dxu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/x_null"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>   <span class="c1"># not a translation; kept raw</span>
+        <span class="n">dy</span><span class="p">,</span> <span class="n">dyu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/y_position"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">chi</span><span class="p">,</span> <span class="n">chiu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/detector/chi_position"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">rpm</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/Dornier-VS/rotation_speed"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">monitors</span><span class="p">,</span> <span class="n">frame_monitors</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"monitor1"</span><span class="p">,</span> <span class="s2">"monitor2"</span><span class="p">,</span> <span class="s2">"monitor3"</span><span class="p">,</span> <span class="s2">"monitor4"</span><span class="p">,</span> <span class="s2">"monitor_5"</span><span class="p">,</span> <span class="s2">"monitor_6"</span><span class="p">,</span>
+                  <span class="s2">"monitor_7"</span><span class="p">,</span> <span class="s2">"monitor_8"</span><span class="p">,</span> <span class="s2">"integrated_beam"</span><span class="p">]:</span>
+            <span class="n">v</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"SANS/</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">/counts"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+                <span class="n">monitors</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>          <span class="c1"># several frames: counted over all of them</span>
+                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">frame_monitors</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="k">if</span> <span class="s2">"monitor1"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">monitors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingField</span><span class="p">(</span><span class="s2">"monitor1 missing"</span><span class="p">)</span>
+        <span class="n">preset</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"control/preset"</span><span class="p">)</span>
+        <span class="n">preset</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">preset</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>          <span class="c1"># per frame in multi-frame runs</span>
+        <span class="n">t_frames</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_frames</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">mode</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"control/mode"</span><span class="p">)</span>
+        <span class="n">att</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/attenuator/selection"</span><span class="p">)</span>
+        <span class="n">bsx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/beam_stop/x_position"</span><span class="p">)</span>
+        <span class="n">bsy</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/beam_stop/y_position"</span><span class="p">)</span>
+        <span class="n">bst</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/beam_stop/out_flag"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>      <span class="c1"># beam stop selector (BerSANS "Beamstop")</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"sample/name"</span><span class="p">)</span>
+        <span class="n">pos</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"sample/position"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">thk</span><span class="p">,</span> <span class="n">thu</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"sample/thickness"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"start_time"</span><span class="p">)</span>
+        <span class="n">end</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"end_time"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+        <span class="n">polz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_read</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"SANS/polarizer/state"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="p">[])</span>   <span class="c1"># SANSPOL option (not in older files)</span>
+    <span class="k">if</span> <span class="n">chiu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">chiu</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"degree"</span><span class="p">,</span> <span class="s2">"degrees"</span><span class="p">,</span> <span class="s2">"deg"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"chi_position unit '</span><span class="si">{</span><span class="n">chiu</span><span class="si">}</span><span class="s2">' unexpected"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">thk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">thu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">thu</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cm"</span><span class="p">:</span>
+        <span class="n">thk</span> <span class="o">=</span> <span class="n">_length_m</span><span class="p">(</span><span class="n">thk</span><span class="p">,</span> <span class="n">thu</span><span class="p">,</span> <span class="s2">"sample/thickness"</span><span class="p">)</span> <span class="o">*</span> <span class="mf">100.0</span>
+    <span class="n">run</span> <span class="o">=</span> <span class="n">RawRun</span><span class="p">(</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">run</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="n">sha256</span><span class="o">=</span><span class="n">sha256_of</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">if</span> <span class="n">checksum</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">counting_time_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">monitors</span><span class="o">=</span><span class="n">monitors</span><span class="p">,</span>
+        <span class="n">preset</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">preset</span><span class="p">),</span> <span class="n">count_mode</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">),</span>
+        <span class="n">wavelength_A</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="o">*</span> <span class="n">lf</span><span class="p">,</span>
+        <span class="n">dlam_over_lam_fwhm</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">dlam</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">dlam</span><span class="p">),</span>
+        <span class="n">coll_m</span><span class="o">=</span><span class="n">_length_m</span><span class="p">(</span><span class="n">coll</span><span class="p">,</span> <span class="n">collu</span><span class="p">,</span> <span class="s2">"collimator/geometry/size"</span><span class="p">),</span>
+        <span class="n">SD_m</span><span class="o">=</span><span class="n">_length_m</span><span class="p">(</span><span class="n">SD</span><span class="p">,</span> <span class="n">SDu</span><span class="p">,</span> <span class="s2">"detector/distance"</span><span class="p">),</span>
+        <span class="n">pixel_size_m</span><span class="o">=</span><span class="p">(</span><span class="n">_length_m</span><span class="p">(</span><span class="n">pxs</span><span class="p">,</span> <span class="n">pxu</span><span class="p">,</span> <span class="s2">"x_pixel_size"</span><span class="p">),</span> <span class="n">_length_m</span><span class="p">(</span><span class="n">pys</span><span class="p">,</span> <span class="n">pyu</span><span class="p">,</span> <span class="s2">"y_pixel_size"</span><span class="p">)),</span>
+        <span class="n">detector_offset_m</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span>
+                           <span class="kc">None</span> <span class="k">if</span> <span class="n">dy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_length_m</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">dyu</span><span class="p">,</span> <span class="s2">"detector/y_position"</span><span class="p">)),</span>
+        <span class="n">detector_tilt_deg</span><span class="o">=</span><span class="mf">0.0</span> <span class="k">if</span> <span class="n">chi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">chi</span><span class="p">),</span>
+        <span class="n">attenuator</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">att</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">beamstop_xy_mm</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">bsx</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">bsy</span><span class="p">)),</span>
+        <span class="n">beamstop_type</span><span class="o">=</span><span class="s2">""</span> <span class="k">if</span> <span class="n">bst</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bst</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">bst</span><span class="p">)</span> <span class="k">else</span> <span class="n">bst</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+        <span class="n">sample_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">sample_position_mm</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span>
+        <span class="n">sample_thickness_cm</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">thk</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">thk</span><span class="p">),</span>
+        <span class="n">start_time</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="n">end_time</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">missing_optional</span><span class="o">=</span><span class="n">missing</span><span class="p">,</span>
+        <span class="n">polariser</span><span class="o">=</span><span class="n">_state_text</span><span class="p">(</span><span class="n">polz</span><span class="p">))</span>
+    <span class="n">_dlam_from_selector</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">tilt</span><span class="p">,</span> <span class="n">dlam</span><span class="p">)</span>
+    <span class="n">_frames</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">t_frames</span><span class="p">,</span> <span class="n">frame_monitors</span><span class="p">,</span> <span class="n">rpm</span><span class="p">)</span>
+    <span class="n">off</span> <span class="o">=</span> <span class="n">distance_offset_for</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span> <span class="k">if</span> <span class="n">distance_offset_m</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">distance_offset_m</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">off</span><span class="p">:</span>
+        <span class="n">run</span><span class="o">.</span><span class="n">SD_offset_m</span> <span class="o">=</span> <span class="n">off</span>
+    <span class="k">return</span> <span class="n">run</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

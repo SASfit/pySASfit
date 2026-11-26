@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.goodness_of_fit &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.goodness_of_fit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.goodness_of_fit</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Error models for data without (or with doubtful) uncertainties, and</span>
+<span class="sd">goodness-of-fit statistics beyond chi2_r (2026-10-10).</span>
+
+<span class="sd">Error models (``estimate_errors``)</span>
+<span class="sd">----------------------------------</span>
+<span class="sd">Every solver needs per-point standard uncertainties sigma_i (weights,</span>
+<span class="sd">chi2_r, discrepancy principle). If the file has no dI column, one of these</span>
+<span class="sd">models supplies them (formulas in the documentation, chapter "Forward</span>
+<span class="sd">model, data and information content"):</span>
+
+<span class="sd">* ``"scatter"``: sigma estimated from the point-to-point scatter of the</span>
+<span class="sd">  data. ln I_i is compared with the interpolation (in ln q) of its two</span>
+<span class="sd">  neighbours; the running median (15 points) of the normalized deviations,</span>
+<span class="sd">  times 1.4826, is the relative error. Robust against form-factor minima</span>
+<span class="sd">  and outliers, follows a q-dependent noise level. test.dat: median ratio</span>
+<span class="sd">  to the file's dI 1.18, all points within a factor 0.54-2.35.</span>
+<span class="sd">* ``"poly"``: local polynomial fits (default: cubic through the point and</span>
+<span class="sd">  two neighbours on each side, in ln I vs ln q); sigma^2 = RSS/(n - p) of</span>
+<span class="sd">  the fit, optionally combined over a window of points. Less biased by</span>
+<span class="sd">  curvature than "scatter", noisier per point (1 degree of freedom).</span>
+<span class="sd">* ``"poisson"``: sigma_i^2 = I_i, for I in counts.</span>
+<span class="sd">* ``"relative"``: sigma_i = r * abs(I_i).</span>
+
+<span class="sd">Fit statistics (``fit_statistics``)</span>
+<span class="sd">-----------------------------------</span>
+<span class="sd">For measured and fitted total intensities (background included) the</span>
+<span class="sd">reduced chi2 (needs sigma), Pearson's chi2/M (sigma^2 = F), the Poisson</span>
+<span class="sd">deviance (G test)/M and the KL divergence of the normalized curves.</span>
+<span class="sd">Pearson and deviance are ~1 for a correct model only if I is in counts</span>
+<span class="sd">and scale with the unit of I; KL is scale-free (SASfit's G test = 2 KL)</span>
+<span class="sd">but has no target value, so it can monitor fits but not replace</span>
+<span class="sd">chi2_r = 1 in the discrepancy principle.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">ERROR_MODELS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"file"</span><span class="p">,</span> <span class="s2">"scatter"</span><span class="p">,</span> <span class="s2">"poly"</span><span class="p">,</span> <span class="s2">"poisson"</span><span class="p">,</span> <span class="s2">"relative"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_running_median</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">half</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">half</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">lo</span><span class="p">:</span><span class="n">hi</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="relative_scatter">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.relative_scatter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">relative_scatter</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Relative error eps_i estimated from the point-to-point scatter of</span>
+<span class="sd">    ln I versus ln q (see module docstring). Points with I &lt;= 0 are</span>
+<span class="sd">    bridged; window = number of points of the running median."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"need at least 5 points to estimate the scatter"</span><span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">lq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+    <span class="n">lI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"need at least 5 positive points to estimate the scatter"</span><span class="p">)</span>
+    <span class="n">li</span><span class="p">,</span> <span class="n">lqq</span> <span class="o">=</span> <span class="n">lI</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">lq</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">lqq</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">lqq</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">lqq</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">lqq</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">li</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">li</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span> <span class="o">*</span> <span class="n">li</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">w</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">e</span><span class="p">,</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]])</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="mf">1.4826</span> <span class="o">*</span> <span class="n">_running_median</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">window</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">eps</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span>
+    <span class="c1"># bridge non-positive points with the nearest estimate</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">eps</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="local_polynomial_scatter">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.local_polynomial_scatter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">local_polynomial_scatter</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">half_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">combine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"median"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Error estimate from local polynomial fits (Joachim's method,</span>
+<span class="sd">    2026-10-10): for every point a polynomial of `degree` is fitted to the</span>
+<span class="sd">    point and its `half_width` neighbours on each side (default: cubic</span>
+<span class="sd">    through 5 points); the scatter of the points about that fit is the</span>
+<span class="sd">    error estimate for the central point.</span>
+
+<span class="sd">    With n = 2*half_width + 1 points and p = degree + 1 parameters the</span>
+<span class="sd">    residual sum of squares has nu = n - p degrees of freedom, so</span>
+
+<span class="sd">        s_i^2 = RSS_i / nu</span>
+
+<span class="sd">    is an unbiased estimate of sigma^2 (the plain mean square deviation</span>
+<span class="sd">    RSS/n would be too small by nu/n, i.e. by a factor sqrt(1/5) = 0.45 in</span>
+<span class="sd">    sigma for a cubic through 5 points). For the cubic through 5 points</span>
+<span class="sd">    nu = 1: each s_i is abs(z) of a single Gaussian variable z (for equidistant</span>
+<span class="sd">    points z is proportional to the 4th difference y_{i-2} - 4y_{i-1} +</span>
+<span class="sd">    6y_i - 4y_{i+1} + y_{i+2}), so single-point estimates scatter</span>
+<span class="sd">    strongly (chi-square with 1 degree of freedom: 0.03 sigma - 2.2 sigma</span>
+<span class="sd">    at the 5/95 % levels).</span>
+
+<span class="sd">    window &gt; 1 combines the s_i of `window` neighbouring points:</span>
+<span class="sd">    combine="median" (robust): median(s) / sqrt(median(chi2_nu)/nu),</span>
+<span class="sd">    i.e. x 1.4826 for nu = 1; combine="rms": sqrt(mean(s^2)) (unbiased for</span>
+<span class="sd">    sigma^2, sensitive to outliers). window = 1 is the plain per-point</span>
+<span class="sd">    estimate. Points near the ends use the first/last n points.</span>
+
+<span class="sd">    log=True fits ln I versus ln q and returns RELATIVE errors (sigma/I);</span>
+<span class="sd">    log=False fits I versus q and returns absolute errors. The cubic</span>
+<span class="sd">    removes local curvature up to third order, so it is less biased than</span>
+<span class="sd">    the 3-point linear comparison of relative_scatter near steep slopes and</span>
+<span class="sd">    form-factor minima, at the price of fewer degrees of freedom per point.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">chi2</span> <span class="k">as</span> <span class="n">_chi2</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">n_win</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">half_width</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">nu</span> <span class="o">=</span> <span class="n">n_win</span> <span class="o">-</span> <span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nu</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"need 2*half_width + 1 &gt; degree + 1 points per fit"</span><span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">I</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_win</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"need at least </span><span class="si">{</span><span class="n">n_win</span><span class="si">}</span><span class="s2"> usable points"</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="n">q</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="n">I</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">half_width</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">m</span> <span class="o">-</span> <span class="n">n_win</span><span class="p">)</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">lo</span><span class="p">:</span><span class="n">lo</span> <span class="o">+</span> <span class="n">n_win</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">lo</span><span class="p">:</span><span class="n">lo</span> <span class="o">+</span> <span class="n">n_win</span><span class="p">]</span>
+        <span class="n">xc</span> <span class="o">=</span> <span class="p">(</span><span class="n">xs</span> <span class="o">-</span> <span class="n">xs</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">1.0</span><span class="p">)</span>       <span class="c1"># conditioning</span>
+        <span class="n">coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">xc</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">degree</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">coef</span><span class="p">,</span> <span class="n">xc</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">nu</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">window</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">half</span> <span class="o">=</span> <span class="n">window</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">combine</span> <span class="o">==</span> <span class="s2">"median"</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">_running_median</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">half</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">_chi2</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">nu</span><span class="p">)</span> <span class="o">/</span> <span class="n">nu</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">combine</span> <span class="o">==</span> <span class="s2">"rms"</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"same"</span><span class="p">)</span>
+                        <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">m</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"same"</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"combine must be 'median' or 'rms'"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)),</span> <span class="n">idx</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="mf">1e-300</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="estimate_errors">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.estimate_errors">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_errors</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"scatter"</span><span class="p">,</span>
+    <span class="n">relative</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.03</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">half_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">combine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"median"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-point standard uncertainties for data without dI (see module</span>
+<span class="sd">    docstring for the models). "poly": local polynomial fits</span>
+<span class="sd">    (local_polynomial_scatter, default cubic through 5 points, in ln I vs</span>
+<span class="sd">    ln q); window = 1 gives the plain per-point estimate."""</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"scatter"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">relative_scatter</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="mf">1e-300</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"poly"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">local_polynomial_scatter</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="n">half_width</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span>
+                                        <span class="n">combine</span><span class="o">=</span><span class="n">combine</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="mf">1e-300</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"poisson"</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">floor</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">if</span> <span class="n">pos</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">floor</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">"relative"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">relative</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"relative error must be &gt; 0"</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">I</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">floor</span> <span class="o">=</span> <span class="n">relative</span> <span class="o">*</span> <span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">if</span> <span class="n">pos</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">relative</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="n">floor</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown error model </span><span class="si">{</span><span class="n">model</span><span class="si">!r}</span><span class="s2">; use 'scatter', 'poisson' or 'relative'"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fit_statistics">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.fit_statistics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_statistics</span><span class="p">(</span><span class="n">I</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">F</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""chi2_r (if sigma given), Pearson chi2/M, Poisson deviance/M and the</span>
+<span class="sd">    KL divergence of the normalized curves (see module docstring). I and F</span>
+<span class="sd">    should be TOTAL intensities (background included). Points with</span>
+<span class="sd">    non-positive I or F are left out of the Poisson statistics and of kl."""</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"n_points"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">I</span><span class="p">))}</span>
+    <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"chi2_r"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(((</span><span class="n">I</span> <span class="o">-</span> <span class="n">F</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">pos_f</span> <span class="o">=</span> <span class="n">F</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"pearson_r"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">I</span><span class="p">[</span><span class="n">pos_f</span><span class="p">]</span> <span class="o">-</span> <span class="n">F</span><span class="p">[</span><span class="n">pos_f</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">F</span><span class="p">[</span><span class="n">pos_f</span><span class="p">])</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">pos_f</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">pos_f</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">I</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">I</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">/</span> <span class="n">F</span><span class="p">[</span><span class="n">m</span><span class="p">]),</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">-</span> <span class="n">F</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"deviance_r"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">pos_f</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">I</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="n">m2</span><span class="p">]</span> <span class="o">/</span> <span class="n">I</span><span class="p">[</span><span class="n">m2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">ph</span> <span class="o">=</span> <span class="n">F</span><span class="p">[</span><span class="n">m2</span><span class="p">]</span> <span class="o">/</span> <span class="n">F</span><span class="p">[</span><span class="n">m2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"kl"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">ph</span><span class="p">)))</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"n_excluded"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="o">-</span> <span class="n">m2</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

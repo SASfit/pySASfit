@@ -1,0 +1,265 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D data &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="1D data" href="data1d.html" />
+    <link rel="prev" title="Merge geometries" href="merge.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyTOOLbox</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Using pyTOOLbox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="merge.html">Merge geometries</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">2D data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sources">Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#display">Display</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#beam-centre">Beam centre</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mask">Mask</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#averages-1d-data">Averages → 1D data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sum-rocking">Sum / rocking</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data1d.html">1D data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pyTOOLbox: small helpful tools</a></li>
+      <li class="breadcrumb-item active">2D data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/toolbox/image2d.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="d-data">
+<h1>2D data<a class="headerlink" href="#d-data" title="Link to this heading"></a></h1>
+<p>The tab <strong>2D data</strong> of pyTOOLbox shows reduced 2D scattering images next to the radially averaged curves
+(module <a class="reference internal" href="api.html#module-pysasfit.toolbox.image2d" title="pysasfit.toolbox.image2d"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.toolbox.image2d</span></code></a>), with masking, averages, sums and rocking curves (module
+<a class="reference internal" href="api.html#module-pysasfit.toolbox.analysis2d" title="pysasfit.toolbox.analysis2d"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.toolbox.analysis2d</span></code></a>). The resulting curves go to the tab <strong>1D data</strong> (<a class="reference internal" href="data1d.html"><span class="doc">1D data</span></a>).</p>
+<section id="sources">
+<h2>Sources<a class="headerlink" href="#sources" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>source</p></th>
+<th class="head"><p>how</p></th>
+<th class="head"><p>geometry (q, ψ)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>pySASred in memory</p></td>
+<td><p><em>From pySASred</em>; in <em>Merge geometries</em> select curves and press <em>Show 2D</em>; pySASred <em>Reduction → Send results to pyTOOLbox merge</em> also hands over the images</p></td>
+<td><p>complete</p></td>
+</tr>
+<tr class="row-odd"><td><p>pySASred 2D NXcanSAS</p></td>
+<td><p><em>Add files…</em>; pySASred writes <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;_2d.h5</span></code> with <em>File → Save 2D NXcanSAS…</em> and next to every 1D file with <em>Save all</em></p></td>
+<td><p>from SASdetector (beam centre, pixel size, distance, wavelength)</p></td>
+</tr>
+<tr class="row-even"><td><p>other NXcanSAS 2D with Qx, Qy</p></td>
+<td><p><em>Add files…</em></p></td>
+<td><p>the q of the file</p></td>
+</tr>
+<tr class="row-odd"><td><p>HDF5 viewer</p></td>
+<td><p><em>→ 2D data</em> in the viewer hands the 2D data set shown over (SANS-I raw files with their geometry, otherwise pixels with the pixel size entered there; beam centre from the centre of gravity)</p></td>
+<td><p>as the source</p></td>
+</tr>
+<tr class="row-even"><td><p>BerSANS 2D (<code class="docutils literal notranslate"><span class="pre">Type=SANSDAni</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">D0007613.008</span></code>)</p></td>
+<td><p><em>Add files…</em></p></td>
+<td><p>distance and wavelength from the file; <strong>the beam centre is not in the file</strong>: enter it under <em>Geometry of the image shown</em> and press <em>Apply geometry</em> (pixel 7.5 mm of SANS-I preset). Until then pixels only</p></td>
+</tr>
+</tbody>
+</table>
+<p><em>Show 2D</em> in <em>Merge geometries</em> finds the image of a curve in memory (pySASred) or as <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;_2d.h5</span></code> next
+to its file.</p>
+<p>The pySASred 2D NXcanSAS file contains I (ny, nx), Idev (statistical), Qx, Qy (<code class="docutils literal notranslate"><span class="pre">I_axes</span></code> = “Qy,Qx”), Mask
+(1 = not valid) and the pySASred reason bits (<code class="docutils literal notranslate"><span class="pre">mask_bits</span></code>), the detector geometry and, as in 1D, the
+parameters, notes and the header items of the raw run (<code class="docutils literal notranslate"><span class="pre">SASprocess/metadata</span></code>).</p>
+</section>
+<section id="display">
+<h2>Display<a class="headerlink" href="#display" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>qx – qy</strong> (equal axes, 1/nm), <strong>pixels</strong> (beam centre marked) or <strong>polar (ψ, q)</strong> (nearest-pixel
+resampling as in pySASred’s polar view);</p></li>
+<li><p>colour scale linear, log(1+I), symlog or asinh, colour map, masked pixels grey, hidden or shown; the colour
+range follows the valid pixels;</p></li>
+<li><p>q rings (list of q in 1/nm) drawn as circles (qx – qy) or lines (polar);</p></li>
+<li><p>the cursor read-out gives the pixel, q, ψ and I ± dI, and whether the pixel is masked.</p></li>
+</ul>
+<p>All views show the detector as seen looking towards the sample: +q_x to the right, +q_y up
+(<a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>). ψ = 0 is the horizontal direction +q_x, increasing counter-clockwise, as in pySASred.
+The raw columns of SANS-I / SANS-LLB images run towards −x, so the pixel view shows column 0 on the right.
+pySASred 2D files written before 2026-11-23 (q_x of the other sign) are recognised and read in the present
+frame.</p>
+</section>
+<section id="beam-centre">
+<h2>Beam centre<a class="headerlink" href="#beam-centre" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>click</strong> in the image (pixels or q view, draw mode <em>navigate</em>) sets the beam centre there; or enter x, y [pixel] under
+<em>Geometry of the image shown</em> and press <em>Apply geometry</em>;</p></li>
+<li><p><strong>Centre of gravity</strong> refines the centre iteratively from the intensity around the current one.</p></li>
+</ul>
+<p>q and ψ of every pixel follow the new centre, so the averages below use it at once.</p>
+</section>
+<section id="mask">
+<h2>Mask<a class="headerlink" href="#mask" title="Link to this heading"></a></h2>
+<p>Choose <em>mask</em> or <em>unmask</em> and the shape to draw — <strong>rectangle</strong>, <strong>ellipse</strong> or <strong>polygon</strong> — and draw it in any
+view (pixels, qx – qy or polar: a rectangle in the polar view is a sector of a ring); the pixels inside are
+masked or unmasked at once. <em>navigate</em> switches drawing off (zoom, pan, click for the beam centre).
+<em>mask below</em> / <em>mask above</em> masks pixels by value.
+<em>Invert</em>, <em>Clear</em>, <em>Reset</em> (back to the mask of the file), <em>Undo</em>, <em>Suggest</em> (pySASred’s automatic suggestion:
+beam stop, edges, dead and hot pixels) and <em>Save</em> / <em>Load</em> (HDF5, compatible with pySASred masks) act on the
+image shown.</p>
+</section>
+<section id="averages-1d-data">
+<h2>Averages → 1D data<a class="headerlink" href="#averages-1d-data" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>kind</p></th>
+<th class="head"><p>parameters</p></th>
+<th class="head"><p>result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>radial I(q)</p></td>
+<td><p>bins, log / linear spacing, q min / max (auto)</p></td>
+<td><p>I(q)</p></td>
+</tr>
+<tr class="row-odd"><td><p>sector I(q)</p></td>
+<td><p>ψ0 ± Δψ, <em>both sides</em> adds the opposite sector</p></td>
+<td><p>I(q)</p></td>
+</tr>
+<tr class="row-even"><td><p>azimuthal I(ψ)</p></td>
+<td><p>ring q1 … q2, number of ψ bins</p></td>
+<td><p>I(ψ)</p></td>
+</tr>
+<tr class="row-odd"><td><p>box projection</p></td>
+<td><p>angle, half length, width (1/nm), through the beam centre</p></td>
+<td><p>I along the box axis</p></td>
+</tr>
+<tr class="row-even"><td><p>A(q) + B(q) sin²(ψ − ψ0)</p></td>
+<td><p>bins as radial, ψ0</p></td>
+<td><p>two curves A(q), B(q) (magnetic SANS: nuclear and magnetic part)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Every bin is the mean of its valid pixels, σ = √(Σσᵢ²)/n. A + B sin² is a weighted linear least-squares fit
+of the ψ dependence in every q bin, with the uncertainties of A and B from the covariance. <em>show region</em>
+draws the sector, ring or box in the image. <em>Compute → 1D data</em> puts the curves in the tab <strong>1D data</strong>.</p>
+</section>
+<section id="sum-rocking">
+<h2>Sum / rocking<a class="headerlink" href="#sum-rocking" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Sum</strong> or <strong>Mean of the selected images</strong> (same detector; a pixel masked in any image stays masked)
+gives a new image in the list;</p></li>
+<li><p><strong>Rocking curve</strong>: the mean intensity in a region (whole detector, ring q1 – q2, or ring in the sector) of
+every selected image versus a header item (e.g. <code class="docutils literal notranslate"><span class="pre">hdf:sample/omega</span></code>) → 1D data.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="merge.html" class="btn btn-neutral float-left" title="Merge geometries" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="data1d.html" class="btn btn-neutral float-right" title="1D data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polarised data without spin analysis (SANSPOL) &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SANS-LLB" href="sans_llb.html" />
+    <link rel="prev" title="Scripts and output files" href="scripting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASred</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#status">Status</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usage.html">Using the pySASred window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="masks.html">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Polarised data without spin analysis (SANSPOL)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#polariser-and-flipper-state-of-a-run">Polariser and flipper state of a run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#efficiencies">Efficiencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#procedure">Procedure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scripting">Scripting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASred: SANS data reduction</a></li>
+      <li class="breadcrumb-item active">Polarised data without spin analysis (SANSPOL)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/polarisation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="polarised-data-without-spin-analysis-sanspol">
+<h1>Polarised data without spin analysis (SANSPOL)<a class="headerlink" href="#polarised-data-without-spin-analysis-sanspol" title="Link to this heading"></a></h1>
+<p>SANS-I can polarise the incident beam: the polariser (a supermirror cavity in the first collimation
+section) is <strong>in or out</strong>, the RF flipper before the sample is <strong>on or off</strong>. There is no analyser behind
+the sample. SANS-LLB has no polarisation option. Every state is measured and reduced as a run of its own
+(one HDF file each):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>state</p></th>
+<th class="head"><p>polariser</p></th>
+<th class="head"><p>flipper</p></th>
+<th class="head"><p>measures</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">unpolarised</span></code></p></td>
+<td><p>out</p></td>
+<td><p>–</p></td>
+<td><p>I_u = (I+ + I−)/2</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">off</span></code></p></td>
+<td><p>in</p></td>
+<td><p>off</p></td>
+<td><p>I_off = n+_off I+ + n−_off I−</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on</span></code></p></td>
+<td><p>in</p></td>
+<td><p>on</p></td>
+<td><p>I_on = n+_on I+ + n−_on I−</p></td>
+</tr>
+</tbody>
+</table>
+<p>I+ and I− are the cross sections for a fully polarised beam with the neutron <strong>spin</strong> parallel (+) or
+antiparallel (−) to the field at the sample, summed over the final spin states (I± = I±± + I±∓). This is the
+convention of Moon, Riste &amp; Koehler, Phys. Rev. 181, 920 (1969): the amplitudes are U±± = b ± p M⊥z, so a spin
+parallel to the magnetisation adds the magnetic amplitude, I++ = NN + MH + 2NM, I−− = NN + MH − 2NM, and
+I− − I+ = −4 NM (+ 4 CH in chiral samples) is the nuclear–magnetic interference; (I+ + I−)/2 is the unpolarised
+cross section.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Michels, the SASfit C functions and part of the magnetic-SANS literature label the states by the neutron
+<strong>magnetic moment</strong>, which is antiparallel to the spin: their “++” is the “−−” here (Quan et al. 2019).
+pySASred and pySASstudio label by the spin. Which flipper state gives spin + is set in the instrument file
+(<code class="docutils literal notranslate"><span class="pre">flipper_off_is_plus</span></code>, default: flipper off = +, to be confirmed for SANS-I) and can be changed per data set;
+a sample with a known sign of N·M settles it (I− − I+ &lt; 0 for N·M &gt; 0).</p>
+</div>
+<section id="polariser-and-flipper-state-of-a-run">
+<h2>Polariser and flipper state of a run<a class="headerlink" href="#polariser-and-flipper-state-of-a-run" title="Link to this heading"></a></h2>
+<ul>
+<li><p><strong>Polariser</strong>: stored in the raw file, <code class="docutils literal notranslate"><span class="pre">entry1/SANS/polarizer/state</span></code> (“in” / “out”; read as <code class="docutils literal notranslate"><span class="pre">raw.polariser</span></code>,
+empty for older files without the entry).</p></li>
+<li><p><strong>Flipper</strong>: <em>not</em> stored in the raw files. pySASred takes it</p>
+<ol class="arabic simple">
+<li><p>from what was set by hand in the run table: right mouse button → <strong>Flipper state</strong> → flipper off / on, or
+<em>alternate</em> (off, on, off, … or on, off, … in run order, for the usual alternating measurement); kept per
+raw-data folder like the corrected sample names (<code class="docutils literal notranslate"><span class="pre">names.py</span></code>, also after <em>Rescan</em>);</p></li>
+<li><p>otherwise from the sample name: “flipper on”, “flip_off”, “flipper=on” or a trailing “_on” / “-off” /
+“ (on)” (a plain “on” inside a name, as in “PNIPAM on silica”, is not used).</p></li>
+</ol>
+<p>Runs with the polariser in and an unknown flipper state are shown in orange in the run table, and the
+reduction plan says so (“flipper off and on runs would otherwise be summed”).</p>
+</li>
+</ul>
+<p>The grouping keeps polariser in / out and flipper off / on apart (<code class="docutils literal notranslate"><span class="pre">polariser</span></code> and <code class="docutils literal notranslate"><span class="pre">flipper</span></code> are part of the
+default matching), the rows of polarised samples are labelled “name [flipper off]” / “name [flipper on]” (the
+transmission and the sample position are matched by the plain name), a row that sums runs of different states
+gets a warning, and the reduced files carry <code class="docutils literal notranslate"><span class="pre">polariser</span></code>, <code class="docutils literal notranslate"><span class="pre">flipper</span></code> and <code class="docutils literal notranslate"><span class="pre">flipper_source</span></code> in their metadata, from
+where the correction and pySASstudio take the state.</p>
+</section>
+<section id="efficiencies">
+<h2>Efficiencies<a class="headerlink" href="#efficiencies" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>symbol</p></th>
+<th class="head"><p>meaning</p></th>
+<th class="head"><p>relation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>P</p></td>
+<td><p>beam polarisation</p></td>
+<td><p>p = (1 + P)/2 neutrons in the + state with flipper off; flipping ratio (1 + P)/(1 − P)</p></td>
+</tr>
+<tr class="row-odd"><td><p>f</p></td>
+<td><p>flipped fraction of the flipper</p></td>
+<td><p>flipper “efficiency” F = 2f − 1 (Quan et al. quote F = 0.99, i.e. f = 0.995)</p></td>
+</tr>
+<tr class="row-even"><td><p>P_f</p></td>
+<td><p>polarisation after the sample (depolarisation)</p></td>
+<td><p>r = (1 − P_f)/(−ln P_f); P_f = 1: no depolarisation</p></td>
+</tr>
+</tbody>
+</table>
+<p>With Pe = P r:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>n+_off = (1 + Pe)/2,           n−_off = (1 − Pe)/2
+n−_on  = f n+_off + (1 − f) n−_off,   n+_on = 1 − n−_on            (exact)
+</pre></div>
+</div>
+<p>BerSANS (Keiderling et al. 2008, eq. 3b) uses n−_on = p f, which leaves out the (1 − p)(1 − f) term; the
+option <code class="docutils literal notranslate"><span class="pre">form=&quot;bersans&quot;</span></code> reproduces data corrected that way.</p>
+<p><strong>Depolarisation</strong> (Quan et al., IUCrJ 8 (2021) 455): in a ferromagnet that is not saturated the beam
+polarisation decays exponentially along the path, P(x) = P exp(−D x). Neutrons scattered at depth x see
+the local polarisation, so for SANSPOL the incident polarisation is replaced by its depth average P r
+(P_f = 0.9 → r = 0.949, 0.75 → 0.869). P_f is measured in transmission, which needs an analyser; without
+it P_f = 1.</p>
+<section id="where-the-values-come-from">
+<h3>Where the values come from<a class="headerlink" href="#where-the-values-come-from" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>The <strong>metadata</strong> of the reduced file (header items of the raw run), with the keys listed in the
+instrument file under <code class="docutils literal notranslate"><span class="pre">polarisation:</span> <span class="pre">metadata_keys</span></code> (SANS-I: <code class="docutils literal notranslate"><span class="pre">polariser</span></code> / <code class="docutils literal notranslate"><span class="pre">entry1/SANS/polarizer/state</span></code>,
+<code class="docutils literal notranslate"><span class="pre">flipper</span></code>). P and f are not stored in the SANS-I files.</p></li>
+<li><p>Otherwise the <strong>instrument defaults</strong> (<code class="docutils literal notranslate"><span class="pre">instruments/sinq/sans_i.yaml</span></code>, section <code class="docutils literal notranslate"><span class="pre">polarisation</span></code>):</p>
+<ul>
+<li><p>P(λ, collimation) from the table of Aswal et al., NIM A 586 (2008) 86, Fig. 4 (proton spin filter,
+δP/P ≤ 0.5 %), interpolated linearly in λ and in log(collimation). Outside the measured range the
+nearest value is used and the source says “extrapolated”. A collimation longer than 15 m is
+flagged: the polariser sits in the first collimation section and cannot be in.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>λ [nm]</p></th>
+<th class="head"><p>2 m</p></th>
+<th class="head"><p>3 m</p></th>
+<th class="head"><p>6 m</p></th>
+<th class="head"><p>15 m</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.47</p></td>
+<td><p>0.957</p></td>
+<td><p>0.960</p></td>
+<td><p>0.973</p></td>
+<td><p>0.977</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.60</p></td>
+<td><p>0.976</p></td>
+<td><p>0.981</p></td>
+<td><p>0.984</p></td>
+<td><p>0.984</p></td>
+</tr>
+<tr class="row-even"><td><p>0.80</p></td>
+<td><p>0.982</p></td>
+<td><p>0.983</p></td>
+<td><p>0.987</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.00</p></td>
+<td><p>0.985</p></td>
+<td><p>0.984</p></td>
+<td><p>–</p></td>
+<td><p>–</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p>f = 0.995 (F = 0.99).</p></li>
+</ul>
+</li>
+<li><p>Values <strong>entered</strong> by the user win over both.</p></li>
+</ol>
+<p>Every value carries its source, which is written into the notes and the output files.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Without an analyser <strong>P cannot be determined from the data</strong>: only the product P (I+ − I−) is measured.
+A wrong P scales I+ − I− by 1/P and leaves (I+ + I−)/2 unchanged. f, on the other hand, follows from the
+three states (<code class="docutils literal notranslate"><span class="pre">flipped_fraction_from_data</span></code>), provided the polariser-out data are on the same absolute
+scale.</p>
+</div>
+</section>
+</section>
+<section id="procedure">
+<h2>Procedure<a class="headerlink" href="#procedure" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Reduce every state as usual</strong>: same mask, binning (1D) or pixel grid (2D), background and empty
+cell measured in the same state, transmission, water or direct beam. The correction is linear and is
+applied to the <strong>fully corrected</strong> data, never to raw counts (Keiderling et al. 2008). Sample
+transmissions of the two flipper states agree unless the sample absorbs spin-dependently.</p></li>
+<li><p><strong>Combine the states</strong> (two or all three):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>I+ − I− = (I_off − I_on) / (f Pe)
+I_u     = I_off − (I_off − I_on) / (2 f)          (independent of P)
+I±      = I_u ± (I+ − I−)/2
+</pre></div>
+</div>
+<p>With all three states I+ and I− follow per point from weighted least squares (weights 1/variance of
+each state); chi² per point (one degree of freedom, median ≈ 0.45 when consistent) checks P, f and the
+scale of the polariser-out data.</p>
+</li>
+<li><p><strong>Outputs</strong>: I+, I−, (I+ + I−)/2 and I− − I+, each as a reduced data set (2D image or 1D curve) with
+the union of the masks.</p></li>
+</ol>
+<p><strong>Uncertainties</strong>: every source of the reduced states is kept and propagated exactly to first order;
+sources shared by the states (the same background, Cd or water run) are counted once. P, f and P_f enter
+as systematic scalar sources (group <code class="docutils literal notranslate"><span class="pre">polarisation</span></code>) when their uncertainty is known (the SANS-I table:
+σ_P = 0.005); otherwise “uncertainty unknown, not propagated” is noted. For files the inputs carry only
+Idev, so the outputs have the statistical Idev; the covariance and systematic sensitivities of the inputs
+are removed from the output files because they belong to the uncorrected intensity.</p>
+<p>For <strong>fitting</strong> a model it is better to fit the measured states directly with the forward model
+(<code class="docutils literal notranslate"><span class="pre">sanspol_forward</span></code>, pySASstudio polarisation box): no noise amplification by the inversion. The
+corrected I+, I− and I− − I+ are for display and model-free analysis.</p>
+</section>
+<section id="scripting">
+<h2>Scripting<a class="headerlink" href="#scripting" title="Link to this heading"></a></h2>
+<p>From reduced files (written by pySASred, 1D or 2D):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">correct_files</span>
+
+<span class="n">out</span> <span class="o">=</span> <span class="n">correct_files</span><span class="p">({</span><span class="s2">"off"</span><span class="p">:</span> <span class="s2">"sample_off.h5"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">:</span> <span class="s2">"sample_on.h5"</span><span class="p">,</span>
+                     <span class="s2">"unpolarised"</span><span class="p">:</span> <span class="s2">"sample_unpol.h5"</span><span class="p">},</span>      <span class="c1"># optional third state</span>
+                    <span class="n">out_prefix</span><span class="o">=</span><span class="s2">"sample_sanspol"</span><span class="p">)</span>
+<span class="c1"># -&gt; sample_sanspol_plus.h5, _minus.h5, _unpolarised.h5, _difference.h5</span>
+</pre></div>
+</div>
+<p>P and f come from the metadata, else from the SANS-I defaults; give them explicitly with
+<code class="docutils literal notranslate"><span class="pre">correct_files(...,</span> <span class="pre">P=0.975,</span> <span class="pre">f=0.99,</span> <span class="pre">P_f=0.9)</span></code> or a full setup:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolarisationSetup</span><span class="p">,</span> <span class="n">sanspol_correct</span><span class="p">,</span> <span class="n">correct_reduced</span>
+
+<span class="n">setup</span> <span class="o">=</span> <span class="n">PolarisationSetup</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="mf">0.984</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mf">0.995</span><span class="p">,</span> <span class="n">sigma_P</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">P_f</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                          <span class="n">form</span><span class="o">=</span><span class="s2">"exact"</span><span class="p">,</span> <span class="n">flipper_off_is_plus</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">setup</span><span class="o">.</span><span class="n">describe</span><span class="p">())</span>
+
+<span class="c1"># reduced results of one session (Reduced2D or ReducedRun): all sources stay correlated</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">correct_reduced</span><span class="p">(</span><span class="n">setup</span><span class="p">,</span> <span class="n">off</span><span class="o">=</span><span class="n">r_off</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">r_on</span><span class="p">,</span> <span class="n">unpolarised</span><span class="o">=</span><span class="n">r_unpol</span><span class="p">)</span>
+<span class="n">res</span><span class="p">[</span><span class="s2">"difference"</span><span class="p">]</span><span class="o">.</span><span class="n">image</span>          <span class="c1"># UArray, I- - I+ per pixel</span>
+<span class="n">res</span><span class="p">[</span><span class="s2">"result"</span><span class="p">]</span><span class="o">.</span><span class="n">chi2</span>               <span class="c1"># with three states</span>
+
+<span class="c1"># arrays or UArrays directly</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">sanspol_correct</span><span class="p">({</span><span class="s2">"off"</span><span class="p">:</span> <span class="n">I_off</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">:</span> <span class="n">I_on</span><span class="p">},</span> <span class="n">setup</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">plus</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">minus</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">unpolarised</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">difference</span>
+</pre></div>
+</div>
+<p>Default P of SANS-I for a setting:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">beam_polarisation_table</span>
+<span class="n">P</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">beam_polarisation_table</span><span class="p">(</span><span class="n">wavelength_nm</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">collimation_m</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>   <span class="c1"># 0.984, 0.005</span>
+</pre></div>
+</div>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Keiderling et al., <em>Meas. Sci. Technol.</em> <strong>19</strong> (2008) 034009 – SANSPOL/POLARIS correction at V4 (BerSANS).</p></li>
+<li><p>Aswal et al., <em>Nucl. Instrum. Methods A</em> <strong>586</strong> (2008) 86 – SANS-I polariser, flipper and beam polarisation.</p></li>
+<li><p>Quan et al., <em>J. Phys.: Conf. Ser.</em> <strong>1316</strong> (2019) 012010 – POLARIS at SANS-I with a proton spin filter;
+notation of the spin states.</p></li>
+<li><p>Quan et al., <em>IUCrJ</em> <strong>8</strong> (2021) 455 – depolarisation correction, optimum sample thickness.</p></li>
+<li><p>R. M. Moon, T. Riste, W. C. Koehler, <em>Phys. Rev.</em> <strong>181</strong> (1969) 920 – polarisation analysis; the spin
+convention used here.</p></li>
+<li><p>A. Michels, <em>Magnetic Small-Angle Neutron Scattering</em>, Oxford University Press (2021).</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scripting.html" class="btn btn-neutral float-left" title="Scripts and output files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sans_llb.html" class="btn btn-neutral float-right" title="SANS-LLB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

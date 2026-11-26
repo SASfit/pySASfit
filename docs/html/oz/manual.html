@@ -1,0 +1,881 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ozLib — manual and quick reference &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The graphical interface" href="gui.html" />
+    <link rel="prev" title="Ornstein–Zernike" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyOZsolver</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ozLib — manual and quick reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#quick-reference">Quick reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ozresult-attributes"><code class="docutils literal notranslate"><span class="pre">OZResult</span></code> attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#solve-in-full"><code class="docutils literal notranslate"><span class="pre">solve()</span></code> in full</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#potentials-21">Potentials (21)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#closures-24">Closures (24)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solvers">Solvers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-independent-residual-check-residualtolerance">The independent residual check (<code class="docutils literal notranslate"><span class="pre">residualTolerance</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-physicality-screen-min-s-q-0-on-every-solve">The physicality screen: min S(Q) ≥ 0 on every solve</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deflation-what-to-do-when-the-root-is-unphysical">Deflation: what to do when the root is unphysical</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#grids-and-transforms">Grids and transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solvewithconsensus"><code class="docutils literal notranslate"><span class="pre">solveWithConsensus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#worked-examples">Worked examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#a-single-curve">A single curve</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#an-attractive-square-well-at-a-chosen-resolution">An attractive square well, at a chosen resolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#solving-by-thermodynamic-consistency">Solving α by thermodynamic consistency</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checking-convergence-properly">Checking convergence properly</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#damped-picard-for-a-hard-state-point">Damped Picard for a hard state point</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#things-that-will-bite">Things that will bite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-to-look-next">Where to look next</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">The graphical interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generic_polydisperse_tab.html">The generic polydisperse tab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html">Changes since pyOZgui</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#where-to-start">Where to start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#a-note-on-the-two-halves">A note on the two halves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#report-and-manuscript">Report and manuscript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#citing">Citing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Ornstein–Zernike</a></li>
+      <li class="breadcrumb-item active">ozLib — manual and quick reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/oz/manual.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="ozlib-manual-and-quick-reference">
+<h1>ozLib — manual and quick reference<a class="headerlink" href="#ozlib-manual-and-quick-reference" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">ozLib</span></code> is the programmatic entry point to the Ornstein–Zernike solver. The
+GUI’s Calculate button calls <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code>; anything the GUI can compute is
+reachable from a script through the same function, which means a figure made
+in the GUI can be reproduced in a batch job without reimplementing anything.</p>
+<hr class="docutils" />
+<section id="quick-reference">
+<h2>Quick reference<a class="headerlink" href="#quick-reference" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.oz</span><span class="w"> </span><span class="kn">import</span> <span class="n">ozLib</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"HardSphere"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>          <span class="c1"># simplest possible call</span>
+<span class="n">q</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">Sq</span>                              <span class="c1"># both plain numpy arrays</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>what</p></th>
+<th class="head"><p>how</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>one solve</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.solve(potential,</span> <span class="pre">phi,</span> <span class="pre">...)</span></code> → <code class="docutils literal notranslate"><span class="pre">OZResult</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>agreement of several solvers</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.solveWithConsensus(...)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>which closures work for mixtures</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.multicomponentCapableClosures()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>is this potential a mixture one</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.isMulticomponentPotential(name)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>does this closure take a 2nd parameter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.secondClosureParam(name)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>names of everything</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ozLib.CLOSURE_SETTERS</span></code>, <code class="docutils literal notranslate"><span class="pre">SOLVER_CLASSES</span></code>, <code class="docutils literal notranslate"><span class="pre">CURVE_NAMES</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<section id="ozresult-attributes">
+<h3><code class="docutils literal notranslate"><span class="pre">OZResult</span></code> attributes<a class="headerlink" href="#ozresult-attributes" title="Link to this heading"></a></h3>
+<p>Curves are plain arrays on the solver’s own grid, <strong>not</strong> functions:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>real space (vs <code class="docutils literal notranslate"><span class="pre">res.r</span></code>)</p></th>
+<th class="head"><p>reciprocal (vs <code class="docutils literal notranslate"><span class="pre">res.q</span></code>)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gr</span></code> g(r), <code class="docutils literal notranslate"><span class="pre">cr</span></code> c(r), <code class="docutils literal notranslate"><span class="pre">hr</span></code> h(r)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Sq</span></code> S(Q)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code> γ(r), <code class="docutils literal notranslate"><span class="pre">Br</span></code> B(r), <code class="docutils literal notranslate"><span class="pre">yr</span></code> y(r)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Ur</span></code> βu(r), <code class="docutils literal notranslate"><span class="pre">fr</span></code> Mayer f(r)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p>Plus <code class="docutils literal notranslate"><span class="pre">potential</span></code>, <code class="docutils literal notranslate"><span class="pre">potentialArgs</span></code>, <code class="docutils literal notranslate"><span class="pre">phi</span></code>, <code class="docutils literal notranslate"><span class="pre">closure</span></code>, <code class="docutils literal notranslate"><span class="pre">closureParam</span></code>,
+<code class="docutils literal notranslate"><span class="pre">solverName</span></code>, and <code class="docutils literal notranslate"><span class="pre">solverInstance</span></code> for the underlying solver object.</p>
+<p><strong>Beware the three spellings.</strong> The same two quantities are named differently
+at each layer, and writing a call from memory is how an afternoon gets lost:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>layer</p></th>
+<th class="head"><p>grid size</p></th>
+<th class="head"><p>resolution</p></th>
+<th class="head"><p>q and S(Q)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ozLib.solve</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">numberOfRadialSamplingPoints</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">hardSphereDiameterInPoints</span></code></p></td>
+<td><p>returns <code class="docutils literal notranslate"><span class="pre">OZResult</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OZResult</span></code></p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.q</span></code>, <code class="docutils literal notranslate"><span class="pre">.Sq</span></code> (arrays)</p></td>
+</tr>
+<tr class="row-even"><td><p>solver object</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">getqArray()</span></code>, <code class="docutils literal notranslate"><span class="pre">getSq()</span></code> (methods)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GenericPolydisperseSAS</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gridN</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pointsPerSigma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">I_exact(Q)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<hr class="docutils" />
+<section id="solve-in-full">
+<h2><code class="docutils literal notranslate"><span class="pre">solve()</span></code> in full<a class="headerlink" href="#solve-in-full" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span>
+            <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(),</span>
+            <span class="n">closure</span><span class="o">=</span><span class="s2">"Percus-Yevick"</span><span class="p">,</span>
+            <span class="n">closureParam</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">closureParam2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">findConsistentParameter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">solver</span><span class="o">=</span><span class="s2">"scipy Anderson"</span><span class="p">,</span>
+            <span class="n">maxIterations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">onSolverCreated</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">verifyWith</span><span class="o">=</span><span class="p">(</span><span class="s2">"Biggs-Andrews"</span><span class="p">,</span> <span class="s2">"Picard / Mann iteration"</span><span class="p">),</span>
+            <span class="n">verifyTolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+            <span class="n">residualTolerance</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+            <span class="n">deflateOnUnphysical</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">transformType</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">mannAlpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">verifyMannAlpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">verifyWith</span></code> defaults to Biggs–Andrews, then Picard / Mann. The verifiers are tried in order. The solver being
+verified is skipped, and so is any verifier of the <strong>same algorithm family</strong> (<code class="docutils literal notranslate"><span class="pre">ozLib.SOLVER_FAMILIES</span></code>). For
+example, KIN_FP, scipy Anderson and MDIIS are all Anderson/DIIS acceleration and never verify each other. The
+first verifier that <em>converges</em> is used, each with its own iteration limit from the preferences
+(<code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> applies to the primary only). The Picard / Mann verifier is damped with <code class="docutils literal notranslate"><span class="pre">verifyMannAlpha</span></code>
+(default 0.5), because undamped Picard and Biggs–Andrews both fail for dense states (hard spheres,
+φ ≥ 0.5).</p>
+<p>If no verifier converges, <code class="docutils literal notranslate"><span class="pre">ozLib.VerificationUnavailable</span></code> (a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>) is raised. It carries the
+unverified result as <code class="docutils literal notranslate"><span class="pre">.result</span></code> and what each verifier did as <code class="docutils literal notranslate"><span class="pre">.attempts</span></code>. A disagreement between converged
+solvers raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> as before. A verified result has <code class="docutils literal notranslate"><span class="pre">verifiedWith</span></code> and <code class="docutils literal notranslate"><span class="pre">verificationDifference</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mannAlpha</span></code> (0 &lt; a ≤ 1, otherwise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>) is the damping of the Picard / Mann solver,
+x ← (1−a)x + a·T(x). <code class="docutils literal notranslate"><span class="pre">None</span></code> or 1 means plain Picard. <strong>The iteration limit of Picard / Mann is ⌈N/a⌉.</strong> Here N
+is <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code>, or, when that is <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">PicardOZsolver.DEFAULT_MAX_ITERATIONS</span></code> (preference
+<code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations_picard</span></code>, factory 5000). N is therefore the limit for a = 1. A damped step covers
+only the fraction a of the way, so the iterations needed grow as 1/a, and the limit grows with them.
+<code class="docutils literal notranslate"><span class="pre">PicardOZsolver.mannIterationLimit(N,</span> <span class="pre">a)</span></code> returns the limit. <code class="docutils literal notranslate"><span class="pre">OZResult.iterationLimit</span></code> gives the limit that
+applied, and <code class="docutils literal notranslate"><span class="pre">OZResult.iterations</span></code> the iterations used (Picard / Mann). <code class="docutils literal notranslate"><span class="pre">mannAlpha</span></code> applies to the primary solve and a deflation retry. It does not apply to the
+verifier, which uses <code class="docutils literal notranslate"><span class="pre">verifyMannAlpha</span></code>. All other solvers ignore it. The value used is stored as <code class="docutils literal notranslate"><span class="pre">OZResult.mannAlpha</span></code>
+(<code class="docutils literal notranslate"><span class="pre">None</span></code> for the other solvers). The former solver name <code class="docutils literal notranslate"><span class="pre">&quot;Picard</span> <span class="pre">iteration&quot;</span></code> is still accepted
+(<code class="docutils literal notranslate"><span class="pre">ozLib.SOLVER_ALIASES</span></code>).</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">OZResult.converged</span></code></strong> tells whether the solve met its convergence criterion, and
+<code class="docutils literal notranslate"><span class="pre">OZResult.finalRelativeProgress</span></code> gives the last relative change. A solve that stops at the iteration limit
+still returns its last iterate, but it now also issues a <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> (”… did not converge; the result is
+the last iterate, not a solution”). Check the flag in scripts. For hard spheres (PY, φ = 0.53), Picard / Mann
+with a fixed limit of 1000 iterations returned g_max between 4.35 and 6.77 depending on a (the limit is now
+N/a), while every converged run gives
+5.556220 (see <a class="reference internal" href="gui.html"><span class="std std-doc">the GUI guide</span></a>). RMSA, ZSEP and the consistent-parameter search end with an internal
+Picard solve; the flag now reports that final solve. Before, it was always False for them.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<p><strong><code class="docutils literal notranslate"><span class="pre">maxIterations=None</span></code> means the solver’s own limit, not “unlimited”.</strong> Each
+solver carries a <code class="docutils literal notranslate"><span class="pre">DEFAULT_MAX_ITERATIONS</span></code>: <strong>600</strong> for the accelerated
+family, <strong>5000</strong> for Picard (3000 before Picard / Mann became the damped
+verifier; see below). The difference is justified by measurement — a
+solve that converges takes 17–60 iterations under SUNDIALS KIN_FP, 18–179
+under scipy Anderson and 30–97 under MDIIS, against 336 to several thousand
+for Picard.</p>
+<p>Passing a flat number to every solver, which this used to do, gives the
+accelerated ones ten to a hundred times what they need. That costs nothing
+on a solve that converges — it stops at its tolerance long before the ceiling
+— but a great deal on one that does not: at an unphysical or near-spinodal
+state point the solver grinds through thousands of iterations before
+admitting defeat, and during a global search those are exactly the
+evaluations that dominate. Pass a number only if you mean to override the
+solver’s judgement.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">potentialArgs</span></code> is positional and its meaning is per-potential.</strong> There is
+no keyword form. <code class="docutils literal notranslate"><span class="pre">(tau,</span> <span class="pre">delta)</span></code> for StickyHardSphere, <code class="docutils literal notranslate"><span class="pre">(K1,</span> <span class="pre">z1,</span> <span class="pre">K2,</span> <span class="pre">z2)</span></code> for
+HardSphereDoubleYukawa — see the table below, or call
+<code class="docutils literal notranslate"><span class="pre">getAvailablePotentialNames()</span></code> on a solver instance for the live list.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">verify=True</span></code> is the default and should stay that way.</strong> It re-solves with
+two other solvers and raises if they land on different fixed points. That is
+not paranoia: the closure equations genuinely admit several solutions, and
+a solver reporting success is not saying it found the <em>physical</em> one. At a
+Lennard-Jones state tested during development, every Newton–Krylov variant
+converged to residuals below 1e-11 on branches with min S(Q) ≈ −38 — real
+roots, entirely unphysical. Turn verification off for speed only once you
+know the state point is well-behaved.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">findConsistentParameter=True</span></code></strong> solves the closure’s own α by
+thermodynamic consistency (compressibility route against virial) instead of
+taking <code class="docutils literal notranslate"><span class="pre">closureParam</span></code>. It costs three OZ solves per trial value, so a single
+Calculate becomes dozens of solves.</p>
+</section>
+<hr class="docutils" />
+<section id="potentials-21">
+<h2>Potentials (21)<a class="headerlink" href="#potentials-21" title="Link to this heading"></a></h2>
+<p>All lengths are in units of the hard-core diameter σ; all energies in k_BT.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>arguments</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HardSphere</span></code></p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SquareWell</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon,</span> <span class="pre">delta)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">StickyHardSphere</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(tau,</span> <span class="pre">delta)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Yukawa</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(shieldingLength,</span> <span class="pre">strength,</span> <span class="pre">doAddHardSphere)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HardSphereDoubleYukawa</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(K1,</span> <span class="pre">z1,</span> <span class="pre">K2,</span> <span class="pre">z2)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">HS3Yukawa</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(K1,</span> <span class="pre">l1,</span> <span class="pre">K2,</span> <span class="pre">l2,</span> <span class="pre">K3,</span> <span class="pre">l3)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LennardJones</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SoftSphere</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon,</span> <span class="pre">n)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DLVO</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(kappa,</span> <span class="pre">Z,</span> <span class="pre">LB,</span> <span class="pre">A)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DLVOHydra</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(kappa,</span> <span class="pre">Z,</span> <span class="pre">LB,</span> <span class="pre">A,</span> <span class="pre">GHY,</span> <span class="pre">DH)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Depletion</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(sigmaRatio,</span> <span class="pre">phi2)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FermiDistribution</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon,</span> <span class="pre">xi)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GGCMn</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon,</span> <span class="pre">n,</span> <span class="pre">alpha)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">IonicMicrogel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(Z,</span> <span class="pre">ED,</span> <span class="pre">KPi,</span> <span class="pre">EPSILON)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PSM</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ParabolicSphere</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(epsilon)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PiecewiseConstantHS</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(eps1,</span> <span class="pre">d1,</span> <span class="pre">eps2,</span> <span class="pre">d2,</span> <span class="pre">eps3,</span> <span class="pre">d3)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">StarPolymerHighF</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(NumberOfArms)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">StarPolymerLowF</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(NumberOfArms)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Polydisperse</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(potentialName,</span> <span class="pre">potentialArgs,</span> <span class="pre">srel,</span> <span class="pre">nComponents,</span> <span class="pre">...)</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PolydisperseHardCoreYukawa</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(srel,</span> <span class="pre">nComponents,</span> <span class="pre">valence,</span> <span class="pre">bjerrum,</span> <span class="pre">...)</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sign convention (project-wide, “convention A”): positive = attractive.</strong>
+Every well depth and Yukawa amplitude in pySASfit is positive for attraction:
+<code class="docutils literal notranslate"><span class="pre">SquareWell</span></code> ε and <code class="docutils literal notranslate"><span class="pre">PiecewiseConstantHS</span></code> ε_i are depths (βu = −ε, ε &gt; 0 a well,
+ε &lt; 0 a shoulder), and the Yukawa amplitudes of <code class="docutils literal notranslate"><span class="pre">Yukawa</span></code>, <code class="docutils literal notranslate"><span class="pre">HardSphereDoubleYukawa</span></code>,
+<code class="docutils literal notranslate"><span class="pre">HS3Yukawa</span></code> and the polydisperse MSA/RY Yukawa code are K &gt; 0 attractive, K &lt; 0
+repulsive. This matches the SASfit structure-factor plugins and the literature.
+pyOZgui, and SASfit’s C OZ solver (<code class="docutils literal notranslate"><span class="pre">sasfit_oz_potential_square_well.c</span></code>,
+<code class="docutils literal notranslate"><span class="pre">..._piecewise_constant_HS.c</span></code>), use the opposite sign for <code class="docutils literal notranslate"><span class="pre">SquareWell</span></code>,
+<code class="docutils literal notranslate"><span class="pre">PiecewiseConstantHS</span></code> and pyOZgui’s single <code class="docutils literal notranslate"><span class="pre">Yukawa</span></code>; session files written
+before the change are converted on load.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">SquareWell</span></code> and <code class="docutils literal notranslate"><span class="pre">StickyHardSphere</span></code> take δ as an absolute length</strong>, not as
+a fraction of σ, so it is directly comparable with a shell thickness.</p>
+</section>
+<hr class="docutils" />
+<section id="closures-24">
+<h2>Closures (24)<a class="headerlink" href="#closures-24" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ozLib.CLOSURE_SETTERS</span></code> maps each name to its setter and whether it takes a
+parameter. <code class="docutils literal notranslate"><span class="pre">ozLib.multicomponentCapableClosures()</span></code> filters to those valid for
+mixtures.</p>
+<p><strong>Parameter-free</strong>: Percus-Yevick, Hypernetted-Chain, MSA, Modified MSA,
+Symmetric MSA, Rescaled MSA, Verlet, Martynov-Sarkisov, Duh-Haymet,
+Kovalenko-Hirata, Choudhury-Ghosh, Vompe-Martynov, Reference HNC, ZSEP.</p>
+<p><strong>Take an α, settable directly or by consistency</strong> (<code class="docutils literal notranslate"><span class="pre">ozLib.CONSISTENT_</span> <span class="pre">PARAMETER_CLOSURES</span></code>): Rogers-Young, Extended Rogers-Young, HMSA, Modified
+HNC, Modified Verlet, BPGG, CJVM, BB, Khanpour, Carbajal-Tinoco.</p>
+<p><strong>Takes a second parameter</strong>: Extended Rogers-Young, <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">0.0,</span> <span class="pre">&quot;quadratic</span> <span class="pre">coefficient;</span> <span class="pre">a</span> <span class="pre">=</span> <span class="pre">0</span> <span class="pre">gives</span> <span class="pre">plain</span> <span class="pre">RY&quot;)</span></code> — see <code class="docutils literal notranslate"><span class="pre">ozLib.secondClosureParam</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="solvers">
+<h2>Solvers<a class="headerlink" href="#solvers" title="Link to this heading"></a></h2>
+<p>Nine with SUNDIALS installed, five without. Timings are from
+<code class="docutils literal notranslate"><span class="pre">tools/benchmark.py</span></code> on a 4095-point grid; the ranking is what
+<code class="docutils literal notranslate"><span class="pre">ozLib.SOLVER_CLASSES</span></code> lists, fastest first.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>family</p></th>
+<th class="head"><p>seconds</p></th>
+<th class="head"><p>note</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sundials4py:</span> <span class="pre">Fixed-Point</span> <span class="pre">(Anderson)</span></code></p></td>
+<td><p>fixed point</p></td>
+<td><p><strong>0.0049</strong></p></td>
+<td><p>the default when built</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scipy</span> <span class="pre">Anderson</span></code></p></td>
+<td><p>fixed point</p></td>
+<td><p>0.0077</p></td>
+<td><p>the default without SUNDIALS</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MDIIS</span></code></p></td>
+<td><p>fixed point</p></td>
+<td><p>0.0096</p></td>
+<td><p>see below</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sundials4py:</span> <span class="pre">Newton-Krylov</span> <span class="pre">(FGMRES)</span></code></p></td>
+<td><p>Newton–Krylov</p></td>
+<td><p>0.0100</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sundials4py:</span> <span class="pre">Newton-Krylov</span> <span class="pre">(GMRES)</span></code></p></td>
+<td><p>Newton–Krylov</p></td>
+<td><p>0.0108</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sundials4py:</span> <span class="pre">Newton-Krylov</span> <span class="pre">(TFQMR)</span></code></p></td>
+<td><p>Newton–Krylov</p></td>
+<td><p>0.0187</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scipy</span> <span class="pre">Newton-Krylov</span></code></p></td>
+<td><p>Newton–Krylov</p></td>
+<td><p>0.0232</p></td>
+<td><p><strong>see the warning below</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Biggs-Andrews</span></code></p></td>
+<td><p>fixed point</p></td>
+<td><p>0.0402</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Picard</span> <span class="pre">/</span> <span class="pre">Mann</span> <span class="pre">iteration</span></code></p></td>
+<td><p>fixed point</p></td>
+<td><p>0.0493</p></td>
+<td><p>plainest; undamped (a = 1) <strong>diverges above φ ≈ 0.42</strong></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Picard’s limit is 0.42, not the 0.45 this table used to say</strong> — measured on
+a 1023-point grid, where the iteration count grows geometrically (41, 49, 60,
+… 946 in steps of Δφ = 0.02) and then fails outright with a residual of 1.1.
+And <strong>a density ramp does not rescue it</strong>: the contraction factor exceeds 1
+there, so the basin has not moved but ceased to exist, and no starting point
+inside it helps. Continuation methods fail for the same reason.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">Anderson</span> <span class="pre">acceleration</span></code> was removed.</strong> It duplicated <code class="docutils literal notranslate"><span class="pre">scipy</span> <span class="pre">Anderson</span></code> —
+the same algorithm, hand-written rather than from scipy — and two entries for
+one method cost a choice nobody has a basis to make. The module remains
+importable; it is simply not registered.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">MDIIS</span></code> is a fallback, not a recommendation.</strong> Third of nine here, and it
+fails at φ = 0.58 where KIN_FP and scipy Anderson both converge. Its use is
+on installations without SUNDIALS, where scipy Anderson’s iteration count
+swings erratically with density (28, 116, 40, 179) while MDIIS rises
+smoothly — at φ = 0.52 it is the better of the two. Try it when scipy
+Anderson stalls.</p>
+<p><strong>Prefer a fixed-point method.</strong> Near a fold the Jacobian is singular, and
+the Newton–Krylov family is drawn onto negative-compressibility branches
+exactly where the fold lies. Measured at one Lennard-Jones state: the
+fixed-point family found g_max = 2.16 with min S(Q) = +0.21; the
+Newton–Krylov family found 1.13 and 1.22 with min S(Q) ≈ −38. All had
+residuals below 1e-11. They are all correct answers to the question asked;
+only one is physical.</p>
+<p><strong>Picard damping (Mann iteration).</strong> The Picard / Mann solver iterates
+x ← (1−a)x + a·T(x). a = 1 is plain Picard. Below 1 it is Mann’s iteration,
+which is slower (about 1/a times more iterations) but converges where undamped
+Picard diverges. For hard spheres (PY, 1023 points), a = 0.7 converges at
+φ = 0.45 in 2311 iterations, a = 0.5 at φ = 0.50 in 5776, and a = 0.3 at
+φ = 0.55 in 17917. Undamped Picard fails at φ = 0.45 even after 20000
+iterations. It also rescued a Lennard-Jones case at a = 0.5. Pass it as
+<code class="docutils literal notranslate"><span class="pre">solve(...,</span> <span class="pre">mannAlpha=0.5)</span></code>; setting <code class="docutils literal notranslate"><span class="pre">sol.mannAlpha</span></code> in <code class="docutils literal notranslate"><span class="pre">onSolverCreated</span></code>
+still works. The iteration limit is then ⌈N/a⌉ (see <code class="docutils literal notranslate"><span class="pre">mannAlpha</span></code> above). Convergence is tested on the residual ‖T(x) − x‖/‖x‖, not on the
+damped step, so a small a does not stop early. The full table is in
+<a class="reference internal" href="gui.html"><span class="std std-doc">the GUI guide</span></a>.</p>
+<p><strong>Every solver exposes <code class="docutils literal notranslate"><span class="pre">converged</span></code></strong>, declared in <code class="docutils literal notranslate"><span class="pre">OZsolver.__init__</span></code> and
+defaulting to <code class="docutils literal notranslate"><span class="pre">False</span></code> — so a solver that forgets to set it reports failure
+rather than a success it never established. Until recently only Picard set
+it, and the rest returned <code class="docutils literal notranslate"><span class="pre">None</span></code>, which a caller cannot tell apart from
+“ran and did not converge”.</p>
+<p><strong>But it is not a correctness check</strong>, and the distinction matters more here
+than in most numerical work. On one Lennard-Jones state point all four
+Newton–Krylov solvers report <code class="docutils literal notranslate"><span class="pre">converged</span> <span class="pre">=</span> <span class="pre">True</span></code>, are genuine fixed points,
+and reach residuals of 10⁻¹³ — at <strong>min S(Q) ≈ −38</strong>. Every question of the
+form “did it converge?” answers yes; only the <code class="docutils literal notranslate"><span class="pre">min</span> <span class="pre">S(Q)</span> <span class="pre">≥</span> <span class="pre">0</span></code> screen
+separates them from the correct g_max = 2.1636.</p>
+<p>So <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> checks both, on every solve: min S(Q) ≥ 0 (below) and the residual.</p>
+<section id="the-independent-residual-check-residualtolerance">
+<h3>The independent residual check (<code class="docutils literal notranslate"><span class="pre">residualTolerance</span></code>)<a class="headerlink" href="#the-independent-residual-check-residualtolerance" title="Link to this heading"></a></h3>
+<p>A solve looks for x with T(x) = x, where T is the closure’s fixed-point map (x = Γ = h − c for one component,
+the packed pair matrix for a mixture). After the solver has finished, T is applied <strong>once more</strong> to the
+returned x, and</p>
+<p>r = ‖T(x) − x‖ / ‖x‖</p>
+<p>is stored as <code class="docutils literal notranslate"><span class="pre">OZResult.residual</span></code>. If r &gt; <code class="docutils literal notranslate"><span class="pre">residualTolerance</span></code> (default 10⁻⁶; preference
+<code class="docutils literal notranslate"><span class="pre">oz.solve.residual_tolerance</span></code>), the result is marked <strong>not converged</strong>: <code class="docutils literal notranslate"><span class="pre">OZResult.converged</span> <span class="pre">=</span> <span class="pre">False</span></code>, a
+<code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>, and “[NOT CONVERGED]” in the OZ solver tab. This applies whatever the solver reported, so a
+solver’s flag can be overruled but never upgraded. <code class="docutils literal notranslate"><span class="pre">residualTolerance=None</span></code> switches the check off.</p>
+<p>Why the check matters: the solvers decide convergence by their own internal tests, and those can be fooled.
+Examples:</p>
+<ul class="simple">
+<li><p>The old Picard test compared successive norms and accepted a “solution” with residual 19.4.</p></li>
+<li><p>A damped step is shorter than the residual.</p></li>
+<li><p>SUNDIALS KIN_FP reports success for polydisperse hard-core Yukawa (HNC, φ = 0.1) and returns S(Q) = NaN; its
+residual is infinite.</p></li>
+</ul>
+<p>Converged solves give r = 10⁻¹⁶ … 10⁻¹¹ (all 24 closures checked on hard spheres, Lennard-Jones and a square
+well), so 10⁻⁶ rejects only real failures.</p>
+<p>The residual cannot tell a physical root from an unphysical one. The Newton–Krylov roots above have
+r ≈ 10⁻¹³ and min S(Q) ≈ −38. The three checks answer different questions:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>check</p></th>
+<th class="head"><p>question</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>residual</p></td>
+<td><p>is the returned x a fixed point?</p></td>
+</tr>
+<tr class="row-odd"><td><p>min S(Q) ≥ 0</p></td>
+<td><p>is this fixed point a fluid?</p></td>
+</tr>
+<tr class="row-even"><td><p>verification</p></td>
+<td><p>does an independent solver find the same one?</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-physicality-screen-min-s-q-0-on-every-solve">
+<h3>The physicality screen: min S(Q) ≥ 0 on every solve<a class="headerlink" href="#the-physicality-screen-min-s-q-0-on-every-solve" title="Link to this heading"></a></h3>
+<p>S(Q) is a variance and cannot be negative, but no convergence test sees that. <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> therefore checks
+min S(Q) on <strong>every</strong> solve, whatever <code class="docutils literal notranslate"><span class="pre">deflateOnUnphysical</span></code> is:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OZResult.minSq</span></code> holds the minimum of S(Q), and <code class="docutils literal notranslate"><span class="pre">OZResult.physical</span></code> is <code class="docutils literal notranslate"><span class="pre">minSq</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">deflateOnUnphysical</span> <span class="pre">=</span> <span class="pre">0</span></code> (the default), an unphysical root is returned with a <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>. The OZ
+solver tab marks the run “[S(Q)&lt;0]” and shows a warning.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">deflateOnUnphysical</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> the root is rejected and the same solver is retried with it deflated away (next
+section). If no physical root is found, a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> is raised.</p></li>
+</ul>
+<p>Example: Lennard-Jones ε = 0.8, φ = 0.30, HNC, 1023 points. SUNDIALS KIN_FP finds the physical root
+(min S(Q) = 0.217). scipy Newton–Krylov (min S = −9.3), SUNDIALS Newton–Krylov (−10.8) and scipy Anderson
+(−13.7) all report convergence on unphysical roots. scipy Anderson is the default solver when SUNDIALS is not
+installed. Before this change, the screen ran only when deflation was on, so these roots came back without notice.</p>
+</section>
+<section id="deflation-what-to-do-when-the-root-is-unphysical">
+<h3>Deflation: what to do when the root is unphysical<a class="headerlink" href="#deflation-what-to-do-when-the-root-is-unphysical" title="Link to this heading"></a></h3>
+<p>The screen above tells you the solver landed on a branch that is not a fluid.
+<code class="docutils literal notranslate"><span class="pre">deflateOnUnphysical</span></code> does something about it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">r</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"LennardJones"</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,),</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.30</span><span class="p">,</span>
+                <span class="n">closure</span><span class="o">=</span><span class="s2">"Hypernetted-Chain"</span><span class="p">,</span>
+                <span class="n">solver</span><span class="o">=</span><span class="s2">"scipy Newton-Krylov"</span><span class="p">,</span>
+                <span class="n">deflateOnUnphysical</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>      <span class="c1"># 0 = off, the default</span>
+</pre></div>
+</div>
+<p>Each attempt divides the residual by a factor singular at every root already
+found, so the solver <strong>cannot</strong> return there and must find something else or
+fail. The same solver is kept throughout.</p>
+<p><strong>Why not simply switch solver?</strong> That would often work — the fixed-point and
+Newton–Krylov families empirically favour different branches, and at the
+state point above a fixed-point solver finds the correct root directly. Two
+reasons against. It silently hands back a result from a solver you did not
+choose. And it leans on a bias that happens to hold where it has been tested
+rather than on anything guaranteed: nothing stops both families landing on
+the same wrong root elsewhere.</p>
+<p><strong>Failure is informative, not a defect.</strong> Past a spinodal there may be no
+physical solution at the state point, and deflation will go on finding
+unphysical ones because that is all there is. The exception therefore lists
+every root found with its min S(Q) rather than reporting a bare
+non-convergence — those numbers say something about the state point. At
+ε = 0.8, φ = 0.30 under HNC with Newton–Krylov you get roots at −18.73 and
+−20.69 and then a refusal, which is the honest answer.</p>
+<p><strong>In the GUI</strong> every tab has a <em>Deflate if S(Q)&lt;0</em> control, defaulting to 0.
+On the polydisperse tab it applies to <strong>Compute only, never to Fit</strong>: the
+optimiser calls the solver hundreds of times and wanders into unphysical
+territory routinely, and rescuing some of those points and not others would
+make chi-squared jump between neighbouring parameter values. Least squares
+assumes a smooth residual. The refusal is also a signal to the optimiser to
+back off, and hiding it helps nobody.</p>
+<p>The workflow it is actually for runs the other way: fit, get a suspicious
+answer, then recompute at those parameters with deflation on to ask whether a
+second branch exists there.</p>
+<p><strong>A caution on reading too much into a second root.</strong> If deflation finds one
+while S(Q) ≥ 0 — which it will do if you ask it to search rather than only to
+rescue — resist the temptation to pick between them on thermodynamic
+consistency. For a parameter-free closure the compressibility/virial mismatch
+is a property of the closure, not of the branch, and PY hard spheres are
+inconsistent by a large and known amount at every density. For the
+consistency-parameter closures it is circular: α is tuned precisely to make
+the two routes agree, so two roots give two values of α each achieving it.
+Continuity from a known-good state point, or agreement with an analytic limit
+where one exists, discriminates where consistency cannot.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="grids-and-transforms">
+<h2>Grids and transforms<a class="headerlink" href="#grids-and-transforms" title="Link to this heading"></a></h2>
+<p><strong>N and the resolution are not independent.</strong> The real-space range is</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>r_max = N · σ / pointsPerSigma
+</pre></div>
+</div>
+<p>so raising the resolution at fixed N <em>shrinks the box</em>. Refining that way
+makes the result better near contact and worse at low Q, and a convergence
+test done that way measures nothing. Scale both together. This mistake has
+been made twice in this project and caught both times only by a plot.</p>
+<p><strong>Every precision claim in this documentation was checked against that rule.</strong>
+The transform timings and accuracies, the first-order convergence of type 1,
+the stability of the low-q extrapolation: all compare grids at
+r_max = 40.95–40.96 σ, varying only the density. The one comparison that does
+vary the range — 41 σ to 655 σ at fixed resolution, which changed S(0) in the
+sixth decimal — is described as such, and it is what established that the
+type-1 error is a grid-alignment effect rather than truncation.</p>
+<p>When writing a new comparison, pair <code class="docutils literal notranslate"><span class="pre">bestGridSize(N,</span> <span class="pre">transformType)</span></code> with a
+proportionally scaled <code class="docutils literal notranslate"><span class="pre">pointsPerSigma</span></code> and the range stays fixed without
+anyone having to remember it. Print <code class="docutils literal notranslate"><span class="pre">N/pointsPerSigma</span></code> if in doubt: it takes
+a second and it is the check that would have caught both earlier mistakes.</p>
+<p><strong>Grid size depends on the transform type</strong>, and the difference is large:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>N</p></th>
+<th class="head"><p>DST-I (type 1)</p></th>
+<th class="head"><p>DST-IV (type 4)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>16383 = 2¹⁴−1</p></td>
+<td><p><strong>0.263 ms</strong></p></td>
+<td><p>0.308 ms</p></td>
+</tr>
+<tr class="row-odd"><td><p>16384 = 2¹⁴</p></td>
+<td><p>0.599 ms</p></td>
+<td><p><strong>0.099 ms</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>16385</p></td>
+<td><p>2.497 ms</p></td>
+<td><p>0.303 ms</p></td>
+</tr>
+</tbody>
+</table>
+<p>A DST-I goes through an FFT of length 2(N+1), so it wants N = 2^k − 1; a
+DST-IV is a length-N transform and wants N = 2^k. Use
+<code class="docutils literal notranslate"><span class="pre">oZfixpointOperator.bestGridSize(n,</span> <span class="pre">transformType)</span></code> rather than choosing by
+hand. Sizing both for type 1 made type 4 benchmark <em>slower</em> than type 1 for
+some time, which is how the rule was found.</p>
+<p><strong>Type 4 is second order</strong> — measured 139× to 1092× more accurate than type 1
+at the same grid, and faster on a power-of-two grid. It is <strong>correct only for
+one size class</strong>: it requires every pair core to fall between grid points,
+which cannot be arranged for a mixture because the σ_ij are irrational.</p>
+<p><strong>How much that costs, measured absolutely.</strong> Percus–Yevick hard spheres have
+a closed form for the compressibility, S(0) = (1−φ)⁴/(1+2φ)², which is the
+only exact answer available anywhere in this package. Against it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>φ</p></th>
+<th class="head"><p>type 1, pps=100</p></th>
+<th class="head"><p>type 1, pps=400</p></th>
+<th class="head"><p>type 4, pps=100</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.30</p></td>
+<td><p>3.67%</p></td>
+<td><p>0.92%</p></td>
+<td><p><strong>0.015%</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>0.40</p></td>
+<td><p>5.27%</p></td>
+<td><p>1.33%</p></td>
+<td><p><strong>0.036%</strong></p></td>
+</tr>
+</tbody>
+</table>
+<p>The cause is where the discontinuity lands. A DST-I places nodes at (n+1)Δr,
+so the hard core at r = σ falls <strong>on</strong> a node and is carried by a point that
+is neither inside nor outside; the excluded volume is then wrong at first
+order. A DST-IV places them at (n+½)Δr, the core falls <strong>between</strong> points,
+and the step is resolved to second order.</p>
+<p>Two things make this worth knowing rather than filing under “type 4 is
+better”. The error is <strong>independent of the real-space range</strong> — extending
+r_max from 41σ to 655σ changed S(0) in the sixth decimal — so the usual
+instinct of giving the solver more room does nothing. And refining the
+resolution <em>does</em> reduce it, by a clean factor of 3.96 per fourfold step, so
+a convergence study sees orderly first-order behaviour and concludes the
+method is working. It is, slowly, towards an answer whose leading error is
+set by grid alignment.</p>
+<p>S(0) is the isothermal compressibility, so this is a systematic bias in
+exactly the quantity the volume fraction controls: <strong>a fit absorbs it by
+moving φ</strong>, and the denser the sample the more it moves. For one component,
+use type 4. For a mixture there is no such option, and a dense polydisperse
+fit should use the finest affordable resolution with its fitted volume
+fraction read accordingly.</p>
+<p><code class="docutils literal notranslate"><span class="pre">tools/numerics_test.py</span></code> asserts all of this, and
+<code class="docutils literal notranslate"><span class="pre">tools/validation_table_test.py</span></code> reports it per transform and per resolution.</p>
+</section>
+<hr class="docutils" />
+<section id="solvewithconsensus">
+<h2><code class="docutils literal notranslate"><span class="pre">solveWithConsensus()</span></code><a class="headerlink" href="#solvewithconsensus" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ozLib</span><span class="o">.</span><span class="n">solveWithConsensus</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(),</span>
+                         <span class="n">closure</span><span class="o">=</span><span class="s2">"doPYclosure"</span><span class="p">,</span> <span class="n">closureParam</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">volumeDensity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                         <span class="n">solvers</span><span class="o">=</span><span class="p">(</span><span class="s2">"scipy Anderson"</span><span class="p">,</span> <span class="s2">"Biggs-Andrews"</span><span class="p">,</span>
+                                  <span class="s2">"Picard / Mann iteration"</span><span class="p">),</span>
+                         <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+                         <span class="n">gridN</span><span class="o">=</span><span class="mi">4095</span><span class="p">,</span> <span class="n">pointsPerSigma</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                         <span class="n">maxIterations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformType</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                         <span class="n">quantity</span><span class="o">=</span><span class="s2">"Sq"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Runs several solvers and reports whether they agree. Use it when a state
+point is suspect, or when a result matters enough to want more than one
+route to it. Note it spells its arguments <code class="docutils literal notranslate"><span class="pre">gridN</span></code>/<code class="docutils literal notranslate"><span class="pre">pointsPerSigma</span></code>, unlike
+<code class="docutils literal notranslate"><span class="pre">solve()</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="worked-examples">
+<h2>Worked examples<a class="headerlink" href="#worked-examples" title="Link to this heading"></a></h2>
+<section id="a-single-curve">
+<h3>A single curve<a class="headerlink" href="#a-single-curve" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.oz</span><span class="w"> </span><span class="kn">import</span> <span class="n">ozLib</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"StickyHardSphere"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">))</span>
+<span class="n">q</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">Sq</span>
+</pre></div>
+</div>
+</section>
+<section id="an-attractive-square-well-at-a-chosen-resolution">
+<h3>An attractive square well, at a chosen resolution<a class="headerlink" href="#an-attractive-square-well-at-a-chosen-resolution" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">oZfixpointOperator</span><span class="w"> </span><span class="kn">import</span> <span class="n">bestGridSize</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"SquareWell"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                  <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>       <span class="c1"># POSITIVE = attractive (convention A)</span>
+                  <span class="n">closure</span><span class="o">=</span><span class="s2">"Hypernetted-Chain"</span><span class="p">,</span>
+                  <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="n">bestGridSize</span><span class="p">(</span><span class="mi">16383</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                  <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="solving-by-thermodynamic-consistency">
+<h3>Solving α by thermodynamic consistency<a class="headerlink" href="#solving-by-thermodynamic-consistency" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"HardSphere"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">closure</span><span class="o">=</span><span class="s2">"Rogers-Young"</span><span class="p">,</span>
+                  <span class="n">findConsistentParameter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">closureParam</span><span class="p">)</span>          <span class="c1"># the α that made the two routes agree</span>
+</pre></div>
+</div>
+</section>
+<section id="checking-convergence-properly">
+<h3>Checking convergence properly<a class="headerlink" href="#checking-convergence-properly" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">oZfixpointOperator</span><span class="w"> </span><span class="kn">import</span> <span class="n">bestGridSize</span>
+<span class="k">for</span> <span class="n">pps</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">((</span><span class="mi">100</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">14</span><span class="p">)):</span>        <span class="c1"># r_max held CONSTANT</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"HardSphere"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                      <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="n">bestGridSize</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                      <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="n">pps</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A fourfold refinement should reduce a first-order error fourfold. A ratio
+near 1 means the discrepancy is not discretisation, and something else is
+wrong — that is how a defect giving every pair in a mixture the same hard
+core was eventually found.</p>
+</section>
+<section id="damped-picard-for-a-hard-state-point">
+<h3>Damped Picard for a hard state point<a class="headerlink" href="#damped-picard-for-a-hard-state-point" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">ozLib</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s2">"HardSphere"</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">"Picard / Mann iteration"</span><span class="p">,</span>
+                  <span class="n">mannAlpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">maxIterations</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>     <span class="c1"># limit 5000/0.5 = 10000</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">mannAlpha</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">iterationLimit</span><span class="p">)</span>   <span class="c1"># 0.5 True 10000</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="things-that-will-bite">
+<h2>Things that will bite<a class="headerlink" href="#things-that-will-bite" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>symptom</p></th>
+<th class="head"><p>cause</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>a converged fit with min S(Q) &lt; 0</p></td>
+<td><p>a real root on an unphysical branch — screen on S(Q) ≥ 0</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TypeError</span></code> on unexpected keyword</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gridN</span></code> vs <code class="docutils literal notranslate"><span class="pre">numberOfRadialSamplingPoints</span></code>; the layers differ</p></td>
+</tr>
+<tr class="row-even"><td><p>a “square well” that repels</p></td>
+<td><p>negative ε is a shoulder; a pyOZgui-era script that used ε &lt; 0 for a well needs the sign flipped</p></td>
+</tr>
+<tr class="row-odd"><td><p>error grows under refinement</p></td>
+<td><p>N held fixed while resolution rose; the box shrank</p></td>
+</tr>
+<tr class="row-even"><td><p>type 4 slower than type 1</p></td>
+<td><p>grid sized 2^k−1 instead of 2^k</p></td>
+</tr>
+<tr class="row-odd"><td><p>solver reports success, answer is wrong</p></td>
+<td><p>KINSOL can report success after diverging; keep <code class="docutils literal notranslate"><span class="pre">verify=True</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<hr class="docutils" />
+<section id="where-to-look-next">
+<h2>Where to look next<a class="headerlink" href="#where-to-look-next" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/two_yukawa_test.py</span></code> — a worked validation against a published
+reference, showing the convergence-ratio pattern</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/gui_path_test.py</span></code> — exercises the GUI’s own compute and fit paths</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/ozGUI_ozLib_report.tex</span></code> — the full report, including the derivations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oZfixpointOperator.py</span></code> — the transform, the grid rules, <code class="docutils literal notranslate"><span class="pre">bestGridSize</span></code></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Ornstein–Zernike" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gui.html" class="btn btn-neutral float-right" title="The graphical interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

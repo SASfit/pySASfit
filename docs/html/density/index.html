@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyDENsity: electron-density maps with DENSS &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyDENSSmulti: 3D maps from several contrasts" href="../densitymulti/index.html" />
+    <link rel="prev" title="pyATsas: the ATSAS programs in pySASfit" href="../atsas/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyDENsity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#numpy-2">NumPy 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#panels">Panels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dmax">Dmax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flat-background">Flat background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#checked">Checked</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scripts">Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#icon">Icon</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pyDENsity: electron-density maps with DENSS</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/density/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pydensity-electron-density-maps-with-denss">
+<h1>pyDENsity: electron-density maps with DENSS<a class="headerlink" href="#pydensity-electron-density-maps-with-denss" title="Link to this heading"></a></h1>
+<img alt="pyDENsity" class="only-light" src="../_images/pyDENsity-light.svg" style="height: 70px;" />
+<img alt="pyDENsity" class="only-dark" src="../_images/pyDENsity-dark.svg" style="height: 70px;" />
+<p>pyDENsity reconstructs low-resolution <strong>electron-density maps</strong> from SAXS/SANS curves with <strong>DENSS</strong> (DENsity from
+Solution Scattering; T. D. Grant, <em>Nature Methods</em> <strong>15</strong>, 191 (2018)). DENSS works on a grid in real space
+(iterative structure-factor retrieval with a shrink-wrap support), so unlike bead models the map can have internal
+contrast, and unlike spherical-harmonics envelopes it is not limited to star-shaped bodies.</p>
+<p>DENSS is <strong>not</strong> part of pySASfit. It is a separate GPL-3.0 package, pure Python (numpy, scipy):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>denss<span class="w">          </span><span class="c1"># into the Python that runs pySASfit (or set Preferences → pyDENsity)</span>
+</pre></div>
+</div>
+<p>pyDENsity runs DENSS as a separate process (<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">denss.scripts...</span></code>) and reads the files it writes; no DENSS code
+is imported into pySASfit. Please cite Grant (2018) for maps made with it.</p>
+<ul class="simple">
+<li><p>launcher tab <strong>pyDENsity</strong>, or stand-alone: <code class="docutils literal notranslate"><span class="pre">pysasfit-density</span> <span class="pre">[data</span> <span class="pre">files]</span></code></p></li>
+<li><p>scripts: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pysasfit</span> <span class="pre">import</span> <span class="pre">density</span></code></p></li>
+</ul>
+<section id="numpy-2">
+<h2>NumPy 2<a class="headerlink" href="#numpy-2" title="Link to this heading"></a></h2>
+<p>DENSS 1.8.7 (the current release) does not run unchanged with current NumPy: it uses <code class="docutils literal notranslate"><span class="pre">np.in1d</span></code> and <code class="docutils literal notranslate"><span class="pre">np.trapz</span></code>, which
+NumPy 2.4 removed, and its MRC writer passes a one-element array to <code class="docutils literal notranslate"><span class="pre">struct.pack</span></code>, which NumPy 2 rejects (the single
+map fails at the end, <code class="docutils literal notranslate"><span class="pre">denss-all</span></code> when writing the reference map). pyDENsity therefore starts DENSS through a small
+shim that adds <code class="docutils literal notranslate"><span class="pre">np.in1d</span></code> (as <code class="docutils literal notranslate"><span class="pre">np.isin</span></code>) and <code class="docutils literal notranslate"><span class="pre">np.trapz</span></code> (as <code class="docutils literal notranslate"><span class="pre">np.trapezoid</span></code>) and hands the MRC writer a plain float box
+size. The DENSS installation itself is not changed; with an older NumPy the shim does nothing. The same patches
+are written as <code class="docutils literal notranslate"><span class="pre">sitecustomize.py</span></code> into a <code class="docutils literal notranslate"><span class="pre">.pydensity</span></code> folder of every run and put first on <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code>: <code class="docutils literal notranslate"><span class="pre">denss-all</span></code>
+computes its maps in a <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> pool, whose workers are fresh Python processes on Windows and macOS (spawn)
+and would otherwise fail with <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">'numpy'</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">attribute</span> <span class="pre">'in1d'</span></code>. A <code class="docutils literal notranslate"><span class="pre">sitecustomize</span></code> of your environment still
+runs after it.</p>
+</section>
+<section id="panels">
+<h2>Panels<a class="headerlink" href="#panels" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>panel</p></th>
+<th class="head"><p>content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Data</p></td>
+<td><p>curves (text, pySASred ASCII, NXcanSAS; q in 1/nm) with their point range, or a GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code> file (DENSS then uses its regularised curve and Dmax; give the q unit of the file); <strong>flat background</strong> of the high-q tail and its subtraction (see below)</p></td>
+</tr>
+<tr class="row-odd"><td><p>DENSS</p></td>
+<td><p>the installation found (Python, version), <em>Search again</em>, <em>Self test</em>. <strong>Map</strong>: mode FAST (simple shapes) / SLOW (complex molecules) / MEMBRANE (negative contrast allowed), Dmax (empty: from the GNOM file or estimated by DENSS, see <a class="reference internal" href="#dmax">Dmax</a>), oversampling, grid points or voxel size, steps, rotational symmetry (n, axis, cyclic / dihedral / icosahedral), seed, GPU (CuPy), further options; <em>Run one map</em>. <strong>Averaged map</strong>: number of maps (20 by default), cores, enantiomer selection; <em>Run denss-all</em> (maps, enantiomer selection, alignment, average, FSC resolution)</p></td>
+</tr>
+<tr class="row-even"><td><p>Density (3D)</p></td>
+<td><p>isosurface of the selected map; <em>enclosed volume</em> sets the level so that the surface encloses the given percentage of the DENSS support volume; optionally the support (translucent); optional scale bar and size box (x y z or principal axes: length, width, thickness). Same 3D panel as pyATsas (rotate, zoom, image; see <em>Size guides</em> in the pyATsas page)</p></td>
+</tr>
+<tr class="row-odd"><td><p>I(q)</p></td>
+<td><p>the data used by DENSS, the scattering of the map (single map, or the mean of the maps of an average) and the residuals</p></td>
+</tr>
+<tr class="row-even"><td><p>Convergence</p></td>
+<td><p>χ², Rg and support volume per step of a single map</p></td>
+</tr>
+<tr class="row-odd"><td><p>Slices</p></td>
+<td><p>three central slices through the map</p></td>
+</tr>
+<tr class="row-even"><td><p>Results</p></td>
+<td><p>one row per run: Rg, χ², support volume, resolution (average), steps or number of maps, map file; <em>Log</em>: command line, run folder, DENSS output</p></td>
+</tr>
+</tbody>
+</table>
+<p>A single FAST map of a protein-sized particle takes seconds to a minute; <em>denss-all</em> with 20 maps takes minutes to
+hours (use several cores). One map is one solution of a non-unique problem; for publication use the average, whose
+FSC resolution says how well the maps agree. Every run gets its own folder (<em>Preferences → pyDENsity → folder for the
+DENSS runs</em>) with the <code class="docutils literal notranslate"><span class="pre">.mrc</span></code> maps, fits and log; ChimeraX, PyMOL or Chimera open the maps (<em>File → Open a density map</em>
+also reads them back).</p>
+<p>Units: the panels use q in 1/nm (pySASfit), DENSS works in 1/Å and Å; pyDENsity converts. Dmax is entered in nm;
+maps, Rg and volumes are in Å as DENSS reports them.</p>
+</section>
+<section id="dmax">
+<h2>Dmax<a class="headerlink" href="#dmax" title="Link to this heading"></a></h2>
+<p>Give <strong>Dmax</strong> whenever you know it (from a P(r): pyATsas GNOM/DATGNOM, pyINVersion), or load a GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code> file. Without
+it DENSS estimates Dmax itself (<code class="docutils literal notranslate"><span class="pre">estimate_dmax</span></code>: unregularised P(r) fits of the first half of the data over a range of
+Dmax values). For large particles, whose Guinier range is only a few points, that estimate is unreliable:</p>
+<ul class="simple">
+<li><p>it can stop with <code class="docutils literal notranslate"><span class="pre">ValueError:</span> <span class="pre">cannot</span> <span class="pre">convert</span> <span class="pre">float</span> <span class="pre">NaN</span> <span class="pre">to</span> <span class="pre">integer</span></code> (the Rg of one trial P(r) is not real). pyDENsity
+then runs DENSS again with Dmax = 3.5 Rg, the rule DENSS uses itself, Rg from a Guinier fit over q·Rg ≤ 1.3
+(<code class="docutils literal notranslate"><span class="pre">density.guinier_rg</span></code>), and says so in the log and the run table;</p></li>
+<li><p>when it does not stop it may be far too large: for a sphere of R = 250 nm (Dmax 500 nm) measured from
+q = 0.004 1/nm it gave 4 to 29 µm depending on the noise, which makes the voxels and the run time huge. pyDENsity
+warns when DENSS’s Dmax exceeds 3 × 3.5 Rg.</p></li>
+</ul>
+<p>The voxel size of a FAST map is about oversampling × Dmax / grid points (3 × Dmax / 32); for fine detail of a large
+particle use SLOW (64 points) or set the grid points.</p>
+</section>
+<section id="flat-background">
+<h2>Flat background<a class="headerlink" href="#flat-background" title="Link to this heading"></a></h2>
+<p>DENSS fits <strong>no constant</strong>: its smoothing of raw data (<code class="docutils literal notranslate"><span class="pre">Sasrec</span></code>, a p(r) expansion up to Dmax) has no constant term,
+and in every iteration and for the final χ² the map is compared with the data with a scale factor only
+(<code class="docutils literal notranslate"><span class="pre">calc_chi2(...,</span> <span class="pre">scale=True,</span> <span class="pre">offset=False)</span></code>; the offset option of that function is used only by <code class="docutils literal notranslate"><span class="pre">denss-pdb2mrc</span></code>). A flat
+background — incoherent scattering of hydrogen in SANS, a buffer mismatch — is therefore taken as particle scattering:
+the map gets fine detail or density at the edge of the support, Rg and volume are distorted. Subtract it first.</p>
+<p>The group <strong>Flat background</strong> in the Data panel fits I = A q⁻ᴮ + bg to the high-q tail by weighted least squares
+(<code class="docutils literal notranslate"><span class="pre">pysasfit.atsas.core.fit_power_background</span></code>; numpy/scipy only, no ATSAS needed):</p>
+<ul class="simple">
+<li><p><em>tail q</em> (start: the last 30 % of the points of the range, button <em>30 %</em>), the exponent B free or fixed (4: Porod,
+sharp interfaces; 2: Gaussian chains); <em>Fit background</em> shows bg ± σ, B, χ²/n and draws the fit and the bg line in
+the I(q) plot. A bg below 2σ is reported as not significant; χ²/n &gt; 5 means the tail is not described by a power
+law plus a constant alone (form-factor oscillations still in the range, or a wrong exponent).</p></li>
+<li><p>The tail must lie beyond the last form-factor features (for a compact particle q·Rg ≳ 10); B and bg are strongly
+correlated when it is short.</p></li>
+<li><p><strong>Subtract → new curve</strong> adds <code class="docutils literal notranslate"><span class="pre">…</span> <span class="pre">minus</span> <span class="pre">bg</span> <span class="pre">&lt;value&gt;</span></code> (errors unchanged) and selects it; the original stays; the value
+can be edited first. Subtracted curves come back with the session; <em>Copy Python</em> contains the fit and the
+subtraction.</p></li>
+<li><p>Before every run on a curve whose background was not subtracted, pyDENsity fits the tail (last 30 %) itself; if it
+finds a significant constant (&gt; 3σ and &gt; 10 % of the last intensities), it says so and asks whether to run anyway.</p></li>
+</ul>
+<p>For GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code> input the background must have been subtracted before GNOM (pyATsas has the same tail fit, plus a
+DATPOROD cross-check).</p>
+</section>
+<section id="checked">
+<h2>Checked<a class="headerlink" href="#checked" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>With the real DENSS 1.8.7 (through the shim, NumPy 2.5): sphere R = 2 nm: Rg 16.1 Å (exact 15.49 Å, +3.8 %); the
+lysozyme example data of ATSAS (<code class="docutils literal notranslate"><span class="pre">lyzexp.dat</span></code>): one map Rg 15.1 Å (GNOM 15.4 Å), χ² 0.19; <em>denss-all</em> with 4 maps:
+Rg 15.14 ± 0.14 Å, resolution 12.8 ± 2.4 Å. Single maps vary (one run of the GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code> gave 18.7 Å) — the reason
+for averaging.</p></li>
+<li><p>The tests use a small fake DENSS written in Python (also on Windows) and, when DENSS is installed, the real one
+(<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">-m</span> <span class="pre">denss</span></code>).</p></li>
+</ul>
+</section>
+<section id="scripts">
+<h2>Scripts<a class="headerlink" href="#scripts" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit</span><span class="w"> </span><span class="kn">import</span> <span class="n">density</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.toolbox.merge</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_curves</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">read_curves</span><span class="p">(</span><span class="s2">"lysozyme.dat"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>                                  <span class="c1"># q in 1/nm</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">run_denss</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">),</span> <span class="n">dmax_nm</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"FAST"</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">rg</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">chi2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">support_volume</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">workdir</span><span class="p">)</span>                    <span class="c1"># Å, -, Å³; r.rho (grid), r.voxel (Å)</span>
+<span class="n">lev</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">level_for_volume</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">voxel</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">support_volume</span><span class="p">)</span>
+<span class="n">verts</span><span class="p">,</span> <span class="n">faces</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">isosurface</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">lev</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">voxel</span><span class="p">)</span>              <span class="c1"># surface in Å</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">run_denss_all</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">),</span> <span class="n">dmax_nm</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">nmaps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">cores</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">resolution</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">rg_mean</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">map_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Errors of DENSS raise <code class="docutils literal notranslate"><span class="pre">DenssError</span></code> with the end of its error output; doubtful results carry <code class="docutils literal notranslate"><span class="pre">warnings</span></code>.</p>
+</section>
+<section id="icon">
+<h2>Icon<a class="headerlink" href="#icon" title="Link to this heading"></a></h2>
+<p>DENSS has no logo of its own (the DENSS 1.8.7 package contains no image file). pyDENsity uses one when an installed
+DENSS ships an image named <code class="docutils literal notranslate"><span class="pre">*logo*</span></code> or <code class="docutils literal notranslate"><span class="pre">*icon*</span></code>; otherwise it shows its own icon: contour lines of a density map on
+its blue tile.</p>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<p>Functions and result classes: <a class="reference internal" href="api.html"><span class="doc">pyDENsity: API reference</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../atsas/index.html" class="btn btn-neutral float-left" title="pyATsas: the ATSAS programs in pySASfit" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../densitymulti/index.html" class="btn btn-neutral float-right" title="pyDENSSmulti: 3D maps from several contrasts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

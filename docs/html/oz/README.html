@@ -1,0 +1,328 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySASmorph: 3D two- and multi-phase morphologies from SAS data" href="../morph/index.html" />
+    <link rel="prev" title="The generic polydisperse tab" href="generic_polydisperse_tab.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyOZsolver</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="manual.html">ozLib — manual and quick reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">The graphical interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generic_polydisperse_tab.html">The generic polydisperse tab</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Changes since pyOZgui</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gui-modules">GUI modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#behaviour-changes-and-bug-fixes-made-during-the-port">Behaviour changes and bug fixes made during the port</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#where-to-start">Where to start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#a-note-on-the-two-halves">A note on the two halves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#report-and-manuscript">Report and manuscript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#citing">Citing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Ornstein–Zernike</a></li>
+      <li class="breadcrumb-item active">pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/oz/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysasfit-oz-ornsteinzernike-toolkit-and-its-qt-gui">
+<h1>pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI<a class="headerlink" href="#pysasfit-oz-ornsteinzernike-toolkit-and-its-qt-gui" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit.oz</span></code> is pyOZgui (<code class="docutils literal notranslate"><span class="pre">SASfitGit/src/pyOZgui</span></code>) inside pySASfit:</p>
+<ul class="simple">
+<li><p><strong>Library</strong>: all modules of <code class="docutils literal notranslate"><span class="pre">src/pyozgui</span></code>, unchanged except that their imports between each other are now
+package-relative (<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">.ozLib</span> <span class="pre">import</span> <span class="pre">...</span></code>). Use them as <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pysasfit.oz</span> <span class="pre">import</span> <span class="pre">ozLib</span></code>,
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pysasfit.oz.picardOZsolver</span> <span class="pre">import</span> <span class="pre">PicardOZsolver</span></code>, …
+Not carried over: <code class="docutils literal notranslate"><span class="pre">criticalDensities.py</span></code> and <code class="docutils literal notranslate"><span class="pre">optimizeRYalpha.py</span></code> (Python 2 <code class="docutils literal notranslate"><span class="pre">print</span></code> statements; they never imported
+under Python 3).</p></li>
+<li><p><strong>GUI</strong>: the Tk GUI is ported to Qt (PySide6) in <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui</span></code>. Start it with <code class="docutils literal notranslate"><span class="pre">pysasfit-oz</span></code>, or use the
+“pyOZsolver” tab of <code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code>.</p></li>
+<li><p><strong>C helper libraries</strong>: <code class="docutils literal notranslate"><span class="pre">librmsa.dll</span></code> is included for Windows. The sources of librmsa, liboneyukawa, liborpa and
+librfa are in <code class="docutils literal notranslate"><span class="pre">extern/oz</span></code>, with <code class="docutils literal notranslate"><span class="pre">build_windows.bat</span></code> per library (MSYS2/MinGW) and <code class="docutils literal notranslate"><span class="pre">build_linux.sh</span></code> for Linux/macOS
+(needs GSL). The wrappers look for the libraries next to themselves in <code class="docutils literal notranslate"><span class="pre">src/pysasfit/oz</span></code>.</p></li>
+<li><p><strong>Tests</strong>: <code class="docutils literal notranslate"><span class="pre">tests/oz</span></code> (library: <code class="docutils literal notranslate"><span class="pre">test_generic_polydisperse.py</span></code>, <code class="docutils literal notranslate"><span class="pre">test_multicomponent.py</span></code>, SAS/S(Q) validation) and
+<code class="docutils literal notranslate"><span class="pre">tests/oz_gui</span></code> (every tab, offscreen, with dialogs intercepted).</p></li>
+</ul>
+<p>The other documents in this folder (<code class="docutils literal notranslate"><span class="pre">gui.md</span></code>, <code class="docutils literal notranslate"><span class="pre">generic_polydisperse_tab.md</span></code>, <code class="docutils literal notranslate"><span class="pre">manual.md</span></code>, <code class="docutils literal notranslate"><span class="pre">api.md</span></code>) are pyOZgui’s
+documentation. They describe the same tabs and controls. Module names now carry the <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.</span></code> prefix, and the
+screenshots in <code class="docutils literal notranslate"><span class="pre">figures/gui_*.png</span></code> show the Tk version; <code class="docutils literal notranslate"><span class="pre">figures/qt_*.png</span></code> show the Qt version.</p>
+<p><img alt="OZ solver tab" src="../_images/qt_oz_solver.png" />
+<img alt="Polydisperse tab" src="../_images/qt_polydisperse.png" /></p>
+<section id="gui-modules">
+<h2>GUI modules<a class="headerlink" href="#gui-modules" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tk module (pyOZgui)</p></th>
+<th class="head"><p>Qt module (<code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui</span></code>)</p></th>
+<th class="head"><p>tab</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">oZgui.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">main_window.py</span></code> (<code class="docutils literal notranslate"><span class="pre">OZMainWindow</span></code>, embeddable <code class="docutils literal notranslate"><span class="pre">OZWidget</span></code>), <code class="docutils literal notranslate"><span class="pre">oz_solver_tab.py</span></code></p></td>
+<td><p>0: OZ solver</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">generic_polydisperse_tab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">generic_polydisperse_tab.py</span></code></p></td>
+<td><p>1: Polydisperse (any potential)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ry_polydisperse_yukawa_tab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ry_polydisperse_yukawa_tab.py</span></code></p></td>
+<td><p>2: RY Polydisperse Yukawa</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mixture_validation_tab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mixture_validation_tab.py</span></code></p></td>
+<td><p>3: Mixture validation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">polydisperse_yukawa_tab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">polydisperse_yukawa_tab.py</span></code></p></td>
+<td><p>not registered (as in pyOZgui)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">robertus_shs_tab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">robertus_shs_tab.py</span></code></p></td>
+<td><p>not registered (as in pyOZgui)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">polydisperse_tab_controls.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tab_controls.py</span></code></p></td>
+<td><p>shared button row / session / export mixin</p></td>
+</tr>
+<tr class="row-odd"><td><p>—</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">qtkit.py</span></code></p></td>
+<td><p>Tk-style variables, widget factories, dialogs, queue poller, plot tabs</p></td>
+</tr>
+</tbody>
+</table>
+<p>Layout, labels, defaults, help texts, hover help, session files (<code class="docutils literal notranslate"><span class="pre">.oz</span></code>, <code class="docutils literal notranslate"><span class="pre">.oz1</span></code>, …, same JSON formats, so files saved
+by the Tk version load in the Qt version), autosave, fitting and the Settings dialog are kept. Workers still run in
+threads; results reach the GUI through a queue drained by a <code class="docutils literal notranslate"><span class="pre">QTimer</span></code> instead of Tk’s <code class="docutils literal notranslate"><span class="pre">after()</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">qtkit.set_dialog_hook()</span></code> lets tests (and scripts) answer dialogs without showing them.</p>
+</section>
+<section id="behaviour-changes-and-bug-fixes-made-during-the-port">
+<h2>Behaviour changes and bug fixes made during the port<a class="headerlink" href="#behaviour-changes-and-bug-fixes-made-during-the-port" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Sign convention A, project-wide: positive = attractive.</strong> Every well depth and Yukawa amplitude is positive for
+attraction (βu = −ε, βu = −K e^{…}/r), as in the SASfit structure-factor plugins and the literature
+(<code class="docutils literal notranslate"><span class="pre">pysasfit.oz.sign_convention</span></code>). Three pyOZgui potentials used the opposite sign and were flipped: <code class="docutils literal notranslate"><span class="pre">SquareWell</span></code> ε,
+<code class="docutils literal notranslate"><span class="pre">PiecewiseConstantHS</span></code> ε₁…ε₃ and the single <code class="docutils literal notranslate"><span class="pre">Yukawa</span></code> strength. <code class="docutils literal notranslate"><span class="pre">HardSphereDoubleYukawa</span></code>, <code class="docutils literal notranslate"><span class="pre">HS3Yukawa</span></code> and the
+polydisperse MSA/RY Yukawa K were already convention A. The RFA wrapper converts at its boundary (its C library
+takes βu), so RFA, ORPA and the numerical square well now take the same number. Generic-tab session files without
+a <code class="docutils literal notranslate"><span class="pre">signConvention</span></code> key are converted on load (values, fit bounds, fitted value) and the status line says so; the
+potential fields carry a “(+ = attr.)” label. The single <code class="docutils literal notranslate"><span class="pre">Yukawa</span></code>’s repulsive/attractive split, used by HMSA and
+similar closures, was the bare shape without K; it is now the potential split by sign.</p></li>
+</ul>
+<p>Each fix is marked in the code (“BUG FIX (Qt port)”, “Port fix”).</p>
+<ul class="simple">
+<li><p><strong>Robertus SHS and RY Yukawa tabs, core-shell:</strong> <code class="docutils literal notranslate"><span class="pre">CoreShell</span></code> was called with the wrong arguments (positional
+shell/rho, or no arguments) and always raised “give exactly one of thickness, ratio”.</p></li>
+<li><p><strong>RY Yukawa tab:</strong></p>
+<ul>
+<li><p>Gamma and Beta distributions crashed with <code class="docutils literal notranslate"><span class="pre">KeyError:</span> <span class="pre">'D0'</span></code>; their mean and s.d. now come from the moments.</p></li>
+<li><p>A single bin gave a NaN bar width.</p></li>
+<li><p>Interrupt could never be pressed; it now works, including between the solves of the α search.</p></li>
+<li><p>The tab now saves and restores its settings in session files; before, its session files restored nothing.</p></li>
+</ul>
+</li>
+<li><p><strong>Generic polydisperse tab:</strong></p>
+<ul>
+<li><p>The fit summary was overwritten by the redraw and never visible after a Compute.</p></li>
+<li><p>A non-numeric bound crashed the fit after the error message.</p></li>
+<li><p>The Fit button stayed disabled after a failed fit.</p></li>
+<li><p>The “fitter” help text was never attached.</p></li>
+<li><p>The core-shell-only entries were found by creation order; they are now found by name.</p></li>
+</ul>
+</li>
+<li><p><strong>Mixture validation tab:</strong></p>
+<ul>
+<li><p>Save/Load dropped six settings that change the numerical curve: refinement, solver, damping, grid exponent,
+maximum iterations and deflation.</p></li>
+<li><p>Loading left the previous summary on screen.</p></li>
+<li><p>The N readout could crash (<code class="docutils literal notranslate"><span class="pre">inf</span></code>) or freeze (huge k).</p></li>
+<li><p>Two help texts were never shown.</p></li>
+</ul>
+</li>
+<li><p><strong>Generic tab:</strong> the OZ solver and “Deflate if S(Q)&lt;0” are now saved in session files (a reloaded session
+used to fall back to the default solver and no deflation). A solver not installed on the loading machine falls back
+to the first available one, and the status line says so; older files keep the current choice.</p></li>
+<li><p><strong>RY Polydisperse Yukawa tab:</strong></p>
+<ul>
+<li><p>The selected size distribution is now used: the classes are its own quadrature nodes and weights
+(<code class="docutils literal notranslate"><span class="pre">discretize</span></code>, as in the MSA tab). pyOZgui built them from mean and s.d. only, evenly spaced over ±3 s.d. with
+log-normal weights, so every distribution gave the log-normal result and a rel. s.d. above 1/3 gave negative sizes.</p></li>
+<li><p>The distributions are of the radius; the solver gets diameters σ = 2R. pyOZgui used the radius values as
+diameters (particles half the size entered). Results differ from pyOZgui’s for both reasons.</p></li>
+</ul>
+</li>
+<li><p><strong>RY and MSA Polydisperse Yukawa tabs:</strong> “Mean radius” of the log-normal distribution is now the mean, as for
+Schulz-Zimm and in the generic tab. pyOZgui passed it to <code class="docutils literal notranslate"><span class="pre">LogNormal</span></code> as the median, so the actual mean was
+√(1 + rel.s.d.²) larger (2 % at 0.2, 4 % at 0.3).</p></li>
+<li><p><strong>Polydisperse Yukawa tab:</strong></p>
+<ul>
+<li><p>One bin crashed the redraw and left Compute disabled.</p></li>
+<li><p>The S_ij plot drew duplicate curves for N ≤ 2.</p></li>
+</ul>
+</li>
+<li><p><strong>Deflation</strong> (“Deflate if S(Q) &lt; 0”) in the polydisperse model (<code class="docutils literal notranslate"><span class="pre">GenericPolydisperseSAS</span></code>) now works: before, the
+retry solver was never set up or solved and the screen’s result was ignored, so an unphysical root came back
+silently when deflation was on. The attempts are listed in the error message when no physical root is reached.</p></li>
+<li><p><strong>RY wrapper, automatic solver</strong> (<code class="docutils literal notranslate"><span class="pre">solverClass=None</span></code>): the fallback to the next solver was unreachable and would
+have lost closure and deflation settings; fixed (<code class="docutils literal notranslate"><span class="pre">solverFallback</span></code> lists the solvers that failed).</p></li>
+<li><p><strong>OZ solver tab</strong>: Hankel transform type selectable in the preferences (auto = 4 for one component, 1, 4).</p></li>
+<li><p><strong>OZ solver tab, Picard / Mann iteration</strong>: the Picard solver is now “Picard / Mann iteration”, with a field
+<em>damping a</em> (x ← (1−a)x + a·T(x); a = 1 plain Picard, a &lt; 1 Mann’s damped iteration). The start value is a
+preference (<code class="docutils literal notranslate"><span class="pre">oz.solve.mann_alpha</span></code>). <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> has a <code class="docutils literal notranslate"><span class="pre">mannAlpha</span></code> argument, and the old name
+“Picard iteration” is still accepted. Convergence is now tested on the residual instead of the damped step,
+which with a &lt; 1 would have stopped 1/a times too early. See <a class="reference internal" href="gui.html"><span class="std std-doc">the GUI guide</span></a>.</p></li>
+<li><p><strong>Non-converged solves are reported</strong>: <code class="docutils literal notranslate"><span class="pre">OZResult.converged</span></code> / <code class="docutils literal notranslate"><span class="pre">finalRelativeProgress</span></code>, a <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>, and in
+the OZ solver tab a “[NOT CONVERGED]” label and a warning dialog. Before, the last iterate at the iteration
+limit was shown like a solution. For example, HS/PY at φ = 0.53 after 1000 Picard/Mann iterations looked as if
+the solution depended on a. The verification message now distinguishes “did not converge” from “two roots”.
+For RMSA, ZSEP and the consistent-parameter search the flag was always False and now reports the final solve.</p></li>
+<li><p><strong>OZ solver tab, iteration limit</strong>: the “Max iterations” field was removed. The limit comes from the
+preferences (<code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations</span></code>, <code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations_picard</span></code>). For Picard / Mann the limit is
+⌈N/a⌉, and a grey line shows the value that will apply. The damping must satisfy 0 &lt; a ≤ 1: the field turns
+red otherwise, and the library raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p><strong>Physicality screen on every solve</strong>: <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> checks min S(Q) ≥ 0 always (before: only with
+<code class="docutils literal notranslate"><span class="pre">deflateOnUnphysical</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>, default 0, so an unphysical root came back without notice). The result carries
+<code class="docutils literal notranslate"><span class="pre">minSq</span></code> and <code class="docutils literal notranslate"><span class="pre">physical</span></code>, gives a <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>, and the OZ solver tab marks the run “[S(Q)&lt;0]”.</p></li>
+<li><p><strong>Independent residual check</strong>: <code class="docutils literal notranslate"><span class="pre">ozLib.solve(residualTolerance=1e-6)</span></code> was accepted but never used. Now the
+closure map is applied once more to the returned solution, and the result is marked not converged when
+‖T(x) − x‖/‖x‖ exceeds the tolerance, whatever the solver reported (<code class="docutils literal notranslate"><span class="pre">OZResult.residual</span></code>). The tolerance is a
+preference (<code class="docutils literal notranslate"><span class="pre">oz.solve.residual_tolerance</span></code>). Example caught: KIN_FP returning NaN with a success flag.</p></li>
+<li><p><strong>Verification</strong>: verifiers must be independent of the solver they check. A verifier of the same algorithm
+family is skipped (<code class="docutils literal notranslate"><span class="pre">SOLVER_FAMILIES</span></code>; KIN_FP, scipy Anderson and MDIIS form one Anderson/DIIS family). Only a
+<em>converged</em> verifier counts. The defaults are Biggs–Andrews, then Picard / Mann damped with a = 0.5
+(preference <code class="docutils literal notranslate"><span class="pre">oz.solve.verify_mann_alpha</span></code>). The Picard limit was raised from 3000 to 5000 so that the damped
+verifier converges for dense hard spheres (φ = 0.53), where Biggs–Andrews and undamped Picard fail. If no
+verifier converges, <code class="docutils literal notranslate"><span class="pre">VerificationUnavailable</span></code> is raised, and the GUI shows the result marked “[UNVERIFIED]”.</p></li>
+<li><p>SASfit’s own C OZ solver (<code class="docutils literal notranslate"><span class="pre">sasfit_oz_potential_square_well.c</span></code>, <code class="docutils literal notranslate"><span class="pre">..._piecewise_constant_HS.c</span></code>, reached from
+<code class="docutils literal notranslate"><span class="pre">pysasfit.studio</span></code> through the <code class="docutils literal notranslate"><span class="pre">sq_oz_*</span></code> plugins) still uses βu = +ε. Values passed there keep SASfit’s sign.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/oz/test_multicomponent.py::RegressionOneComponent</span></code> fails with the original code too: its stored reference
+values predate later solver changes. It is marked as an expected failure.</p></li>
+<li><p><strong>RY Yukawa tab:</strong></p>
+<ul>
+<li><p>The α search always uses the default solver.</p></li>
+<li><p>With the default parameters (φ = 0.15, z = 0.06, K = 1) no α in [0.02, 3] makes the two pressure routes agree,
+before and after the distribution fix; the summary reports this as “NO consistent alpha”.</p></li>
+</ul>
+</li>
+<li><p><strong>Generic tab:</strong></p>
+<ul>
+<li><p>Fit can be started while a Compute is still running.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generic_polydisperse_tab.html" class="btn btn-neutral float-left" title="The generic polydisperse tab" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../morph/index.html" class="btn btn-neutral float-right" title="pySASmorph: 3D two- and multi-phase morphologies from SAS data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polarised neutrons &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python ports of SASfit plugins" href="python_ports.html" />
+    <link rel="prev" title="SESANS and multiple scattering" href="sesans_msas.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASstudio</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explorer.html">The model explorer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Building models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sesans_msas.html">SESANS and multiple scattering</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Polarised neutrons</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basis-terms">Basis terms</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#magnetic-models-python-ports">Magnetic models (Python ports)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#what-a-data-set-measures">What a data set measures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-several-states-together">Fitting several states together</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conventions">Conventions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="python_ports.html">Python ports of SASfit plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="results.html">Results and export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Extending studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../studio.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#about-the-pictures-and-examples">About the pictures and examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">studio manual</a></li>
+      <li class="breadcrumb-item active">Polarised neutrons</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/studio_manual/polarisation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="polarised-neutrons">
+<h1>Polarised neutrons<a class="headerlink" href="#polarised-neutrons" title="Link to this heading"></a></h1>
+<p>SASfit has one function per polarisation channel of a magnetic model (<code class="docutils literal notranslate"><span class="pre">_pp</span></code>, <code class="docutils literal notranslate"><span class="pre">_mm</span></code>, <code class="docutils literal notranslate"><span class="pre">_pm</span></code>, <code class="docutils literal notranslate"><span class="pre">_POLARIS</span></code>, <code class="docutils literal notranslate"><span class="pre">_cross</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_aniso</span></code>, …) and repeats the instrument values (polarisation, flipper efficiency) in every model. In pySASstudio
+the <strong>model</strong> describes the sample only and the <strong>data set</strong> says what was measured. One magnetic model then fits
+the unpolarised data, flipper off and flipper on, the corrected I+ and I−, their difference and – with an
+analyser – the four channels, all at the same time.</p>
+<section id="basis-terms">
+<h2>Basis terms<a class="headerlink" href="#basis-terms" title="Link to this heading"></a></h2>
+<p>A magnetic model returns, for every q and angle ψ between q and the field on the detector, five terms
+(field perpendicular to the beam; N nuclear, M⊥ magnetic Halpern–Johnson amplitude, h the field axis):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>term</p></th>
+<th class="head"><p>meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NN</p></td>
+<td><p>⟨|N|²⟩, nuclear</p></td>
+</tr>
+<tr class="row-odd"><td><p>NM</p></td>
+<td><p>⟨Re N M⊥h*⟩, nuclear–magnetic interference</p></td>
+</tr>
+<tr class="row-even"><td><p>MH</p></td>
+<td><p>⟨|M⊥h|²⟩, magnetic, non-spin-flip</p></td>
+</tr>
+<tr class="row-odd"><td><p>MSF</p></td>
+<td><p>⟨|M⊥|² − |M⊥h|²⟩, magnetic, spin-flip</p></td>
+</tr>
+<tr class="row-even"><td><p>CH</p></td>
+<td><p>chiral term (0 unless the model is chiral)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The measured cross sections are weighted sums. <strong>+ and − are the neutron spin parallel / antiparallel to the
+field</strong> (convention of Moon, Riste &amp; Koehler, Phys. Rev. 181, 920 (1969): σ_z|±⟩ = ±|±⟩ with z along the field).
+The neutron moment is opposite to its spin, so the amplitudes are U±± = b ± p M⊥z: a neutron with spin parallel to
+the magnetisation sees nuclear and magnetic amplitude added (this is why a magnetised Co crystal reflects the
+neutrons with spin parallel to its moment and to the field). Hence</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>I++ = NN + MH + 2NM      I−− = NN + MH − 2NM      I+− = MSF − 2CH      I−+ = MSF + 2CH
+I+  = I++ + I+−          I−  = I−− + I−+          (SANSPOL, no analyser)
+I− − I+ = −4 NM + 4 CH
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Michels (book and reviews), the SASfit C functions (<code class="docutils literal notranslate"><span class="pre">_pp</span></code>, <code class="docutils literal notranslate"><span class="pre">_mm</span></code>, <code class="docutils literal notranslate"><span class="pre">pol</span></code> = +1) and part of the magnetic-SANS
+literature label the states by the neutron <strong>moment</strong>: their “++” (with −2NM) is “−−” here. The <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter
+of the SASfit functions keeps its SASfit meaning; pol = +1 is spin antiparallel to the field. When a data set
+has a polarisation setting, C functions with a <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter get pol = n− − n+ of that setting.</p>
+</div>
+<p>For particles whose moments have the orientation moments S1 = ⟨cos θ⟩ and S2 = ⟨P₂(cos θ)⟩ with respect to the
+field (nuclear amplitude F_N, magnetic amplitude F_M, same normalisation as I(0) = (Δη V)²):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>NN  = F_N²
+NM  = F_N F_M S1 sin²ψ
+MH  = F_M² [S2 sin⁴ψ + (1 − S2)/3 sin²ψ]
+MSF = F_M² [2(1 − S2)/3 − S2 sin⁴ψ + (4 S2 − 1)/3 sin²ψ]
+</pre></div>
+</div>
+<p>Saturated: S1 = S2 = 1 (MH = F_M² sin⁴ψ, MSF = F_M² sin²ψ cos²ψ); random: S1 = S2 = 0 (MH + MSF = 2F_M²/3);
+Langevin: S1 = L(ξ), S2 = 1 − 3L(ξ)/ξ.</p>
+<section id="magnetic-models-python-ports">
+<h3>Magnetic models (Python ports)<a class="headerlink" href="#magnetic-models-python-ports" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>function</p></th>
+<th class="head"><p>model</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ff_py_magnetic_shell_psi</span></code></p></td>
+<td><p>core-shell sphere, nuclear and magnetic SLDs of core, shell and matrix, saturated</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ff_py_superparamagnetic_ff_psi</span></code></p></td>
+<td><p>core-shell sphere with a magnetic core, Langevin statistics with ξ = mu_kT (R/R_av)³</p></td>
+</tr>
+</tbody>
+</table>
+<p>Both reproduce the libsasfit originals (<code class="docutils literal notranslate"><span class="pre">ff_magnetic_shell_psi</span></code>, <code class="docutils literal notranslate"><span class="pre">ff_superparamagnetic_ff_psi</span></code>) exactly when no
+polarisation is set: then their <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter mixes the states as in SASfit, I = (1+pol)/2 I− + (1−pol)/2 I+ in the
+spin labels used here (pol = +1: spin antiparallel to the field). ψ is the
+angle between q and the field (90°: q perpendicular to the field). With a size distribution over R the
+Langevin parameter follows the size of each particle.</p>
+</section>
+</section>
+<section id="what-a-data-set-measures">
+<h2>What a data set measures<a class="headerlink" href="#what-a-data-set-measures" title="Link to this heading"></a></h2>
+<p>The <strong>Polarisation</strong> box under the Transform box (per data set) sets the quantity:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>quantity</p></th>
+<th class="head"><p>data</p></th>
+<th class="head"><p>instrument values</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>not polarised</p></td>
+<td><p>ordinary data; magnetic functions use their <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>unpolarised</p></td>
+<td><p>polariser out, or (I+ + I−)/2</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>flipper off</p></td>
+<td><p>polariser in, flipper off, <strong>not corrected</strong></p></td>
+<td><p>P (, P_f)</p></td>
+</tr>
+<tr class="row-odd"><td><p>flipper on</p></td>
+<td><p>polariser in, flipper on, <strong>not corrected</strong></p></td>
+<td><p>P, f (, P_f)</p></td>
+</tr>
+<tr class="row-even"><td><p>I+, I−</p></td>
+<td><p>SANSPOL corrected (pySASred output <code class="docutils literal notranslate"><span class="pre">_plus</span></code>, <code class="docutils literal notranslate"><span class="pre">_minus</span></code>)</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>I− − I+</p></td>
+<td><p>difference, corrected</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>I++, I−−, I+−, I−+</p></td>
+<td><p>four channels with analyser, corrected</p></td>
+<td><p>–</p></td>
+</tr>
+</tbody>
+</table>
+<p>Only data that are <strong>not corrected</strong> for the instrument need P (beam polarisation), f (flipped fraction of the
+flipper, F = 2f − 1) and P_f (polarisation after the sample, depolarisation): the model mixes I+ and I−
+exactly as <a class="reference internal" href="../sasred/polarisation.html"><span class="doc">pySASred</span></a> does,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>n+_off = (1 + P r)/2,   n−_on = f n+_off + (1 − f) n−_off,   r = (1 − P_f)/(−ln P_f),
+</pre></div>
+</div>
+<p>so fitting the uncorrected states with the forward model is equivalent to correcting them first – without the
+noise amplification of the inversion. The box shows only the values the quantity needs and where each one comes
+from:</p>
+<ul class="simple">
+<li><p><strong>from the file</strong>: a reduced NXcanSAS file of pySASred carries the polarisation of a SANSPOL output (<code class="docutils literal notranslate"><span class="pre">_plus</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_minus</span></code>, <code class="docutils literal notranslate"><span class="pre">_unpolarised</span></code>, <code class="docutils literal notranslate"><span class="pre">_difference</span></code>) or the polariser/flipper state of the run and P, f from the metadata or
+the SANS-I defaults (Aswal et al. 2008 table, f = 0.995). Adding such a file sets the box.</p></li>
+<li><p><strong>entered</strong>: typed in the box.</p></li>
+</ul>
+<p>Without an analyser P and the magnetic contrast are degenerate (only P·(I+ − I−) is measured): give P from the
+instrument; fit it only if the magnetic SLD is known.</p>
+<p>Further settings: <em>flipper off = +</em> (which flipper state is spin parallel to the field), <em>exact / BerSANS</em> flipper
+mixing, the <strong>field direction ψ_H</strong> on the detector (from +q_x, counter-clockwise; the ψ of the magnetic functions is
+measured from it, so the 2D map shows the field along ψ_H) and <strong>azimuthal average</strong> for 1D radial averages
+(sin²ψ → 1/2, sin⁴ψ → 3/8; the ψ parameter is then not used).</p>
+<p>Non-magnetic contributions count with the nuclear weight: fully in I+, I−, the non-spin-flip channels and
+unpolarised data, <strong>not</strong> in the spin-flip channels and in I− − I+. The background stays a parameter of each data
+set (it is not mixed).</p>
+<p>C functions that only know SASfit’s <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter (for example the libsasfit originals) get
+pol = n+ − n− of the data set, which covers unpolarised, flipper off/on, I+ and I−; for the difference and the
+analyser channels a Python port with basis terms is needed.</p>
+</section>
+<section id="fitting-several-states-together">
+<h2>Fitting several states together<a class="headerlink" href="#fitting-several-states-together" title="Link to this heading"></a></h2>
+<p>Load the states as data sets (flipper off and on, or I+ and I−, optionally the polariser-out run), set the
+quantity of each and fit the magnetic parameters as common parameters. P, f, P_f and ψ_H can be fitted from a
+script with the addresses <code class="docutils literal notranslate"><span class="pre">pol.P</span></code>, <code class="docutils literal notranslate"><span class="pre">pol.f</span></code>, <code class="docutils literal notranslate"><span class="pre">pol.P_f</span></code>, <code class="docutils literal notranslate"><span class="pre">pol.psi_H</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.studio</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelFunction</span><span class="p">,</span> <span class="n">ScatteringContribution</span><span class="p">,</span> <span class="n">ports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.studio.fitting</span><span class="w"> </span><span class="kn">import</span> <span class="n">FitProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.studio.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Polarisation</span>
+
+<span class="n">ports</span><span class="o">.</span><span class="n">register_aliases</span><span class="p">()</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">ScatteringContribution</span><span class="p">(</span><span class="s2">"ff_py_superparamagnetic_ff_psi"</span><span class="p">,</span>
+                           <span class="p">{</span><span class="s2">"R"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"dR"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"eta_nuc_core"</span><span class="p">:</span> <span class="mf">6.9</span><span class="p">,</span> <span class="s2">"eta_nuc_shell"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"eta_nuc_matrix"</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+                            <span class="s2">"eta_mag_core"</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s2">"R_av"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"mu_kT"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">"psi"</span><span class="p">:</span> <span class="mi">90</span><span class="p">},</span>
+                           <span class="n">size_distribution</span><span class="o">=</span><span class="s2">"sd_LogNorm"</span><span class="p">,</span> <span class="n">sd_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"N"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"mu"</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+                           <span class="n">distributed</span><span class="o">=</span><span class="s2">"R"</span><span class="p">)</span>
+<span class="n">m_off</span> <span class="o">=</span> <span class="n">ModelFunction</span><span class="p">([</span><span class="n">c</span><span class="p">],</span> <span class="n">background</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">polarisation</span><span class="o">=</span><span class="n">Polarisation</span><span class="p">(</span><span class="s2">"off"</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="mf">0.984</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mf">0.995</span><span class="p">))</span>
+<span class="n">m_on</span> <span class="o">=</span> <span class="n">ModelFunction</span><span class="p">([</span><span class="n">c</span><span class="p">],</span> <span class="n">background</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">polarisation</span><span class="o">=</span><span class="n">Polarisation</span><span class="p">(</span><span class="s2">"on"</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="mf">0.984</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mf">0.995</span><span class="p">))</span>
+
+<span class="n">prob</span> <span class="o">=</span> <span class="n">FitProblem</span><span class="p">()</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_dataset</span><span class="p">(</span><span class="s2">"sample_off.h5"</span><span class="p">,</span> <span class="n">m_off</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"off"</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_dataset</span><span class="p">(</span><span class="s2">"sample_on.h5"</span><span class="p">,</span> <span class="n">m_on</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"on"</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_common</span><span class="p">(</span><span class="s2">"0.ff.eta_mag_core"</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_common</span><span class="p">(</span><span class="s2">"0.sd.mu"</span><span class="p">)</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">add_local</span><span class="p">(</span><span class="s2">"background"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">"scipy"</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>A model may also be given the setting as a dictionary (<code class="docutils literal notranslate"><span class="pre">polarisation={&quot;quantity&quot;:</span> <span class="pre">&quot;minus&quot;}</span></code>); this is what
+<em>Copy Python code</em> writes.</p>
+</section>
+<section id="conventions">
+<h2>Conventions<a class="headerlink" href="#conventions" title="Link to this heading"></a></h2>
+<p>The pySASfit frame (<a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>): q_x to the right and q_y up as seen looking towards the sample,
+ψ counter-clockwise from +q_x. With the field along +q_x (ψ_H = 0) the frame of Michels (field along z_M) is
+x_M = z, z_M = x, y_M = −y, and the geometric factors are identical. + and − refer to the neutron spin (Moon, Riste
+&amp; Koehler 1969); Michels and SASfit label by the neutron moment (their “++” is the “−−” here).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sesans_msas.html" class="btn btn-neutral float-left" title="SESANS and multiple scattering" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="python_ports.html" class="btn btn-neutral float-right" title="Python ports of SASfit plugins" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

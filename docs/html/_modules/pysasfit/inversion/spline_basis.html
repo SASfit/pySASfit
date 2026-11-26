@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.spline_basis &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.spline_basis</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.spline_basis</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Glatter-style B-spline basis for p(r) (Glatter, 1977, Acta Cryst. A33,</span>
+<span class="sd">83-90 -- the original Indirect Fourier Transform method, still used today</span>
+<span class="sd">in GNOM; Svergun, 1992, J. Appl. Cryst. 25, 495-503). Instead of solving</span>
+<span class="sd">for p(r) directly on a fine point grid of n values (this package's default</span>
+<span class="sd">representation, and the one Hansen (2000) and the Bayesian-evidence</span>
+<span class="sd">solvers here use), Glatter represents p(r) as a linear combination of a</span>
+<span class="sd">SMALL number of smooth basis functions:</span>
+
+<span class="sd">    p(r) = sum_j c_j * phi_j(r)</span>
+
+<span class="sd">with ~15-30 cubic B-spline basis functions phi_j, rather than the</span>
+<span class="sd">~100-200 point values this package's grid typically uses. This is</span>
+<span class="sd">regularization by dimensionality reduction rather than by a roughness</span>
+<span class="sd">penalty: a high-frequency oscillation simply isn't representable in a</span>
+<span class="sd">15-30-dimensional spline basis, so near-Nyquist "ringing" of the kind</span>
+<span class="sd">investigated in this package's own diagnose_hansen_* scripts (2026-10-06)</span>
+<span class="sd">is structurally excluded, independent of any regularization-strength</span>
+<span class="sd">tuning. This is a genuinely different mechanism from the single- or</span>
+<span class="sd">multi-block lambda*||L p||^2 penalty used elsewhere in this package (see</span>
+<span class="sd">regularization.py and bayesian_evidence.log_evidence_blocks) -- not a</span>
+<span class="sd">competitor that needs to "win" against it, but a different, complementary</span>
+<span class="sd">way of imposing smoothness, in the same spirit as the Glatter-vs-Hansen</span>
+<span class="sd">split in the IFT literature this package's own docstrings already</span>
+<span class="sd">reference.</span>
+
+<span class="sd">NORMALIZED r: the basis is built on t = r/r_max in [0, 1] (originally on</span>
+<span class="sd">integer indices 0..n-1, which is the same thing for an equidistant grid), exactly mirroring how</span>
+<span class="sd">regularization.hann_taper is used in index space inside</span>
+<span class="sd">solver_registry.py's _run_bayesian_evidence_hann_tapered -- the physical</span>
+<span class="sd">r grid is always an affine function of index (r = r_max * i/(n-1)), so a</span>
+<span class="sd">basis built in index space and a basis built in r space span the same</span>
+<span class="sd">set of representable shapes; building in index space avoids having to</span>
+<span class="sd">plumb r_max/r_grid into every solver function that currently only</span>
+<span class="sd">receives (A, b, db).</span>
+
+<span class="sd">ENDPOINT CONSTRAINT: Hansen (2000) imposes p(0)=p(Dmax)=0 explicitly as a</span>
+<span class="sd">term in his regularization functional (see hansen_smoothness_cholesky's</span>
+<span class="sd">docstring). The spline basis built here imposes the SAME physical</span>
+<span class="sd">constraint structurally instead, via the standard clamped-B-spline trick:</span>
+<span class="sd">build an open-uniform (clamped) B-spline basis with n_coeffs+2 control</span>
+<span class="sd">points, then drop the first and last control points/basis functions. A</span>
+<span class="sd">clamped B-spline's first basis function is the only one nonzero at the</span>
+<span class="sd">left domain edge (where it equals 1, i.e. the curve there equals exactly</span>
+<span class="sd">that control point), and symmetrically for the last basis function at the</span>
+<span class="sd">right edge -- so every REMAINING (interior) basis function is</span>
+<span class="sd">*identically* zero at both r=0 and r=r_max, for any choice of</span>
+<span class="sd">coefficients. p(0)=p(Dmax)=0 therefore holds exactly, not as a penalized</span>
+<span class="sd">soft preference, with no extra machinery needed in the solvers that use</span>
+<span class="sd">this basis.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">BSpline</span>
+
+
+<span class="n">SPACINGS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"uniform"</span><span class="p">,</span> <span class="s2">"quadratic"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="interior_knots">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.spline_basis.interior_knots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">interior_knots</span><span class="p">(</span><span class="n">n_coeffs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"uniform"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Interior knot positions in normalized r, t = r/r_max in (0, 1).</span>
+
+<span class="sd">    The clamped basis has n_coeffs + 2 control points (the two endpoint ones</span>
+<span class="sd">    are dropped later), hence n_coeffs + 2 - degree - 1 interior knots.</span>
+
+<span class="sd">    spacing::</span>
+
+<span class="sd">      "uniform"   -- equidistant in r (Glatter 1977; uniform Shannon</span>
+<span class="sd">                     resolution pi/q_max along r).</span>
+<span class="sd">      "quadratic" -- t_k = u_k^2 with u uniform: knot density ~ 1/sqrt(t),</span>
+<span class="sd">                     denser at small r.</span>
+<span class="sd">      "log"       -- geometric from t_min = 1/(2*n_coeffs) to 1: denser at</span>
+<span class="sd">                     small r, sparse in the tail.</span>
+
+<span class="sd">    On test.dat (2026-10-10) quadratic/log gave chi2_r ~1.0 with balanced</span>
+<span class="sd">    low/mid/high-q residuals at 20 coefficients, uniform needed ~25 (p(r)</span>
+<span class="sd">    rises steeply to its peak and has a long smooth tail). Data-dependent:</span>
+<span class="sd">    a p(r) with structure at large r may prefer uniform.</span>
+<span class="sd">    """</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">n_coeffs</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_coeffs=</span><span class="si">{</span><span class="n">n_coeffs</span><span class="si">}</span><span class="s2"> too small for degree=</span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"uniform"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"quadratic"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"log"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">t_min</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n_coeffs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">t_min</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown knot spacing </span><span class="si">{</span><span class="n">spacing</span><span class="si">!r}</span><span class="s2">; use one of </span><span class="si">{</span><span class="n">SPACINGS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="bspline_basis_at">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.spline_basis.bspline_basis_at">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bspline_basis_at</span><span class="p">(</span>
+    <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n_coeffs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"uniform"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""(len(t), n_coeffs) basis evaluated at normalized positions t in</span>
+<span class="sd">    [0, 1] (t = r/r_max). Every column vanishes at t=0 and t=1 (endpoint</span>
+<span class="sd">    control points dropped, see module docstring). Evaluating the same</span>
+<span class="sd">    basis on a fine quadrature grid and on the coarse display grid is what</span>
+<span class="sd">    lets the spline solvers integrate the kernel accurately even when knot</span>
+<span class="sd">    spans are shorter than the display-grid spacing (log/quadratic knots</span>
+<span class="sd">    near r=0)."""</span>
+    <span class="k">if</span> <span class="n">degree</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"degree must be &gt;= 1, got </span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_coeffs</span> <span class="o">&lt;</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"n_coeffs=</span><span class="si">{</span><span class="n">n_coeffs</span><span class="si">}</span><span class="s2"> too small for degree=</span><span class="si">{</span><span class="n">degree</span><span class="si">}</span><span class="s2">; need n_coeffs &gt;= </span><span class="si">{</span><span class="n">degree</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">n_ctrl</span> <span class="o">=</span> <span class="n">n_coeffs</span> <span class="o">+</span> <span class="mi">2</span>
+    <span class="n">knots</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">interior_knots</span><span class="p">(</span><span class="n">n_coeffs</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="n">spacing</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="p">])</span>
+    <span class="n">B_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">n_ctrl</span><span class="p">))</span>
+    <span class="n">eye</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_ctrl</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_ctrl</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">BSpline</span><span class="p">(</span><span class="n">knots</span><span class="p">,</span> <span class="n">eye</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">degree</span><span class="p">,</span> <span class="n">extrapolate</span><span class="o">=</span><span class="kc">False</span><span class="p">)(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">B_full</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="c1"># FITPACK returns 0 at the right clamped edge; the true value there is</span>
+    <span class="c1"># 1 for the last basis function and 0 for all others. That column is</span>
+    <span class="c1"># dropped below, so the interior columns are already correct.</span>
+    <span class="k">return</span> <span class="n">B_full</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="build_bspline_basis">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.spline_basis.build_bspline_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_bspline_basis</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_coeffs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">degree</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"uniform"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    (n, n_coeffs) basis on n equidistant grid points spanning [0, r_max],</span>
+<span class="sd">    with x[0] == x[n-1] == 0 for every coefficient vector (see module</span>
+<span class="sd">    docstring). Thin wrapper around bspline_basis_at(linspace(0, 1, n)).</span>
+
+<span class="sd">    n_coeffs: number of free coefficients (Glatter/GNOM typically ~15-30);</span>
+<span class="sd">    the main regularization knob -- fewer = stiffer.</span>
+<span class="sd">    spacing: knot placement in r, see interior_knots().</span>
+
+<span class="sd">    Raises ValueError if n_coeffs is too small for the degree or larger</span>
+<span class="sd">    than n - 2.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">n_coeffs</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"n_coeffs=</span><span class="si">{</span><span class="n">n_coeffs</span><span class="si">}</span><span class="s2"> too large for a grid of n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> points "</span>
+            <span class="sa">f</span><span class="s2">"(need n_coeffs &lt;= n - 2)"</span>
+        <span class="p">)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">bspline_basis_at</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">n_coeffs</span><span class="p">,</span> <span class="n">degree</span><span class="p">,</span> <span class="n">spacing</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n_coeffs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">B</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

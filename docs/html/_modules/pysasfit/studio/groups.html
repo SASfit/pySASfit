@@ -1,0 +1,458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.groups &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.groups</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.groups</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">"""Menu tree of the SASfit model functions, from the Doxygen group definitions (``*.def``).</span>
+
+<span class="sd">SASfit builds the pull-down menus for form factors, structure factors and size</span>
+<span class="sd">distributions from two sources:</span>
+
+<span class="sd">* the ``*.def`` files of the plugin directory (a folder ``def`` next to the plugin</span>
+<span class="sd">  libraries, or the plugin folder itself, see :func:`pysasfit.studio.paths.def_dirs`)</span>
+<span class="sd">  define the groups and how they nest::</span>
+
+<span class="sd">      /**</span>
+<span class="sd">       * \defgroup ff_plugins_fuzzy_obj fuzzy obj.      &lt;- group name and menu label</span>
+<span class="sd">       * \ingroup ff_plugins                            &lt;- parent group (the menu level above)</span>
+<span class="sd">       *</span>
+<span class="sd">       * This group contains form factors with many different fuzzy cross-sectional profiles.</span>
+<span class="sd">       */</span>
+
+<span class="sd">  A group with ``\toplvldescr{form factor,sasfit_ff,form_fac}`` is the root of a menu</span>
+<span class="sd">  (here: the form factors); groups above it (``model_functions``) are not shown;</span>
+<span class="sd">* the plugin headers (:mod:`pysasfit.studio.headers`) name the group of every function</span>
+<span class="sd">  with ``\ingroup``.</span>
+
+<span class="sd">    defs = load_groups()                                  # all .def files; defs.files lists them</span>
+<span class="sd">    top = build_menu(headers.catalogue().values(), ("sq",), defs)</span>
+<span class="sd">    for path, p in iter_functions(top): ...               # path: labels of the groups above p</span>
+<span class="sd">    print("\n".join(tree_lines(top)))</span>
+
+<span class="sd">Groups without functions are left out. Functions without a (known) group are collected in a</span>
+<span class="sd">last entry, so nothing disappears when a ``.def`` file is missing; without any ``.def`` file</span>
+<span class="sd">the menu is a flat list.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">paths</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"GroupDef"</span><span class="p">,</span>
+    <span class="s2">"GroupDefs"</span><span class="p">,</span>
+    <span class="s2">"MenuNode"</span><span class="p">,</span>
+    <span class="s2">"parse_def"</span><span class="p">,</span>
+    <span class="s2">"def_files"</span><span class="p">,</span>
+    <span class="s2">"load_groups"</span><span class="p">,</span>
+    <span class="s2">"build_menu"</span><span class="p">,</span>
+    <span class="s2">"iter_functions"</span><span class="p">,</span>
+    <span class="s2">"tree_lines"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_COMMENT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"/\*\*(.*?)\*/"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+<span class="n">_DEFGROUP</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"</span><span class="se">\\</span><span class="s2">defgroup\s+(\S+)[ \t]*([^\n]*)"</span><span class="p">)</span>
+<span class="n">_INGROUP</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"</span><span class="se">\\</span><span class="s2">ingroup\s+(\S+)"</span><span class="p">)</span>
+<span class="n">_TOPLVL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"</span><span class="se">\\</span><span class="s2">toplvldescr\s*\{([^,}]*),([^,}]*),([^,}]*)\}"</span><span class="p">)</span>
+<span class="n">_MATH</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"</span><span class="se">\\</span><span class="s2">f\[.*?</span><span class="se">\\</span><span class="s2">f\]|</span><span class="se">\\</span><span class="s2">f\$(.*?)</span><span class="se">\\</span><span class="s2">f\$"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+<span class="n">_DIRECTIVE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^</span><span class="se">\\</span><span class="s2">(defgroup|ingroup|modname|toplvldescr|sa|see)\b"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GroupDef">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.GroupDef">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GroupDef</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One ``\\defgroup`` of a ``.def`` file."""</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. 'ff_plugins_fuzzy_obj'</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># menu text, e.g. 'fuzzy obj.'</span>
+    <span class="n">parent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># name of the group above ('' = none)</span>
+    <span class="n">brief</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># description (tool tip)</span>
+    <span class="n">toplevel</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># (description, prefix, key) of ``\toplvldescr`` roots, else None</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># file the group was read from</span></div>
+
+
+
+<div class="viewcode-block" id="GroupDefs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.GroupDefs">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GroupDefs</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Group name -&gt; :class:`GroupDef` in definition order; ``files`` lists the ``.def`` files read."""</span>
+
+    <span class="n">files</span><span class="p">:</span> <span class="nb">list</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">(),</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_brief</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">_DIRECTIVE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">brief"</span><span class="p">):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">brief"</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_MATH</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())[:</span><span class="mi">400</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="parse_def">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.parse_def">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_def</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The :class:`GroupDef` entries of one ``.def`` file, in file order."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">_COMMENT</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">_DEFGROUP</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">_INGROUP</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="n">_TOPLVL</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">GroupDef</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="ow">or</span> <span class="n">name</span><span class="p">,</span>
+                <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+                <span class="n">brief</span><span class="o">=</span><span class="n">_brief</span><span class="p">(</span><span class="n">block</span><span class="p">),</span>
+                <span class="n">toplevel</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">groups</span><span class="p">())</span> <span class="k">if</span> <span class="n">top</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="def_files">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.def_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">def_files</span><span class="p">(</span><span class="n">dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""All ``*.def`` files in ``dirs`` (default: :func:`pysasfit.studio.paths.def_dirs`)."""</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">def_dirs</span><span class="p">()</span> <span class="k">if</span> <span class="n">dirs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".def"</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mtime</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_load</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">defs</span> <span class="o">=</span> <span class="n">GroupDefs</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="n">fn</span> <span class="k">for</span> <span class="n">fn</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">key</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">fn</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">parse_def</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># an unreadable file only loses its groups</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">:</span>
+            <span class="n">defs</span><span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span>  <span class="c1"># later files override earlier ones; the first position is kept</span>
+    <span class="k">return</span> <span class="n">defs</span>
+
+
+<div class="viewcode-block" id="load_groups">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.load_groups">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_groups</span><span class="p">(</span><span class="n">dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The group definitions of all ``.def`` files as :class:`GroupDefs` (empty if there are none)."""</span>
+    <span class="k">return</span> <span class="n">_load</span><span class="p">(</span><span class="nb">tuple</span><span class="p">((</span><span class="n">fn</span><span class="p">,</span> <span class="n">_mtime</span><span class="p">(</span><span class="n">fn</span><span class="p">))</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">def_files</span><span class="p">(</span><span class="n">dirs</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="MenuNode">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.MenuNode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MenuNode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A menu level: sub-groups (``children``, in definition order) and functions."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">brief</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">brief</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">brief</span><span class="p">,</span> <span class="n">order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">functions</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># PluginInfo, in the order of the entries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="MenuNode.child">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.MenuNode.child">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">brief</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">MenuNode</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">brief</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span></div>
+
+
+<div class="viewcode-block" id="MenuNode.count">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.MenuNode.count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Number of functions in this node and below."""</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">)</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>  <span class="c1"># stable: definition order</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">_sort</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_group_path</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">defs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``(path, root)``: the group names from the first level below the menu root down to ``group``, and</span>
+<span class="sd">    the name of that menu root (None if there is none); ``(None, None)`` for an unknown group."""</span>
+    <span class="n">chain</span><span class="p">,</span> <span class="n">seen</span> <span class="o">=</span> <span class="p">[],</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">defs</span> <span class="ow">and</span> <span class="n">group</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+        <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">chain</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chain</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">defs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">toplevel</span><span class="p">:</span>  <span class="c1"># the root of the menu and everything above it is not shown</span>
+            <span class="n">root</span><span class="p">,</span> <span class="n">chain</span> <span class="o">=</span> <span class="n">name</span><span class="p">,</span> <span class="n">chain</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">chain</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">root</span>
+
+
+<span class="n">_MENU_PREFIX</span> <span class="o">=</span> <span class="s2">"menu:"</span>
+<span class="c1"># order of the own top-level submenus relative to the tree of the SASfit plugins ("py plugin ports" is at +0.5)</span>
+<span class="n">_TOP_OFFSET</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"BornAgain"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">"Polyhedra"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s2">"SasView"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_menu_path</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Submenu path (list of labels) of a function, or None for the other functions.</span>
+
+<span class="sd">    A function names its own place in the menu by ``group = "menu:Top/Sub/Subsub"`` (e.g. the polyhedra of</span>
+<span class="sd">    :mod:`pysasfit.studio.polyhedra`); the SasView models go below "SasView", one submenu per sasmodels category.</span>
+<span class="sd">    """</span>
+    <span class="n">group</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">group</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_MENU_PREFIX</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">group</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">_MENU_PREFIX</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="ow">or</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">collection</span> <span class="o">==</span> <span class="s2">"sasmodels"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"builtin"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"SasView"</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="s2">":"</span> <span class="ow">in</span> <span class="n">group</span> <span class="k">else</span> <span class="s2">"other"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_special</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s2">"builtin"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"(built-in)"</span><span class="p">,</span> <span class="s2">"built-in (libsasfit)"</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">collection</span> <span class="o">==</span> <span class="s2">"python"</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".py"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"(python)"</span><span class="p">,</span> <span class="s2">"Python plugins"</span><span class="p">,</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="s2">"(ungrouped)"</span><span class="p">,</span> <span class="s2">"(not in a group)"</span><span class="p">,</span> <span class="mi">3</span>
+
+
+<div class="viewcode-block" id="build_menu">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.build_menu">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_menu</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">defs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Menu tree (:class:`MenuNode`) of the functions of the given type(s).</span>
+
+<span class="sd">    ``entries``: iterable of :class:`pysasfit.studio.headers.PluginInfo`; ``types``: 'ff', 'sq',</span>
+<span class="sd">    'sd', ... or a tuple of them; ``defs``: :func:`load_groups` (default: read the ``.def`` files).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span><span class="p">,)</span>
+    <span class="n">defs</span> <span class="o">=</span> <span class="n">load_groups</span><span class="p">()</span> <span class="k">if</span> <span class="n">defs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">defs</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">defs</span><span class="p">)}</span>
+    <span class="c1"># the menu roots (``\toplvldescr``) of these types; groups below other roots belong to other menus</span>
+    <span class="n">mine</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">defs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">toplevel</span> <span class="ow">and</span> <span class="n">g</span><span class="o">.</span><span class="n">toplevel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"sasfit_"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">types</span><span class="p">}</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">MenuNode</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="n">_menu_path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mp</span><span class="p">:</span>  <span class="c1"># own submenus on the level of "py plugin ports": BornAgain, Polyhedra, SasView</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">top</span>
+            <span class="n">top_order</span> <span class="o">=</span> <span class="n">order</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ff_plugins"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">defs</span><span class="p">))</span> <span class="o">+</span> <span class="n">_TOP_OFFSET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">0.9</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mp</span><span class="p">):</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">(</span><span class="s2">"(menu)"</span> <span class="o">+</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mp</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">label</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">top_order</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">top</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">collection</span> <span class="o">==</span> <span class="s2">"py plugin ports"</span><span class="p">:</span>  <span class="c1"># Python ports: a copy of the plugin tree below its own node</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">top</span><span class="o">.</span><span class="n">child</span><span class="p">(</span>
+                <span class="s2">"(py plugin ports)"</span><span class="p">,</span>
+                <span class="s2">"py plugin ports"</span><span class="p">,</span>
+                <span class="s2">"Python ports of SASfit plugins: the same functions and groups as the SASfit plugins, computed in "</span>
+                <span class="s2">"Python (vectorised, thread-safe) instead of by the compiled plugin"</span><span class="p">,</span>
+                <span class="n">order</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ff_plugins"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">defs</span><span class="p">))</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># right after the tree of the SASfit plugins</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">defs</span><span class="p">:</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>  <span class="c1"># no .def files: flat list</span>
+            <span class="k">continue</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">root</span> <span class="o">=</span> <span class="n">_group_path</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">defs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">top</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="k">elif</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">_special</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">top</span><span class="o">.</span><span class="n">child</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">defs</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mine</span> <span class="ow">and</span> <span class="n">root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mine</span><span class="p">:</span>
+            <span class="c1"># e.g. a form factor whose header says \ingroup sq_...: that group is part of another menu</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">top</span><span class="o">.</span><span class="n">child</span><span class="p">(</span>
+                <span class="s2">"(other menu)"</span><span class="p">,</span>
+                <span class="s2">"(filed in a group of another menu)"</span><span class="p">,</span>
+                <span class="s2">"These functions name a group of another menu (e.g. structure factors) in their plugin header."</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">defs</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">base</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">defs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">defs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">brief</span><span class="p">,</span> <span class="n">order</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">top</span><span class="o">.</span><span class="n">_sort</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">top</span></div>
+
+
+
+<div class="viewcode-block" id="iter_functions">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.iter_functions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_functions</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">_path</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Yield ``(path, function)`` for every function of the tree; ``path`` = labels of the groups above it."""</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">iter_functions</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">_path</span> <span class="o">+</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">label</span><span class="p">,))</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">functions</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">_path</span><span class="p">,</span> <span class="n">p</span></div>
+
+
+
+<div class="viewcode-block" id="tree_lines">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.groups.tree_lines">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tree_lines</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">functions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Indented text lines of a tree (group labels with the number of functions in brackets)."""</span>
+    <span class="n">pad</span> <span class="o">=</span> <span class="s2">"  "</span> <span class="o">*</span> <span class="n">_level</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pad</span><span class="si">}{</span><span class="n">g</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">g</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">+=</span> <span class="n">tree_lines</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">_level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">functions</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pad</span><span class="si">}</span><span class="s2">- </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">   (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">top</span><span class="o">.</span><span class="n">functions</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

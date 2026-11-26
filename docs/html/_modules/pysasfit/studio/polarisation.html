@@ -1,0 +1,516 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.polarisation &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.polarisation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.polarisation</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Polarised neutrons: what a data set measures, as a setting of the data set instead of separate functions.</span>
+
+<span class="sd">SASfit has one function per polarisation channel (``_pp``, ``_mm``, ``_pm``, ``_POLARIS``, ``_cross``, ...) and the</span>
+<span class="sd">efficiencies as parameters of every model. Here a magnetic model returns its **basis terms** once,</span>
+
+<span class="sd">    NN  = &lt;|N|²&gt;                      nuclear</span>
+<span class="sd">    NM  = &lt;Re N M⊥h*&gt;                 nuclear-magnetic interference (h: field axis)</span>
+<span class="sd">    MH  = &lt;|M⊥h|²&gt;                    magnetic, non-spin-flip</span>
+<span class="sd">    MSF = &lt;|M⊥|² - |M⊥h|²&gt;            magnetic, spin-flip</span>
+<span class="sd">    CH  = &lt;Im(M⊥a M⊥b*)&gt;              chiral (0 unless the model is chiral)</span>
+
+<span class="sd">(per (q, ψ), ψ = angle between q and the field on the detector; M = magnetisation, i.e. moment density), and the</span>
+<span class="sd">data set says what was measured (:class:`Polarisation`).</span>
+
+<span class="sd">**Convention (Moon, Riste &amp; Koehler, Phys. Rev. 181, 920 (1969)):** + and - are the neutron **spin** parallel /</span>
+<span class="sd">antiparallel to the field (σ_z|±&gt; = ±|±&gt;, z along the field). The neutron moment is opposite to its spin, so the</span>
+<span class="sd">amplitudes are U±± = b ± p M⊥z: spin parallel to the magnetisation adds the magnetic amplitude. The ideal cross</span>
+<span class="sd">sections are</span>
+
+<span class="sd">    I++ = NN + MH + 2NM,  I-- = NN + MH - 2NM,  I+- = MSF - 2CH,  I-+ = MSF + 2CH,</span>
+<span class="sd">    SANSPOL  I± = I±± + I±∓ = NN + MH + MSF ± 2NM ∓ 2CH,    I- - I+ = -4NM + 4CH.</span>
+
+<span class="sd">Michels and the SASfit C functions (``_pp``, ``pol`` = +1) label the states by the neutron **moment**: their "++"</span>
+<span class="sd">is "--" here, their ``pol`` is -(n+ - n-) here.</span>
+
+<span class="sd">and, for data that are not corrected for the instrument, the mixing of I+ and I- with the beam polarisation P,</span>
+<span class="sd">the flipped fraction f of the flipper and the depolarisation of the sample (P_f), exactly as in</span>
+<span class="sd">:mod:`pysasfit.sasred.polarisation`:</span>
+
+<span class="sd">=================  ==========================================  ==================</span>
+<span class="sd">quantity           data set                                    needs</span>
+<span class="sd">=================  ==========================================  ==================</span>
+<span class="sd">``unpolarised``    polariser out, or (I+ + I-)/2               --</span>
+<span class="sd">``off``            polariser in, flipper off (not corrected)   P (, P_f)</span>
+<span class="sd">``on``             polariser in, flipper on (not corrected)    P, f (, P_f)</span>
+<span class="sd">``plus``/``minus`` I+, I- corrected (pySASred SANSPOL output)   --</span>
+<span class="sd">``difference``     I- - I+ (corrected)                         --</span>
+<span class="sd">``pp`` ... ``mp``  four channels with analyser, corrected      --</span>
+<span class="sd">=================  ==========================================  ==================</span>
+
+<span class="sd">``flipper_off_is_plus`` says which flipper state is + (spin parallel to the field). Non-magnetic contributions enter with the NN weight (1, or 0 in the spin-flip channels and the</span>
+<span class="sd">difference). A model gets the setting as ``ModelFunction.polarisation``; while it is evaluated the setting is</span>
+<span class="sd">active (:func:`active`) and magnetic functions read it (:func:`current`). Without a setting a magnetic port behaves</span>
+<span class="sd">like its SASfit original (its ``pol`` parameter in SASfit's moment labels: I = (1+pol)/2 I- + (1-pol)/2 I+ here);</span>
+<span class="sd">C functions with a ``pol`` parameter get pol = n- - n+ of the setting (SANSPOL quantities only).</span>
+
+<span class="sd">Parameter addresses for fits: ``pol.P``, ``pol.f``, ``pol.P_f``, ``pol.psi_H``.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextvars</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">nullcontext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TERMS"</span><span class="p">,</span> <span class="s2">"QUANTITIES"</span><span class="p">,</span> <span class="s2">"Polarisation"</span><span class="p">,</span> <span class="s2">"basis_terms"</span><span class="p">,</span> <span class="s2">"combine"</span><span class="p">,</span> <span class="s2">"active"</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">,</span> <span class="s2">"cache_key"</span><span class="p">,</span>
+           <span class="s2">"is_magnetic"</span><span class="p">,</span> <span class="s2">"pol_parameter_index"</span><span class="p">,</span> <span class="s2">"from_metadata"</span><span class="p">,</span> <span class="s2">"from_file"</span><span class="p">,</span> <span class="s2">"angular_moments"</span><span class="p">]</span>  <span class="c1"># fmt: skip</span>
+
+<span class="n">TERMS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"NN"</span><span class="p">,</span> <span class="s2">"NM"</span><span class="p">,</span> <span class="s2">"MH"</span><span class="p">,</span> <span class="s2">"MSF"</span><span class="p">,</span> <span class="s2">"CH"</span><span class="p">)</span>
+
+<span class="c1"># spin convention (Moon, Riste &amp; Koehler 1969): + = neutron spin parallel to the field</span>
+<span class="n">_W_PLUS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">])</span>
+<span class="n">_W_MINUS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<span class="n">_FIXED</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"unpolarised"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+    <span class="s2">"plus"</span><span class="p">:</span> <span class="n">_W_PLUS</span><span class="p">,</span>
+    <span class="s2">"minus"</span><span class="p">:</span> <span class="n">_W_MINUS</span><span class="p">,</span>
+    <span class="s2">"difference"</span><span class="p">:</span> <span class="n">_W_MINUS</span> <span class="o">-</span> <span class="n">_W_PLUS</span><span class="p">,</span>
+    <span class="s2">"pp"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+    <span class="s2">"mm"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span>
+    <span class="s2">"pm"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">]),</span>
+    <span class="s2">"mp"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]),</span>
+<span class="p">}</span>
+
+<span class="c1">#: quantity -&gt; (label, instrument parameters it needs)</span>
+<span class="n">QUANTITIES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"unpolarised"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"unpolarised (polariser out, or (I+ + I−)/2)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"off"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"polariser in, flipper off – not corrected"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P"</span><span class="p">,</span> <span class="s2">"P_f"</span><span class="p">)),</span>
+    <span class="s2">"on"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"polariser in, flipper on – not corrected"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"P"</span><span class="p">,</span> <span class="s2">"f"</span><span class="p">,</span> <span class="s2">"P_f"</span><span class="p">)),</span>
+    <span class="s2">"plus"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I+ (SANSPOL, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"minus"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I− (SANSPOL, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"difference"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I− − I+ (corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"pp"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I++ (analyser, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"mm"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I−− (analyser, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"pm"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I+− spin flip (analyser, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="s2">"mp"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"I−+ spin flip (analyser, corrected)"</span><span class="p">,</span> <span class="p">()),</span>
+<span class="p">}</span>
+
+<span class="n">_SANSPOL</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"unpolarised"</span><span class="p">,</span> <span class="s2">"off"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">,</span> <span class="s2">"plus"</span><span class="p">,</span> <span class="s2">"minus"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Polarisation">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Polarisation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What a data set measures (``quantity``, see the module docstring) and the instrument values it needs.</span>
+
+<span class="sd">    ``P``: beam polarisation, ``f``: flipped fraction of the flipper (F = 2f - 1), ``P_f``: polarisation after</span>
+<span class="sd">    the sample (depolarisation, 1 = none), ``form``: "exact" or "bersans" flipper mixing, ``flipper_off_is_plus``:</span>
+<span class="sd">    flipper off = spin parallel to the field, ``psi_H``: field direction on the detector (deg from +q_x,</span>
+<span class="sd">    counter-clockwise), ``average``: azimuthal average over ψ (sin²ψ -&gt; 1/2, sin⁴ψ -&gt; 3/8; 1D radial averages)</span>
+<span class="sd">    instead of the ψ parameter of the functions, ``source``: where each value comes from (file, instrument</span>
+<span class="sd">    table, entered)."""</span>
+
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"unpolarised"</span>
+    <span class="n">P</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.98</span>
+    <span class="n">f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.995</span>
+    <span class="n">P_f</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">form</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exact"</span>
+    <span class="n">flipper_off_is_plus</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">psi_H</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">average</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">QUANTITIES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"quantity must be one of </span><span class="si">{</span><span class="nb">tuple</span><span class="p">(</span><span class="n">QUANTITIES</span><span class="p">)</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">form</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"exact"</span><span class="p">,</span> <span class="s2">"bersans"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"form must be 'exact' or 'bersans'"</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------ weights</span>
+<div class="viewcode-block" id="Polarisation.needs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.needs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">needs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Instrument parameters the quantity depends on (P, f, P_f)."""</span>
+        <span class="k">return</span> <span class="n">QUANTITIES</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sanspol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""True if the quantity is a mixture of I+ and I- only (no analyser channel, no difference)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="ow">in</span> <span class="n">_SANSPOL</span>
+
+<div class="viewcode-block" id="Polarisation.mixing">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.mixing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mixing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""(n+, n-): fractions of I+ and I- in a SANSPOL quantity."""</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="s2">"plus"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="s2">"minus"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="s2">"unpolarised"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"off"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">: not a mixture of I+ and I-"</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..sasred.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolarisationSetup</span><span class="p">,</span> <span class="n">state_weights</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">PolarisationSetup</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">),</span> <span class="n">f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">),</span> <span class="n">P_f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_f</span><span class="p">),</span> <span class="n">form</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">form</span><span class="p">,</span>
+                              <span class="n">flipper_off_is_plus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flipper_off_is_plus</span><span class="p">,</span> <span class="n">sigma_P_f</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># fmt: skip</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">state_weights</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">),</span> <span class="n">s</span><span class="o">.</span><span class="n">r</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.effective_pol">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.effective_pol">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">effective_pol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""SASfit's ``pol`` parameter for this quantity (SANSPOL quantities). SASfit labels by the neutron moment, so</span>
+<span class="sd">        its pol = +1 is spin antiparallel to the field: pol = n- - n+."""</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixing</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.sasfit_pol_weights">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.sasfit_pol_weights">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sasfit_pol_weights</span><span class="p">(</span><span class="n">pol_sasfit</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Weights of SASfit's ``pol`` parameter: (1+pol)/2 I(moment +) + (1-pol)/2 I(moment -) =</span>
+<span class="sd">        (1+pol)/2 I- + (1-pol)/2 I+ in the spin labels used here."""</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">pol_sasfit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">P</span><span class="p">)</span> <span class="o">*</span> <span class="n">_W_MINUS</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">P</span><span class="p">)</span> <span class="o">*</span> <span class="n">_W_PLUS</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.weights">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.weights">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Weights of (NN, NM, MH, MSF, CH)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="ow">in</span> <span class="n">_FIXED</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_FIXED</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mixing</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">_W_PLUS</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">_W_MINUS</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.key">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Hashable description for caches."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">(),</span> <span class="mi">15</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psi_H</span><span class="p">),</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">average</span><span class="p">))</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ text, files</span>
+<div class="viewcode-block" id="Polarisation.describe">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">lab</span> <span class="o">=</span> <span class="n">QUANTITIES</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quantity</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">needs</span><span class="p">():</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">src</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="k">if</span> <span class="s2">"f"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">needs</span><span class="p">():</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"F = 2f − 1 = </span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">geo</span> <span class="o">=</span> <span class="s2">"azimuthal average"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">average</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"field at ψ_H = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">psi_H</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">°"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lab</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="s2">": "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"; </span><span class="si">{</span><span class="n">geo</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.to_dict">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Polarisation.from_dict">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.Polarisation.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">d</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__dataclass_fields__</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">known</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- context</span>
+<span class="n">_CURRENT</span> <span class="o">=</span> <span class="n">contextvars</span><span class="o">.</span><span class="n">ContextVar</span><span class="p">(</span><span class="s2">"pysasfit_polarisation"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="active">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.active">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">active</span><span class="p">(</span><span class="n">pol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Make ``pol`` (a :class:`Polarisation` or None) the setting seen by magnetic functions."""</span>
+    <span class="k">if</span> <span class="n">pol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">nullcontext</span><span class="p">():</span>
+            <span class="k">yield</span>
+        <span class="k">return</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_CURRENT</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">pol</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_CURRENT</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">token</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="current">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.current">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The active :class:`Polarisation` or None."""</span>
+    <span class="k">return</span> <span class="n">_CURRENT</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="cache_key">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.cache_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cache_key</span><span class="p">():</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">_CURRENT</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">p</span><span class="o">.</span><span class="n">key</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- terms</span>
+<div class="viewcode-block" id="angular_moments">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.angular_moments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">angular_moments</span><span class="p">(</span><span class="n">psi_deg</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(sin²ψ, sin⁴ψ) of the angle between q and the field (or the azimuthal averages 1/2, 3/8)."""</span>
+    <span class="k">if</span> <span class="n">average</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.375</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">psi_deg</span><span class="p">,</span> <span class="nb">float</span><span class="p">)))</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">s2</span></div>
+
+
+
+<div class="viewcode-block" id="basis_terms">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.basis_terms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">basis_terms</span><span class="p">(</span><span class="n">kn</span><span class="p">,</span> <span class="n">km</span><span class="p">,</span> <span class="n">S1</span><span class="p">,</span> <span class="n">S2</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Basis terms of particles with nuclear amplitude ``kn`` and magnetic amplitude ``km`` (same units, SASfit</span>
+<span class="sd">    I(0) = (Δη V)² normalisation) whose moments have the orientation moments S1 = &lt;cos θ&gt; and S2 = &lt;P2(cos θ)&gt;</span>
+<span class="sd">    with respect to the field (saturated: 1, 1; random: 0, 0; Langevin: L(ξ), 1 - 3L(ξ)/ξ), for the</span>
+<span class="sd">    perpendicular scattering geometry (field ⟂ beam). ``s2``, ``s4``: sin²ψ, sin⁴ψ. Returns an array (5, ...)."""</span>
+    <span class="n">kn</span><span class="p">,</span> <span class="n">km</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">kn</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">km</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">km</span> <span class="o">*</span> <span class="n">km</span>
+    <span class="n">NN</span> <span class="o">=</span> <span class="n">kn</span> <span class="o">*</span> <span class="n">kn</span>
+    <span class="n">NM</span> <span class="o">=</span> <span class="n">kn</span> <span class="o">*</span> <span class="n">km</span> <span class="o">*</span> <span class="n">S1</span> <span class="o">*</span> <span class="n">s2</span>
+    <span class="n">MH</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">*</span> <span class="p">(</span><span class="n">S2</span> <span class="o">*</span> <span class="n">s4</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">S2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">s2</span><span class="p">)</span>
+    <span class="n">MSF</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">S2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">-</span> <span class="n">S2</span> <span class="o">*</span> <span class="n">s4</span> <span class="o">+</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">S2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">s2</span><span class="p">)</span>
+    <span class="n">NN</span><span class="p">,</span> <span class="n">NM</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">MSF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">NN</span><span class="p">,</span> <span class="n">NM</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">MSF</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">NN</span><span class="p">,</span> <span class="n">NM</span><span class="p">,</span> <span class="n">MH</span><span class="p">,</span> <span class="n">MSF</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">NN</span><span class="p">)])</span></div>
+
+
+
+<div class="viewcode-block" id="combine">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.combine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">combine</span><span class="p">(</span><span class="n">terms</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Σ w_k T_k."""</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">5</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">terms</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- functions</span>
+<div class="viewcode-block" id="is_magnetic">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.is_magnetic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_magnetic</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""True if the function ``f`` (SASfitFunction) returns basis terms (a magnetic Python port)."""</span>
+    <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">ports</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ports</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">terms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="pol_parameter_index">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.pol_parameter_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pol_parameter_index</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Index of SASfit's ``pol`` parameter of a (C) function, or None."""</span>
+    <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"parameter_names"</span><span class="p">,</span> <span class="p">())]</span>
+    <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"pol"</span><span class="p">,</span> <span class="s2">"p_pol"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cand</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------- data files</span>
+<span class="n">_OUTPUT_TO_QUANTITY</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"plus"</span><span class="p">:</span> <span class="s2">"plus"</span><span class="p">,</span> <span class="s2">"minus"</span><span class="p">:</span> <span class="s2">"minus"</span><span class="p">,</span> <span class="s2">"unpolarised"</span><span class="p">:</span> <span class="s2">"unpolarised"</span><span class="p">,</span> <span class="s2">"difference"</span><span class="p">:</span> <span class="s2">"difference"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="from_metadata">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.from_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_metadata</span><span class="p">(</span><span class="n">polarisation_json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The :class:`Polarisation` of a reduced pySASred file, or None if it says nothing about polarisation.</span>
+
+<span class="sd">    ``polarisation_json``: SASprocess ``polarisation`` of a SANSPOL output (:func:`pysasfit.sasred.polarisation.</span>
+<span class="sd">    correct_files`): the quantity is that output, P and f are kept for the record. ``metadata``: SASprocess</span>
+<span class="sd">    ``metadata`` (header items of the raw run): the state (polariser out / flipper off / on) from the keys of the</span>
+<span class="sd">    instrument file, P and f from the file or the instrument defaults (:func:`pysasfit.sasred.polarisation.</span>
+<span class="sd">    setup_from_metadata`)."""</span>
+    <span class="k">if</span> <span class="n">polarisation_json</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">polarisation_json</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">polarisation_json</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">polarisation_json</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">_OUTPUT_TO_QUANTITY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="s2">"SANSPOL correction in pySASred"</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"P"</span><span class="p">,</span> <span class="s2">"f"</span><span class="p">,</span> <span class="s2">"P_f"</span><span class="p">)}</span>
+            <span class="k">return</span> <span class="n">Polarisation</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"P"</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">)),</span> <span class="n">f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,</span> <span class="mf">0.995</span><span class="p">)),</span>
+                                <span class="n">P_f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"P_f"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="n">form</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"form"</span><span class="p">,</span> <span class="s2">"exact"</span><span class="p">),</span>
+                                <span class="n">flipper_off_is_plus</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"flipper_off_is_plus"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span> <span class="n">source</span><span class="o">=</span><span class="n">src</span><span class="p">)</span>  <span class="c1"># fmt: skip</span>
+    <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..sasred.polarisation</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_from_metadata</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">state</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">setup_from_metadata</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">instrument</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - other instruments</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">Polarisation</span><span class="p">(</span><span class="n">quantity</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">P</span><span class="p">),</span> <span class="n">f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">f</span><span class="p">),</span> <span class="n">P_f</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">P_f</span><span class="p">),</span> <span class="n">form</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">form</span><span class="p">,</span>
+                            <span class="n">flipper_off_is_plus</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">flipper_off_is_plus</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source</span><span class="p">))</span>  <span class="c1"># fmt: skip</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="from_file">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.polarisation.from_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">""":func:`from_metadata` of an NXcanSAS file (None for other files or without polarisation information)."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">pj</span> <span class="o">=</span> <span class="n">meta</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">fh</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="s2">"keys"</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="s2">"polarisation"</span> <span class="ow">in</span> <span class="n">g</span> <span class="ow">and</span> <span class="n">pj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">pj</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"polarisation"</span><span class="p">][()]</span>
+                        <span class="k">if</span> <span class="s2">"metadata"</span> <span class="ow">in</span> <span class="n">g</span> <span class="ow">and</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">meta</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">][()]</span>
+            <span class="n">dec</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>  <span class="c1"># noqa: E731</span>
+            <span class="k">return</span> <span class="n">from_metadata</span><span class="p">(</span><span class="n">dec</span><span class="p">(</span><span class="n">pj</span><span class="p">),</span> <span class="n">dec</span><span class="p">(</span><span class="n">meta</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

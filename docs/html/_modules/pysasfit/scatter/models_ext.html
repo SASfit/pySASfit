@@ -1,0 +1,533 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.scatter.models_ext &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.scatter.models_ext</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.scatter.models_ext</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Models that the hypergeometric (hypscat) part of pySCAtter does not cover, added for the pySCAtter tool:</span>
+
+<span class="sd">* :class:`KratkyPorodChain` – worm-like chain, Kholodenko's approximation (Macromolecules 26, 4179 (1993)),</span>
+<span class="sd">  Schulz-Zimm polydisperse in the contour length.</span>
+<span class="sd">* :func:`powerlaw_shell_sphere` – core + shell with an algebraic segment-density profile φ(r) ∝ r^α</span>
+<span class="sd">  (Förster &amp; Burger, Macromolecules 31, 879 (1998): star polymers / block-copolymer micelles), as a stack of</span>
+<span class="sd">  thin homogeneous shells of the exact multi-shell sphere.</span>
+<span class="sd">* :class:`TeubnerStrey` – microemulsion / bicontinuous model (Teubner &amp; Strey, J. Chem. Phys. 87, 3195 (1987)).</span>
+<span class="sd">* Isotropic structure factors for the decoupling approximation I = P (1 + β (S - 1)):</span>
+<span class="sd">  :class:`PercusYevick` (hard spheres), :class:`StickyHardSphere` (Baxter / Menon et al.),</span>
+<span class="sd">  :class:`FractalTeixeira` (mass fractal of building blocks, Teixeira J. Appl. Cryst. 21, 781 (1988)).</span>
+
+<span class="sd">All lengths in the same unit (nm in the GUI), q in the inverse unit.  ``P(0) = 1`` for the form factors.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gamma</span> <span class="k">as</span> <span class="n">_G</span><span class="p">,</span> <span class="n">gammaln</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.coreshell</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoreShellSphere</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"KratkyPorodChain"</span><span class="p">,</span> <span class="s2">"powerlaw_shell_sphere"</span><span class="p">,</span> <span class="s2">"TeubnerStrey"</span><span class="p">,</span> <span class="s2">"PercusYevick"</span><span class="p">,</span> <span class="s2">"StickyHardSphere"</span><span class="p">,</span>
+           <span class="s2">"FractalTeixeira"</span><span class="p">,</span> <span class="s2">"STRUCTURE_FACTORS"</span><span class="p">,</span> <span class="s2">"make_structure_factor"</span><span class="p">]</span>
+
+
+<span class="c1"># ----------------------------------------------------------------------------- worm-like chain</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_kholodenko_mono</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">nz</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Kholodenko's worm-like chain form factor (P(0) = 1) for contour length L and Kuhn length b."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="n">b</span>
+    <span class="c1"># Gauss-Legendre nodes on [0, x]; the integrand is smooth (f(z) ~ 1 near 0, decays like e^-z)</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="n">nz</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">wz</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="mf">3.0</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">ak</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">ak</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">ak</span> <span class="o">*</span> <span class="n">ak</span><span class="p">)</span>
+                <span class="c1"># sinh(Ez)/(E sinh z) written with exponentials (no overflow at large z)</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">E</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">z</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">z</span><span class="p">))),</span>
+                             <span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ak</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ak</span> <span class="o">*</span> <span class="n">ak</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">F</span> <span class="o">*</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">F</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="mf">700.0</span><span class="p">))),</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="n">z</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="mf">700.0</span><span class="p">)),</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">I1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wz</span> <span class="o">*</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">I2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wz</span> <span class="o">*</span> <span class="n">z</span> <span class="o">*</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">I1</span> <span class="o">-</span> <span class="n">I2</span> <span class="o">/</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="KratkyPorodChain">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.KratkyPorodChain">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KratkyPorodChain</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Worm-like (Kratky-Porod) chain of contour length ``L`` and Kuhn length ``b`` (= 2 × persistence length),</span>
+<span class="sd">    without excluded volume.  ``sigma``: relative standard deviation of L (Schulz-Zimm, number weighted by</span>
+<span class="sd">    mass, i.e. weights ∝ L f(L))."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"kratky_porod"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">L</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Kratky-Porod chain: L and b must be &gt; 0"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">L</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Rg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Radius of gyration (Benoit-Doty) of the monodisperse chain."""</span>
+        <span class="n">lp</span><span class="p">,</span> <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lp</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">lp</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lp</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">/</span> <span class="n">L</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lp</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">L</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">L</span> <span class="o">/</span> <span class="n">lp</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="KratkyPorodChain.P">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.KratkyPorodChain.P">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_kholodenko_mono</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">),</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">6</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="mi">41</span><span class="p">)</span>
+        <span class="n">lw</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span>                <span class="c1"># Schulz-Zimm × L (mass weighting)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">lw</span> <span class="o">-</span> <span class="n">lw</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">w</span> <span class="o">/=</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wi</span> <span class="o">*</span> <span class="n">_kholodenko_mono</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">ti</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">wi</span><span class="p">,</span> <span class="n">ti</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="KratkyPorodChain.beta">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.KratkyPorodChain.beta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)))</span></div>
+</div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------- algebraic shell profile</span>
+<div class="viewcode-block" id="powerlaw_shell_sphere">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.powerlaw_shell_sphere">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">powerlaw_shell_sphere</span><span class="p">(</span><span class="n">R_core</span><span class="p">,</span> <span class="n">R_out</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">rho_core</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">rho_shell</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">rho_solvent</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Homogeneous core (radius ``R_core``, density ``rho_core``) and a shell up to ``R_out`` whose density</span>
+<span class="sd">    follows ρ(r) = rho_shell (r / R_core)^alpha (alpha = -4/3 star / micelle corona in good solvent,</span>
+<span class="sd">    -1 θ solvent, 0 homogeneous; Förster &amp; Burger 1998).  Built from ``n`` thin homogeneous shells of the exact</span>
+<span class="sd">    multi-shell sphere (default: enough shells for |Δρ| ≤ 3 % per step, 20 … 120)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">R_core</span> <span class="o">&lt;</span> <span class="n">R_out</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"power-law shell: 0 &lt; R_core &lt; R_out required"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">R_out</span> <span class="o">/</span> <span class="n">R_core</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">span</span> <span class="o">/</span> <span class="mf">0.03</span><span class="p">),</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+    <span class="n">pc</span> <span class="o">=</span> <span class="n">R_core</span> <span class="o">/</span> <span class="n">R_out</span>
+    <span class="c1"># geometric spacing: equal steps in ln r give equal relative density steps of the power law</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">pc</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">mid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="n">pc</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+    <span class="n">p</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="n">rho_core</span><span class="p">],</span> <span class="n">rho_shell</span> <span class="o">*</span> <span class="p">(</span><span class="n">mid</span> <span class="o">/</span> <span class="n">pc</span><span class="p">)</span> <span class="o">**</span> <span class="n">alpha</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">CoreShellSphere</span><span class="p">(</span><span class="n">R_out</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">rho_solvent</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------- Teubner-Strey</span>
+<div class="viewcode-block" id="TeubnerStrey">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.TeubnerStrey">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TeubnerStrey</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""I(q) ∝ 1 / (a2 + c1 q² + c2 q⁴) from the repeat distance ``d`` and the correlation length ``xi``;</span>
+<span class="sd">    normalised to P(0) = 1.  An intensity model (no particle amplitude): beta = 1."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"teubner_strey"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">xi</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">xi</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Teubner-Strey: d and xi must be &gt; 0"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TeubnerStrey.P">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.TeubnerStrey.P">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">k</span><span class="p">,</span> <span class="n">ik</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">ik</span> <span class="o">*</span> <span class="n">ik</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">k</span> <span class="o">-</span> <span class="n">ik</span> <span class="o">*</span> <span class="n">ik</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">a2</span> <span class="o">/</span> <span class="p">(</span><span class="n">a2</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">q</span> <span class="o">*</span> <span class="n">q</span> <span class="o">+</span> <span class="n">q</span> <span class="o">**</span> <span class="mi">4</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TeubnerStrey.beta">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.TeubnerStrey.beta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amphiphilicity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""f_a = c1 / sqrt(4 a2 c2) (−1 … 1; &lt; 0 structured microemulsion)."""</span>
+        <span class="n">k</span><span class="p">,</span> <span class="n">ik</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">k</span> <span class="o">-</span> <span class="n">ik</span> <span class="o">*</span> <span class="n">ik</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">ik</span> <span class="o">*</span> <span class="n">ik</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------- structure factors</span>
+<div class="viewcode-block" id="PercusYevick">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.PercusYevick">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PercusYevick</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hard-sphere structure factor (Percus-Yevick closure; Wertheim/Thiele analytic solution) for hard-sphere</span>
+<span class="sd">    radius ``R`` and volume fraction ``eta``."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"percus_yevick"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">eta</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">R</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">eta</span> <span class="o">&lt;</span> <span class="mf">0.74</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Percus-Yevick: R &gt; 0 and 0 ≤ eta &lt; 0.74"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PercusYevick.S">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.PercusYevick.S">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">4</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mi">6</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">4</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">a</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">small</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.05</span>                      <span class="c1"># series: the closed form cancels badly at small x</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">small</span><span class="p">]</span>
+        <span class="c1"># series of G(x)/x at small x: integral of the direct correlation function</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">small</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">b</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">6</span> <span class="o">-</span> <span class="n">xs</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">30</span> <span class="o">+</span> <span class="n">b</span> <span class="o">/</span> <span class="mi">36</span> <span class="o">+</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">48</span><span class="p">)))</span>
+        <span class="n">xl</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="o">~</span><span class="n">small</span><span class="p">]</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">co</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">xl</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">xl</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">xl</span> <span class="o">*</span> <span class="n">co</span><span class="p">)</span> <span class="o">/</span> <span class="n">xl</span> <span class="o">**</span> <span class="mi">2</span>
+             <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">-</span> <span class="n">xl</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">co</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">xl</span> <span class="o">**</span> <span class="mi">3</span>
+             <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">xl</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">co</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">((</span><span class="mi">3</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="n">co</span> <span class="o">+</span> <span class="p">(</span><span class="n">xl</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">xl</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">6</span><span class="p">))</span> <span class="o">/</span> <span class="n">xl</span> <span class="o">**</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">small</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">G</span> <span class="o">/</span> <span class="n">xl</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StickyHardSphere">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.StickyHardSphere">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StickyHardSphere</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Baxter's adhesive hard spheres (Percus-Yevick, perturbative solution as in Menon, Manohar &amp; Rao,</span>
+<span class="sd">    J. Chem. Phys. 95, 9186 (1991)): hard-sphere radius ``R``, volume fraction ``eta``, stickiness ``tau``</span>
+<span class="sd">    (large: hard spheres), well width ``delta`` (relative to the diameter, small)."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"sticky_hard_sphere"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">R</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">eta</span> <span class="o">&lt;</span> <span class="mf">0.6</span> <span class="ow">or</span> <span class="n">tau</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sticky hard spheres: R &gt; 0, 0 ≤ eta &lt; 0.6, tau &gt; 0, 0 &lt; delta &lt; 0.5"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">eta</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">tau</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StickyHardSphere.baxter">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.StickyHardSphere.baxter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">baxter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""(eta, sigma, lambda, a, b) of Baxter's solution: eta and sigma of the sticky sphere (core + well)."""</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span>            <span class="c1"># volume fraction of the sticky spheres (core + well)</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">eta</span> <span class="o">/</span> <span class="mf">12.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">+</span> <span class="n">eta</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eta</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">disc</span> <span class="o">=</span> <span class="n">B</span> <span class="o">*</span> <span class="n">B</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">A</span> <span class="o">*</span> <span class="n">C</span>
+        <span class="k">if</span> <span class="n">disc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sticky hard spheres: no real solution (too sticky for this volume fraction)"</span><span class="p">)</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">disc</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">A</span><span class="p">)</span> <span class="k">if</span> <span class="n">A</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">C</span> <span class="o">/</span> <span class="n">B</span>          <span class="c1"># smaller root</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">lam</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mu</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eta</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sticky hard spheres: unphysical root"</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">eta</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eta</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span></div>
+
+
+<div class="viewcode-block" id="StickyHardSphere.S">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.StickyHardSphere.S">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""S = 1/|Q(k)|², Q(k) = 1 − 12 η ∫₀¹ q(r) e^{ikr} dr, q(r) = a(r²−1)/2 + b(r−1) + λ/12 (Baxter 1968)."""</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">eta</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baxter</span><span class="p">()</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+        <span class="n">r</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">w</span>
+        <span class="n">qr</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">lam</span> <span class="o">/</span> <span class="mi">12</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">sig</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">re</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">12</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">qr</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">r</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="o">-</span><span class="mi">12</span> <span class="o">*</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">qr</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">r</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">re</span> <span class="o">*</span> <span class="n">re</span> <span class="o">+</span> <span class="n">im</span> <span class="o">*</span> <span class="n">im</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FractalTeixeira">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.FractalTeixeira">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FractalTeixeira</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mass-fractal aggregate of building blocks of radius ``r0`` with fractal dimension ``D`` (1 &lt; D &lt; 3)</span>
+<span class="sd">    and cut-off length ``xi`` (Teixeira 1988)."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"fractal"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">xi</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">r0</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">xi</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">D</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fractal: r0 &gt; 0, xi &gt; 0 and 1 &lt; D &lt; 3"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r0</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">D</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FractalTeixeira.S">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.FractalTeixeira.S">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">D</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">r0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r0</span>
+        <span class="n">qr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">r0</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">D</span> <span class="o">*</span> <span class="n">_G</span><span class="p">(</span><span class="n">D</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">D</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">xi</span><span class="p">))</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">qr</span> <span class="o">**</span> <span class="n">D</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">xi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="p">((</span><span class="n">D</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+        <span class="n">q0</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">xi</span> <span class="o">&lt;</span> <span class="mf">1e-6</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">q0</span><span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">q0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">_G</span><span class="p">(</span><span class="n">D</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">xi</span> <span class="o">/</span> <span class="n">r0</span><span class="p">)</span> <span class="o">**</span> <span class="n">D</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<span class="c1">#: structure factors offered by the GUI: index -&gt; (label, class, parameter keys)</span>
+<span class="n">STRUCTURE_FACTORS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"none"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">()),</span>
+    <span class="p">(</span><span class="s2">"hard spheres (Percus-Yevick)"</span><span class="p">,</span> <span class="n">PercusYevick</span><span class="p">,</span> <span class="p">(</span><span class="s2">"SFRadius"</span><span class="p">,</span> <span class="s2">"SFEta"</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">"sticky hard spheres (Baxter)"</span><span class="p">,</span> <span class="n">StickyHardSphere</span><span class="p">,</span> <span class="p">(</span><span class="s2">"SFRadius"</span><span class="p">,</span> <span class="s2">"SFEta"</span><span class="p">,</span> <span class="s2">"SFTau"</span><span class="p">,</span> <span class="s2">"SFDelta"</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s2">"mass fractal (Teixeira)"</span><span class="p">,</span> <span class="n">FractalTeixeira</span><span class="p">,</span> <span class="p">(</span><span class="s2">"SFRadius"</span><span class="p">,</span> <span class="s2">"SFDim"</span><span class="p">,</span> <span class="s2">"SFXi"</span><span class="p">)),</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="make_structure_factor">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.models_ext.make_structure_factor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_structure_factor</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Structure factor of the parameter dict (key StructureFactor), or None."""</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"StructureFactor"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">STRUCTURE_FACTORS</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">_lab</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">STRUCTURE_FACTORS</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">])</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------- cylinder / disk as in CrystalScatter</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CylinderRL</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Cylinder with *independent* Schulz-Zimm distributions of the radius R (relative width ``sigma_r``) and of the</span>
+<span class="sd">    half-length L (``sigma_l``), as in CrystalScatter (where 'Length' is the half-length).  The amplitude of one</span>
+<span class="sd">    cylinder at angle theta between q and the axis (mu = cos theta) factorises,</span>
+
+<span class="sd">        F = [2 J1(q R sin theta) / (q R sin theta)] [sin(q L mu) / (q L mu)],</span>
+
+<span class="sd">    so the size averages of the two factors are taken separately (hypergeometric blocks d = 2 and d = 1,</span>
+<span class="sd">    reference weighting s = 0) and only the orientation average is done numerically:</span>
+
+<span class="sd">        P(q) = int_0^1 &lt;F_R^2&gt;(q R sqrt(1-mu^2)) &lt;F_L^2&gt;(q L mu) dmu,   F(q) likewise with the amplitudes.</span>
+
+<span class="sd">    A disk is the same body with a small L / R."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"cylinder_rl"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">sigma_r</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma_l</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n_mu</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">z_from_sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_l</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma_r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma_l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zl</span> <span class="o">=</span> <span class="n">z_from_sigma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">),</span> <span class="n">z_from_sigma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_l</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_mu</span> <span class="o">=</span> <span class="n">n_mu</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_mu</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">80</span> <span class="o">+</span> <span class="mi">8</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">))</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">),</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">w</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_avg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLOCK</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mu</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">mu</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">qi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">qi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">qi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zl</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avg</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">F</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avg</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="s1">'F'</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">P_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">mu</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Fixed orientation (mu = cos of the angle between q and the axis)."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLOCK</span>
+        <span class="n">q</span><span class="p">,</span> <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">mu</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">)</span> <span class="o">*</span> <span class="n">BLOCK</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mu</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">zl</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">P_vec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qb</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Body frame q vector (..., 3), axis along z (for the oriented-pattern routines)."""</span>
+        <span class="n">qb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qb</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">qn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">qb</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">qn</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">qb</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">qn</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_fixed</span><span class="p">(</span><span class="n">qn</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>
+
+
+<span class="c1"># ----------------------------------------------------------------------------- vesicle as in CrystalScatter</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VesicleRD</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Unilamellar vesicle: a spherical shell between the inner radius ``r_in`` and the outer radius ``r_out``</span>
+<span class="sd">    (CrystalScatter: inner = 'EditRadius', outer = 'Length').  The mean radius r = (r_in + r_out)/2 and the</span>
+<span class="sd">    half-thickness d = (r_out - r_in)/2 follow independent Schulz-Zimm distributions (``sigma_r``, ``sigma_d``).</span>
+<span class="sd">    Exact shell amplitude, averaged numerically:</span>
+
+<span class="sd">        F = [r_o^3 Phi(q r_o) - r_i^3 Phi(q r_i)] / (r_o^3 - r_i^3),   Phi(x) = 3 (sin x - x cos x) / x^3,</span>
+
+<span class="sd">    P = &lt;F^2&gt; (number weights).  CrystalScatter evaluates the same model in a thin-shell closed form</span>
+<span class="sd">    (polyvesicle); see the documentation for the differences."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"vesicle"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r_in</span><span class="p">,</span> <span class="n">r_out</span><span class="p">,</span> <span class="n">sigma_r</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma_d</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">r_in</span> <span class="o">&lt;</span> <span class="n">r_out</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"vesicle: 0 &lt; inner radius &lt; outer radius"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">r_in</span> <span class="o">+</span> <span class="n">r_out</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">r_out</span> <span class="o">-</span> <span class="n">r_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_d</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma_r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sigma_d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_schulz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schulz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_d</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_schulz</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">mean</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">])</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">s</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">s</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">7</span> <span class="o">*</span> <span class="n">s</span><span class="p">),</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">7</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">lw</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">lw</span> <span class="o">-</span> <span class="n">lw</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">mean</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">w</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_amp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">wr</span><span class="p">),</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">wd</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span>
+        <span class="n">ro</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">ri</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">r</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">d</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="mf">0.0</span><span class="p">)[</span><span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">phi</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="p">(</span><span class="n">ro</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">phi</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">ro</span><span class="p">)</span> <span class="o">-</span> <span class="n">ri</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">phi</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">ri</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">ro</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">ri</span> <span class="o">**</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="p">,</span> <span class="p">(</span><span class="n">wr</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">wd</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])[</span><span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_amp</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">F</span> <span class="o">*</span> <span class="n">F</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">F</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_amp</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">F</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">beta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

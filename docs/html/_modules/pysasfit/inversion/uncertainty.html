@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.uncertainty &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.uncertainty</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.uncertainty</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Parametric bootstrap for pointwise uncertainty on a recovered distribution</span>
+<span class="sd">x(r) (or N(s)), applicable to ANY solver in solver_registry.py -- unlike</span>
+<span class="sd">bayesian_evidence.posterior_covariance (a Laplace/Hessian approximation</span>
+<span class="sd">specific to the Bayesian-evidence solver family), this makes no</span>
+<span class="sd">linearity/positivity assumptions about the solver at all, so it also</span>
+<span class="sd">covers the EM/MaxEnt/ARLS/SVD solvers, at the cost of actually re-solving</span>
+<span class="sd">many times instead of a single cheap matrix inverse.</span>
+
+<span class="sd">Method: perturb the FITTED intensity (A @ x of the single solve; the</span>
+<span class="sd">measured b only if no fit is given) by the stated per-point uncertainty</span>
+<span class="sd">db (assuming independent Gaussian noise</span>
+<span class="sd">-- the same assumption chi2_r itself already makes throughout this</span>
+<span class="sd">package), re-run the FULL solve (including its own internal lambda/h</span>
+<span class="sd">search) on each noisy replicate, and summarize the resulting ensemble of</span>
+<span class="sd">recovered x(r) curves by their pointwise mean and standard deviation.</span>
+
+<span class="sd">Re-running the complete solve (not just the final linear step at a fixed</span>
+<span class="sd">hyperparameter) on every replicate is deliberate: it propagates</span>
+<span class="sd">uncertainty in the regularization-strength CHOICE itself, not just the</span>
+<span class="sd">uncertainty of a linear solve conditioned on one particular lambda/h --</span>
+<span class="sd">more honest, at the cost of this being exactly as slow as N full solves</span>
+<span class="sd">(including whatever lambda search each solver does internally).</span>
+
+<span class="sd">A consequence worth knowing before reading the output: the bootstrap MEAN</span>
+<span class="sd">of a nonlinear, positivity-constrained solver (EM, MaxEnt, ARLS) is not</span>
+<span class="sd">generally equal to a single solve on the unperturbed data -- the ensemble</span>
+<span class="sd">average can be smoother/biased relative to the single "best" solve,</span>
+<span class="sd">particularly wherever a replicate's noise pushes x toward (and gets</span>
+<span class="sd">clipped at) its positivity floor. That's not a bug in this module; it's</span>
+<span class="sd">the real behavior of the underlying nonlinear solver under their own</span>
+<span class="sd">positivity constraint, and precisely the kind of thing a bootstrap</span>
+<span class="sd">reveals and a single point estimate hides.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.solvers.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverResult</span>
+
+
+<div class="viewcode-block" id="BootstrapResult">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.uncertainty.BootstrapResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BootstrapResult</span><span class="p">:</span>
+    <span class="n">x_mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>       <span class="c1"># (n,) pointwise mean over successful replicates</span>
+    <span class="n">x_std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>        <span class="c1"># (n,) pointwise std over successful replicates</span>
+    <span class="n">x_samples</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>    <span class="c1"># (n_ok, n) every successful replicate's x</span>
+    <span class="n">n_boot</span><span class="p">:</span> <span class="nb">int</span>               <span class="c1"># successful replicates actually used</span>
+    <span class="n">n_failed</span><span class="p">:</span> <span class="nb">int</span>              <span class="c1"># replicates skipped (solver raised, or produced non-finite x)</span></div>
+
+
+
+<div class="viewcode-block" id="bootstrap_uncertainty">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.uncertainty.bootstrap_uncertainty">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bootstrap_uncertainty</span><span class="p">(</span>
+    <span class="n">solve_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">SolverResult</span><span class="p">],</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">n_boot</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">progress</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">should_abort</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BootstrapResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    solve_fn : callable(b_replicate) -&gt; SolverResult</span>
+<span class="sd">        Everything else (kernel matrix A, dI used for weighting/chi2, the</span>
+<span class="sd">        chosen solver and any of its own fixed kwargs like taper_frac)</span>
+<span class="sd">        should already be bound in via e.g. functools.partial or a small</span>
+<span class="sd">        lambda -- see gui/app.py's usage for the exact pattern.</span>
+<span class="sd">    b : (M,) the real, background-subtracted measured intensity. Used as</span>
+<span class="sd">        the bootstrap center only if `center` is None (legacy behavior).</span>
+<span class="sd">    db : (M,) per-point uncertainty on b, used both as the noise</span>
+<span class="sd">        generating sigma for the parametric bootstrap and (inside</span>
+<span class="sd">        solve_fn, as always) for chi2 weighting.</span>
+<span class="sd">    progress : callback(done, total) after every finished replicate (e.g. for a GUI status line).</span>
+<span class="sd">    should_abort : callable; when it returns True, no further replicates are started and the</span>
+<span class="sd">        result is built from the finished ones.</span>
+<span class="sd">    workers : threads for the re-solves (None: PYSASFIT_THREADS or the CPU count; 1: serial). The replicates</span>
+<span class="sd">        are drawn before the solves, so the result is the same for any number of workers.</span>
+<span class="sd">    n_boot : number of replicates to attempt. A handful can fail (solver</span>
+<span class="sd">        non-convergence, a lambda search that can't bracket a root on a</span>
+<span class="sd">        particular noisy draw, ...) -- those are silently skipped and</span>
+<span class="sd">        counted in n_failed rather than aborting the whole run, since on</span>
+<span class="sd">        a reasonably-behaved problem a small failure rate is expected and</span>
+<span class="sd">        shouldn't block getting an answer from the rest.</span>
+<span class="sd">    rng : optional numpy Generator for reproducibility; a fresh default</span>
+<span class="sd">        generator is used otherwise.</span>
+<span class="sd">    center : (M,) noise-free curve the replicates are generated around --</span>
+<span class="sd">        pass the single solve's fitted_b. STRONGLY recommended: the</span>
+<span class="sd">        measured b already contains one realization of noise, so b + noise</span>
+<span class="sd">        has variance ~2*db^2. Every replicate then has a true chi2_r of ~2,</span>
+<span class="sd">        and any solver forced to chi2_r=1 (discrepancy principle) must</span>
+<span class="sd">        overfit it. Found 2026-10-10 on test.dat with</span>
+<span class="sd">        bayesian_evidence_two_segment + target_chi2_r=1: centering on b</span>
+<span class="sd">        drove lambda down by up to 1e8 on some replicates (std(p) up to</span>
+<span class="sd">        5.9, p peak ~1); centering on fitted_b gave std(p) &lt;= 0.014.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError if every single replicate failed (nothing to summarize).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span> <span class="k">if</span> <span class="n">center</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">center</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="c1"># All noise realisations are drawn first, in the same order as a serial loop, so the replicates (and the</span>
+    <span class="c1"># result) do not depend on the number of workers.  The re-solves are independent: with workers != 1 they</span>
+    <span class="c1"># run in worker processes when one solve takes longer than ~0.2 s and solve_fn can be pickled (use</span>
+    <span class="c1"># replicate_solver(); a lambda/closure cannot) -- threads do not help, the iterative solvers are limited by</span>
+    <span class="c1"># the Python interpreter lock.</span>
+    <span class="n">reps</span> <span class="o">=</span> <span class="p">[</span><span class="n">base</span> <span class="o">+</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_boot</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">one</span><span class="p">(</span><span class="n">b_rep</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">solve_fn</span><span class="p">(</span><span class="n">b_rep</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"solver returned an empty or non-finite result"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">_run_replicates</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">solve_fn</span><span class="p">,</span> <span class="n">reps</span><span class="p">,</span> <span class="n">workers</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">progress</span><span class="p">,</span> <span class="n">should_abort</span><span class="o">=</span><span class="n">should_abort</span><span class="p">)</span>
+    <span class="n">samples</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n_failed</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+            <span class="n">n_failed</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">samples</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"All </span><span class="si">{</span><span class="n">n_boot</span><span class="si">}</span><span class="s2"> bootstrap replicates failed -- cannot estimate "</span>
+            <span class="s2">"uncertainty this way for this solver/data combination."</span>
+        <span class="p">)</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BootstrapResult</span><span class="p">(</span>
+        <span class="n">x_mean</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">x_std</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">x_samples</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+        <span class="n">n_boot</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">n_failed</span><span class="o">=</span><span class="n">n_failed</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ------------------------------------------------------------------------------------------------------------</span>
+<span class="c1"># parallel re-solves</span>
+<span class="c1"># ------------------------------------------------------------------------------------------------------------</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReplicateSolver</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Picklable solve_fn: run_solver(key, A, b_rep, db, spline=spline, **kwargs)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">spline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">solver_registry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spline</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">db</span><span class="p">),</span> <span class="n">spline</span><span class="p">,</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">solver_registry</span><span class="o">.</span><span class="n">OPTIONS</span><span class="p">)</span>     <span class="c1"># numerical options of the parent (worker processes)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b_rep</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">solver_registry</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">:</span>                      <span class="c1"># in a worker process: the parent's options</span>
+            <span class="n">solver_registry</span><span class="o">.</span><span class="n">apply_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">solver_registry</span><span class="o">.</span><span class="n">run_solver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">b_rep</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">,</span> <span class="n">spline</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">spline</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="replicate_solver">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.uncertainty.replicate_solver">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">replicate_solver</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">spline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""solve_fn for :func:`bootstrap_uncertainty` that can be sent to worker processes."""</span>
+    <span class="k">return</span> <span class="n">_ReplicateSolver</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">spline</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_call_replicate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">one</span><span class="p">,</span> <span class="n">b_rep</span> <span class="o">=</span> <span class="n">args</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">one</span><span class="p">(</span><span class="n">b_rep</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="k">return</span> <span class="n">e</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_One</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Picklable wrapper: solve, check x (the body of bootstrap_uncertainty's `one`)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solve_fn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve_fn</span> <span class="o">=</span> <span class="n">solve_fn</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b_rep</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solve_fn</span><span class="p">(</span><span class="n">b_rep</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"solver returned an empty or non-finite result"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_replicates</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">solve_fn</span><span class="p">,</span> <span class="n">reps</span><span class="p">,</span> <span class="n">workers</span><span class="p">,</span> <span class="n">min_seconds</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">should_abort</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="ne">TimeoutError</span> <span class="k">as</span> <span class="n">_FutTimeout</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..core.accel</span><span class="w"> </span><span class="kn">import</span> <span class="n">n_workers</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">workers</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_workers</span><span class="p">(</span><span class="n">workers</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">reps</span><span class="p">))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reps</span><span class="p">)</span>
+    <span class="n">aborted</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">should_abort</span> <span class="ow">and</span> <span class="n">should_abort</span><span class="p">()))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">tick</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">progress</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reps</span> <span class="ow">or</span> <span class="n">aborted</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_call_replicate</span><span class="p">((</span><span class="n">one</span><span class="p">,</span> <span class="n">reps</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+    <span class="n">tick</span><span class="p">()</span>
+    <span class="n">slow</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span> <span class="o">&gt;</span> <span class="n">min_seconds</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">slow</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">reps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">_One</span><span class="p">(</span><span class="n">solve_fn</span><span class="p">)</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- closure / lambda: serial</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">..core.accel</span><span class="w"> </span><span class="kn">import</span> <span class="n">single_thread_blas_env</span>
+                <span class="c1"># 'spawn' everywhere: forking a process that runs Qt threads is unsafe (Windows spawns anyway).</span>
+                <span class="c1"># One BLAS thread per worker (else N workers x N OpenBLAS threads exhaust memory on Windows),</span>
+                <span class="c1"># and at most 8 workers unless PYSASFIT_THREADS / workers asks for more.</span>
+                <span class="n">nw</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span> <span class="k">if</span> <span class="p">(</span><span class="n">workers</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_THREADS"</span><span class="p">))</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">reps</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">single_thread_blas_env</span><span class="p">():</span>
+                    <span class="n">ex</span> <span class="o">=</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">nw</span><span class="p">,</span> <span class="n">mp_context</span><span class="o">=</span><span class="n">mp</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="s2">"spawn"</span><span class="p">))</span>
+                    <span class="n">futs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ex</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_call_replicate</span><span class="p">,</span> <span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">reps</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span>   <span class="c1"># workers start here</span>
+                <span class="c1"># Watchdog: worker processes that do not deliver (could not start, hang) must not freeze the</span>
+                <span class="c1"># caller -- after a generous timeout the remaining replicates are solved serially.</span>
+                <span class="n">t_one</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+                <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">+</span> <span class="mf">60.0</span> <span class="o">+</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">t_one</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">futs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">nw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">futs</span><span class="p">:</span>
+                        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">aborted</span><span class="p">():</span>
+                                <span class="k">raise</span> <span class="ne">KeyboardInterrupt</span>
+                            <span class="n">left</span> <span class="o">=</span> <span class="n">deadline</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+                            <span class="k">if</span> <span class="n">left</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="k">raise</span> <span class="ne">TimeoutError</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">left</span><span class="p">)))</span>
+                                <span class="k">break</span>
+                            <span class="k">except</span> <span class="p">(</span><span class="n">_FutTimeout</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">):</span>
+                                <span class="k">continue</span>
+                        <span class="n">tick</span><span class="p">()</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>  <span class="c1"># noqa: BLE001 -- abort, timeout, broken pool</span>
+                    <span class="k">pass</span>
+                <span class="n">ex</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cancel_futures</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">reps</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">):]:</span>
+                    <span class="k">if</span> <span class="n">aborted</span><span class="p">():</span>
+                        <span class="k">break</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_call_replicate</span><span class="p">((</span><span class="n">one</span><span class="p">,</span> <span class="n">b</span><span class="p">)))</span>
+                    <span class="n">tick</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">out</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- no worker processes available: serial</span>
+                <span class="k">del</span> <span class="n">out</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">reps</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="k">if</span> <span class="n">aborted</span><span class="p">():</span>
+            <span class="k">break</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_call_replicate</span><span class="p">((</span><span class="n">one</span><span class="p">,</span> <span class="n">b</span><span class="p">)))</span>
+        <span class="n">tick</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">out</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

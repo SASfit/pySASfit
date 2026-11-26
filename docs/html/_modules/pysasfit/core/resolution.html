@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.resolution &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.resolution</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.resolution</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">"""Instrumental smearing.</span>
+
+<span class="sd">Because the model intensity is quadratic in rho, smearing cannot be applied</span>
+<span class="sd">to the amplitude.  A resolution object instead provides a fine q-grid q' and</span>
+<span class="sd">a matrix R such that</span>
+
+<span class="sd">    I_smeared(q_i) = sum_m R_im I(q'_m).</span>
+
+<span class="sd">Then C_i = sum_m R_im c(q'_m) a(q'_m) a(q'_m)^T in Hansen's notation.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"NoResolution"</span><span class="p">,</span> <span class="s2">"Resolution"</span><span class="p">,</span> <span class="s2">"RicianResolution"</span><span class="p">,</span> <span class="s2">"GaussianResolution"</span><span class="p">,</span> <span class="s2">"SlitResolution"</span><span class="p">,</span> <span class="s2">"MatrixResolution"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="NoResolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.NoResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Point-like resolution (R = identity)."""</span>
+
+<div class="viewcode-block" id="NoResolution.setup">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.NoResolution.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">q</span><span class="p">,</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Resolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.Resolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Resolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Pinhole Q-resolution as a fixed linear operator -- the same operator as</span>
+<span class="sd">    ``pyozgui.polydisperse_fit.Resolution`` (pyOZgui), so both programs smear identically.</span>
+
+<span class="sd">    ``kernel="rician"`` (default) or ``"gaussian"``.</span>
+
+<span class="sd">    Rician is the physically correct kernel: the instrument broadens Q</span>
+<span class="sd">    isotropically in the two-dimensional detector plane and the data are then</span>
+<span class="sd">    radially averaged, so the distribution of the magnitude ``|Q|`` about the</span>
+<span class="sd">    nominal Q0 is</span>
+
+<span class="sd">        P(Q|Q0) = (Q/s^2) exp(-(Q^2 + Q0^2)/2s^2) I0(Q Q0/s^2),</span>
+
+<span class="sd">    evaluated as (Q/s^2) exp(-(Q-Q0)^2/2s^2) i0e(Q Q0/s^2) to avoid overflow.</span>
+<span class="sd">    A Gaussian in Q is its Q0/s &gt;&gt; 1 limit; it is adequate for small dQ/Q but</span>
+<span class="sd">    puts weight at Q &lt; 0 for large dQ/Q (lowest-Q points). The factor Q makes</span>
+<span class="sd">    the Rician weight vanish at the origin.</span>
+
+<span class="sd">    Conventions (identical to pyOZgui):</span>
+
+<span class="sd">    * ``dq`` is the kernel's SIGMA; ``fwhm=True`` converts a FWHM (/2.3548).</span>
+<span class="sd">    * The model is evaluated on an extended grid Qext = linspace(lo, hi,</span>
+<span class="sd">      oversample*M) united with the measured Q, lo = max(min(Q - nSigma dQ),</span>
+<span class="sd">      1e-3 Q_min), hi = max(Q + nSigma dQ); including the measured Q makes</span>
+<span class="sd">      dQ -&gt; 0 reproduce the unsmeared curve exactly.</span>
+<span class="sd">    * Trapezoid weights on Qext; every row normalised to 1; a row that falls</span>
+<span class="sd">      between grid points falls back to the nearest node.</span>
+<span class="sd">    * The background is NOT smeared (it is added after smearing, in the model).</span>
+
+<span class="sd">    ``dq`` may be a scalar or an array with one value per data point.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dq</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"rician"</span><span class="p">,</span> <span class="n">fwhm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">nSigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">oversample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kernel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"rician"</span><span class="p">,</span> <span class="s2">"gaussian"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"kernel must be 'rician' or 'gaussian', got </span><span class="si">{</span><span class="n">kernel</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dq</span> <span class="o">=</span> <span class="n">dq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fwhm</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nSigma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">nSigma</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oversample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">oversample</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Resolution.setup">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.Resolution.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">dQ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dq</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">Q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="p">:</span>
+            <span class="n">dQ</span> <span class="o">=</span> <span class="n">dQ</span> <span class="o">/</span> <span class="mf">2.3548200450309493</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">Q</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nSigma</span> <span class="o">*</span> <span class="n">dQ</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">Q</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">Q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nSigma</span> <span class="o">*</span> <span class="n">dQ</span><span class="p">))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">oversample</span> <span class="o">*</span> <span class="n">Q</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">Q</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">Qext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Q</span><span class="p">]))</span>
+        <span class="n">dq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">Qext</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">==</span> <span class="s2">"gaussian"</span><span class="p">:</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">Qext</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">Q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">/</span> <span class="n">dQ</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">z</span> <span class="o">*</span> <span class="n">z</span><span class="p">)</span> <span class="o">*</span> <span class="n">dq</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">i0e</span>
+
+                <span class="n">s2</span> <span class="o">=</span> <span class="p">(</span><span class="n">dQ</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="n">Qe</span> <span class="o">=</span> <span class="n">Qext</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="n">Q0</span> <span class="o">=</span> <span class="n">Q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">Qe</span> <span class="o">*</span> <span class="n">Q0</span> <span class="o">/</span> <span class="n">s2</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="p">(</span><span class="n">Qe</span> <span class="o">/</span> <span class="n">s2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">Qe</span> <span class="o">-</span> <span class="n">Q0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">s2</span><span class="p">)</span> <span class="o">*</span> <span class="n">i0e</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">dq</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Qe</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">W</span><span class="p">),</span> <span class="n">W</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="p">(</span><span class="n">norm</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">norm</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">bad</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">bad</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Qext</span> <span class="o">-</span> <span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">])))]</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Qext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span> <span class="o">=</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Qext</span><span class="p">,</span> <span class="n">W</span> <span class="o">/</span> <span class="n">norm</span>
+        <span class="k">return</span> <span class="n">Qext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Resolution(kernel=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="si">!r}</span><span class="s2">, fwhm=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fwhm</span><span class="si">}</span><span class="s2">, nSigma=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nSigma</span><span class="si">}</span><span class="s2">, oversample=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oversample</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<div class="viewcode-block" id="RicianResolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.RicianResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RicianResolution</span><span class="p">(</span><span class="n">Resolution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rician pinhole resolution (default kernel); ``dq`` = sigma (or FWHM with ``fwhm=True``)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dq</span><span class="p">,</span> <span class="n">fwhm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">nSigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">oversample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dq</span><span class="p">,</span> <span class="s2">"rician"</span><span class="p">,</span> <span class="n">fwhm</span><span class="p">,</span> <span class="n">nSigma</span><span class="p">,</span> <span class="n">oversample</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GaussianResolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.GaussianResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GaussianResolution</span><span class="p">(</span><span class="n">Resolution</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gaussian pinhole resolution (large-Q/dQ limit of the Rician), same operator as pyOZgui."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dq</span><span class="p">,</span> <span class="n">fwhm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">nSigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">oversample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">n_nodes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dq</span><span class="p">,</span> <span class="s2">"gaussian"</span><span class="p">,</span> <span class="n">fwhm</span><span class="p">,</span> <span class="n">nSigma</span><span class="p">,</span> <span class="n">oversample</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SlitResolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.SlitResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlitResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Slit smearing with a Gaussian beam-length profile (Glatter 1977; Hansen 2016, sect. 3.1).</span>
+
+<span class="sd">        I_m(q) = 2 \int_0^\infty P(t) I(sqrt(q^2 + t^2)) dt,</span>
+<span class="sd">        P(t)   = exp(-t^2 / c^2) / (c sqrt(pi))      (2 \int_0^\infty P = 1)</span>
+
+<span class="sd">    ``c`` is the profile width in q units.  The t-integral is done with</span>
+<span class="sd">    Gauss-Hermite (half-range) quadrature.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SlitResolution.setup">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.SlitResolution.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">hermite</span><span class="o">.</span><span class="n">hermgauss</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_nodes</span><span class="p">)</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>  <span class="c1"># 2 * int_0^inf exp(-x^2)/sqrt(pi) f = sum wt f</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="n">wt</span> <span class="o">/</span> <span class="n">wt</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">qf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">t</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">qf</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">*</span> <span class="n">k</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">wt</span>
+        <span class="k">return</span> <span class="n">qf</span><span class="p">,</span> <span class="n">R</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MatrixResolution">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.MatrixResolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MatrixResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""User supplied fine grid ``q_fine`` and smearing matrix ``R`` (len(q) x len(q_fine))."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_fine</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q_fine</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MatrixResolution.setup">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.resolution.MatrixResolution.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_fine</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"R has wrong shape"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_fine</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

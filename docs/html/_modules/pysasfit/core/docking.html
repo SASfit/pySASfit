@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.docking &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.docking</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.docking</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">"""Detachable panels for the Qt main windows.</span>
+
+<span class="sd">Every panel (input controls, each plot, text output) is a ``QDockWidget``. Inside</span>
+<span class="sd">the main window it can be moved to another side or stacked as tabs by dragging its</span>
+<span class="sd">title bar. The detach button in the title bar (or a double-click on the title)</span>
+<span class="sd">moves the panel into an ordinary, independent window: own task-bar entry,</span>
+<span class="sd">minimise / maximise, and it does **not** stay on top of the main window (Qt's own</span>
+<span class="sd">floating docks are tool windows that always stay above their main window).</span>
+<span class="sd">Closing such a window docks the panel again. Every panel has a border (View →</span>
+<span class="sd">Panel border: raised (default), sunken, groove, line or none), docked or detached; the active</span>
+<span class="sd">panel (last clicked or holding the keyboard focus) is framed in colour. **View → Arrange panels**</span>
+<span class="sd">puts the docked panels side by side, one above the other, in a grid or all as tabs, and cascades or</span>
+<span class="sd">tiles the detached panel windows. Panels</span>
+<span class="sd">can be hidden and shown from the **View** menu; **View → Reset layout** docks everything in the arrangement</span>
+<span class="sd">the window started with (optional panels hidden at the start are hidden again). The arrangement, including detached windows and their</span>
+<span class="sd">positions, is part of the last session (``dock_state``).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6</span><span class="w"> </span><span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"DockMixin"</span><span class="p">,</span> <span class="s2">"PanelWindow"</span><span class="p">,</span> <span class="s2">"plot_panel"</span><span class="p">,</span> <span class="s2">"PANEL_BORDERS"</span><span class="p">,</span> <span class="s2">"DEFAULT_PANEL_BORDER"</span><span class="p">,</span> <span class="s2">"adapt_fonts"</span><span class="p">,</span>
+           <span class="s2">"keep_fonts_adapted"</span><span class="p">,</span> <span class="s2">"ACTIVE_PANEL_COLOUR"</span><span class="p">,</span> <span class="s2">"DEFAULT_TITLE_COLOUR"</span><span class="p">,</span> <span class="s2">"title_colours"</span><span class="p">]</span>
+
+<span class="c1">#: border drawn around the content of every detachable panel (View → Panel border):</span>
+<span class="c1">#: name -&gt; (menu label, QFrame shape, QFrame shadow, line width, mid-line width)</span>
+<span class="n">PANEL_BORDERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sunken"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Sunken"</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">Panel</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shadow</span><span class="o">.</span><span class="n">Sunken</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"groove"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Groove"</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">Box</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shadow</span><span class="o">.</span><span class="n">Sunken</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"raised"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Raised"</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">Panel</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shadow</span><span class="o">.</span><span class="n">Raised</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"line"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Line"</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">Box</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shadow</span><span class="o">.</span><span class="n">Plain</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"none"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"None"</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">NoFrame</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shadow</span><span class="o">.</span><span class="n">Plain</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="n">DEFAULT_PANEL_BORDER</span> <span class="o">=</span> <span class="s2">"raised"</span>
+
+<span class="c1">#: colour of the frame around the active panel (the one last clicked or holding the keyboard focus)</span>
+<span class="n">ACTIVE_PANEL_COLOUR</span> <span class="o">=</span> <span class="s2">"#c8246e"</span>
+
+
+<span class="c1">#: title bars of the docked panels, coloured as window title bars under Windows (Windows 10/11 accent blue)</span>
+<span class="n">DEFAULT_TITLE_COLOUR</span> <span class="o">=</span> <span class="s2">"#0078d7"</span>
+<span class="n">TITLE_MODES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"pale"</span><span class="p">,</span> <span class="s2">"all"</span><span class="p">,</span> <span class="s2">"active"</span><span class="p">,</span> <span class="s2">"off"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_title_settings</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""(mode, colour) of the panel title bars from the preferences (defaults without settings)."""</span>
+    <span class="n">mode</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="s2">"pale"</span><span class="p">,</span> <span class="n">DEFAULT_TITLE_COLOUR</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"appearance.panel_title.mode"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">mode</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"appearance.panel_title.colour"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">col</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>                      <span class="c1"># no preferences module / unknown key: defaults</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">))</span><span class="o">.</span><span class="n">isValid</span><span class="p">():</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">DEFAULT_TITLE_COLOUR</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">mode</span> <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">TITLE_MODES</span> <span class="k">else</span> <span class="s2">"pale"</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="title_colours">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.title_colours">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">title_colours</span><span class="p">(</span><span class="n">active</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(background, text) of a panel title bar, or None for the system look.</span>
+
+<span class="sd">    mode 'pale': active panel in the colour, the others in a pale tint of it (default);</span>
+<span class="sd">    'all': every panel in the colour; 'active': only the active panel coloured; 'off': system look."""</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">_title_settings</span><span class="p">()</span>
+    <span class="n">mode</span><span class="p">,</span> <span class="n">colour</span> <span class="o">=</span> <span class="n">mode</span> <span class="ow">or</span> <span class="n">m</span><span class="p">,</span> <span class="n">colour</span> <span class="ow">or</span> <span class="n">c</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"off"</span> <span class="ow">or</span> <span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"active"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">active</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">bg</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="n">colour</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"pale"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">active</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="mf">0.22</span>                                       <span class="c1"># 22 % of the colour on white</span>
+        <span class="n">bg</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">bg</span><span class="o">.</span><span class="n">red</span><span class="p">())),</span> <span class="nb">round</span><span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">bg</span><span class="o">.</span><span class="n">green</span><span class="p">())),</span>
+                          <span class="nb">round</span><span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="mi">255</span> <span class="o">-</span> <span class="n">bg</span><span class="o">.</span><span class="n">blue</span><span class="p">())))</span>
+    <span class="n">lum</span> <span class="o">=</span> <span class="mf">0.2126</span> <span class="o">*</span> <span class="n">bg</span><span class="o">.</span><span class="n">redF</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.7152</span> <span class="o">*</span> <span class="n">bg</span><span class="o">.</span><span class="n">greenF</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.0722</span> <span class="o">*</span> <span class="n">bg</span><span class="o">.</span><span class="n">blueF</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">bg</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span> <span class="p">(</span><span class="s2">"#ffffff"</span> <span class="k">if</span> <span class="n">lum</span> <span class="o">&lt;</span> <span class="mf">0.55</span> <span class="k">else</span> <span class="s2">"#1a1a1a"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_glyph_icon</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Flat window-button glyph ('restore' = two squares, 'close' = ×) in the text colour of the bar."""</span>
+    <span class="n">pm</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">pm</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">GlobalColor</span><span class="o">.</span><span class="n">transparent</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPainter</span><span class="p">(</span><span class="n">pm</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">setRenderHint</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPainter</span><span class="o">.</span><span class="n">RenderHint</span><span class="o">.</span><span class="n">Antialiasing</span><span class="p">)</span>
+    <span class="n">pen</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPen</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="n">colour</span><span class="p">),</span> <span class="mf">1.3</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">setPen</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">size</span> <span class="o">-</span> <span class="mf">3.0</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"close"</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">drawLine</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="mf">2.5</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">drawRect</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRectF</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span> <span class="o">-</span> <span class="n">o</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span> <span class="o">-</span> <span class="n">o</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">drawPolyline</span><span class="p">([</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">a</span> <span class="o">+</span> <span class="n">o</span><span class="p">),</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span>
+                        <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">o</span><span class="p">),</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPointF</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">o</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">o</span><span class="p">)])</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="n">pm</span><span class="p">)</span>
+
+
+<span class="c1">#: icon size (pixels) of the matplotlib toolbars above the plots</span>
+<span class="n">TOOLBAR_ICON_SIZE</span> <span class="o">=</span> <span class="mi">16</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">small_toolbar</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Matplotlib navigation toolbar with small icons (default 16 px instead of 24)."""</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span> <span class="ow">or</span> <span class="n">TOOLBAR_ICON_SIZE</span><span class="p">)</span>
+    <span class="n">tb</span><span class="o">.</span><span class="n">setIconSize</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QSize</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+    <span class="n">tb</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">tb</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tb</span>
+
+
+<span class="c1">#: figure size (inches) down to which the fonts keep their normal size, and the smallest</span>
+<span class="c1">#: font scale used for smaller figures</span>
+<span class="n">FONT_REF_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">2.9</span><span class="p">)</span>
+<span class="n">FONT_MIN_SCALE</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scaled</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"_pf_base_size"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get_fontsize</span><span class="p">()</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">_pf_base_size</span> <span class="o">=</span> <span class="n">b</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="adapt_fonts">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.adapt_fonts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapt_fonts</span><span class="p">(</span><span class="n">fig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Scale all fonts of ``fig`` with the figure size, so that small panels still show</span>
+<span class="sd">    every axis label and tick label (constrained layout cannot make room for text</span>
+<span class="sd">    that is larger than the figure). The size is measured in inches, i.e. it does</span>
+<span class="sd">    not depend on the screen scaling. Call after drawing and on every resize."""</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">FONT_MIN_SCALE</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">w</span> <span class="o">/</span> <span class="n">FONT_REF_SIZE</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h</span> <span class="o">/</span> <span class="n">FONT_REF_SIZE</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">fig</span><span class="o">.</span><span class="n">_suptitle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_scaled</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">_suptitle</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">_left_title</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">_right_title</span><span class="p">,</span>
+                  <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">get_offset_text</span><span class="p">(),</span> <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">get_offset_text</span><span class="p">(),</span> <span class="o">*</span><span class="n">ax</span><span class="o">.</span><span class="n">texts</span><span class="p">):</span>
+            <span class="n">_scaled</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">axis</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="p">),</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="p">)):</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="s2">"_pf_tick_size"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ticks</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">()</span>
+                <span class="n">base</span> <span class="o">=</span> <span class="n">ticks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label1</span><span class="o">.</span><span class="n">get_fontsize</span><span class="p">()</span> <span class="k">if</span> <span class="n">ticks</span> <span class="k">else</span> <span class="mf">10.0</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">_pf_tick_size</span> <span class="o">=</span> <span class="n">base</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s2">"both"</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="n">base</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">lg</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_legend</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">lg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">lg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
+                <span class="n">_scaled</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lg</span><span class="o">.</span><span class="n">get_title</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_scaled</span><span class="p">(</span><span class="n">lg</span><span class="o">.</span><span class="n">get_title</span><span class="p">(),</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lg</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">legends</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">lg</span><span class="o">.</span><span class="n">get_texts</span><span class="p">():</span>
+            <span class="n">_scaled</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<div class="viewcode-block" id="keep_fonts_adapted">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.keep_fonts_adapted">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">keep_fonts_adapted</span><span class="p">(</span><span class="n">canvas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Re-scale the fonts of the canvas' figure whenever the canvas is resized."""</span>
+    <span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">"resize_event"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_e</span><span class="p">:</span> <span class="n">adapt_fonts</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">figure</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="plot_panel">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.plot_panel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_panel</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="n">toolbar_parent</span><span class="p">,</span> <span class="n">bars</span><span class="o">=</span><span class="p">()):</span>
+<span class="w">    </span><span class="sd">"""Widget with the matplotlib toolbar, optional control bars (QLayouts or</span>
+<span class="sd">    QWidgets) and the canvas below."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.backends.backend_qtagg</span><span class="w"> </span><span class="kn">import</span> <span class="n">NavigationToolbar2QT</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">()</span>
+    <span class="n">lay</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">lay</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+    <span class="n">top</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">small_toolbar</span><span class="p">(</span><span class="n">NavigationToolbar2QT</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="n">toolbar_parent</span><span class="p">)))</span>
+    <span class="n">top</span><span class="o">.</span><span class="n">addStretch</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">lay</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">top</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bars</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLayout</span><span class="p">):</span>
+            <span class="n">lay</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># no large minimum size: a panel that does not fit is clipped by Qt (labels cut off at</span>
+    <span class="c1"># the edges); instead the canvas shrinks and the fonts follow (adapt_fonts)</span>
+    <span class="n">canvas</span><span class="o">.</span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>
+    <span class="n">keep_fonts_adapted</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_ActivePanelFilter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Application event filter of a DockMixin window: a click or the keyboard focus inside one of its</span>
+<span class="sd">    panels makes that panel the active one (coloured frame)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">win</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_win</span> <span class="o">=</span> <span class="n">win</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">eventFilter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">MouseButtonPress</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QEvent</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">FocusIn</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_win</span><span class="o">.</span><span class="n">_panel_of</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_win</span><span class="o">.</span><span class="n">_mark_active</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>                      <span class="c1"># window being deleted</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="PanelWindow">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.PanelWindow">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PanelWindow</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Independent top-level window holding a detached panel (no parent: not kept</span>
+<span class="sd">    above the main window, own task-bar entry). Closing it docks the panel again."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">on_close</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">WindowType</span><span class="o">.</span><span class="n">Window</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_close</span> <span class="o">=</span> <span class="n">on_close</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_closing_app</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PanelWindow.closeEvent">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.PanelWindow.closeEvent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closing_app</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_on_close</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">closeEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_TitleBar</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Title bar of a docked panel: title, detach button, close button.</span>
+<span class="sd">    Dragging it moves the panel inside the main window."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dock</span><span class="p">,</span> <span class="n">on_detach</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dock</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_detach</span> <span class="o">=</span> <span class="n">on_detach</span>
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="n">dock</span><span class="o">.</span><span class="n">windowTitle</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addStretch</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">()</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QToolButton</span><span class="p">()</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">standardIcon</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_TitleBarNormalButton</span><span class="p">))</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Detach into a separate window (closing that window docks it again)"</span><span class="p">)</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">setAutoRaise</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># clicked(bool) passes 'checked': never forward it as the panel name</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_checked</span><span class="o">=</span><span class="kc">False</span><span class="p">:</span> <span class="n">on_detach</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QToolButton</span><span class="p">()</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">standardIcon</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_TitleBarCloseButton</span><span class="p">))</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Hide this panel (View menu shows it again)"</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">setAutoRaise</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_checked</span><span class="o">=</span><span class="kc">False</span><span class="p">:</span> <span class="n">dock</span><span class="o">.</span><span class="n">close</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detach_button</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">close_button</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">"panelTitleBar"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setAttribute</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">WidgetAttribute</span><span class="o">.</span><span class="n">WA_StyledBackground</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colours</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_active</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">active</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Colour of the bar (preferences: appearance.panel_title.*); the system look when switched off."""</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">title_colours</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cols</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">colours</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colours</span> <span class="o">=</span> <span class="n">cols</span>
+        <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detach_button</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">standardIcon</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_TitleBarNormalButton</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close_button</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">standardIcon</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_TitleBarCloseButton</span><span class="p">))</span>
+            <span class="k">return</span>
+        <span class="n">bg</span><span class="p">,</span> <span class="n">fg</span> <span class="o">=</span> <span class="n">cols</span>
+        <span class="n">hover</span> <span class="o">=</span> <span class="s2">"rgba(255,255,255,70)"</span> <span class="k">if</span> <span class="n">fg</span> <span class="o">==</span> <span class="s2">"#ffffff"</span> <span class="k">else</span> <span class="s2">"rgba(0,0,0,40)"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"QWidget#panelTitleBar </span><span class="se">{{</span><span class="s2"> background-color: </span><span class="si">{</span><span class="n">bg</span><span class="si">}</span><span class="s2">; </span><span class="se">}}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"QWidget#panelTitleBar QLabel </span><span class="se">{{</span><span class="s2"> color: </span><span class="si">{</span><span class="n">fg</span><span class="si">}</span><span class="s2">; background: transparent; </span><span class="se">}}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"QWidget#panelTitleBar QToolButton </span><span class="se">{{</span><span class="s2"> border: none; background: transparent; padding: 1px 4px; </span><span class="se">}}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"QWidget#panelTitleBar QToolButton:hover </span><span class="se">{{</span><span class="s2"> background: </span><span class="si">{</span><span class="n">hover</span><span class="si">}</span><span class="s2">; </span><span class="se">}}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"QWidget#panelTitleBar QToolButton#closeButton:hover </span><span class="se">{{</span><span class="s2"> background: #e81123; </span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detach_button</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">_glyph_icon</span><span class="p">(</span><span class="s2">"restore"</span><span class="p">,</span> <span class="n">fg</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_button</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">_glyph_icon</span><span class="p">(</span><span class="s2">"close"</span><span class="p">,</span> <span class="n">fg</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_button</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">"closeButton"</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">font</span><span class="p">()</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">setBold</span><span class="p">(</span><span class="n">active</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setFont</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mouseDoubleClickEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_detach</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="DockMixin">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DockMixin</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mixin for a QMainWindow: :meth:`_add_dock` creates the panels,</span>
+<span class="sd">    :meth:`_finish_docks` adds the View menu and remembers the start layout."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_dock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">widget</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">DockWidgetArea</span><span class="o">.</span><span class="n">RightDockWidgetArea</span><span class="p">,</span>
+                  <span class="n">scrollable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># every panel scrolls: otherwise the widest / tallest panel content fixes the smallest size of the</span>
+        <span class="c1"># tool, and one tool that of the whole pySASfit window (pysasfit.core.scrolling). Text boxes, tables</span>
+        <span class="c1"># and trees scroll themselves. ``scrollable`` is kept for existing callers.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QAbstractScrollArea</span><span class="p">):</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.scrolling</span><span class="w"> </span><span class="kn">import</span> <span class="n">scrolled</span>
+            <span class="n">widget</span> <span class="o">=</span> <span class="n">scrolled</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">widget</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QScrollArea</span><span class="p">):</span>
+            <span class="n">widget</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">Shape</span><span class="o">.</span><span class="n">NoFrame</span><span class="p">)</span>     <span class="c1"># the panel border replaces it</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="p">()</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="sa">f</span><span class="s2">"panel_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">widget</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QDockWidget</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dock_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>          <span class="c1"># needed by saveState/restoreState</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setWidget</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+        <span class="c1"># no Qt floating (tool window, always above the main window): detaching</span>
+        <span class="c1"># goes to an independent PanelWindow instead</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setFeatures</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QDockWidget</span><span class="o">.</span><span class="n">DockWidgetFeature</span><span class="o">.</span><span class="n">DockWidgetMovable</span>
+                      <span class="o">|</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QDockWidget</span><span class="o">.</span><span class="n">DockWidgetFeature</span><span class="o">.</span><span class="n">DockWidgetClosable</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setAllowedAreas</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">DockWidgetArea</span><span class="o">.</span><span class="n">AllDockWidgetAreas</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setTitleBarWidget</span><span class="p">(</span><span class="n">_TitleBar</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">detach</span><span class="p">(</span><span class="n">n</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addDockWidget</span><span class="p">(</span><span class="n">area</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"docks"</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_actions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">panel_frames</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel_frames</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_apply_border</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_border"</span><span class="p">,</span> <span class="n">DEFAULT_PANEL_BORDER</span><span class="p">))</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">visibilityChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_v</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_finish_docks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setDockNestingEnabled</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setDockOptions</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="o">.</span><span class="n">DockOption</span><span class="o">.</span><span class="n">AnimatedDocks</span>
+                            <span class="o">|</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="o">.</span><span class="n">DockOption</span><span class="o">.</span><span class="n">AllowNestedDocks</span>
+                            <span class="o">|</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="o">.</span><span class="n">DockOption</span><span class="o">.</span><span class="n">AllowTabbedDocks</span><span class="p">)</span>
+        <span class="n">menu</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&amp;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"View"</span><span class="p">:</span>
+                <span class="n">menu</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">menu</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">menu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">"&amp;View"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">act</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">windowTitle</span><span class="p">(),</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">act</span><span class="o">.</span><span class="n">setCheckable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">act</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">isHidden</span><span class="p">())</span>
+            <span class="n">act</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">checked</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_panel_visible</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">checked</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view_actions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">act</span>
+            <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+        <span class="n">menu</span><span class="o">.</span><span class="n">addSeparator</span><span class="p">()</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">menu</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">"Panel border"</span><span class="p">)</span>
+        <span class="n">grp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QActionGroup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">grp</span><span class="o">.</span><span class="n">setExclusive</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">border_actions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="o">*</span><span class="n">_rest</span><span class="p">)</span> <span class="ow">in</span> <span class="n">PANEL_BORDERS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">setCheckable</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_border"</span><span class="p">,</span> <span class="n">DEFAULT_PANEL_BORDER</span><span class="p">))</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_c</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_panel_border</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+            <span class="n">grp</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">border_actions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="n">menu</span><span class="o">.</span><span class="n">addSeparator</span><span class="p">()</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">menu</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">"Arrange panels"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">how</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Side by side (tile horizontally)"</span><span class="p">,</span> <span class="s2">"horizontal"</span><span class="p">),</span>
+                           <span class="p">(</span><span class="s2">"One above the other (tile vertically)"</span><span class="p">,</span> <span class="s2">"vertical"</span><span class="p">),</span>
+                           <span class="p">(</span><span class="s2">"Grid"</span><span class="p">,</span> <span class="s2">"grid"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"All as tabs (cascade)"</span><span class="p">,</span> <span class="s2">"tabs"</span><span class="p">)):</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_c</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">how</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrange_panels</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+            <span class="n">arr</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">addSeparator</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">how</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Detached windows: cascade"</span><span class="p">,</span> <span class="s2">"cascade"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Detached windows: tile"</span><span class="p">,</span> <span class="s2">"tile"</span><span class="p">)):</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_c</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">how</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrange_detached</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+            <span class="n">arr</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">act</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="s2">"Dock all panels"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">act</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dock_all</span><span class="p">)</span>
+        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+        <span class="n">act</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="s2">"Reset layout"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">act</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reset_layout</span><span class="p">)</span>
+        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view_menu</span> <span class="o">=</span> <span class="n">menu</span>
+        <span class="c1"># arrangement at construction (before a session or project can change it);</span>
+        <span class="c1"># panels hidden at that point (optional panels) stay hidden after Reset layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">saveState</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_hidden</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">isHidden</span><span class="p">()}</span>
+        <span class="c1"># the active panel (last clicked / focused) gets a coloured frame, as the active window in Origin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_panel</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_active_filter</span> <span class="o">=</span> <span class="n">_ActivePanelFilter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>      <span class="c1"># own object: the window's eventFilter stays its own</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">installEventFilter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_active_filter</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>                                                    <span class="c1"># new title-bar colours after Preferences → Save</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.settings_dialog</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_saved</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">on_saved</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ref</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ref</span><span class="p">()</span><span class="o">.</span><span class="n">refresh_title_bars</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+<div class="viewcode-block" id="DockMixin.refresh_title_bars">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.refresh_title_bars">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh_title_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Colour every panel title bar again (after a change of the preferences)."""</span>
+        <span class="n">act</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"docks"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">titleBarWidget</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="n">_TitleBar</span><span class="p">):</span>
+                <span class="n">tb</span><span class="o">.</span><span class="n">colours</span> <span class="o">=</span> <span class="kc">None</span>                                <span class="c1"># force: the settings may have changed</span>
+                <span class="n">tb</span><span class="o">.</span><span class="n">set_active</span><span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="n">act</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ---------------------------------------------------------------- borders</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_apply_border</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">_lab</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">shadow</span><span class="p">,</span> <span class="n">lw</span><span class="p">,</span> <span class="n">mlw</span> <span class="o">=</span> <span class="n">PANEL_BORDERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">PANEL_BORDERS</span><span class="p">[</span><span class="n">DEFAULT_PANEL_BORDER</span><span class="p">])</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">setFrameShadow</span><span class="p">(</span><span class="n">shadow</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">setLineWidth</span><span class="p">(</span><span class="n">lw</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">setMidLineWidth</span><span class="p">(</span><span class="n">mlw</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DockMixin.set_panel_border">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.set_panel_border">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_panel_border</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">chosen</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Border of every panel: 'sunken', 'groove', 'raised', 'line' or 'none'."""</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PANEL_BORDERS</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">DEFAULT_PANEL_BORDER</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel_border</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">if</span> <span class="n">chosen</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_border_chosen</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_frames"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_border</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mark_active</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_active_panel</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"border_actions"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ---------------------------------------------------------------- active panel</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_panel_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_frames"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">rev</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">f</span><span class="p">):</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">frames</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">while</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">rev</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">n</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">parentWidget</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mark_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Coloured frame around panel ``name``; the other panels keep the normal border."""</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_frames"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">old</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">old</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">old</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_border</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_border"</span><span class="p">,</span> <span class="n">DEFAULT_PANEL_BORDER</span><span class="p">))</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">frames</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">docks</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"docks"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">name</span><span class="p">):</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">docks</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">titleBarWidget</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">docks</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="n">_TitleBar</span><span class="p">):</span>
+                <span class="n">tb</span><span class="o">.</span><span class="n">set_active</span><span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_panel</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="sa">f</span><span class="s2">"QFrame#</span><span class="si">{</span><span class="n">f</span><span class="o">.</span><span class="n">objectName</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2"> border: 2px solid </span><span class="si">{</span><span class="n">ACTIVE_PANEL_COLOUR</span><span class="si">}</span><span class="s2">; </span><span class="se">}}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active_panel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_active_panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># ---------------------------------------------------------------- arrange</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_arrangeable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Docked, visible panels in reading order (left to right, top to bottom)."""</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">isHidden</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">nd</span><span class="p">:</span> <span class="p">(</span><span class="n">nd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span><span class="o">.</span><span class="n">x</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">nd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">nd</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span><span class="o">.</span><span class="n">y</span><span class="p">()))</span>
+
+<div class="viewcode-block" id="DockMixin.arrange_panels">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.arrange_panels">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">arrange_panels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"horizontal"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""View → Arrange panels: 'horizontal' (side by side), 'vertical' (one above the other),</span>
+<span class="sd">        'grid', or 'tabs' (all in one place as tabs, like cascaded windows)."""</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">_n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrangeable</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">H</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Orientation</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Orientation</span><span class="o">.</span><span class="n">Vertical</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">DockWidgetArea</span><span class="o">.</span><span class="n">LeftDockWidgetArea</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">removeDockWidget</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addDockWidget</span><span class="p">(</span><span class="n">area</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">"tabs"</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tabifyDockWidget</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">)</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+            <span class="n">ds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">raise_</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">how</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"horizontal"</span><span class="p">,</span> <span class="s2">"vertical"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">ds</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">splitDockWidget</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">H</span> <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">"horizontal"</span> <span class="k">else</span> <span class="n">V</span><span class="p">)</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>                                     <span class="c1"># grid: columns first, then the panels below each other</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+            <span class="n">ncol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">))))</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="p">[</span><span class="n">i</span><span class="p">::</span><span class="n">ncol</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncol</span><span class="p">)]</span>
+            <span class="n">heads</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">c</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">heads</span><span class="p">,</span> <span class="n">heads</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">splitDockWidget</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">H</span><span class="p">)</span>
+                <span class="n">b</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">splitDockWidget</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hide_stray_tab_bars</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.arrange_detached">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.arrange_detached">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">arrange_detached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"cascade"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Detached panel windows: 'cascade' (stepped) or 'tile' (side by side on the screen)."""</span>
+        <span class="n">ws</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">isVisible</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">scr</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screen</span><span class="p">()</span> <span class="ow">or</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGuiApplication</span><span class="o">.</span><span class="n">primaryScreen</span><span class="p">())</span><span class="o">.</span><span class="n">availableGeometry</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s2">"tile"</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+            <span class="n">ncol</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ws</span><span class="p">))))</span>
+            <span class="n">nrow</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="o">/</span> <span class="n">ncol</span><span class="p">))</span>
+            <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="n">scr</span><span class="o">.</span><span class="n">width</span><span class="p">()</span> <span class="o">//</span> <span class="n">ncol</span><span class="p">,</span> <span class="n">scr</span><span class="o">.</span><span class="n">height</span><span class="p">()</span> <span class="o">//</span> <span class="n">nrow</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">scr</span><span class="o">.</span><span class="n">x</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="n">ncol</span><span class="p">)</span> <span class="o">*</span> <span class="n">w0</span><span class="p">,</span> <span class="n">scr</span><span class="o">.</span><span class="n">y</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span> <span class="o">//</span> <span class="n">ncol</span><span class="p">)</span> <span class="o">*</span> <span class="n">h0</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">-</span> <span class="mi">30</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">32</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ws</span><span class="p">):</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">scr</span><span class="o">.</span><span class="n">x</span><span class="p">()</span> <span class="o">+</span> <span class="mi">40</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span> <span class="n">scr</span><span class="o">.</span><span class="n">y</span><span class="p">()</span> <span class="o">+</span> <span class="mi">40</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">step</span><span class="p">,</span>
+                              <span class="nb">int</span><span class="p">(</span><span class="n">scr</span><span class="o">.</span><span class="n">width</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.6</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">scr</span><span class="o">.</span><span class="n">height</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.6</span><span class="p">))</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">raise_</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ---------------------------------------------------------------- detach / dock</span>
+<div class="viewcode-block" id="DockMixin.detach">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.detach">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Move panel ``name`` into an independent window."""</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">raise_</span><span class="p">()</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">activateWindow</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">w</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">isVisible</span><span class="p">()</span> <span class="k">else</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QSize</span><span class="p">(</span><span class="mi">700</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">mapToGlobal</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QPoint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">isVisible</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">windowTitle</span><span class="p">()</span>
+        <span class="n">app_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">()</span><span class="o">.</span><span class="n">windowTitle</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"–"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"pySASfit"</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">PanelWindow</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2"> – </span><span class="si">{</span><span class="n">app_title</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">n</span><span class="o">=</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dock_panel</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>            <span class="c1"># reparents the content</span>
+        <span class="n">content</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">geometry</span><span class="p">:</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">geometry</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">size</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="mi">400</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">size</span><span class="o">.</span><span class="n">height</span><span class="p">(),</span> <span class="mi">300</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">pos</span> <span class="o">+</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QPoint</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.dock_panel">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.dock_panel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dock_panel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Put a detached panel back into its dock."""</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span><span class="o">.</span><span class="n">itemAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span> <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">setWidget</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">_closing_app</span> <span class="o">=</span> <span class="kc">True</span>          <span class="c1"># avoid a second dock_panel from its closeEvent</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">deleteLater</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.dock_all">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.dock_all">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dock_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dock_panel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.close_detached">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.close_detached">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close_detached</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Close the detached windows without docking (main window closes)."""</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">_closing_app</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">w</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.set_panel_visible">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.set_panel_visible">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_panel_visible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">visible</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">visible</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detach</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>                <span class="c1"># raise it</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">raise_</span><span class="p">()</span>        <span class="c1"># front tab when it shares a place with others</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dock_panel</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sync_view_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">act</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"view_actions"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">act</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">act</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">isHidden</span><span class="p">())</span>
+
+<div class="viewcode-block" id="DockMixin.reset_layout">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.reset_layout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Back to the arrangement at start: all panels docked and visible."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dock_all</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restoreState</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_layout</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">setVisible</span><span class="p">(</span><span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_start_hidden"</span><span class="p">,</span> <span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hide_stray_tab_bars</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.hide_stray_tab_bars">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.hide_stray_tab_bars">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hide_stray_tab_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Qt can leave the tab bar of a former tab group visible after ``restoreState`` (with more</span>
+<span class="sd">        than one group of tabbed panels): a tab bar that does not touch the panel of its current tab</span>
+<span class="sd">        is hidden. Run again from the event loop, after the layout has settled."""</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">tb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">findChildren</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTabBar</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">tb</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">tb</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">tb</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">tb</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+                    <span class="k">continue</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">tabText</span><span class="p">(</span><span class="n">tb</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">())</span>
+                <span class="n">docks</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">windowTitle</span><span class="p">()</span> <span class="o">==</span> <span class="n">title</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">isVisible</span><span class="p">()</span>
+                         <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">isFloating</span><span class="p">()]</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span>
+                <span class="n">touch</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span><span class="o">.</span><span class="n">bottom</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">g</span><span class="o">.</span><span class="n">top</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">6</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">bottom</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">d</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span><span class="o">.</span><span class="n">top</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="mi">6</span>
+                            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docks</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">touch</span><span class="p">:</span>
+                    <span class="n">tb</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+        <span class="n">run</span><span class="p">()</span>
+        <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="o">.</span><span class="n">singleShot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">run</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.closeEvent">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.closeEvent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_detached</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">closeEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ---------------------------------------------------------------- persistence</span>
+<div class="viewcode-block" id="DockMixin.dock_state">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.dock_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dock_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">geo</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detached</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">geometry</span><span class="p">()</span>
+            <span class="n">geo</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">y</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">height</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"qt"</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">saveState</span><span class="p">()</span><span class="o">.</span><span class="n">toBase64</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">),</span> <span class="s2">"detached"</span><span class="p">:</span> <span class="n">geo</span><span class="p">,</span>
+                           <span class="s2">"border"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"panel_border"</span><span class="p">,</span> <span class="n">DEFAULT_PANEL_BORDER</span><span class="p">),</span>
+                           <span class="s2">"border_chosen"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_border_chosen"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))})</span></div>
+
+
+<div class="viewcode-block" id="DockMixin.restore_dock_state">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.docking.DockMixin.restore_dock_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">restore_dock_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"qt"</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span> <span class="s2">"detached"</span><span class="p">:</span> <span class="p">{}}</span>          <span class="c1"># plain Qt state (first version)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dock_all</span><span class="p">()</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restoreState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QByteArray</span><span class="o">.</span><span class="n">fromBase64</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"qt"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">))))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"border"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">PANEL_BORDERS</span> <span class="ow">and</span> <span class="n">st</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"border_chosen"</span><span class="p">):</span>   <span class="c1"># older sessions: the default</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_panel_border</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="s2">"border"</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"detached"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">detach</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">g</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_view_action</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hide_stray_tab_bars</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ok</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

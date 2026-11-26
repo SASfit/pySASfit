@@ -1,0 +1,185 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extending studio &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="studio reference" href="../studio.html" />
+    <link rel="prev" title="Scripting" href="scripting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASstudio</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explorer.html">The model explorer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Building models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sesans_msas.html">SESANS and multiple scattering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html">Polarised neutrons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python_ports.html">Python ports of SASfit plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="results.html">Results and export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">Scripting</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Extending studio</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#python-plugins">Python plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sasview">SasView</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-things-are-found">Where things are found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../studio.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#about-the-pictures-and-examples">About the pictures and examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">studio manual</a></li>
+      <li class="breadcrumb-item active">Extending studio</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/studio_manual/extending.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="extending-studio">
+<h1>Extending studio<a class="headerlink" href="#extending-studio" title="Link to this heading"></a></h1>
+<section id="python-plugins">
+<h2>Python plugins<a class="headerlink" href="#python-plugins" title="Link to this heading"></a></h2>
+<p>A Python function appears in the menus like a SASfit plugin and overrides a C plugin of the same name. Create the
+files from the template:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pysasfit-studio<span class="w"> </span>new-plugin<span class="w"> </span>my_gauss<span class="w">          </span><span class="c1"># -&gt; ~/.pysasfit/studio_plugins/sasstudio_my_gauss.py and a test</span>
+</pre></div>
+</div>
+<p>Edit the function and its <code class="docutils literal notranslate"><span class="pre">PARAMETERS</span></code>; use it as <code class="docutils literal notranslate"><span class="pre">studio.function(&quot;ff_my_gauss&quot;)</span></code> or pick it in the explorer. The
+plugin folder is <code class="docutils literal notranslate"><span class="pre">~/.pysasfit/studio_plugins</span></code> or a folder in <code class="docutils literal notranslate"><span class="pre">PYSASFIT_STUDIO_PLUGINS</span></code>. At run time:
+<code class="docutils literal notranslate"><span class="pre">studio.register_python_function(&quot;ff_name&quot;,</span> <span class="pre">intensity,</span> <span class="pre">amplitude,</span> <span class="pre">volume,</span> <span class="pre">parameters=[...])</span></code>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">*.def</span></code> file in the plugin folder defines your own menu groups (see <code class="docutils literal notranslate"><span class="pre">templates/groups_example.def</span></code>); name the
+group in the plugin’s <code class="docutils literal notranslate"><span class="pre">GROUP</span></code>.</p>
+</section>
+<section id="sasview">
+<h2>SasView<a class="headerlink" href="#sasview" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pysasfit-studio<span class="w"> </span>sasview-adapter<span class="w"> </span>ff_sphere<span class="w"> </span>--dir<span class="w"> </span>.
+</pre></div>
+</div>
+<p>writes a SasView model file that calls the SASfit function (SasView must run in an environment with pysasfit and the
+libraries).</p>
+</section>
+<section id="where-things-are-found">
+<h2>Where things are found<a class="headerlink" href="#where-things-are-found" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit-studio</span> <span class="pre">status</span></code> shows the folders. The libraries come from, in this order: the folder chosen in the GUI,
+<code class="docutils literal notranslate"><span class="pre">PYSASFIT_SASFIT_LIB</span></code>, <code class="docutils literal notranslate"><span class="pre">SASFIT_LOCATION</span></code>, and <code class="docutils literal notranslate"><span class="pre">src/pysasfit/studio/sasfit_lib</span></code> (filled by
+<code class="docutils literal notranslate"><span class="pre">pysasfit-studio</span> <span class="pre">install-binaries</span></code>).</p>
+</section>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/studio<span class="w"> </span>-q
+</pre></div>
+</div>
+<p>Most tests need no SASfit library; the tests that need it are skipped without it. See the
+<a class="reference internal" href="../studio.html#tests"><span class="std std-ref">reference</span></a> for the list of test files.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scripting.html" class="btn btn-neutral float-left" title="Scripting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../studio.html" class="btn btn-neutral float-right" title="studio reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

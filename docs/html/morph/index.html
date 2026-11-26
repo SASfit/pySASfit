@@ -1,0 +1,402 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySASmorph: 3D two- and multi-phase morphologies from SAS data &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySASmorph: theory and mathematics" href="theory.html" />
+    <link rel="prev" title="pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI" href="../oz/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pySASmorph</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#method">Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-phase-structures-and-contrast-series">Multi-phase structures and contrast series</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#theory">Theory</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sesans-data">SESANS data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#differences-from-saxsmorph-2-2">Differences from SAXSMorph 2.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#d-panel">3D panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#choosing-the-parameters">Choosing the parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#limits">Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation-tests-morph">Validation (tests/morph)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="theory.html">pySASmorph: theory and mathematics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="texture.html">pySASmorph: anisotropic data (texture)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">pySASmorph: API reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pySASmorph: 3D two- and multi-phase morphologies from SAS data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/morph/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysasmorph-3d-two-and-multi-phase-morphologies-from-sas-data">
+<h1>pySASmorph: 3D two- and multi-phase morphologies from SAS data<a class="headerlink" href="#pysasmorph-3d-two-and-multi-phase-morphologies-from-sas-data" title="Link to this heading"></a></h1>
+<img alt="pySASmorph" class="only-light" src="../_images/pySASmorph-light.svg" style="height: 56px;" />
+<img alt="pySASmorph" class="only-dark" src="../_images/pySASmorph-dark.svg" style="height: 56px;" />
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit.morph</span></code> (GUI: <code class="docutils literal notranslate"><span class="pre">pysasfit-morph</span></code>, launcher tab <strong>pySASmorph</strong>) builds a <em>representative</em> three-dimensional
+two-phase structure whose two-point statistics reproduce a measured SAXS/SANS curve. It is a clean
+reimplementation of the method of SAXSMorph (B. Ingham, H. Li, E. L. Allen, M. F. Toney,
+<em>J. Appl. Cryst.</em> <strong>44</strong> (2011) 221, doi:10.1107/S0021889810048557), based on the clipped Gaussian random field
+of Berk (<em>Phys. Rev. A</em> <strong>44</strong> (1991) 5069) and Quintanilla (<em>Modelling Simul. Mater. Sci. Eng.</em> <strong>15</strong> (2007) S337).</p>
+<img alt="pySASmorph window" src="../_images/gui.png" />
+<section id="method">
+<h2>Method<a class="headerlink" href="#method" title="Link to this heading"></a></h2>
+<p>The derivation of every step, with all formulas and the references sorted by topic, is on the page
+<a class="reference internal" href="theory.html"><span class="doc">pySASmorph: theory and mathematics</span></a>.</p>
+<ol class="arabic simple">
+<li><p><strong>Extrapolation.</strong> The background-subtracted I(q) is extended to q → 0 (Guinier, linear or constant fit to
+the first points) and to q → ∞ by Porod’s law I = K q⁻⁴, fitted to the last points, optionally with a flat
+background B (I = K q⁻⁴ + B, B is then subtracted). The invariant is
+Q = ∫ q² I(q) dq, with the Porod tail K / q_max added analytically.</p></li>
+<li><p><strong>Debye correlation function</strong>
+γ(r) = (1/Q) ∫ q² I(q) sin(qr)/(qr) dq, γ(0) = 1.</p></li>
+<li><p><strong>Level-cut inversion.</strong> A Gaussian field ψ with unit variance and correlation g(r) is cut at α; phase 2
+(“pore”) is ψ &gt; α with volume fraction φ = ½ erfc(α/√2). Its indicator correlation is
+S₂(r) − φ² = F(g(r)), F(g) = (1/2π) ∫₀^g exp(−α²/(1+t)) / √(1−t²) dt, with F(1) = φ(1−φ) and F(−1) = −φ²
+(φ ≤ ½). The two-phase relation S₂ − φ² = φ(1−φ) γ(r) gives g(r) = F⁻¹(φ(1−φ) γ(r)).</p></li>
+<li><p><strong>Spectral function</strong> f(k) = 4π ∫ r² g(r) sin(kr)/(kr) dr; the wave-vector magnitudes of the field are
+distributed as P(k) = k² f(k) / 2π².</p></li>
+<li><p><strong>Random field and level cut</strong> on an n³ voxel grid of edge L.</p></li>
+<li><p><strong>Checks and statistics:</strong> the scattering of the level-cut model and of the voxel structure, both on the
+absolute scale of the data (contrast Δρ² = Q / (2π² φ(1−φ))); S/V from Porod (π φ(1−φ) K / Q) and from the
+voxels; clusters, percolation, bicontinuity and SAXSMorph’s degree of connectivity.</p></li>
+</ol>
+<p><strong>Anisotropic samples</strong> (uniaxial texture, the axis in the detector plane) are reconstructed from one 2D pattern:
+<a class="reference internal" href="texture.html"><span class="doc">pySASmorph: anisotropic data (texture)</span></a>.</p>
+</section>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
+<p>Every curve has its own flat (incoherent) background B (Data table, columns <em>fit B</em> and <em>B</em>). New curves get
+<em>fit B</em> ticked when <strong>fit background B for new curves</strong> (Extrapolation box, on by default) is ticked.</p>
+<ul class="simple">
+<li><p><strong>fit B</strong> ticked: B is fitted together with the Porod law, I = K/q⁴ + B, on the Porod range, and the fitted
+value appears in column <em>B</em> (green; tooltip with the uncertainty) and in the report.</p></li>
+<li><p><strong>no background</strong>: untick <em>fit B</em> and leave <em>B</em> at 0.</p></li>
+<li><p><strong>set by hand</strong>: typing a value into column <em>B</em>, or using the <strong>B</strong> box above the I(q) plot (arrows or mouse
+wheel change it in small steps; the plots follow after a short pause) fixes B and switches the fit off.
+<em>fit</em> next to the box fits it again.</p></li>
+</ul>
+<p>The I(q) plot shows B as a dash-dotted line with its value, the Porod law plus background on the Porod range and
+the data after subtraction (×). The <strong>Porod plot</strong> (selector above the plot) shows I q⁴/K against q⁴: a flat
+background is a straight line 1 + (B/K) q⁴ through the raw data (o), and with the right B the subtracted data (×)
+lie on the horizontal line 1 – the most sensitive check of B.</p>
+<p><strong>Porod range</strong> (Extrapolation box), for all curves:</p>
+<ul class="simple">
+<li><p><strong>automatic</strong> (default): the longest high-q range on which the Porod law (+ B) still describes the data
+(<a class="reference internal" href="api.html#pysasfit.morph.extrapolation.auto_porod_range" title="pysasfit.morph.extrapolation.auto_porod_range"><code class="xref py py-func docutils literal notranslate"><span class="pre">auto_porod_range()</span></code></a>). Every possible start is tried; a start is
+acceptable when the fit’s χ² is at most 1.5 times the best one (or ≤ 2 with error bars) and its residuals show
+no trend. The lowest acceptable start gives the most precise K and B. The range appears in the I(q) and Porod
+plots and in the report (“auto”).</p></li>
+<li><p><strong>No clear Porod regime:</strong> the report warns when</p>
+<ul>
+<li><p>no candidate fits;</p></li>
+<li><p>the range spans less than a factor 1.5 in q, so K and B cannot be separated;</p></li>
+<li><p>or the “Porod term” is smaller than B at the start of the range.</p></li>
+</ul>
+</li>
+<li><p><strong>last N points</strong> or <strong>q ≥ q_min</strong>: set by hand.</p></li>
+<li><p><strong>last 15 %</strong>: the former fixed default.</p></li>
+</ul>
+<p>A fitted B absorbs part of any deviation from q⁻⁴ near the start of the range; in the tests, a
+Debye–Anderson–Brumberger curve gives B within 10 %. Check B in the Porod plot, and fix it by hand when you know
+it, e.g. from the hydrogen content or from a measurement of the incoherent background.</p>
+</section>
+<section id="multi-phase-structures-and-contrast-series">
+<h2>Multi-phase structures and contrast series<a class="headerlink" href="#multi-phase-structures-and-contrast-series" title="Link to this heading"></a></h2>
+<img alt="three phases, three contrasts" src="../_images/gui_multiphase.png" />
+<p>The same Gaussian field ψ is cut at N − 1 levels α₁ &lt; … &lt; α_{N−1}: phase i occupies α_i &lt; ψ &lt; α_{i+1}. The phases
+are <strong>ordered</strong>: phase i touches only phases i − 1 and i + 1, so a middle phase forms a layer between its
+neighbours – a surfactant film between oil and water, a shell, a liquid film on a pore wall. The fractions fix the
+levels, α_k = Φ⁻¹(φ₀ + … + φ_{k−1}). With the SLD jumps Δρ_k = ρ_k − ρ_{k−1} at the levels, Plackett’s identity
+for the bivariate normal distribution gives the SLD correlation</p>
+<p>⟨δρ(0) δρ(r)⟩ = Σ_kl Δρ_k Δρ_l · (1/2π) ∫₀^{g(r)} exp[−(α_k² + α_l² − 2tα_kα_l) / 2(1 − t²)] / √(1 − t²) dt.</p>
+<p>One cut is the SAXSMorph relation; a single phase between two cuts is the two-cut model of Berk (1991) and
+Roberts (1997). The functions are tabulated in θ = arcsin g (the integrand is smooth in θ, its end values are
+the exact orthant probabilities).</p>
+<p><strong>Several curves.</strong> Every curve m of a contrast series (SANS contrast variation, SAXS + SANS) has its own SLD set
+and gives γ_m(r). The common g(r) minimises Σ_m w_m [γ_m(r) − G_m(g)]² at every r, with G_m the normalised model
+correlation; it is found on a fine g grid, so it also works where G_m is not monotonic. Each curve may be
+rescaled by a factor λ_m close to 1, because the invariant of a curve that does not reach its Porod regime (the film
+contrast) is a few per cent off; corrections above 10 % are reported.</p>
+<p><strong>Fractions.</strong> Normally the composition is known and the fractions are entered. <em>Fit volume fractions</em> adjusts them
+to the shapes γ_m and to the invariant ratios (curves on one intensity scale) or the absolute invariants
+(<em>absolute</em>: SLD in 10⁻⁶ Å⁻², I in 1/cm). This information is weak: in the tests the fractions come out within
+a few hundredths. With <em>absolute</em> the report also compares each invariant with 2π²⟨δρ²⟩ (calibration check).</p>
+<p><strong>Results:</strong> the phase index of every voxel (VTK, HDF5, TIFF, npy), per curve the model and voxel I(q), per phase
+the volume, clusters and percolation, and per pair of phases the interface area S/V (direct contacts of
+non-neighbouring phases appear only where a layer is thinner than a voxel). The 3D panel shows each phase or all;
+with <em>exact cut of ψ</em> the surface of a middle phase is the pair of level surfaces of ψ.</p>
+<img alt="oil, film and water, clipped" src="../_images/3d_multiphase.png" />
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">MultiParameters</span><span class="p">,</span> <span class="n">reconstruct_multi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_curve</span>
+
+<span class="n">sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">DataSet</span><span class="p">(</span><span class="o">*</span><span class="n">load_curve</span><span class="p">(</span><span class="s2">"bulk.dat"</span><span class="p">),</span> <span class="n">sld</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">6.3</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"bulk"</span><span class="p">),</span>
+        <span class="n">DataSet</span><span class="p">(</span><span class="o">*</span><span class="n">load_curve</span><span class="p">(</span><span class="s2">"film.dat"</span><span class="p">),</span> <span class="n">sld</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"film"</span><span class="p">)]</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">MultiParameters</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"oil"</span><span class="p">,</span> <span class="s2">"film"</span><span class="p">,</span> <span class="s2">"water"</span><span class="p">],</span> <span class="n">fractions</span><span class="o">=</span><span class="p">[</span><span class="mf">0.42</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.42</span><span class="p">],</span> <span class="n">box_size</span><span class="o">=</span><span class="mi">700</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">reconstruct_multi</span><span class="p">(</span><span class="n">sets</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">())</span>
+</pre></div>
+</div>
+<section id="theory">
+<h3>Theory<a class="headerlink" href="#theory" title="Link to this heading"></a></h3>
+<p>The multi-phase relations (ordered cuts, Plackett’s identity, joint g(r), fraction fit) are derived in
+<a class="reference internal" href="theory.html"><span class="doc">pySASmorph: theory and mathematics</span></a>, section 9, with the references (Berk, Teubner, Roberts, Arleth et al., Gommes, Kronenberger et al.).</p>
+</section>
+</section>
+<section id="sesans-data">
+<h2>SESANS data<a class="headerlink" href="#sesans-data" title="Link to this heading"></a></h2>
+<img alt="scattering curve and SESANS curve of the same sample" src="../_images/gui_sesans.png" />
+<p>SESANS curves (<code class="docutils literal notranslate"><span class="pre">.ses</span></code>, SasView v1.0 and Delft formats, read as in pySASstudio) can be added next to the scattering
+curves: <strong>SESANS…</strong> below the Data table or <strong>File → Add SESANS data (.ses)…</strong>. A dialog shows what the file says
+and lets you override the units of the spin-echo length and wavelength and the thickness (some files label them
+wrongly). The curves are converted to the length unit of the panel (and read again when the q unit changes). They
+need an SLD column in the phase table like every curve.</p>
+<ul class="simple">
+<li><p><strong>SESANS only:</strong> G(δ) is inverted (Abel transform, regularised) to the correlation function, which enters the fit
+of g(r) like a scattering curve.</p></li>
+<li><p><strong>With scattering curves:</strong> the SESANS curves fix the large-scale structure, i.e. what the scattering curves miss
+below their q_min. Each scattering curve is extended to low q by the model of the SESANS g(r) (thick line “low q
+from SESANS” in the I(q) plot) instead of a Guinier/constant extrapolation; g(r) then follows from the extended
+curves and the SESANS curves are compared with it.</p></li>
+<li><p><strong>SESANS panel:</strong> measured G(δ) − G(0) (or P/P0 = exp(λ²t G) with λ and t of the file), the model of the common
+g(r) with its χ², and the SESANS curve of the voxel structure (up to L/2 of the box).</p></li>
+<li><p>The correlation plot shows the γ of a SESANS curve on its spin-echo range, on a logarithmic r axis.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.core.sesans_io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sesans</span>
+<span class="n">ses</span> <span class="o">=</span> <span class="n">load_sesans</span><span class="p">(</span><span class="s2">"sample.ses"</span><span class="p">,</span> <span class="n">length_unit</span><span class="o">=</span><span class="s2">"A"</span><span class="p">)</span>
+<span class="n">sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DataSet</span><span class="p">(</span><span class="n">ses</span><span class="o">.</span><span class="n">delta</span><span class="p">,</span> <span class="n">ses</span><span class="o">.</span><span class="n">G</span><span class="p">,</span> <span class="n">ses</span><span class="o">.</span><span class="n">dG</span><span class="p">,</span> <span class="n">sld</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"sesans"</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"sesans"</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Theory and the test case: <a class="reference internal" href="theory.html"><span class="doc">pySASmorph: theory and mathematics</span></a>, section 9 (SESANS curves).</p>
+</section>
+<section id="differences-from-saxsmorph-2-2">
+<h2>Differences from SAXSMorph 2.2<a class="headerlink" href="#differences-from-saxsmorph-2-2" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>SAXSMorph 2.2</p></th>
+<th class="head"><p>pySASmorph</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Fourier integrals</p></td>
+<td><p>Romberg on a finite grid; ripple for k &gt; q_max</p></td>
+<td><p>exact integrals of the piecewise-linear q I(q) (Filon type); accurate for any r</p></td>
+</tr>
+<tr class="row-odd"><td><p>Porod tail</p></td>
+<td><p>extrapolated numerically up to q = 100</p></td>
+<td><p>integrated analytically to ∞ (sine integral)</p></td>
+</tr>
+<tr class="row-even"><td><p>g(r) from γ(r)</p></td>
+<td><p>root finding of the level-cut integral</p></td>
+<td><p>tabulated F in θ = arcsin g (smooth integrand), monotone inversion; points outside the reachable range are counted and reported</p></td>
+</tr>
+<tr class="row-odd"><td><p>random field</p></td>
+<td><p>sum of 10 000 cosines, |k| by rejection sampling</p></td>
+<td><p>default: FFT spectral synthesis on the periodic grid (exact grid statistics, O(n³ log n)); Berk’s random waves still available (<code class="docutils literal notranslate"><span class="pre">method=&quot;cosine&quot;</span></code>, |k| by inverse CDF)</p></td>
+</tr>
+<tr class="row-even"><td><p>porosity</p></td>
+<td><p>level α</p></td>
+<td><p>level α or the empirical quantile (voxel porosity exact, default)</p></td>
+</tr>
+<tr class="row-odd"><td><p>validation</p></td>
+<td><p>–</p></td>
+<td><p>back-calculated I(q) of the model and of the voxels, χ² against the data</p></td>
+</tr>
+<tr class="row-even"><td><p>output</p></td>
+<td><p>POV-Ray scene</p></td>
+<td><p>VTK, HDF5, TIFF stack, npy, STL; 3D panel in the window (OpenGL), optional PyVista window</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph</span><span class="w"> </span><span class="kn">import</span> <span class="n">MorphParameters</span><span class="p">,</span> <span class="n">reconstruct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_curve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_curves</span><span class="p">,</span> <span class="n">write_matrix</span>
+
+<span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">load_curve</span><span class="p">(</span><span class="s2">"sample.dat"</span><span class="p">)</span>            <span class="c1"># q, I [, sigma]; two-column files are accepted</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">MorphParameters</span><span class="p">(</span><span class="n">porosity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">box_size</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">porod_points</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">reconstruct</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">())</span>
+<span class="n">write_curves</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"sample"</span><span class="p">)</span>                   <span class="c1"># sample_gamma.txt, sample_gr.txt, ...</span>
+<span class="n">write_matrix</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"sample.vtk"</span><span class="p">)</span>               <span class="c1"># ParaView / PyVista</span>
+</pre></div>
+</div>
+</section>
+<section id="d-panel">
+<h2>3D panel<a class="headerlink" href="#d-panel" title="Link to this heading"></a></h2>
+<img alt="3D panel of pySASmorph" src="../_images/gui3d.png" />
+<p>The <strong>3D</strong> panel (tab next to <em>Structure</em>) draws the interface with OpenGL (pyqtgraph), inside the window:</p>
+<ul class="simple">
+<li><p>phase: pore, solid or both; the largest connected cluster of the phase in magenta;</p></li>
+<li><p>surface: the <strong>exact cut</strong> of the Gaussian field (iso-surface of ψ at the cut level: the smooth interface of the
+model), the voxels smoothed (Gaussian, 0.8 voxel) or the voxels as exported;</p></li>
+<li><p>clipping plane along x, y or z (the cut is closed), box outline, view reset, image export;</p></li>
+<li><p>mouse: drag rotates, wheel or right button zooms, middle button pans.</p></li>
+</ul>
+<p><strong>File → Export surface (STL)</strong> writes the surface exactly as shown (phase, surface type, clipping); with <em>both</em>
+two files <code class="docutils literal notranslate"><span class="pre">_pore.stl</span></code> and <code class="docutils literal notranslate"><span class="pre">_solid.stl</span></code>. Marching cubes come from scikit-image when installed (faster), else from
+pyqtgraph. The meshes are computed only while the panel is visible; 128³ gives about a million triangles.</p>
+<p><em>Open in PyVista window</em> still opens the same surface in a separate VTK window where PyVista can be installed
+(standard python.org Python; under MSYS2 there are no VTK wheels).</p>
+<p><code class="docutils literal notranslate"><span class="pre">correlations(q,</span> <span class="pre">I,</span> <span class="pre">s,</span> <span class="pre">p)</span></code> runs steps 1–4 only (milliseconds) and is what the GUI shows after loading.
+<code class="docutils literal notranslate"><span class="pre">porosity_from_invariant(Q,</span> <span class="pre">Δρ)</span></code> gives φ from absolute data. The optional extra <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[morph]&quot;</span></code>
+installs pyqtgraph and PyOpenGL (3D panel), h5py and tifffile; <code class="docutils literal notranslate"><span class="pre">.[morph-pyvista]</span></code> adds PyVista.</p>
+</section>
+<section id="choosing-the-parameters">
+<h2>Choosing the parameters<a class="headerlink" href="#choosing-the-parameters" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Box size L</strong>: several correlation lengths; <code class="docutils literal notranslate"><span class="pre">suggest_box</span></code> takes 5 × 2π/q* (maximum of the Kratky plot).
+If γ(r) has not decayed at half the box diagonal, a warning is given.</p></li>
+<li><p><strong>Voxels n</strong>: the voxel size a = L/n should resolve π/q_max; otherwise the finest structure is lost
+(warning). 128³ takes well under a second, 256³ a few seconds and about 1 GB of memory.</p></li>
+<li><p><strong>Porod range</strong>: the data must reach a q⁻⁴ regime. A large Porod share of the invariant (&gt; 20 %), K ≤ 0 or no
+clear Porod regime (automatic range) is reported.</p></li>
+</ul>
+</section>
+<section id="limits">
+<h2>Limits<a class="headerlink" href="#limits" title="Link to this heading"></a></h2>
+<p>The reconstruction is one member of the family of structures with the measured two-point function, not <em>the</em>
+structure. It is meaningful for isotropic, non-periodic two-phase samples with sharp interfaces. A level-cut
+Gaussian field with g(r) ≈ 1 − b r² has Porod behaviour; data with q⁻³·⁵ or fractal slopes correspond to
+non-smooth g and are outside the model. If γ(r) leaves the range a level-cut field can reach (reported as
+clipped points), the porosity or the background is probably wrong.</p>
+</section>
+<section id="validation-tests-morph">
+<h2>Validation (tests/morph)<a class="headerlink" href="#validation-tests-morph" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>the sine transform is exact for piecewise-linear functions; the Porod tail agrees with numerical integration;</p></li>
+<li><p>Debye–Anderson–Brumberger data give γ(r) = exp(−r/ξ), Q = π/(4ξ³), K = ξ⁻⁴;</p></li>
+<li><p>F(1) = φ(1−φ), F(−1) = −φ², F(g) = arcsin(g)/2π at φ = ½;</p></li>
+<li><p>round trip: g(r) → exact level-cut I(q) → g(r) recovered to 2·10⁻⁴, contrast to 0.1 %;</p></li>
+<li><p>the FFT field has the prescribed correlation; Parseval for the voxel intensity; S/V of a slab;</p></li>
+<li><p>end to end (FFT and random waves): voxel porosity, voxel I(q) against the data;</p></li>
+<li><p>SESANS: exact Abel projection (DAB closed form, pySASstudio’s Hankel transform), inversion, SESANS alone,
+scattering curve + SESANS (g to 0.04 where the scattering curve alone is off by 0.23), voxel SESANS curve, GUI.</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">pySASmorph: theory and mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="texture.html">pySASmorph: anisotropic data (texture)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">pySASmorph: API reference</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../oz/README.html" class="btn btn-neutral float-left" title="pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory.html" class="btn btn-neutral float-right" title="pySASmorph: theory and mathematics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,471 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Using the pySASred window &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Masks" href="masks.html" />
+    <link rel="prev" title="pySASred: SANS data reduction" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASred</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#status">Status</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Using the pySASred window</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#a-first-reduction">A first reduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-reduction-table">The reduction table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-reduction-panel">The Reduction panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-detector-panel">The detector panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#i-q-error-budget-and-log">I(q), error budget and log</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#in-the-launcher">In the launcher</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sample-positions-and-transmissions">Sample positions and transmissions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="masks.html">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASred: SANS data reduction</a></li>
+      <li class="breadcrumb-item active">Using the pySASred window</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/usage.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="using-the-pysasred-window">
+<h1>Using the pySASred window<a class="headerlink" href="#using-the-pysasred-window" title="Link to this heading"></a></h1>
+<p>Start it with <code class="docutils literal notranslate"><span class="pre">pysasfit-sasred</span> <span class="pre">[raw-data</span> <span class="pre">folder]</span></code> or open the <strong>pySASred</strong> tab of <code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code>. Every panel
+(Runs, Reduction, Detector, I(q), Error budget, Log) can be moved, stacked as tabs or detached into its own
+window by its title bar; <strong>View</strong> shows hidden panels again and <strong>View → Reset layout</strong> restores the start
+arrangement.</p>
+<section id="a-first-reduction">
+<h2>A first reduction<a class="headerlink" href="#a-first-reduction" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Choose the raw-data folder</strong>: <em>Browse…</em> in the Runs panel (or <em>File → Open raw-data folder…</em>). The table
+lists every <code class="docutils literal notranslate"><span class="pre">sans&lt;year&gt;n&lt;run&gt;.hdf</span></code> with sample name, wavelength, collimation coll, SD, beam stop (type and
+x, y position in mm), attenuator, monitor 1, counting time,
+total counts and whether the run was aborted (monitor preset not reached). Aborted runs are shown in red.
+<strong>Runs without usable data</strong> – measuring time 0, 0 counts on the detector (all banks) or the normalising
+monitor at 0 – and unreadable files are <strong>skipped</strong>: grey and struck through, with the reason in the column
+<em>comment</em> (e.g. “skipped: measuring time 0 s, 0 counts, monitor2 0”). They are left out of the plan and the
+reduction table, never selected by <em>Add many samples</em>, cannot be ticked in the run list of a row, and a
+reduction that is given one anyway leaves it out and says so in the log. The filter field below the folder selects runs by sample name or run number.</p></li>
+<li><p><strong>Beam centre</strong>: every geometry (collimation coll, detector distance SD and wavelength) has its own beam
+centre, because q and the solid angle of each pixel are computed from it, gravity moves the beam with SD and
+λ and the collimation changes the beam. When the folder
+is read, the centre of each geometry is taken from its direct-beam runs (beam stop out of the beam; median of
+their masked centres of gravity); a geometry without a direct-beam run borrows the centre of the same
+wavelength, preferably the same collimation, at the nearest distance, and says so. Selecting a run shows the centre of its geometry in the x / y
+fields. <strong>From selected run (direct beam)</strong> determines it again from the selected run and keeps it for that
+geometry; values typed into x / y are kept for the geometry of the run shown. The centre is the masked centre
+of gravity, re-centred until it moves by less than 0.1 pixel; the label shows its statistical uncertainty
+(about 0.004 pixel for the Vifor runs) and where it comes from. Runs of different geometries are reduced
+separately (one geometry per <em>Reduce selected</em>), each with the centre of its geometry. Pixel indices count from 0, as in Python and GRASP: x (column) is axis 1
+(horizontal), y (row) is axis 0 (vertical) of the stored image. The raw columns run to the right as seen from
+the sample, i.e. towards lab −x; all images are shown as seen looking towards the sample (lab +x to the
+right, <a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>), so the column index grows to the left.</p></li>
+<li><p><strong>Mask</strong>: a new image starts with the standard mask (two outer rows and columns) and a first-guess square
+beamstop around the beam centre. Adjust it with the mask tools, or click <strong>Suggest</strong> in the detector panel:
+it replaces the guess by the rectangle around the beamstop shadow and adds hot pixels found in the image
+shown. See <a class="reference internal" href="masks.html"><span class="doc">Masks</span></a> for editing, loading and saving.</p></li>
+<li><p><strong>Look at I(q) on the fly</strong>: with <em>live I(q) of the selected run</em> switched on (the default), the radial
+average of the selected run is drawn as a dashed curve in the I(q) panel and follows every change of the beam
+centre, mask, q range, binning, normalisation or sector within a fraction of a second. It is not kept.</p></li>
+<li><p><strong>Reduce selected</strong> reduces every selected run with the current settings (the file is read again, with its
+checksum) and keeps the result: it appears as points with error bars in I(q) – vertical Idev and, when the resolution is known (direct beam or
+collimation estimate), horizontal Qdev (1 σ); <em>I error bars</em> and <em>q resolution bars</em> above the plot switch them on and off – and in the list
+<em>Reduced runs</em>. <em>Clear curves</em> removes them.</p></li>
+<li><p><strong>Save</strong>: <em>NXcanSAS…</em> or <em>ASCII…</em> for the run chosen under <em>Reduced runs</em>, <em>All…</em> for every reduced run
+(both formats, file names <code class="docutils literal notranslate"><span class="pre">&lt;run&gt;_&lt;sample&gt;.h5</span></code> / <code class="docutils literal notranslate"><span class="pre">.dat</span></code>). See <a class="reference internal" href="scripting.html"><span class="doc">Scripts and output files</span></a> for the content of the files.</p></li>
+</ol>
+</section>
+<section id="the-reduction-table">
+<h2>The reduction table<a class="headerlink" href="#the-reduction-table" title="Link to this heading"></a></h2>
+<p>The <em>Reduction table</em> panel (a tab next to <em>I(q)</em>, <em>Error budget</em> and <em>Log</em>; menu <em>Reduction → Reduction table</em>
+brings it to the front, <em>Reduction → Add many samples…</em> opens the two-step selection directly) has one tab per
+geometry (detector distance, wavelength, collimation). Each tab holds the correction data (Cadmium, Water,
+Water-BG = empty cell of the water, Sample-BG, Direct beam = the empty-beam transmission runs of the geometry;
+the column <em>Use</em> switches the optional ones – Cadmium, Water-BG, Sample-BG – off) and one row per sample, with transmission, thickness, attenuation
+factor A and scattering probability p_cS, as in the BerSANS data-reduction window.</p>
+<p>When a folder is opened the panel is <strong>filled automatically</strong> (preference <em>fill the reduction table when a folder
+is opened</em>; <strong>Fill from runs</strong> does it again): the runs are grouped by metadata, the roles come from the sample
+names, repeated runs are compared (<em>check repeated runs</em>, about 3 s for the Vifor folder) and outliers are
+switched off; transmissions come from <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> in the folder when present. The tab title gives the number of
+scattering runs; a geometry with few runs or without water / empty cell is marked with <strong>?</strong> — often a geometry
+measured for tests. <strong>Remove geometry</strong> (or the × of its tab) takes it out of the reduction completely, also
+when the table is filled again; the raw files are not touched and <strong>Restore removed</strong> brings it back. With the
+Vifor data: SD 8 m (91 runs), 2 m (58 runs) and 3.9 m (1 run, marked ?).</p>
+<p>Each geometry tab has three tabs of its own <strong>on the left</strong> (labels read upwards): <em>Correction data</em> (Cd, water, water background,
+sample background, direct beam), <em>Absolute scale</em> (method, efficiency map, direct beam, g(λ)) and <em>Sample data</em>
+(the sample rows), so each gets the whole page. The left tab chosen is kept when switching geometries; a left tab
+with something missing has a dark red label, and a double-click in <em>Missing input</em> opens the right one.</p>
+<p><strong>New geometry (by hand)</strong> adds an empty tab for a table filled completely by hand; every cell of Information,
+Transmission, Thickness, Attenuator and Probability can be typed, <em>Copy to all samples below / above</em> copies
+the value of the selected cell. <em>Add many samples…</em> in a tab starts with the search conditions of that geometry
+(scattering runs, SD, λ and coll within 1–2 %). <strong>Save…</strong> / <strong>Load…</strong> keep all tabs and the removed geometries in
+one JSON file next to the data.</p>
+<p>The button in the first column of a row opens its runs as a spreadsheet: <em>use</em> (summed or not), run, sample,
+kind (scattering / transmission), SD, start time, counting time, monitor, counts per monitor and a comment that
+says why a run is left out (outlier with its χ²/ndf against the others and its scale factor, aborted with the
+time or monitor reached, beam stop position not matching the image). Outliers are red, aborted runs orange.
+Runs are switched on or off with the check box, added by number (<code class="docutils literal notranslate"><span class="pre">82187,</span> <span class="pre">82190-82195</span></code>), and <em>show other runs of
+this sample</em> lists the runs of the same sample from other groups (e.g. another changer position). Rows whose
+runs need a decision (drift, shape change) say so in red in <em>Notes</em>; the line below the tables lists what is
+still missing (e.g. no water, a sample without transmission), and missing inputs are red in the table (see
+<em>Missing input</em> below). <strong>Save…</strong> / <strong>Load…</strong> keep the table as JSON next to the data.</p>
+<p><strong>Choosing the runs of any row by hand</strong> (corrections, transmissions, samples): in the same spreadsheet <em>list all
+runs of this geometry</em> adds every scattering run of the geometry (tab <em>Scattering runs</em>) and every transmission
+run of the wavelength (tab <em>Transmission runs</em>), not ticked; tick the runs that belong to the row and untick the
+others, the <em>filter</em> field narrows the list by sample name or run number. <strong>Transmission from the ticked
+transmission runs</strong> recomputes τ (beam spot, each run against the empty beam of the same distance, same
+attenuator preferred) and shows the value of every run; OK takes it over. When the transmission runs of a row
+disagree by more than 3 %, the table says so (“decision needed: the transmission runs disagree”).</p>
+<section id="missing-input-red-cells-and-the-panel-missing-input">
+<h3>Missing input: red cells and the panel <em>Missing input</em><a class="headerlink" href="#missing-input-red-cells-and-the-panel-missing-input" title="Link to this heading"></a></h3>
+<p>Inputs a reduction needs but does not have are <strong>red</strong> in the table: the cell (transmission, thickness, summed
+runs) or, for a correction row without runs, its button; the tooltip says what the reduction does instead
+(T = 1, d = 1 cm, no Cd subtracted, relative scale …). <strong>Orange</strong> marks inputs to check, e.g. an aperture given
+for the samples but not for the water. The colours follow every edit, before anything is reduced.</p>
+<p><strong>Optional corrections</strong>: Cadmium, Water-BG and Sample-BG may have no runs, or be switched off with the tick in
+the column <strong>Use</strong> (their runs stay in the row). The reduction then simply leaves them out and says so; they are
+not red. Without water (direct beam or relative scale) the water background is not asked for at all.</p>
+<p>The panel <strong>Missing input</strong> (a tab next to <em>Log</em>; its title gives the number) lists what is missing <strong>for every
+geometry</strong>, without reducing: it is filled when the folder is read, again whenever a table is edited, and by
+<em>Reduction → Check all geometries</em>. Each line gives the geometry, the row, the input and what the reduction would
+do. Besides the cells of the tables (runs, transmissions, thickness, aperture, absolute scale) it lists:</p>
+<ul class="simple">
+<li><p>the resolution: no direct beam – divergence estimated from the collimation (or calibrated on another distance)
+or no resolution at all; dλ/λ missing in the file (default of the preferences used);</p></li>
+<li><p>the beam centre taken from another geometry (no direct beam);</p></li>
+<li><p>an efficiency map chosen that cannot be used (file not found, or a geometry without water);</p></li>
+<li><p>correction runs at another selector tilt than the samples.</p></li>
+</ul>
+<p>Geometry tabs with something missing have a dark red title and the count in their tool tip; the log has a one-line
+summary (“check of 3 geometries: …”). A reduction keeps this list and adds what it finds itself (rows that could not
+be reduced are dark red); its log lists the lines of the geometry reduced. Optional corrections left out are grey
+and not counted. Double-click a line to jump to its cell in the reduction table.</p>
+</section>
+<section id="absolute-scale-water-or-direct-beam-efficiency-map">
+<h3>Absolute scale: water or direct beam + efficiency map<a class="headerlink" href="#absolute-scale-water-or-direct-beam-efficiency-map" title="Link to this heading"></a></h3>
+<p>The left tab <strong>Absolute scale</strong> of every geometry tab chooses the method: <em>automatic</em> (the direct beam as soon as an
+efficiency map is chosen – the water of the geometry is then not used and its rows are grey –, else water when
+the Water row has runs, else relative), <em>water</em>, <em>direct beam + efficiency map</em> or
+<em>relative</em>; <em>used</em> says which one applies. For a long distance without water:</p>
+<ol class="arabic simple">
+<li><p>The row <strong>Direct beam</strong> holds the empty-beam (transmission) runs of this geometry, filled automatically; its
+button opens the runs as for every row.</p></li>
+<li><p><strong>efficiency map</strong>: <em>water of &lt;geometry&gt;</em> makes the map from the water, water background and Cd rows of
+that geometry (usually a shorter distance; kept for the session), or <em>file…</em> reads a saved map or an
+efficiency archive. <strong>Show</strong> draws it in the detector panel.</p></li>
+<li><p>Optional: <em>mask the pixels the map only estimates</em>, the <em>direct beam radius</em> (mm; empty = automatic) and the
+<em>attenuator transmission</em> of the direct beam (empty: the water calibration of the instrument file at this
+wavelength if there is one, else the nominal value – shown as the grey placeholder).</p></li>
+</ol>
+<p>The log of every reduction gives Φ, the disc, the attenuator factor and the map used (see
+<a class="reference internal" href="reduction.html"><span class="std std-doc">Reduction steps</span></a>).</p>
+</section>
+<section id="wrong-sample-names-names-and-roles-by-hand">
+<h3>Wrong sample names: names and roles by hand<a class="headerlink" href="#wrong-sample-names-names-and-roles-by-hand" title="Link to this heading"></a></h3>
+<p>The roles (water, empty cell, Cd, empty beam, sample) and the grouping follow the sample names in the files. When
+a name is wrong — two cells swapped, a remeasurement with a long explanatory name — select the runs in the run
+table and use <strong>Sample names and roles…</strong> (button below the run table, or the right mouse button): give the
+correct sample name and, if needed, the role (otherwise the role follows the new name: <code class="docutils literal notranslate"><span class="pre">H2O</span></code>, <code class="docutils literal notranslate"><span class="pre">water</span></code> → water,
+<code class="docutils literal notranslate"><span class="pre">EC</span></code> → empty cell, …). Do it for the scattering <em>and</em> the transmission runs of that sample. The raw files are
+not changed; the corrections are kept for the folder (<code class="docutils literal notranslate"><span class="pre">sasred_names/</span></code> next to the preferences file), applied
+every time the folder is opened (listed in the log), shown in blue italics in the run table (tooltip: the name in
+the file), and the reduction table is filled again. <em>Reset name and role to the file</em> undoes it for the selected
+runs.</p>
+<p><strong>Time series of one sample.</strong> To follow a sample in time (kinetics, gelation, a temperature jump), measure
+many short runs and reduce them one by one instead of summed: select a cell of the sample row and click <strong>Time
+series…</strong> (below the sample table). Choose</p>
+<ul class="simple">
+<li><p>the <strong>first</strong> and <strong>last run</strong> of the series (the runs in between are ticked, the others not; excluded runs are
+left out anyway);</p></li>
+<li><p><strong>time zero t₀</strong>, e.g. the moment of mixing (<code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span> <span class="pre">hh:mm:ss</span></code>); empty: the start of the first run;</p></li>
+<li><p><strong>runs per point</strong> (consecutive runs summed per point, 1 = every run) or a <strong>time window</strong> in seconds.</p></li>
+</ul>
+<p>The <em>Number</em> column then shows “series: n” in bold blue. A reduction gives one result per point, named
+“SD 8.0 m No. 3 t=540s”, reduced with the same corrections as a summed row (transmission and thickness of the
+row). The time of a point is the monitor-weighted middle of its runs relative to t₀; it is written into the
+output files with the start and end of the point (<code class="docutils literal notranslate"><span class="pre">time_s</span></code>, <code class="docutils literal notranslate"><span class="pre">time_start</span></code>, <code class="docutils literal notranslate"><span class="pre">time_end</span></code>, <code class="docutils literal notranslate"><span class="pre">series</span></code>, <code class="docutils literal notranslate"><span class="pre">series_t0</span></code>,
+<code class="docutils literal notranslate"><span class="pre">series_index</span></code>), so pyTOOLbox can order the curves by <code class="docutils literal notranslate"><span class="pre">time_s</span></code> (e.g. its <em>series</em> plot). I(q) shows the points of
+one series coloured by time with a colour bar. Untick <em>reduce … as a time series</em> to sum the runs again.
+Runs with many frames (time scans in one file) will give the points in the same way later.</p>
+<p><strong>Excluding runs.</strong> Runs that must not be used — the sample preparation failed, the sample phase-separated during
+the measurement, … — are excluded with <strong>Exclude…</strong> (next to <em>Sample names and roles…</em>, or the right mouse button):
+select them, give the reason. They stay in the run list, grey and struck through, with “skipped: excluded by
+hand: <reason>” in the <em>comment</em> column, and are treated like runs without data: never put into a reduction-table
+row, cannot be ticked, not reduced, not used for beam profiles or the monitor test. The exclusion is kept for the
+folder together with the name corrections (<code class="docutils literal notranslate"><span class="pre">sasred_names/</span></code>), so it survives <strong>Rescan</strong> and the next start, and is
+listed in the log when the folder is opened. <em>Include runs again</em> (right mouse button) takes it back.</p>
+<p>Example (SANS-LLB, Maren 2026-08): at 4 m the runs named “H2O” (5252, 5256, 5261, transmission 5276) are D2O →
+name <code class="docutils literal notranslate"><span class="pre">D2O</span></code>, role sample; the real water 5278–5280 (“real H2O, the other position is D2O …”) → name <code class="docutils literal notranslate"><span class="pre">H2O</span></code>, role
+water.</p>
+</section>
+<section id="add-many-samples">
+<h3>Add many samples<a class="headerlink" href="#add-many-samples" title="Link to this heading"></a></h3>
+<p><strong>Add many samples…</strong> works in two steps, as <em>Select many samples</em> in BerSANS
+(<a class="reference internal" href="api.html#module-pysasfit.sasred.selection" title="pysasfit.sasred.selection"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.sasred.selection</span></code></a>):</p>
+<ol class="arabic simple">
+<li><p><strong>Select runs</strong>: a run range (<em>All available</em> resets it), optionally a pattern (starting with the first
+run, alternately use n runs and skip m), and conditions on header items checked in the list: text items
+are equal to the value or, with <em>Regular expressions</em>, match it as a whole (<code class="docutils literal notranslate"><span class="pre">EXP-.*</span></code>); numbers lie in
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">≤</span> <span class="pre">value</span> <span class="pre">≤</span> <span class="pre">to</span></code>. The list holds the named items (sample, SD_m, coll_m, wavelength_A, attenuator,
+sample_position_mm, thickness, …, kind = scattering / transmission) and every scalar entry of the raw
+files as <em>file: <path></em>, with the value as stored (e.g. <em>file: SANS/Dornier-VS/lambda</em> in nm), so any
+sample environment written to the file (temperature, field, pressure, shear rate) can be used.
+<em>Search and accept</em> lists the selected runs on the second page.</p></li>
+<li><p><strong>Group</strong>: check the items that define a sample and give each number a ± tolerance (empty or 0: equal
+values; text items always equal). All runs of a group lie within ± tolerance of the centre of the group.
+The table below shows the groups as they will be added; <em>check the repeated runs of every group</em>
+compares the runs of each group and switches outliers off with their reason. <em>Add n samples</em> appends
+one sample row per group, with the transmission from <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> and the transmission runs of the same
+sample and wavelength.</p></li>
+</ol>
+<p>With the Vifor data, <em>sample</em> <code class="docutils literal notranslate"><span class="pre">EXP-.*</span></code>, λ 0.59–0.61 nm, attenuator 0, collimation 8 m and SD 1.99–2.01 m select
+the same 52 runs as BerSANS; grouped by sample they give 30 samples, 31 with <em>sample_position_mm</em> ± 0.25
+(A_2 was measured at two changer positions).</p>
+</section>
+</section>
+<section id="the-reduction-panel">
+<h2>The Reduction panel<a class="headerlink" href="#the-reduction-panel" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>field</p></th>
+<th class="head"><p>meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>x (axis 1), y (axis 0)</p></td>
+<td><p>beam centre in pixels, from 0</p></td>
+</tr>
+<tr class="row-odd"><td><p>beamstop</p></td>
+<td><p>shape (square or disc) and half width / radius of the first guess of the beamstop in the mask of a new image; it follows the beam centre until the mask is edited; <em>Into mask</em> puts it into an edited mask</p></td>
+</tr>
+<tr class="row-even"><td><p>number of bins, spacing</p></td>
+<td><p>q bins between q min and q max, logarithmic (constant Δq/q) or linear; empty bins are dropped</p></td>
+</tr>
+<tr class="row-odd"><td><p>units</p></td>
+<td><p><strong>nm, 1/nm</strong> (default) or <strong>Å, 1/Å</strong> for wavelength and q, in the table, the fields, the plots and the saved files. Switching converts q min / q max</p></td>
+</tr>
+<tr class="row-even"><td><p>q min, q max</p></td>
+<td><p>limits of the binning; <em>auto</em> takes the q range of the unmasked pixels</p></td>
+</tr>
+<tr class="row-odd"><td><p>normalise by</p></td>
+<td><p>monitor 1 (its Poisson error is propagated) or counting time</p></td>
+</tr>
+<tr class="row-even"><td><p>sector average</p></td>
+<td><p>only pixels within ± half width of the sector centre φ (and of φ + 180°) are averaged. φ = 0 is the horizontal direction +x (to the right in the image), counter-clockwise (<a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>; before 2026-11-23 an oblique sector at φ was the present 180° − φ). The sector boundaries are drawn in the detector image</p></td>
+</tr>
+<tr class="row-odd"><td><p>live I(q) of the selected run</p></td>
+<td><p>the on-the-fly radial average described above</p></td>
+</tr>
+</tbody>
+</table>
+<p>The start values of these fields (except the beam centre) are in <strong>Settings → Preferences → SANS reduction</strong>;
+the window itself remembers the last values, the folder, the units, the detector-panel choices, the masks, the
+beam centres set by hand or fitted to a run, the <strong>reduction tables</strong> with every change made by hand (absolute
+scale, efficiency map, direct beam, switched-off rows and runs, transmissions and thicknesses typed in) and the
+panel layout (the last session). On first start the three columns get widths in proportion to the window (on a
+laptop of 1600 × 1000 about 340 | 790 | 470 pixels); panels with many controls scroll instead of widening the window,
+and rows of buttons wrap, so pySASred fits screens down to 1366 × 768. The session is written when the window or the launcher closes and every two
+minutes, so a launcher that is killed loses at most two minutes. The tables are restored only for the same
+raw-data folder. <em>Settings → Forget last session</em> in the launcher clears it.</p>
+<p>Reading the folder again (new runs) or correcting sample names refills the tables from the files, but keeps per
+geometry what was set by hand: the absolute-scale settings, and per row (corrections by role, samples by name)
+the runs switched off, transmissions typed in, and thickness, aperture, attenuator and notes; the log lists what
+was kept. Beam centres set by hand or fitted to a run are kept as well (<em>kept: set before</em> in the log); only the
+automatic direct-beam centres are determined again.</p>
+</section>
+<section id="the-detector-panel">
+<h2>The detector panel<a class="headerlink" href="#the-detector-panel" title="Link to this heading"></a></h2>
+<img alt="the same detector image with the four colour scales" src="../_images/colour_scales.png" />
+<p><em>Colour scales of the detector image: linear, log(1+I), symlog and asinh (run 82140).</em></p>
+<ul class="simple">
+<li><p><strong>colour scale</strong>: <em>linear</em>; <em>log(1+I)</em>, where zero-count pixels stay finite and small counts are spread out
+(the default); <em>symlog</em>, linear below 1 count and logarithmic above, which also shows negative values (after a
+subtraction); <em>asinh</em>, a smooth version of symlog. The colour bar is labelled 0, 1, 10, 10², … for the
+non-linear scales. The colour range comes from the <strong>unmasked pixels only</strong>.</p></li>
+<li><p><strong>colours</strong>: the colour map.</p></li>
+<li><p><strong>÷ efficiency</strong>, <strong>÷ solid angle</strong>: the raw image divided by the efficiency map shown (pixels without an
+estimate blank) and / or by the solid angle of every pixel (counts per sr, with the beam centre of the
+geometry); the colour bar gives the unit. Both work in the cartesian and the polar view.</p></li>
+<li><p><strong>efficiency map</strong>: <em>Make from the water of</em> → one entry per geometry with water runs (its reduction-table rows
+Water, Water-BG and Cd, its mask and beam centre; for SANS-LLB the detector bank chosen in the panel); <em>Make from
+the water of the shown geometry</em> (the geometry of the selected run, else the reduction-table tab shown); <em>Load…</em>, <em>Save the shown map…</em>, <em>Archive the shown map</em> (efficiency archive of
+the preferences) and <em>Show</em>. If a map cannot be made (no water in that geometry, no water transmission, …) a message box says why. The view <strong>efficiency map</strong> draws the shown map around 1 (blue below, red above),
+the pixels it only estimates (row × column, e.g. behind the beam stop) outlined, undefined pixels grey; the
+title gives its water runs, distance, wavelength, rms and median σ.</p></li>
+<li><p><strong>view</strong>: <em>cartesian (x, y)</em>, the detector as measured, seen looking towards the sample (lab +x to the right,
+<a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>), drawn with the true aspect ratio of the pixels
+(from <code class="docutils literal notranslate"><span class="pre">x_pixel_size</span></code> / <code class="docutils literal notranslate"><span class="pre">y_pixel_size</span></code> of the file) and flush left in the panel; or <em>polar (φ, q)</em>: azimuth
+φ horizontally (0° = +x = right in the cartesian view, counter-clockwise, as for the sector), q vertically. In the polar view isotropic
+rings become horizontal bands and anisotropy shows as waves along φ; each (φ, q) cell takes the value of the
+pixel under its centre (no interpolation), cells outside the detector are light grey.</p></li>
+<li><p><strong>axes</strong> (cartesian view and <em>SANS-LLB: all detectors</em>): <em>pixels</em>, <em>angle 2θ</em> or <em>q_x, q_y</em>. In angle or q
+every pixel is drawn at 2θ·(cos φ, sin φ) [°] or |q|·(cos φ, sin φ) [q unit shown] with the beam centre of the
+geometry (φ = 0 along +x), so rings are circles at their 2θ or q; on SANS-LLB the central detector and the
+panels sit at their true places. Masks are shown, but edited in pixels.</p></li>
+</ul>
+<img alt="polar view of the detector image with the mask colours" src="../_images/mask_polar.png" />
+<p><em>Polar view of run 82140: the beamstop shadow (red) at the bottom, the drawn rectangle (magenta) as a narrow
+spot near φ = 315°, the leaking pixels at the beamstop edge (cyan) near φ = 180°, the detector corners as the
+four peaks at 45°, 135°, 225° and 315°.</em></p>
+<p>The rows of controls above the plot wrap when the panel is narrow, so the panel can be made small and the
+I(q) panel large.</p>
+</section>
+<section id="i-q-error-budget-and-log">
+<h2>I(q), error budget and log<a class="headerlink" href="#i-q-error-budget-and-log" title="Link to this heading"></a></h2>
+<img alt="I(q) with a reduced run and the live curve" src="../_images/iq_live.png" style="width: 60%;" />
+<p><em>I(q) of the reduced run 82131 (points with Idev) and the live curve of the selected run 82140 (dashed). The
+strong rise of 82140 at the lowest q comes from the beam leaking past the beamstop edge (see <a class="reference internal" href="masks.html"><span class="doc">Masks</span></a>).</em></p>
+<p><strong>Error budget</strong> shows, for the run chosen under <em>Reduced runs</em>, the relative standard deviation that every
+source contributes at each q, and the totals of the statistical (Idev) and the systematic sources. For a sample
+run the counting statistics dominate; the monitor is a systematic scale common to all points (a horizontal line).</p>
+<img alt="error budget of a reduced run" src="../_images/budget.png" style="width: 60%;" />
+<p><strong>Log</strong> lists the beam-centre determinations, every reduction with its q range and dead-time factor, the notes
+of each reduction (for example “deadtime:detector: uncertainty unknown, not propagated” or “Qdev: wavelength,
+beam divergence … from the direct beam …”), the mask suggestions and the saved files. When a folder is opened the
+log lists the beam centre and the <strong>beam profile</strong> of every geometry. The profile line gives the beam widths σx, σy
+in mm, the divergence σθ (also as FWHM) in mrad, the fitted centre, the runs used and the χ² of the fit. A geometry
+without a direct-beam run gets the warning “no direct-beam measurement – beam divergence estimated from the
+collimation” with the estimated widths; its reductions use that estimate and appear in the panel <em>Missing input</em>.
+Variable names: <strong>coll</strong> is the collimation length and <strong>SD</strong> the sample–detector distance throughout pySASfit
+(files written before November 2026 with L1 / L2 are still read).</p>
+</section>
+<section id="in-the-launcher">
+<h2>In the launcher<a class="headerlink" href="#in-the-launcher" title="Link to this heading"></a></h2>
+<p>In <code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code> the window is the first tab. Its own menus are hidden there; their entries appear in the
+launcher’s <strong>File</strong> menu (<em>Open raw-data folder…</em>, <em>Save NXcanSAS…</em>, <em>Save ASCII…</em>, <em>Save all reduced runs…</em>) and
+<strong>View</strong> menu. The tab can be detached into its own window, which shows its own menus again (see
+<a class="reference internal" href="../launcher.html"><span class="doc">The launcher: all tools in one window</span></a>).</p>
+</section>
+<section id="sample-positions-and-transmissions">
+<h2>Sample positions and transmissions<a class="headerlink" href="#sample-positions-and-transmissions" title="Link to this heading"></a></h2>
+<p>The reduction table matches transmissions by sample name <strong>and sample position</strong> (changer position of the
+runs, 1 mm): transmission runs and <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> values of another position are not used, the notes say so.
+Without a usable <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> value the transmission is computed from the transmission runs at that position
+against the nearest empty-beam transmission run (beam spot τ); when <code class="docutils literal notranslate"><span class="pre">trans.txt</span></code> disagrees with the runs
+(more than 5 σ and 0.01), the value of the runs is used and the notes show both. A sample whose position is
+that of another sample measured at the same time (within 5 mm) is marked <em>decision needed</em> (“changer not
+moved or wrong sample name?”), and a sample measured at several positions is listed with them.</p>
+<p>Vifor September 2026: “EXP-005370-A_2” was first measured at 3.0 mm (runs 82060, 82063, 82080, 82097), which
+is the slot of A_1 (0.3 mm; slots are 29 mm apart): transmission 0.2355 and scattering identical to A_1. It was
+measured again in its own slot at 29.3 mm (82114, 82131, 82148): transmission 0.4177 (trans.txt: 0.2966).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="pySASred: SANS data reduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="masks.html" class="btn btn-neutral float-right" title="Masks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

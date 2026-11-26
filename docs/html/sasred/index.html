@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySASred: SANS data reduction &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using the pySASred window" href="usage.html" />
+    <link rel="prev" title="Axis and angle conventions" href="../conventions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pySASred</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#status">Status</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="usage.html">Using the pySASred window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="masks.html">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pySASred: SANS data reduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysasred-sans-data-reduction">
+<h1>pySASred: SANS data reduction<a class="headerlink" href="#pysasred-sans-data-reduction" title="Link to this heading"></a></h1>
+<img alt="pySASred" class="only-light" src="../_images/pySASred-light.svg" style="height: 56px;" />
+<img alt="pySASred" class="only-dark" src="../_images/pySASred-dark.svg" style="height: 56px;" />
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit.sasred</span></code> reduces the raw data of the SINQ SANS instruments (SANS-I now, SANS-LLB later) from the HDF
+files to I(q). Every step propagates the uncertainty of every independent source <strong>exactly to first order</strong>: the
+counting statistics of each pixel, the monitor counts, and (once known) the dead time, attenuator transmissions
+and other calibration constants. The result carries its statistical standard deviation (Idev), the full
+statistical covariance between the q points, the systematic scale uncertainties as separate sensitivities, and
+a variance budget per source.</p>
+<p>The GUI is <code class="docutils literal notranslate"><span class="pre">pysasfit-sasred</span></code>, or the <strong>pySASred</strong> tab of <code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code> (the first tab).</p>
+<img alt="pySASred window with the run table, reduction panel, detector image with mask, and I(q)" src="../_images/window.png" />
+<p><em>Run table and Reduction panel on the left, the detector image of the selected run with its mask in the middle,
+I(q) on the right: a reduced run (points) and the live radial average of the selected run (dashed).</em></p>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
+<p>Version <strong>0.1.0.dev0, phase 1</strong> of the package definition: one run is reduced to a monitor-normalised intensity
+per steradian, I(q) in counts / monitor / sr.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>implemented</p></th>
+<th class="head"><p>still to come (phase 3 of the definition)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>reading SANS-I and SANS-LLB HDF files (units from the attributes, strict required fields, SHA-256 of the raw file; SANS-LLB central detector + wide-angle panels); runs without data (time 0, 0 counts, monitor 0) skipped and marked; multi-frame runs summed, selector speed scans recognised; dλ/λ from the selector tilt (SANS-I calibration table); monitors before / after the selector from their ratio to the proton beam</p></td>
+<td><p>SANS-LLB panel offsets from a standard (AgBe)</p></td>
+</tr>
+<tr class="row-odd"><td><p>counting error, dead time (non-paralysable, global or per tube), attenuator, monitor or time normalisation</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>reduction of the table rows in 2D (transmission, Cd, sample background with (1 − p_cS), water and empty cell with g(λ), thickness, absolute scale from water or from the direct beam + efficiency map), then the radial average; optional corrections (Cd, backgrounds) left out or switched off; missing inputs of every geometry checked without reducing (also resolution, beam centre, efficiency map, selector tilts), coloured in the table and listed in the panel <em>Missing input</em></p></td>
+<td><p>water anisotropy K(2θ) in the reduction; 2D output files; direct-beam scale for the SANS-LLB panels</p></td>
+</tr>
+<tr class="row-odd"><td><p>geometry with detector tilt, exact solid angle</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>detector efficiency from water (empty cell, transmissions, solid angle; masked pixels from the x and y wires), transmission tables, dated archive of the maps in one HDF5 file with comparison over time; in the GUI: made from the water of any geometry, shown as a 2D map, saved / archived; raw image ÷ efficiency / ÷ solid angle</p></td>
+<td><p>archive browser in the GUI</p></td>
+</tr>
+<tr class="row-odd"><td><p>beam centre from the direct beam</p></td>
+<td><p>grouping and equivalence check in the GUI file selection, batch scripts</p></td>
+</tr>
+<tr class="row-even"><td><p>scattering strength after Strunz et al. (2000): transmission over growing apertures (T_Si, τ_UL, lower limit of p_cS), p_cS from the curve, regime and advice, self-consistent p_cS</p></td>
+<td><p>guided strong-scatterer step in the GUI; general formula with T_EB, (1 − p_cS), K0</p></td>
+</tr>
+<tr class="row-odd"><td><p>BerSANS-like grouping of runs by metadata with precisions; equivalence check of repeated runs (outliers, scale and shape drift, e.g. sedimentation) before summing; reduction plan with roles, summed runs, outliers and missing runs per configuration</p></td>
+<td><p><em>Runs</em> panel in the GUI</p></td>
+</tr>
+<tr class="row-even"><td><p>standard, suggested and drawn masks</p></td>
+<td><p>pixel splitting in the averaging</p></td>
+</tr>
+<tr class="row-odd"><td><p>radial and sector average; resolution from the direct beam of each geometry (2D Gaussian fit → divergence) + wavelength + bin width, Qdev in 1D and a 2D Gaussian per pixel; without a direct beam the divergence comes from the collimation model, calibrated on the direct beams of the same collimation at other distances (apertures and default dλ/λ in the preferences), with a warning; I and q error bars in the plots, each switchable</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>NXcanSAS and ASCII output with the full uncertainty information</p></td>
+<td><p>live reduction during the measurement</p></td>
+</tr>
+<tr class="row-odd"><td><p>SANSPOL correction without spin analysis (polariser in/out, flipper on/off): I+, I−, (I+ + I−)/2, I− − I+ from two or three states, exact or BerSANS flipper form, depolarisation, P and f from the metadata or the SANS-I defaults (Aswal et al. 2008) (<a class="reference internal" href="polarisation.html"><span class="doc">Polarised data without spin analysis (SANSPOL)</span></a>)</p></td>
+<td><p>polarisation keys of the SANS-I files; polarisation box in the GUI; analyser (POLARIS)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Values whose uncertainty is not yet known (the dead time τ, the attenuator factors) are used but not
+propagated; every output says so in its notes (“uncertainty unknown, not propagated”).</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using the pySASred window</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#a-first-reduction">A first reduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#the-reduction-table">The reduction table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#the-reduction-panel">The Reduction panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#the-detector-panel">The detector panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#i-q-error-budget-and-log">I(q), error budget and log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#in-the-launcher">In the launcher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#sample-positions-and-transmissions">Sample positions and transmissions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="masks.html">Masks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="masks.html#one-mask-per-instrument-configuration">One mask per instrument configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masks.html#transmission-region">Transmission region</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masks.html#suggested-mask">Suggested mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masks.html#editing">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="masks.html#mask-files">Mask files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#exact-first-order-error-propagation">Exact first-order error propagation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#the-steps-of-one-run">The steps of one run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#resolution-direct-beam-profile-divergence-and-qdev">Resolution: direct-beam profile, divergence and Qdev</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#reduction-of-the-table-2d-first-then-the-average">Reduction of the table: 2D first, then the average</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#absolute-scale-from-the-direct-beam-and-the-attenuator">Absolute scale from the direct beam and the attenuator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#the-sans-i-detector">The SANS-I detector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#detector-efficiency-from-water">Detector efficiency from water</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduction.html#checks">Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#the-general-formula">The general formula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#bersans">BerSANS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#simplifications-one-by-one">Simplifications, one by one</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#strong-scatterers-and-multiple-scattering">Strong scatterers and multiple scattering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#water-at-two-distances">Water at two distances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formula.html#what-the-vifor-transmission-runs-show">What the Vifor transmission runs show</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="grouping.html#grouping-by-metadata">Grouping by metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grouping.html#are-the-runs-equivalent">Are the runs equivalent?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grouping.html#what-the-vifor-data-show">What the Vifor data show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grouping.html#which-runs-were-used-the-reduction-plan">Which runs were used: the reduction plan</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripting.html">Scripts and output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html#reducing-a-run-from-python">Reducing a run from Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html#nxcansas-file">NXcanSAS file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html#ascii-file">ASCII file</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html#polariser-and-flipper-state-of-a-run">Polariser and flipper state of a run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html#efficiencies">Efficiencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html#procedure">Procedure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html#scripting">Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sans_llb.html">SANS-LLB</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sans_llb.html#detector-banks">Detector banks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sans_llb.html#geometry-and-its-corrections">Geometry and its corrections</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>The API reference is <a class="reference internal" href="api.html"><span class="doc">pySASred: API reference</span></a> (also listed under <a class="reference internal" href="../api/index.html"><span class="doc">API reference</span></a>).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../conventions.html" class="btn btn-neutral float-left" title="Axis and angle conventions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Using the pySASred window" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

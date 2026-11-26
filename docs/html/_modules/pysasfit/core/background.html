@@ -1,0 +1,516 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.background &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.background</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.background</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">"""Background models added to the particle scattering.</span>
+
+<span class="sd">    I_model(q) = (smeared) c(q) F(q)^2  +  B(q; theta)</span>
+
+<span class="sd">The background parameters theta can be linear (constant, amplitudes) or</span>
+<span class="sd">nonlinear (power-law exponent, correlation length). They are not</span>
+<span class="sd">regularised: they are extra columns of the Gauss-Newton Jacobian with a flat</span>
+<span class="sd">prior and are integrated out in the Laplace approximation of the evidence,</span>
+<span class="sd">exactly like the flat background of Hansen (2016).</span>
+
+<span class="sd">Positive parameters (amplitudes, exponents, lengths) are fitted as</span>
+<span class="sd">z = ln(theta), which keeps them positive and makes the Gaussian approximation</span>
+<span class="sd">better behaved. The background is evaluated at the measured q (not smeared).</span>
+
+<span class="sd">Built-in terms</span>
+<span class="sd">--------------</span>
+
+<span class="sd">::</span>
+
+<span class="sd">    Constant          c</span>
+<span class="sd">    PowerLaw          A q^(-n)                 (low-q upturn of large aggregates, Porod n = 4,</span>
+<span class="sd">                                                mass fractals 1 &lt; n &lt; 3, surface fractals 3 &lt; n &lt; 4)</span>
+<span class="sd">    OrnsteinZernike   I_L / (1 + (q xi)^2)     (concentration fluctuations / network blobs)</span>
+<span class="sd">    FunctionTerm      any user function f(q, *theta) with a numerical Jacobian</span>
+
+<span class="sd">Example::</span>
+
+<span class="sd">    bg = Background([Constant(), PowerLaw(n=4.0, fit_n=False)])</span>
+<span class="sd">    fit = DensityProfileFit(q, I, s, background=bg)</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"BackgroundTerm"</span><span class="p">,</span> <span class="s2">"Constant"</span><span class="p">,</span> <span class="s2">"PowerLaw"</span><span class="p">,</span> <span class="s2">"OrnsteinZernike"</span><span class="p">,</span> <span class="s2">"FunctionTerm"</span><span class="p">,</span> <span class="s2">"Background"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="BackgroundTerm">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.BackgroundTerm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BackgroundTerm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Base class. Subclasses define ``names``, ``positive``, ``f`` and (optionally) ``grad``."""</span>
+
+    <span class="n">names</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">positive</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">free</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">k</span> <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">free</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">k</span> <span class="k">if</span> <span class="n">free</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">free</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BackgroundTerm.f">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.BackgroundTerm.f">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>  <span class="c1"># pragma: no cover - abstract</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="BackgroundTerm.grad">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.BackgroundTerm.grad">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""d f / d theta (len(q) x k); default: central differences."""</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">th</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">th</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">th</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">th</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span> <span class="mf">1e-8</span><span class="p">)</span>
+            <span class="n">tp</span><span class="p">,</span> <span class="n">tm</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">th</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">tp</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">h</span>
+            <span class="n">tm</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-=</span> <span class="n">h</span>
+            <span class="n">out</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">tp</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">tm</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="BackgroundTerm.guess">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.BackgroundTerm.guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Starting values for parameters given as None."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1">#Start values of the fitted background terms (pySASfit preferences:</span>
+<span class="c1">#numerics.background.*). The fit is a local Levenberg-Marquardt, so the start</span>
+<span class="c1">#decides which minimum is found when the background and the particle term</span>
+<span class="c1">#compete. constant_level x median of the highest-q constant_tail fraction of</span>
+<span class="c1">#the points; power law: amplitude powerlaw_level x I(q_min) q_min^n;</span>
+<span class="c1">#Ornstein-Zernike: I_L = oz_level x max I, xi = 1/median q.</span>
+<span class="n">START_DEFAULTS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">constant_level</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">constant_tail</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">powerlaw_level</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">oz_level</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Constant">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Constant">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Constant</span><span class="p">(</span><span class="n">BackgroundTerm</span><span class="p">):</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,)</span>
+    <span class="n">positive</span> <span class="o">=</span> <span class="p">(</span><span class="kc">False</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([</span><span class="n">c</span><span class="p">],</span> <span class="p">[</span><span class="n">fit</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Constant.f">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Constant.f">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Constant.grad">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Constant.grad">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Constant.guess">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Constant.guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">START_DEFAULTS</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="o">-</span><span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">d</span><span class="p">[</span><span class="s2">"constant_tail"</span><span class="p">])):]])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"constant_level"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">tail</span><span class="p">)),</span> <span class="mf">0.0</span><span class="p">)]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PowerLaw">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.PowerLaw">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PowerLaw</span><span class="p">(</span><span class="n">BackgroundTerm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A q^(-n)."""</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">)</span>
+    <span class="n">positive</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">fit_A</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_n</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([</span><span class="n">A</span><span class="p">,</span> <span class="n">n</span><span class="p">],</span> <span class="p">[</span><span class="n">fit_A</span><span class="p">,</span> <span class="n">fit_n</span><span class="p">])</span>
+
+<div class="viewcode-block" id="PowerLaw.f">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.PowerLaw.f">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">q</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="PowerLaw.grad">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.PowerLaw.grad">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">q</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>              <span class="c1"># (np.c_ costs more than the arithmetic here)</span>
+        <span class="n">out</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="n">out</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="PowerLaw.guess">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.PowerLaw.guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">4.0</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">START_DEFAULTS</span><span class="p">[</span><span class="s2">"powerlaw_level"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mf">1e-30</span><span class="p">)</span> <span class="o">*</span> <span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">**</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrnsteinZernike">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.OrnsteinZernike">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrnsteinZernike</span><span class="p">(</span><span class="n">BackgroundTerm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""I_L / (1 + (q xi)^2)."""</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"I_L"</span><span class="p">,</span> <span class="s2">"xi"</span><span class="p">)</span>
+    <span class="n">positive</span> <span class="o">=</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I_L</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_I_L</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_xi</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">([</span><span class="n">I_L</span><span class="p">,</span> <span class="n">xi</span><span class="p">],</span> <span class="p">[</span><span class="n">fit_I_L</span><span class="p">,</span> <span class="n">fit_xi</span><span class="p">])</span>
+
+<div class="viewcode-block" id="OrnsteinZernike.f">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.OrnsteinZernike.f">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrnsteinZernike.grad">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.OrnsteinZernike.grad">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">d</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">d</span>
+        <span class="n">out</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">th</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">q</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">th</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">d</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="OrnsteinZernike.guess">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.OrnsteinZernike.guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">START_DEFAULTS</span><span class="p">[</span><span class="s2">"oz_level"</span><span class="p">]</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">I</span><span class="p">)),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">q</span><span class="p">)]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="FunctionTerm">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.FunctionTerm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FunctionTerm</span><span class="p">(</span><span class="n">BackgroundTerm</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""User-defined term ``func(q, *theta)``; Jacobian by finite differences."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">positive</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">free</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">positive</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">positive</span><span class="p">)</span> <span class="k">if</span> <span class="n">positive</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="kc">False</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">free</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FunctionTerm.f">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.FunctionTerm.f">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">th</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">q</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FunctionTerm.guess">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.FunctionTerm.guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">v</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Background">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Background</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sum of background terms with a common parameter vector.</span>
+
+<span class="sd">    Internally the free parameters are packed into z (z = ln theta for positive</span>
+<span class="sd">    ones); fixed parameters keep their values.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">terms</span><span class="o">=</span><span class="p">()):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># -------------------------------------------------------------- set-up</span>
+<div class="viewcode-block" id="Background.setup">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Fill unspecified starting values from the data."""</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">values</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_flat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># cached: called several times per model evaluation (2026-10-21, ~25 % of</span>
+        <span class="c1"># the run time of a density-profile fit); the key detects any change of</span>
+        <span class="c1"># the terms' values or free/positive flags</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="nb">id</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">free</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">positive</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_flat_cache"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat_build</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_flat_cache</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_struct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Index arrays derived from _flat (cached with it): free indices, which free ones are positive, term</span>
+<span class="sd">        slices, and whether every term is a Constant (the common flat background: value/jac without the loop)."""</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_struct_cache"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="n">flat</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">flat</span>
+        <span class="n">slices</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+            <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">k</span><span class="p">))</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="n">k</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">fr_idx</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">fr</span><span class="p">),</span> <span class="n">pfree</span><span class="o">=</span><span class="n">pos</span><span class="p">[</span><span class="n">fr</span><span class="p">],</span> <span class="n">any_pos</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">fr</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">()),</span>
+                  <span class="n">slices</span><span class="o">=</span><span class="n">slices</span><span class="p">,</span> <span class="n">all_const</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Constant</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_struct_cache</span> <span class="o">=</span> <span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">st</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">st</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_flat_build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">names</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">free</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">owner</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">it</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">nm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">nm</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">FunctionTerm</span><span class="p">)</span> <span class="k">else</span> <span class="n">nm</span><span class="p">)</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+                <span class="n">free</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">free</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+                <span class="n">pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">positive</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+                <span class="n">owner</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">it</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">names</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">free</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="n">owner</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">free_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">fr</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_free</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Background.z0">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.z0">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">z0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">fr</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[</span><span class="n">fr</span><span class="p">]</span>
+        <span class="n">z</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">p</span><span class="p">],</span> <span class="mf">1e-300</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">z</span></div>
+
+
+<div class="viewcode-block" id="Background.theta">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.theta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Full parameter vector for packed free parameters z."""</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_struct</span><span class="p">()</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">zf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">st</span><span class="p">[</span><span class="s2">"any_pos"</span><span class="p">]:</span>
+            <span class="n">zf</span> <span class="o">=</span> <span class="n">zf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="s2">"pfree"</span><span class="p">]</span>
+            <span class="n">zf</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">zf</span><span class="p">[</span><span class="n">p</span><span class="p">],</span> <span class="o">-</span><span class="mi">700</span><span class="p">,</span> <span class="mi">700</span><span class="p">))</span>
+        <span class="n">th</span><span class="p">[</span><span class="n">st</span><span class="p">[</span><span class="s2">"fr_idx"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">zf</span>
+        <span class="k">return</span> <span class="n">th</span></div>
+
+
+    <span class="c1"># -------------------------------------------------------------- evaluation</span>
+<div class="viewcode-block" id="Background.value">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z0</span><span class="p">()</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">z</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_struct</span><span class="p">()</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">st</span><span class="p">[</span><span class="s2">"all_const"</span><span class="p">]:</span>                       <span class="c1"># flat background: same sum as the loop below</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">th</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="n">x</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">st</span><span class="p">[</span><span class="s2">"slices"</span><span class="p">]:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="Background.jac">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.jac">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">jac</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""d B / d z (len(q) x n_free)."""</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_struct</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">st</span><span class="p">[</span><span class="s2">"all_const"</span><span class="p">]:</span>                       <span class="c1"># d c / d c = 1 for every free constant</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"fr_idx"</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z0</span><span class="p">()</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">z</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">st</span><span class="p">[</span><span class="s2">"fr_idx"</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k1</span> <span class="ow">in</span> <span class="n">st</span><span class="p">[</span><span class="s2">"slices"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">fr</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">k1</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">g</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">th</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">k1</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k1</span> <span class="o">-</span> <span class="n">i</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">fr</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]:</span>
+                        <span class="n">out</span><span class="p">[:,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">th</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">pos</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="k">else</span> <span class="n">g</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span>   <span class="c1"># d/dz = theta d/dtheta</span>
+                        <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="Background.constant">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.constant">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Sum of the Constant terms (the 'flat background')."""</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z0</span><span class="p">()</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">terms</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Constant</span><span class="p">):</span>
+                <span class="n">c</span> <span class="o">+=</span> <span class="n">th</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="n">k</span>
+        <span class="k">return</span> <span class="n">c</span></div>
+
+
+<div class="viewcode-block" id="Background.describe">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">th</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z0</span><span class="p">()</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">names</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">th</span><span class="p">,</span> <span class="n">fr</span><span class="p">)}</span></div>
+
+
+<div class="viewcode-block" id="Background.to_free_theta">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.background.Background.to_free_theta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_free_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Free parameters in natural units (for error propagation)."""</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">fr</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flat</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="n">z</span><span class="p">)[</span><span class="n">fr</span><span class="p">]</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

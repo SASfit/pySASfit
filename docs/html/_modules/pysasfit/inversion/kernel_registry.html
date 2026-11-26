@@ -1,0 +1,354 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.kernel_registry &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.kernel_registry</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.kernel_registry</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Named, pluggable Fredholm kernels for interactive selection (e.g. a GUI</span>
+<span class="sd">dropdown), on top of the generic build_size_distribution_kernel machinery</span>
+<span class="sd">in kernels.py.</span>
+
+<span class="sd">Each kernel function has signature f(q, r) -&gt; array over q, for a single</span>
+<span class="sd">scalar r -- exactly what build_size_distribution_kernel's</span>
+<span class="sd">`form_factor_squared` argument expects, so these plug in directly:</span>
+
+<span class="sd">    A = build_size_distribution_kernel(q, r_grid, KERNEL_REGISTRY["sphere_rg"].func, alpha=0.0)</span>
+
+<span class="sd">KERNEL_REGISTRY is deliberately a plain dict of small dataclasses (not a</span>
+<span class="sd">plugin/entry-point system) so adding a new kernel later is just adding one</span>
+<span class="sd">function + one registry entry -- matching Joachim's "or something else</span>
+<span class="sd">defined later" requirement without over-engineering a plugin framework</span>
+<span class="sd">before there's a second real use case for one.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="KernelSpec">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.KernelSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KernelSpec</span><span class="p">:</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>                 <span class="c1"># display name, e.g. for a GUI dropdown</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">default_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># default size-weighting exponent (see kernels.py eq. 32-34)</span>
+    <span class="c1"># False for kernels whose unknown is not a size distribution (e.g. the</span>
+    <span class="c1"># PDDF p(r) with the j0 kernel): no size weighting, alpha is fixed at 0</span>
+    <span class="c1"># and the GUI hides the alpha field.</span>
+    <span class="n">uses_alpha</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># y-axis label for the recovered function when uses_alpha is False</span>
+    <span class="n">result_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"p(r)"</span>
+    <span class="c1"># Symmetry of the PDDF-type kernels (Hansen 2016, eqs. 1-3):</span>
+    <span class="c1"># "sphere" (3D), "cylinder" (cross-section of a long rod, per unit</span>
+    <span class="c1"># length) or "lamella" (thickness of a flat sheet, per unit area).</span>
+    <span class="c1"># None for size-distribution kernels.</span>
+    <span class="n">geometry</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Forward value of the reduced intensity q^k I(q) for q -&gt; 0, as a</span>
+    <span class="c1"># multiple of int p(r) dr: k = 0, 1, 2 for sphere, cylinder, lamella.</span>
+    <span class="n">forward_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">forward_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"I(0) = 4π∫p dr"</span>
+    <span class="c1"># name of the radius of gyration obtained from int p r^2 / (2 int p)</span>
+    <span class="n">rg_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"R&lt;sub&gt;g&lt;/sub&gt;"</span>
+    <span class="c1"># True when p(0) != 0 (lamella: p(r) = gamma(r), gamma(0) = int rho^2 dx);</span>
+    <span class="c1"># the GUI then preselects a smoothness penalty that does not pin p(0) = 0.</span>
+    <span class="n">p0_free</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="sinc_kernel">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.sinc_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sinc_kernel</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    K(q, r) = 4 pi r^2 j0(qr), where j0(x) = sin(x)/x is the zeroth-order</span>
+<span class="sd">    spherical Bessel function of the first kind.</span>
+
+<span class="sd">    This is the kernel relating a radial (pair-distance-style) distribution</span>
+<span class="sd">    to I(q) via I(q) = integral 4 pi r^2 p(r) j0(qr) dr -- the</span>
+<span class="sd">    spherically-averaged Fourier-sine transform kernel used in the</span>
+<span class="sd">    indirect Fourier transform / Debye formula. j0 shows up here because</span>
+<span class="sd">    it is precisely the radial part of a 3D Fourier transform of a</span>
+<span class="sd">    spherically symmetric function (Joachim, 2026-09-25: correctly pointed</span>
+<span class="sd">    out this is j0, not just "a sinc-like function" -- using</span>
+<span class="sd">    scipy.special.spherical_jn(0, ...) directly now instead of the</span>
+<span class="sd">    np.sinc(x/pi) reindexing trick, for both clarity and because the</span>
+<span class="sd">    dedicated special function is the numerically appropriate way to</span>
+<span class="sd">    evaluate it, including at qr=0 where j0(0)=1.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">spherical_jn</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">r</span>
+    <span class="k">return</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">qr</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sphere_rayleigh_gans_intensity">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.sphere_rayleigh_gans_intensity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sphere_rayleigh_gans_intensity</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Scattered intensity of a homogeneous sphere of radius r, Rayleigh-Gans</span>
+<span class="sd">    (= exact form factor for a sphere in the Born/RG approximation, which</span>
+<span class="sd">    for a sphere coincides with the standard exact form factor)::</span>
+
+<span class="sd">        |F(qr)|^2 = r^6 * [3 (sin(qr) - qr cos(qr)) / (qr)^3]^2</span>
+
+<span class="sd">    BUG FIX (2026-09-25, caught by comparing a blind inversion of the real</span>
+<span class="sd">    JAC-2022-paper benchmark dataset against the paper's own published</span>
+<span class="sd">    Figure 5): earlier versions of this function returned ONLY the</span>
+<span class="sd">    normalized shape P(qr) = [3(sin(qr)-qr cos(qr))/(qr)^3]^2, P(0)=1,</span>
+<span class="sd">    omitting the r^6 (Volume^2) prefactor. That is NOT just a missing</span>
+<span class="sd">    "overall amplitude" -- omitting it changes the *relative* weighting</span>
+<span class="sd">    between different particle sizes in a polydisperse sum, because real</span>
+<span class="sd">    particles scatter with intensity proportional to Volume^2, not with</span>
+<span class="sd">    uniform per-particle efficiency regardless of size. Without r^6, a</span>
+<span class="sd">    blind EM inversion on that benchmark data (known bilognormal spheres</span>
+<span class="sd">    at 60nm and 180nm modes) recovered a spurious single broad peak</span>
+<span class="sd">    dominated by ~300nm content and negligible signal near 60nm --</span>
+<span class="sd">    because the kernel made large particles look like weak scatterers, so</span>
+<span class="sd">    the solver had to pile up unrealistic amounts of N(r) at large r to</span>
+<span class="sd">    explain the data. With r^6 restored, a direct two-population linear</span>
+<span class="sd">    fit against the real data recovers a volume ratio of ~1.9:1 in favor</span>
+<span class="sd">    of the 60nm population, qualitatively matching the paper's Fig. 5</span>
+<span class="sd">    (dominant sharp peak near 60-85nm, smaller broad hump near 180-220nm)</span>
+<span class="sd">    for the first time.</span>
+
+<span class="sd">    An overall physical prefactor ((4pi/3)^2 * (contrast)^2) is still</span>
+<span class="sd">    omitted -- that IS a genuine free amplitude/scale (concentration,</span>
+<span class="sd">    contrast), safe to fold into an overall fit scale factor if an</span>
+<span class="sd">    absolute (not just relative) intensity match is needed. The r^6 term</span>
+<span class="sd">    is not optional in the same way.</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">r</span>
+    <span class="n">qr_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">qr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">qr</span><span class="p">)</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">qr_safe</span><span class="p">)</span> <span class="o">-</span> <span class="n">qr_safe</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">qr_safe</span><span class="p">))</span> <span class="o">/</span> <span class="n">qr_safe</span><span class="o">**</span><span class="mi">3</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">qr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">F</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="cylinder_pddf_kernel">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.cylinder_pddf_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cylinder_pddf_kernel</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Kernel of the cross-section PDDF of a long cylinder (rod), Hansen</span>
+<span class="sd">    (2016) eq. 2 per unit length:</span>
+
+<span class="sd">        I(q) = (2 pi^2 / q) * integral p_c(r) J0(qr) dr,</span>
+
+<span class="sd">    with p_c(r) = r * gamma_c(r) the pair-distance distribution of the</span>
+<span class="sd">    cross-section (2D), J0 the cylindrical Bessel function of order 0.</span>
+<span class="sd">    The 1/q factor is the 1/(qL) of the orientational average of a</span>
+<span class="sd">    long rod (valid for q &gt;&gt; 2 pi/L).  Same normalization as</span>
+<span class="sd">    pysasfit.sldprofile.twostep.ift_kernel(geometry="cylinder").</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">j0</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">q_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">j0</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="n">q_safe</span></div>
+
+
+
+<div class="viewcode-block" id="lamella_pddf_kernel">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.lamella_pddf_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lamella_pddf_kernel</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Kernel of the thickness PDDF of a flat lamella (sheet), Hansen (2016)</span>
+<span class="sd">    eq. 3 per unit area:</span>
+
+<span class="sd">        I(q) = (4 pi / q^2) * integral p_t(r) cos(qr) dr,</span>
+
+<span class="sd">    with p_t(r) = gamma_t(r) the 1D autocorrelation of the density profile</span>
+<span class="sd">    across the sheet (p_t(0) = int rho^2 dx &gt; 0, i.e. NOT zero at r = 0).</span>
+<span class="sd">    The 1/q^2 factor is the Lorentz factor of the orientational average of a</span>
+<span class="sd">    large flat sheet (valid for q &gt;&gt; 2 pi/sqrt(A)).  Same normalization as</span>
+<span class="sd">    pysasfit.sldprofile.twostep.ift_kernel(geometry="lamella").</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">q_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">q</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="n">q_safe</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<span class="n">KERNEL_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">KernelSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sinc_4pi"</span><span class="p">:</span> <span class="n">KernelSpec</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"Sphere: 4</span><span class="se">\u03c0</span><span class="s2"> j</span><span class="se">\u2080</span><span class="s2">(qr)  [j</span><span class="se">\u2080</span><span class="s2">(x)=sin(x)/x, spherical Bessel]"</span><span class="p">,</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">sinc_kernel</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Fourier-sine (Debye/IFT-style) kernel relating a radial "</span>
+                     <span class="s2">"distribution p(r) to I(q), via the zeroth-order spherical "</span>
+                     <span class="s2">"Bessel function j0(qr)."</span><span class="p">,</span>
+        <span class="n">default_alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">uses_alpha</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">result_label</span><span class="o">=</span><span class="s2">"p(r)"</span><span class="p">,</span>
+        <span class="n">geometry</span><span class="o">=</span><span class="s2">"sphere"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"cylinder_pddf"</span><span class="p">:</span> <span class="n">KernelSpec</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"Cylinder cross-section: 2</span><span class="se">\u03c0\u00b2</span><span class="s2"> J</span><span class="se">\u2080</span><span class="s2">(qr)/q  [Hansen 2016]"</span><span class="p">,</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">cylinder_pddf_kernel</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Cross-section pair-distance distribution p_c(r) of a long "</span>
+                     <span class="s2">"rod (per unit length): I(q) = 2 pi^2/q int p_c(r) J0(qr) dr."</span><span class="p">,</span>
+        <span class="n">default_alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">uses_alpha</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">result_label</span><span class="o">=</span><span class="s2">"$p_c(r)$"</span><span class="p">,</span>
+        <span class="n">geometry</span><span class="o">=</span><span class="s2">"cylinder"</span><span class="p">,</span>
+        <span class="n">forward_factor</span><span class="o">=</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">forward_label</span><span class="o">=</span><span class="s2">"lim q·I(q) = 2π²∫p&lt;sub&gt;c&lt;/sub&gt; dr"</span><span class="p">,</span>
+        <span class="n">rg_label</span><span class="o">=</span><span class="s2">"R&lt;sub&gt;c&lt;/sub&gt; (cross-section)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"lamella_pddf"</span><span class="p">:</span> <span class="n">KernelSpec</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"Lamella thickness: 4</span><span class="se">\u03c0</span><span class="s2"> cos(qr)/q</span><span class="se">\u00b2</span><span class="s2">  [Hansen 2016]"</span><span class="p">,</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">lamella_pddf_kernel</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Thickness pair-distance distribution p_t(r) = gamma_t(r) of a "</span>
+                     <span class="s2">"flat sheet (per unit area): I(q) = 4 pi/q^2 int p_t(r) cos(qr) dr; "</span>
+                     <span class="s2">"p_t(0) &gt; 0."</span><span class="p">,</span>
+        <span class="n">default_alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">uses_alpha</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">result_label</span><span class="o">=</span><span class="s2">"$p_t(r)$"</span><span class="p">,</span>
+        <span class="n">geometry</span><span class="o">=</span><span class="s2">"lamella"</span><span class="p">,</span>
+        <span class="n">forward_factor</span><span class="o">=</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
+        <span class="n">forward_label</span><span class="o">=</span><span class="s2">"lim q²·I(q) = 4π∫p&lt;sub&gt;t&lt;/sub&gt; dr"</span><span class="p">,</span>
+        <span class="n">rg_label</span><span class="o">=</span><span class="s2">"R&lt;sub&gt;t&lt;/sub&gt; (thickness)"</span><span class="p">,</span>
+        <span class="n">p0_free</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"sphere_rg"</span><span class="p">:</span> <span class="n">KernelSpec</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"Sphere (Rayleigh-Gans)"</span><span class="p">,</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">sphere_rayleigh_gans_intensity</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Homogeneous sphere form factor (with the physical r^6 "</span>
+                     <span class="s2">"Volume^2 scaling). default_alpha=6 is not just a "</span>
+                     <span class="s2">"convenience default here -- alpha=6 is what divides "</span>
+                     <span class="s2">"the r^6 back out of the kernel for numerical "</span>
+                     <span class="s2">"conditioning (see the function's own docstring); "</span>
+                     <span class="s2">"using alpha=0 with this kernel produces a ~1e15 "</span>
+                     <span class="s2">"dynamic range that breaks the EM solver."</span><span class="p">,</span>
+        <span class="n">default_alpha</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="list_kernels">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernel_registry.list_kernels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_kernels</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""(key, label) pairs, e.g. for populating a GUI dropdown."""</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">KERNEL_REGISTRY</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.project &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.project</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.project</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Save and reload an explorer session (``*.sasstudio``): mixture, parameters, fit selection, data sets, global</span>
+<span class="sd">parameters and links, fit settings.</span>
+
+<span class="sd">The file is plain JSON.  The data are stored inside the file, so a project stays usable when the original</span>
+<span class="sd">data file moves.  The SASfit installation is *not* stored (it is a property of the computer).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.contribution_panel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ROLES</span>
+
+<span class="n">FORMAT</span> <span class="o">=</span> <span class="s2">"pysasfit-studio-project"</span>
+<span class="n">VERSION</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># several data sets, global parameters and links are additions: older versions read the first data set</span>
+<span class="n">SUFFIX</span> <span class="o">=</span> <span class="s2">".sasstudio"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_num</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">bounds_text</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="s2">"fit"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">is_fit</span><span class="p">()),</span> <span class="s2">"lower"</span><span class="p">:</span> <span class="n">lo</span><span class="p">,</span> <span class="s2">"upper"</span><span class="p">:</span> <span class="n">hi</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_row</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">lower</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lower"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)))</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">lower</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">lower</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">upper</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"upper"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)))</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">upper</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">upper</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"value"</span><span class="p">],</span> <span class="n">emit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">row</span><span class="o">.</span><span class="n">set_fit</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fit"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="n">emit</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="to_dict">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.project.to_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="n">ex</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The state of explorer ``ex`` as a JSON-able dictionary."""</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">fit_panel</span>
+    <span class="n">contribs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ex</span><span class="o">.</span><span class="n">panels</span><span class="p">():</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"ff"</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">],</span> <span class="s2">"sd"</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="s2">"sd"</span><span class="p">],</span> <span class="s2">"sq"</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="s2">"sq"</span><span class="p">],</span> <span class="s2">"approach"</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">approach</span><span class="p">(),</span>
+            <span class="s2">"scale"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">scale_row</span><span class="p">),</span> <span class="s2">"parameters"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"datasets"</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">datasets_text</span><span class="p">(),</span>
+        <span class="p">}</span>  <span class="c1"># fmt: skip</span>
+        <span class="n">ff_rows</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">param_rows</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">]</span>
+        <span class="n">c</span><span class="p">[</span><span class="s2">"distributed"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ff_rows</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">_dist</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">p</span><span class="o">.</span><span class="n">_dist</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ff_rows</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">ROLES</span><span class="p">:</span>
+            <span class="n">c</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">][</span><span class="n">role</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">param_rows</span><span class="p">[</span><span class="n">role</span><span class="p">]}</span>
+        <span class="n">contribs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="n">FORMAT</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="n">VERSION</span><span class="p">,</span>
+        <span class="s2">"background"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bg_row</span><span class="p">),</span> <span class="s2">"bg_A"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bgA_row</span><span class="p">),</span> <span class="s2">"bg_alpha"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bgalpha_row</span><span class="p">),</span>
+        <span class="s2">"contributions"</span><span class="p">:</span> <span class="n">contribs</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">(),</span>
+        <span class="s2">"integration"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">integration</span><span class="p">),</span>
+        <span class="s2">"plot"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"qmin"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">qmin</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="s2">"qmax"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">qmax</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="s2">"points"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">npoints</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="s2">"units"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">(),</span>
+            <span class="s2">"logx"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">logx</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"logy"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">logy</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"autoscale"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">autoscale</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span>
+            <span class="s2">"mode"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">mode_combo</span><span class="o">.</span><span class="n">currentData</span><span class="p">(),</span> <span class="s2">"parts"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">show_parts</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"sliders"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">show_sliders</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"data"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"fit"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"q_scale"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">q_scale</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="s2">"fit_qmin"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">fit_qmin</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="s2">"fit_qmax"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">fit_qmax</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span>
+            <span class="s2">"backend"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">currentData</span><span class="p">(),</span> <span class="s2">"algorithm"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">currentData</span><span class="p">(),</span> <span class="s2">"max_eval"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">max_eval</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+            <span class="s2">"polish"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">polish</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"vp"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">vp</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"cache"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">cache_requested</span><span class="p">(),</span> <span class="s2">"coarse"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">coarse</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"grid"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"constraints"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">(),</span> <span class="s2">"priors"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">priors</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">(),</span>
+            <span class="s2">"result"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">(),</span>
+            <span class="s2">"globals"</span><span class="p">:</span> <span class="p">[[</span><span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">_num</span><span class="p">(</span><span class="n">lo</span><span class="p">),</span> <span class="n">_num</span><span class="p">(</span><span class="n">hi</span><span class="p">)]</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">global_table_values</span><span class="p">()],</span>
+            <span class="s2">"links"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">links_edit</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">(),</span> <span class="s2">"local"</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">local_addresses</span><span class="p">()),</span>
+        <span class="p">},</span>
+        <span class="s2">"datasets"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"current_ds"</span><span class="p">:</span> <span class="n">ex</span><span class="o">.</span><span class="n">current_ds</span><span class="p">,</span>
+        <span class="s2">"transform"</span><span class="p">:</span> <span class="n">_tr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_tr_global"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="s2">"polarisation"</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_pol_global"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="s2">"overrides"</span><span class="p">:</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ex</span><span class="o">.</span><span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+    <span class="p">}</span>  <span class="c1"># fmt: skip</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">_store_bg</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">ex</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span> <span class="s2">"q"</span><span class="p">:</span> <span class="p">[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"q"</span><span class="p">]],</span> <span class="s2">"I"</span><span class="p">:</span> <span class="p">[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]],</span>
+            <span class="s2">"sigma"</span><span class="p">:</span> <span class="p">[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"sigma"</span><span class="p">]],</span> <span class="s2">"bg"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"bg"</span><span class="p">]),</span>
+        <span class="p">}</span>  <span class="c1"># fmt: skip</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transform"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># SESANS / MSAS (additions: older versions ignore them)</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"transform"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tr</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"transform"</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"polarisation"</span><span class="p">):</span>  <span class="c1"># polarised neutrons (studio.polarisation)</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"polarisation"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"polarisation"</span><span class="p">])</span>
+        <span class="n">ses</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sesans"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ses</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"domain"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"delta"</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">key</span><span class="p">:</span> <span class="p">[[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ses</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ses</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]]]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"G"</span><span class="p">,</span> <span class="s2">"P"</span><span class="p">)</span> <span class="k">if</span> <span class="n">ses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="p">}</span>  <span class="c1"># fmt: skip</span>
+            <span class="k">if</span> <span class="n">ses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lam"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">item</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">][</span><span class="s2">"lam"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ses</span><span class="p">[</span><span class="s2">"lam"</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">ses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">):</span>
+                <span class="n">item</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">][</span><span class="s2">"options"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ses</span><span class="p">[</span><span class="s2">"options"</span><span class="p">])</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"datasets"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="s2">"datasets"</span><span class="p">]:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"datasets"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># read by version 1</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tr</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Transform settings as JSON (numbers, strings, None)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">_num</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<div class="viewcode-block" id="save">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.project.save">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write the session of explorer ``ex`` to ``path`` (``.sasstudio`` is appended if there is no suffix); returns the path."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">path</span> <span class="o">+=</span> <span class="n">SUFFIX</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">to_dict</span><span class="p">(</span><span class="n">ex</span><span class="p">),</span> <span class="n">fh</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="load_dict">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.project.load_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_dict</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rebuild the session of explorer ``ex`` from a dictionary written by :func:`to_dict`."""</span>
+    <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">FORMAT</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"not a pySASfit studio project file"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"version"</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">VERSION</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the project was written by a newer version (format </span><span class="si">{</span><span class="n">d</span><span class="p">[</span><span class="s1">'version'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="n">pl</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"plot"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="s2">"integration"</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">integration</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">ex</span><span class="o">.</span><span class="n">integration</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">[</span><span class="s2">"integration"</span><span class="p">]}</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">panels</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s2">"contributions"</span><span class="p">]:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">add_contribution</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">],</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sd"</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sq"</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">set_approach</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"approach"</span><span class="p">,</span> <span class="s2">"monodisperse"</span><span class="p">))</span>
+        <span class="n">ff_rows</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">param_rows</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">]}</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"distributed"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ff_rows</span> <span class="ow">and</span> <span class="n">ff_rows</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"distributed"</span><span class="p">]]</span><span class="o">.</span><span class="n">radio</span><span class="o">.</span><span class="n">isEnabled</span><span class="p">():</span>
+            <span class="n">ff_rows</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"distributed"</span><span class="p">]]</span><span class="o">.</span><span class="n">radio</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">ROLES</span><span class="p">:</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">param_rows</span><span class="p">[</span><span class="n">role</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">rd</span> <span class="ow">in</span> <span class="n">c</span><span class="p">[</span><span class="s2">"parameters"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">_set_row</span><span class="p">(</span><span class="n">rows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">rd</span><span class="p">)</span>
+        <span class="n">_set_row</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">scale_row</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scale"</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">set_datasets_text</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"datasets"</span><span class="p">,</span> <span class="s2">"all"</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">old</span><span class="p">:</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">removeTab</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">indexOf</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">deleteLater</span><span class="p">()</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">_structure_changed</span><span class="p">()</span>
+    <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"current"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ex</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">tabs</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"current"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">_set_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bg_row</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"background"</span><span class="p">))</span>
+    <span class="n">_set_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bgA_row</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bg_A"</span><span class="p">))</span>
+    <span class="n">_set_row</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">bgalpha_row</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bg_alpha"</span><span class="p">))</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">clear_data</span><span class="p">()</span>
+    <span class="n">nan</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>  <span class="c1"># noqa: E731</span>
+    <span class="n">sets</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"datasets"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]]</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data"</span><span class="p">)</span> <span class="k">else</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">sets</span> <span class="ow">and</span> <span class="n">sets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bg"</span><span class="p">):</span>      <span class="c1"># the rows hold the background of the data set being added</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="n">sets</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"bg"</span><span class="p">]</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">bg_row</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">b0</span><span class="p">[</span><span class="s2">"background"</span><span class="p">],</span> <span class="n">emit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">bgA_row</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">b0</span><span class="p">[</span><span class="s2">"bg_A"</span><span class="p">],</span> <span class="n">emit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">bgalpha_row</span><span class="o">.</span><span class="n">set_value</span><span class="p">(</span><span class="n">b0</span><span class="p">[</span><span class="s2">"bg_alpha"</span><span class="p">],</span> <span class="n">emit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transform"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_tr_global"</span><span class="p">):</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">_tr_global</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"transform"</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_pol_global"</span><span class="p">):</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">_pol_global</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"polarisation"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">dt</span> <span class="ow">in</span> <span class="n">sets</span><span class="p">:</span>
+        <span class="n">ses</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sesans"</span><span class="p">):</span>
+            <span class="n">ses</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">nan</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">][</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"G"</span><span class="p">,</span> <span class="s2">"P"</span><span class="p">)</span> <span class="k">if</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)}</span>
+            <span class="n">ses</span><span class="p">[</span><span class="s2">"lam"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nan</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">][</span><span class="s2">"lam"</span><span class="p">])</span> <span class="k">if</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lam"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">ses</span><span class="p">[</span><span class="s2">"options"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"sesans"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">)</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transform"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ses</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"transform"</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transform"</span><span class="p">),</span> <span class="s2">"sesans"</span><span class="p">:</span> <span class="n">ses</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"polarisation"</span><span class="p">):</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">"polarisation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="s2">"polarisation"</span><span class="p">]</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">add_dataset</span><span class="p">(</span><span class="n">nan</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"q"</span><span class="p">]),</span> <span class="n">nan</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"I"</span><span class="p">]),</span> <span class="n">nan</span><span class="p">(</span><span class="n">dt</span><span class="p">[</span><span class="s2">"sigma"</span><span class="p">]),</span> <span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">),</span> <span class="n">bg</span><span class="o">=</span><span class="n">dt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bg"</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sets</span><span class="p">:</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">current_ds</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">sets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bg"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>      <span class="c1"># version 1: the background rows hold that of the one data set</span>
+            <span class="n">ex</span><span class="o">.</span><span class="n">_store_bg</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"current_ds"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">cur</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">datasets</span><span class="p">):</span>
+            <span class="n">ex</span><span class="o">.</span><span class="n">current_ds</span> <span class="o">=</span> <span class="n">cur</span>
+            <span class="n">ex</span><span class="o">.</span><span class="n">_load_bg</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+            <span class="n">ex</span><span class="o">.</span><span class="n">_refresh_ds_combo</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_load_tr"</span><span class="p">):</span>
+            <span class="n">ex</span><span class="o">.</span><span class="n">_load_tr</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">current_ds</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s2">"_load_tr"</span><span class="p">):</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">_load_tr</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">overrides</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="p">{</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ov</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">ov</span> <span class="ow">in</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"overrides"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">fit_panel</span><span class="o">.</span><span class="n">refresh_datasets</span><span class="p">()</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">fit_panel</span><span class="o">.</span><span class="n">_update_buttons</span><span class="p">()</span>
+    <span class="c1"># plot settings (after the data: loading data resets the q range)</span>
+    <span class="k">if</span> <span class="n">pl</span><span class="p">:</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">qmin</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"qmin"</span><span class="p">,</span> <span class="n">ex</span><span class="o">.</span><span class="n">qmin</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">qmax</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"qmax"</span><span class="p">,</span> <span class="n">ex</span><span class="o">.</span><span class="n">qmax</span><span class="o">.</span><span class="n">text</span><span class="p">()))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">npoints</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"points"</span><span class="p">,</span> <span class="n">ex</span><span class="o">.</span><span class="n">npoints</span><span class="o">.</span><span class="n">value</span><span class="p">()))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"units"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">logx</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"logx"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">logy</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"logy"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">autoscale</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"autoscale"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">show_parts</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parts"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">mode_combo</span><span class="o">.</span><span class="n">findData</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mode"</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">mode_combo</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">ex</span><span class="o">.</span><span class="n">sliders_action</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sliders"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fit"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">fit_panel</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">q_scale</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"q_scale"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">fit_qmin</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fit_qmin"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">fit_qmax</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fit_qmax"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">findData</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"backend"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># the optimiser may not be installed on this computer</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">findData</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">max_eval</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_eval"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">polish</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"polish"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">vp</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"vp"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cache"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">coarse</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coarse"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"grid"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"constraints"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">priors</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"priors"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"result"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">inf</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">,</span> <span class="n">sgn</span><span class="p">:</span> <span class="n">sgn</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>  <span class="c1"># noqa: E731</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">set_global_table_values</span><span class="p">([(</span><span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">inf</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">inf</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"globals"</span><span class="p">,</span> <span class="p">[])],</span>
+                               <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"links"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">set_local_addresses</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"local"</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="n">fp</span><span class="o">.</span><span class="n">refresh_table</span><span class="p">()</span>
+    <span class="n">ex</span><span class="o">.</span><span class="n">_schedule</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="load">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.project.load">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Read a project file and rebuild the session of explorer ``ex`` from it (see :func:`load_dict`)."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+    <span class="n">load_dict</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

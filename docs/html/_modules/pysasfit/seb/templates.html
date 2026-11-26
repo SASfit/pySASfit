@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.seb.templates &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.seb.templates</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.seb.templates</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Ready-made structures of the pySEBpolymers panel.</span>
+
+<span class="sd">Every template turns a few options into a design (:mod:`pysasfit.seb.graph`, shown in the designer) and thereby into</span>
+<span class="sd">Python code that builds a :class:`~pysasfit.seb.Structure` named ``s``. :func:`build` runs such code.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">Structure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">builders</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TEMPLATES"</span><span class="p">,</span> <span class="s2">"Option"</span><span class="p">,</span> <span class="s2">"design_for"</span><span class="p">,</span> <span class="s2">"code_for"</span><span class="p">,</span> <span class="s2">"build"</span><span class="p">,</span> <span class="s2">"default_value"</span><span class="p">,</span> <span class="s2">"CORE_REF"</span><span class="p">,</span> <span class="s2">"CHAIN_REF"</span><span class="p">]</span>
+
+<span class="c1">#: reference point of a core at which chains are grafted (random point on its outer surface)</span>
+<span class="n">CORE_REF</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"SolidSphere"</span><span class="p">:</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="s2">"ThinSphericalShell"</span><span class="p">:</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="s2">"SolidSphericalShell"</span><span class="p">:</span> <span class="s2">"surfaceo"</span><span class="p">,</span>
+            <span class="s2">"Spheroid"</span><span class="p">:</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="s2">"SolidCylinder"</span><span class="p">:</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="s2">"ThinDisk"</span><span class="p">:</span> <span class="s2">"surface"</span><span class="p">}</span>
+<span class="c1">#: reference point of a chain at which it is grafted</span>
+<span class="n">CHAIN_REF</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"GaussianPolymer"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"FloryPolymer"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"ExcludedVolumePolymer"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span>
+             <span class="s2">"WormLikeChain"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"WormLikeChainEV"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"ThinRod"</span><span class="p">:</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"GaussianLoop"</span><span class="p">:</span> <span class="s2">"contour"</span><span class="p">,</span>
+             <span class="s2">"FloryLoop"</span><span class="p">:</span> <span class="s2">"contour"</span><span class="p">}</span>
+<span class="n">LINEAR</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"FloryPolymer"</span><span class="p">,</span> <span class="s2">"ExcludedVolumePolymer"</span><span class="p">,</span> <span class="s2">"WormLikeChain"</span><span class="p">,</span> <span class="s2">"WormLikeChainEV"</span><span class="p">,</span> <span class="s2">"ThinRod"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Option">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.templates.Option">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Option</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One option of a template: kind "int", "bool" or "choice"."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"int"</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">(),</span> <span class="n">tip</span><span class="o">=</span><span class="s2">""</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tip</span> <span class="o">=</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">),</span> <span class="n">tip</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_micelle</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"micelle"</span><span class="p">)</span>
+    <span class="n">core</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"core"</span><span class="p">],</span> <span class="s2">"core"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"core"</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Array"</span><span class="p">,</span> <span class="n">o</span><span class="p">[</span><span class="s2">"chain"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"chains"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="s2">"same"</span> <span class="k">if</span> <span class="n">o</span><span class="p">[</span><span class="s2">"same_point"</span><span class="p">]</span> <span class="k">else</span> <span class="s2">"independent"</span><span class="p">,</span> <span class="n">in_ref</span><span class="o">=</span><span class="n">CHAIN_REF</span><span class="p">[</span><span class="n">o</span><span class="p">[</span><span class="s2">"chain"</span><span class="p">]],</span>
+                        <span class="n">poly</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"poly"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span> <span class="n">vex</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"vex"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">CORE_REF</span><span class="p">[</span><span class="n">o</span><span class="p">[</span><span class="s2">"core"</span><span class="p">]],</span> <span class="n">arr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_star</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"star"</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"Point"</span><span class="p">,</span> <span class="s2">"centre"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"centre"</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Array"</span><span class="p">,</span> <span class="n">o</span><span class="p">[</span><span class="s2">"arm"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"arms"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"arm"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"same"</span><span class="p">,</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"point"</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_linear</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"chain"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span><span class="p">[</span><span class="s2">"alternate"</span><span class="p">]:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">new_component</span><span class="p">(</span><span class="s2">"diblock"</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"block"</span><span class="p">],</span> <span class="s2">"A"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"A"</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"block"</span><span class="p">],</span> <span class="s2">"B"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"B"</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">230</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">set_port</span><span class="p">(</span><span class="s2">"in"</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">set_port</span><span class="p">(</span><span class="s2">"out"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Chain"</span><span class="p">,</span> <span class="s2">"diblock"</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"blocks"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Chain"</span><span class="p">,</span> <span class="n">o</span><span class="p">[</span><span class="s2">"block"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"blocks"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"block"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">,</span> <span class="n">out_ref</span><span class="o">=</span><span class="s2">"end2"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dendrimer</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"dendrimer"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Generations"</span><span class="p">,</span> <span class="n">o</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">"dendron"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"g"</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"functionality"</span><span class="p">],</span> <span class="n">g</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"generations"</span><span class="p">],</span>
+                  <span class="n">gen_tags</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">,</span> <span class="n">out_ref</span><span class="o">=</span><span class="s2">"end2"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_brush</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"bottlebrush"</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">new_component</span><span class="p">(</span><span class="s2">"segment"</span><span class="p">)</span>
+    <span class="n">bb</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"backbone"</span><span class="p">],</span> <span class="s2">"bb"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"bb"</span><span class="p">)</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"side"</span><span class="p">],</span> <span class="s2">"sc"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"sc"</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">230</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">bb</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">set_port</span><span class="p">(</span><span class="s2">"in"</span><span class="p">,</span> <span class="n">bb</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">set_port</span><span class="p">(</span><span class="s2">"out"</span><span class="p">,</span> <span class="n">bb</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Chain"</span><span class="p">,</span> <span class="s2">"segment"</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"backbone"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fjc</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"fjc"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Chain"</span><span class="p">,</span> <span class="s2">"ThinRod"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"segments"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"seg"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">,</span> <span class="n">out_ref</span><span class="o">=</span><span class="s2">"end2"</span><span class="p">,</span>
+                  <span class="n">poly</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"poly"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_worm</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"worm"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">],</span> <span class="s2">"worm"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"worm"</span><span class="p">)</span><span class="o">.</span><span class="n">poly</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s2">"poly"</span><span class="p">]</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">by_name</span><span class="p">(</span><span class="s2">"worm"</span><span class="p">)</span><span class="o">.</span><span class="n">thick</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s2">"thick"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rodcoil</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"rodcoil"</span><span class="p">)</span>
+    <span class="n">rod</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"ThinRod"</span><span class="p">,</span> <span class="s2">"rod"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"rod"</span><span class="p">)</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"coil1"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"coil"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">rod</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">,</span> <span class="n">c1</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"coil2"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"coil"</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">rod</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">,</span> <span class="n">c2</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_vesicle</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"vesicle"</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"ThinSphericalShell"</span><span class="p">,</span> <span class="s2">"ves"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"ves"</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Array"</span><span class="p">,</span> <span class="s2">"GaussianLoop"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"loops"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"loop"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">o</span><span class="p">[</span><span class="s2">"n"</span><span class="p">],</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"contour"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_custom</span><span class="p">(</span><span class="n">_o</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"custom"</span><span class="p">)</span>
+    <span class="n">cyl</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"SolidCylinder"</span><span class="p">,</span> <span class="s2">"cyl"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"cyl"</span><span class="p">)</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"top"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">)</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"bottom"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">cyl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"top"</span><span class="p">,</span> <span class="n">top</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">cyl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"bottom"</span><span class="p">,</span> <span class="n">bot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Array"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"hull"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">cyl</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"hull"</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="n">_CORES</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">CORE_REF</span><span class="p">)</span>
+<span class="n">TEMPLATES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Micelle (core + grafted chains)"</span><span class="p">:</span> <span class="p">(</span><span class="n">_micelle</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"chains"</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"core"</span><span class="p">,</span> <span class="s2">"core"</span><span class="p">,</span> <span class="s2">"SolidSphere"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">_CORES</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"chain"</span><span class="p">,</span> <span class="s2">"chains are"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">CHAIN_REF</span><span class="p">)),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"same_point"</span><span class="p">,</span> <span class="s2">"all chains at one point"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"poly"</span><span class="p">,</span> <span class="s2">"polydisperse chains"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"vex"</span><span class="p">,</span> <span class="s2">"chains see each other"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">,</span>
+               <span class="n">tip</span><span class="o">=</span><span class="s2">"excluded volume between the chains (RPA-type, parameter vex_chains)"</span><span class="p">)]),</span>
+    <span class="s2">"Star polymer"</span><span class="p">:</span> <span class="p">(</span><span class="n">_star</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"arms"</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"arm"</span><span class="p">,</span> <span class="s2">"arms are"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">LINEAR</span><span class="p">)]),</span>
+    <span class="s2">"Linear / multiblock chain"</span><span class="p">:</span> <span class="p">(</span><span class="n">_linear</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"repeats"</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">tip</span><span class="o">=</span><span class="s2">"blocks, or A-B diblocks when alternating"</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"block"</span><span class="p">,</span> <span class="s2">"blocks are"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">LINEAR</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"alternate"</span><span class="p">,</span> <span class="s2">"alternating A/B blocks"</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">)]),</span>
+    <span class="s2">"Dendrimer"</span><span class="p">:</span> <span class="p">(</span><span class="n">_dendrimer</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"generations"</span><span class="p">,</span> <span class="s2">"generations"</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">12</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"functionality"</span><span class="p">,</span> <span class="s2">"functionality"</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">8</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"branches are"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">LINEAR</span><span class="p">)]),</span>
+    <span class="s2">"Bottle brush"</span><span class="p">:</span> <span class="p">(</span><span class="n">_brush</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"backbone segments"</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"backbone"</span><span class="p">,</span> <span class="s2">"backbone"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">LINEAR</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"side"</span><span class="p">,</span> <span class="s2">"side chains"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">LINEAR</span><span class="p">)]),</span>
+    <span class="s2">"Freely jointed chain"</span><span class="p">:</span> <span class="p">(</span><span class="n">_fjc</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"segments"</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"poly"</span><span class="p">,</span> <span class="s2">"polydisperse segments"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">)]),</span>
+    <span class="s2">"Worm-like chain"</span><span class="p">:</span> <span class="p">(</span><span class="n">_worm</span><span class="p">,</span> <span class="p">[</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"model"</span><span class="p">,</span> <span class="s2">"WormLikeChainEV"</span><span class="p">,</span> <span class="s2">"choice"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">(</span><span class="s2">"WormLikeChainEV"</span><span class="p">,</span> <span class="s2">"WormLikeChain"</span><span class="p">)),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"poly"</span><span class="p">,</span> <span class="s2">"polydisperse (length)"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">),</span>
+        <span class="n">Option</span><span class="p">(</span><span class="s2">"thick"</span><span class="p">,</span> <span class="s2">"thick (cross-section)"</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"bool"</span><span class="p">)]),</span>
+    <span class="s2">"Rod–coil block copolymer"</span><span class="p">:</span> <span class="p">(</span><span class="n">_rodcoil</span><span class="p">,</span> <span class="p">[</span><span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"coils"</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">2</span><span class="p">)]),</span>
+    <span class="s2">"Vesicle with loops"</span><span class="p">:</span> <span class="p">(</span><span class="n">_vesicle</span><span class="p">,</span> <span class="p">[</span><span class="n">Option</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="s2">"loops"</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span><span class="mi">5000</span><span class="p">)]),</span>
+    <span class="s2">"Custom"</span><span class="p">:</span> <span class="p">(</span><span class="n">_custom</span><span class="p">,</span> <span class="p">[]),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="design_for">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.templates.design_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">design_for</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Design (pysasfit.seb.graph) of ``template`` with ``options`` (missing ones: defaults)."""</span>
+    <span class="n">fn</span><span class="p">,</span> <span class="n">opts</span> <span class="o">=</span> <span class="n">TEMPLATES</span><span class="p">[</span><span class="n">template</span><span class="p">]</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">default</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">}</span>
+    <span class="n">o</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">auto_layout</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">auto_layout</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<div class="viewcode-block" id="code_for">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.templates.code_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">code_for</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Python code of ``template`` with ``options`` (missing ones: defaults)."""</span>
+    <span class="k">return</span> <span class="n">design_for</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">to_code</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="build">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.templates.build">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">code</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Run structure code; it must assign a Structure to ``s``. Returns it."""</span>
+    <span class="n">ns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Structure"</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span> <span class="s2">"builders"</span><span class="p">:</span> <span class="n">builders</span><span class="p">,</span> <span class="s2">"np"</span><span class="p">:</span> <span class="n">np</span><span class="p">}</span>
+    <span class="n">exec</span><span class="p">(</span><span class="nb">compile</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s2">"&lt;structure&gt;"</span><span class="p">,</span> <span class="s2">"exec"</span><span class="p">),</span> <span class="n">ns</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">ns</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"s"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the code must assign a Structure to the variable s"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">_graph</span><span class="p">()</span>                       <span class="c1"># loops, self-links: report now, not at the first evaluation</span>
+    <span class="k">return</span> <span class="n">s</span></div>
+
+
+
+<span class="n">_DEFAULTS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"beta"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"nu"</span><span class="p">:</span> <span class="mf">0.588</span><span class="p">,</span> <span class="s2">"sigma"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">"Rc"</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">"vex"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s2">"Rg"</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">:</span> <span class="mf">40.0</span><span class="p">,</span>
+             <span class="s2">"L"</span><span class="p">:</span> <span class="mf">100.0</span><span class="p">,</span> <span class="s2">"Ri"</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span> <span class="s2">"Ro"</span><span class="p">:</span> <span class="mf">40.0</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">:</span> <span class="mf">60.0</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="default_value">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.templates.default_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_value</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Start value of a structure parameter (lengths in the inverse unit of q, Å for q in 1/Å)."""</span>
+    <span class="k">return</span> <span class="n">_DEFAULTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

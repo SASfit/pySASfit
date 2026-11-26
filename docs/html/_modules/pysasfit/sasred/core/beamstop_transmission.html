@@ -1,0 +1,257 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.core.beamstop_transmission &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.core.beamstop_transmission</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.core.beamstop_transmission</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Transmission from the beam behind a semi-transparent beam stop (SANS-LLB).</span>
+
+<span class="sd">A semi-transparent beam stop lets a known, small fraction of the direct beam through. Its counts, in a</span>
+<span class="sd">*transmission region* of pixels drawn around the beam centre (the second layer of the mask editor: these</span>
+<span class="sd">pixels are used, not left out), measure the beam transmitted by the sample during the scattering run itself:</span>
+
+<span class="sd">    I_bs = sum over the region of the counts, corrected for dead time and attenuator, per monitor (or s)</span>
+<span class="sd">    T_bs = I_bs(sample run) / I_bs(reference run)</span>
+
+<span class="sd">with a reference run of the same configuration and beam stop: the empty beam, or the empty cell (then</span>
+<span class="sd">T_bs is the transmission of the sample relative to the cell). Scattered neutrons that land in the region</span>
+<span class="sd">are counted too, so T_bs is slightly too high for strong scatterers; how reliable it is, is what</span>
+<span class="sd">:func:`compare` shows against the transmission from the transmission runs (beam stop out).</span>
+
+<span class="sd">The uncertainties come from the same propagation as the reduction (counting, monitor, dead time,</span>
+<span class="sd">attenuator; :mod:`pysasfit.sasred.data.uarray`): ``sigma`` statistical, ``sigma_total`` including the</span>
+<span class="sd">systematic sources that do not cancel in the ratio (e.g. different attenuators).</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"RegionIntensity"</span><span class="p">,</span> <span class="s2">"region_intensity"</span><span class="p">,</span> <span class="s2">"BeamstopTransmission"</span><span class="p">,</span> <span class="s2">"beamstop_transmission"</span><span class="p">,</span> <span class="s2">"compare"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="RegionIntensity">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.RegionIntensity">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RegionIntensity</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Intensity in the transmission region of one run or of runs summed (monitor-weighted mean)."""</span>
+    <span class="n">runs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">object</span>                     <span class="c1"># UArray scalar: counts / monitor (or / s), dead time and attenuator corrected</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="nb">float</span>                     <span class="c1"># raw counts in the region, all runs</span>
+    <span class="n">n_pixels</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">I</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="region_intensity">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.region_intensity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">region_intensity</span><span class="p">(</span><span class="n">raws</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">instrument</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">normalise_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"monitor"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RegionIntensity</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sum of the corrected counts of every run of ``raws`` in ``region`` (bool image, True = used), per</span>
+<span class="sd">    monitor (``normalise_by="monitor"``) or per second; several runs: weighted by their monitor (or</span>
+<span class="sd">    time), i.e. as if summed."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span><span class="p">,</span> <span class="n">normalised_counts</span>
+    <span class="n">raws</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no runs"</span><span class="p">)</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">region</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the transmission region is empty"</span><span class="p">)</span>
+    <span class="n">inst</span> <span class="o">=</span> <span class="n">instrument</span> <span class="ow">or</span> <span class="n">load_instrument</span><span class="p">(</span><span class="n">raws</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total</span><span class="p">,</span> <span class="n">wsum</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">region</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="si">}</span><span class="s2">: detector </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> does not fit the region </span><span class="si">{</span><span class="n">region</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">,</span> <span class="n">_factor</span><span class="p">,</span> <span class="n">_mask</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="n">normalised_counts</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">inst</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalise_by</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">normalise_by</span> <span class="o">==</span> <span class="s2">"monitor"</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">monitors</span><span class="p">[</span><span class="n">inst</span><span class="p">[</span><span class="s2">"monitor"</span><span class="p">][</span><span class="s2">"normaliser"</span><span class="p">]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counting_time_s</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="n">w</span> <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">total</span> <span class="o">+</span> <span class="n">s</span> <span class="o">*</span> <span class="n">w</span>
+        <span class="n">wsum</span> <span class="o">+=</span> <span class="n">w</span>
+        <span class="n">counts</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="p">[</span><span class="n">region</span><span class="p">]))</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/sr"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RegionIntensity</span><span class="p">([</span><span class="n">r</span><span class="o">.</span><span class="n">run</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">],</span> <span class="n">total</span> <span class="o">/</span> <span class="n">wsum</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">region</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="n">unit</span><span class="p">,</span>
+                           <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">notes</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="BeamstopTransmission">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.BeamstopTransmission">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BeamstopTransmission</span><span class="p">:</span>
+    <span class="n">sample</span><span class="p">:</span> <span class="n">RegionIntensity</span>
+    <span class="n">reference</span><span class="p">:</span> <span class="n">RegionIntensity</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span>                      <span class="c1"># statistical</span>
+    <span class="n">sigma_total</span><span class="p">:</span> <span class="nb">float</span>                <span class="c1"># with the systematic sources that do not cancel</span>
+
+<div class="viewcode-block" id="BeamstopTransmission.text">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.BeamstopTransmission.text">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"T_bs = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> (total ± </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_total</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">): runs "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">runs</span><span class="si">}</span><span class="s2"> / reference </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">runs</span><span class="si">}</span><span class="s2">, region </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">n_pixels</span><span class="si">}</span><span class="s2"> px, "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">counts</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">counts</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> counts"</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="beamstop_transmission">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.beamstop_transmission">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beamstop_transmission</span><span class="p">(</span><span class="n">sample_raws</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">reference_raws</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">normalise_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"monitor"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BeamstopTransmission</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""T_bs = I_bs(sample runs) / I_bs(reference runs) in the transmission region."""</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">region_intensity</span><span class="p">(</span><span class="n">sample_raws</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">instrument</span><span class="p">,</span> <span class="n">normalise_by</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">region_intensity</span><span class="p">(</span><span class="n">reference_raws</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">instrument</span><span class="p">,</span> <span class="n">normalise_by</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ref</span><span class="o">.</span><span class="n">I</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"reference runs </span><span class="si">{</span><span class="n">ref</span><span class="o">.</span><span class="n">runs</span><span class="si">}</span><span class="s2">: no counts in the transmission region"</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">ref</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">BeamstopTransmission</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span>
+                                <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">std</span><span class="p">())</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="compare">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.beamstop_transmission.compare">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare</span><span class="p">(</span><span class="n">t_bs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">s_bs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t_runs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">s_runs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""(ratio T_bs / T_runs, its σ, z = (T_bs - T_runs) / σ_diff) or (None, None, None)."""</span>
+    <span class="k">if</span> <span class="n">t_runs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">t_runs</span><span class="p">)</span> <span class="ow">or</span> <span class="n">t_runs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">s_runs</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">s_runs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">s_runs</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">s_runs</span><span class="p">)</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">t_bs</span> <span class="o">/</span> <span class="n">t_runs</span>
+    <span class="n">s_ratio</span> <span class="o">=</span> <span class="n">ratio</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">s_bs</span> <span class="o">/</span> <span class="n">t_bs</span> <span class="k">if</span> <span class="n">t_bs</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">s_runs</span> <span class="o">/</span> <span class="n">t_runs</span><span class="p">)</span>
+    <span class="n">sd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">s_bs</span><span class="p">,</span> <span class="n">s_runs</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_bs</span> <span class="o">-</span> <span class="n">t_runs</span><span class="p">)</span> <span class="o">/</span> <span class="n">sd</span> <span class="k">if</span> <span class="n">sd</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">ratio</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">s_ratio</span><span class="p">),</span> <span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">z</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">z</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,835 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python ports of SASfit plugins &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Results and export" href="results.html" />
+    <link rel="prev" title="Polarised neutrons" href="polarisation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASstudio</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explorer.html">The model explorer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Building models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sesans_msas.html">SESANS and multiple scattering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html">Polarised neutrons</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Python ports of SASfit plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-ports">Using the ports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comparison-with-the-c-plugins">Comparison with the C plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ported-functions">Ported functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#statistics-of-distributions-and-peaks-v">Statistics of distributions and peaks (<code class="docutils literal notranslate"><span class="pre">_v</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-domains-and-default-values">Parameter domains and default values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#magnetic-ports-2026-11-23">Magnetic ports (2026-11-23)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-a-port">Writing a port</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="results.html">Results and export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Extending studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../studio.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#about-the-pictures-and-examples">About the pictures and examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">studio manual</a></li>
+      <li class="breadcrumb-item active">Python ports of SASfit plugins</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/studio_manual/python_ports.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="python-ports-of-sasfit-plugins">
+<h1>Python ports of SASfit plugins<a class="headerlink" href="#python-ports-of-sasfit-plugins" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit.studio.ports</span></code> holds vectorised numpy versions of SASfit C plugin functions. They take the same
+parameter vector as the C function, evaluate all q at once and, for ψ-dependent (anisotropic) functions, also a
+grid of directions ψ of Q on the detector:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.studio</span><span class="w"> </span><span class="kn">import</span> <span class="n">ports</span>
+
+<span class="n">spec</span> <span class="o">=</span> <span class="n">ports</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ff_deformed_ring_polymer__bz_"</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">50</span><span class="p">);</span> <span class="n">p</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">]</span>   <span class="c1"># Rg_ll, Rg_perp, nu, I0, theta_0 (deg), psi (deg)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">I</span> <span class="o">=</span> <span class="n">spec</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>                                             <span class="c1"># psi from p[5]</span>
+<span class="n">psi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">I2d</span> <span class="o">=</span> <span class="n">spec</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="n">psi</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span>                <span class="c1"># (32, 200): psi in radians, broadcast against q</span>
+</pre></div>
+</div>
+<p>The C plugins remain the default and the reference. <code class="docutils literal notranslate"><span class="pre">ports.enable()</span></code> (or <code class="docutils literal notranslate"><span class="pre">ports.enable([&quot;ff_...&quot;])</span></code>) makes
+<code class="docutils literal notranslate"><span class="pre">studio.function(name)</span></code> and the explorer use the ports instead; <code class="docutils literal notranslate"><span class="pre">ports.disable()</span></code> switches back.</p>
+<section id="using-the-ports">
+<h2>Using the ports<a class="headerlink" href="#using-the-ports" title="Link to this heading"></a></h2>
+<p>Every port is registered under its own name <code class="docutils literal notranslate"><span class="pre">ff_py_&lt;name</span> <span class="pre">without</span> <span class="pre">ff_&gt;</span></code> next to the C function, in the collection
+“py plugin ports”; the model explorer shows them in the form-factor menu tree <strong>py plugin ports</strong> (a copy of the
+SASfit plugin tree). From a script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.studio</span><span class="w"> </span><span class="kn">import</span> <span class="n">function</span>
+<span class="n">f_py</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="s2">"ff_py_sheared_cylinders__maier_saupe_"</span><span class="p">)</span>   <span class="c1"># Python port</span>
+<span class="n">f_c</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="s2">"ff_sheared_cylinders__maier_saupe_"</span><span class="p">)</span>       <span class="c1"># C plugin</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ports.enable()</span></code> instead replaces the C plugins under their original names (scripts, comparisons).</p>
+</section>
+<section id="comparison-with-the-c-plugins">
+<h2>Comparison with the C plugins<a class="headerlink" href="#comparison-with-the-c-plugins" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pysasfit</span><span class="o">.</span><span class="n">studio</span><span class="o">.</span><span class="n">ports</span><span class="o">.</span><span class="n">check</span>                       <span class="c1"># all ports</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pysasfit</span><span class="o">.</span><span class="n">studio</span><span class="o">.</span><span class="n">ports</span><span class="o">.</span><span class="n">check</span> <span class="n">ff_ringpolymerBZ</span> <span class="o">--</span><span class="n">sets</span> <span class="mi">50</span> <span class="o">--</span><span class="n">report</span> <span class="n">ports_report</span><span class="o">.</span><span class="n">md</span>
+</pre></div>
+</div>
+<p>or, from the repository root without installing and with a chosen SASfit folder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">tools</span><span class="o">/</span><span class="n">port_check</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">lib</span><span class="o">-</span><span class="nb">dir</span> <span class="n">C</span><span class="p">:</span><span class="o">/</span><span class="n">Users</span><span class="o">/</span><span class="n">me</span><span class="o">/</span><span class="n">SASstudio</span> <span class="o">--</span><span class="n">sets</span> <span class="mi">30</span> <span class="o">--</span><span class="n">report</span> <span class="n">ports_report</span><span class="o">.</span><span class="n">md</span>
+<span class="n">python</span> <span class="n">tools</span><span class="o">/</span><span class="n">port_check</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">list</span>
+<span class="n">python</span> <span class="n">tools</span><span class="o">/</span><span class="n">port_check</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">aniso</span> <span class="mf">1e-9</span>          <span class="c1"># tighter SASfit precision for this run</span>
+</pre></div>
+</div>
+<p>Freshly built plugins can be taken directly from the SASfit source tree, without copying the DLLs:
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">tools/port_check.py</span> <span class="pre">--plugin-dir</span> <span class="pre">/c/Users/&lt;you&gt;/switchdrive/SASfitGit/src/plugins</span></code> (session only), or once
+for all pySASfit sessions <code class="docutils literal notranslate"><span class="pre">pysasfit-studio</span> <span class="pre">plugin-build-dir</span> <span class="pre">/c/Users/&lt;you&gt;/switchdrive/SASfitGit/src/plugins</span></code>
+(saved; <code class="docutils literal notranslate"><span class="pre">--clear</span></code> forgets it). Every <code class="docutils literal notranslate"><span class="pre">&lt;dir&gt;/&lt;plugin&gt;/lib/libsasfit_&lt;plugin&gt;.dll</span></code> then replaces the installed plugin of
+the same name and <code class="docutils literal notranslate"><span class="pre">&lt;dir&gt;/&lt;plugin&gt;/include/sasfit_&lt;plugin&gt;.h</span></code> the bundled header; libsasfit itself still comes from
+the SASfit installation.</p>
+<p>SASfit plugins integrate with <code class="docutils literal notranslate"><span class="pre">sasfit_integrate</span></code>, whose relative tolerance is SASfit’s eps <em>aniso</em> (studio default
+1e-5), not eps <em>nriq</em>. For such functions <code class="docutils literal notranslate"><span class="pre">tools/port_check.py</span></code> compares at max(port tolerance, 2·eps aniso), so a
+deviation of ~1e-6 with eps aniso = 1e-5 is SASfit’s requested precision, not an error.</p>
+<p>For every port, random parameter sets within <code class="docutils literal notranslate"><span class="pre">PortSpec.sample</span></code> are evaluated with the port and with the C
+plugin of the SASfit library (<code class="docutils literal notranslate"><span class="pre">SASfitFunction(name,</span> <span class="pre">language=&quot;c&quot;)</span></code>) on q = 10⁻³ … 10 nm⁻¹ (with Rg = 1 … 100 nm:
+q Rg = 10⁻³ … 10³). The report gives the largest relative deviation, the times of both implementations, a check
+that the vectorised ψ argument equals the ψ parameter, and the number of points where the C function returned 0
+but the port did not (a failed integration in C). The C side uses your SASfit integration settings
+(Settings → Integration…), so integration-based functions are compared at SASfit’s own precision.</p>
+<p>The test suite (<code class="docutils literal notranslate"><span class="pre">tests/studio/test_ports.py</span></code>) compiles the unchanged C sources of the ported functions
+(<code class="docutils literal notranslate"><span class="pre">tests/studio/port_reference/sasfit_src</span></code>) with small shim headers and GSL, with a reference-quality
+<code class="docutils literal notranslate"><span class="pre">sasfit_integrate</span></code>, and checks the ports against them, against closed forms (Debye function, Dawson integral of the
+Gaussian ring) and against the large-q asymptotics.</p>
+</section>
+<section id="ported-functions">
+<h2>Ported functions<a class="headerlink" href="#ported-functions" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>function</p></th>
+<th class="head"><p>C source</p></th>
+<th class="head"><p>accuracy</p></th>
+<th class="head"><p>notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>ff_deformed_generalized_gaussian_chain</p></td>
+<td><p>deformed_polymers</p></td>
+<td><p>exact (~1e-15)</p></td>
+<td><p>SASfit builds before 2026-11-17 use Guinier exp(-β/3) for √β &lt; 0.1 (error up to ~4e-6)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_deformed_ring_polymer__bmb_</p></td>
+<td><p>deformed_polymers + polymer_rings</p></td>
+<td><p>~1e-14</p></td>
+<td><p>tanh-sinh quadrature, scaled to the end-point layer</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_deformed_ring_polymer__bz_</p></td>
+<td><p>deformed_polymers + polymer_rings</p></td>
+<td><p>~1e-14</p></td>
+<td><p>as above</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_ringpolymerBMB</p></td>
+<td><p>polymer_rings</p></td>
+<td><p>~1e-14</p></td>
+<td><p>isotropic</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_ringpolymerBZ</p></td>
+<td><p>polymer_rings</p></td>
+<td><p>~1e-14</p></td>
+<td><p>isotropic</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_we/hsh__deformed_polym__netw_</p></td>
+<td><p>deformed_polymer_network</p></td>
+<td><p>~1e-12</p></td>
+<td><p>tube models, split at the end-point layer</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_we/hsh__deformed_ringpolym__netw_</p></td>
+<td><p>deformed_polymer_network</p></td>
+<td><p>~1e-12</p></td>
+<td><p>rings, symmetric half interval</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_reptating_chain</p></td>
+<td><p>reptating_chain</p></td>
+<td><p>~1e-15</p></td>
+<td><p>C ignores I0 and loses digits in D(x) for q Rg &lt; ~0.01</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_polymer/ring_under_shearflow</p></td>
+<td><p>shearflow</p></td>
+<td><p>~1e-15</p></td>
+<td><p>sector average with 32 Gauss-Legendre nodes</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_polymer/ring_under_shearflow1</p></td>
+<td><p>shearflow</p></td>
+<td><p>~1e-15</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>ff_polymer/ring_under_shearflow2</p></td>
+<td><p>shearflow</p></td>
+<td><p>~1e-11</p></td>
+<td><p>two-stage form factor in closed form (polymer), kinks as segment edges (ring)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_shearflow_lin, _g1, _g2</p></td>
+<td><p>shearflow_polymers_lin</p></td>
+<td><p>~1e-15</p></td>
+<td><p>two-stage form factor in closed form; detector angle is varphi (p[11])</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_sheared_cylinders__{maier_saupe, gauss, boltzmann, onsager, heavyside, hayterpenfold, legendre}_</p></td>
+<td><p>sheared_objects</p></td>
+<td><p>not compared</p></td>
+<td><p>see below</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_sheared_spheroids__{maier_saupe, gauss, boltzmann, onsager, heavyside, hayterpenfold}_</p></td>
+<td><p>sheared_objects</p></td>
+<td><p>not compared</p></td>
+<td><p>see below</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_sphere, ff_spherical_shell_i/ii/iii, ff_hollow_sphere, ff_multilamellar_vesicle</p></td>
+<td><p>sphericalshells</p></td>
+<td><p>~1e-11</p></td>
+<td><p>stable Φ(x) = 3(sin x - x cos x)/x³; C fixed 2026-11-18 (digits lost for 1e-4 &lt; q R &lt; 0.01, mlv <code class="docutils literal notranslate"><span class="pre">_v</span></code> returned a radius)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_sphere_with_3_shells</p></td>
+<td><p>sphere_with_3_shells</p></td>
+<td><p>~1e-11</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>ff_boucher_sphere, _sphere2, _profiles, _profiles2</p></td>
+<td><p>boucherprofile</p></td>
+<td><p>~1e-13</p></td>
+<td><p>0F1 via J_{b-1}</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_kratkysphere</p></td>
+<td><p>kratky_sphere</p></td>
+<td><p>~1e-7</p></td>
+<td><p>Gauss-Legendre over q⊥; Δq⊥ = 0 gives the unsmeared limit (C fixed 2026-11-18, was 0/0)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_gauss, _gauss2, _gauss3, ff_gauspoly</p></td>
+<td><p>polymer_chains</p></td>
+<td><p>~1e-10</p></td>
+<td><p>C fixed 2026-11-18 (digits lost for small q Rg; <code class="docutils literal notranslate"><span class="pre">_f</span></code> was (1-e^{+u})/u)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_generalized_gaussian_coil, _2, _3</p></td>
+<td><p>polymer_chains</p></td>
+<td><p>~1e-10</p></td>
+<td><p>exact (series of u^-a γ(a,u)); C fixed 2026-11-18 (was Guinier for q Rg &lt; 0.1; c_compat)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_benoitstar, ff_broken_rods_star, ff_dozierstar, _dozierstar2, ff_gauss_exvol_star, ff_polydispersestar</p></td>
+<td><p>polymer_stars</p></td>
+<td><p>~1e-10</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_blob__beaucage_, _<em>dendrimer</em>, _<em>star</em></p></td>
+<td><p>blob</p></td>
+<td><p>~1e-15</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>ff_fract_branched_polym</p></td>
+<td><p>hammouda_branched</p></td>
+<td><p>~1e-10</p></td>
+<td><p>C fixed 2026-11-18 (lost all digits for small q Rg: Γ - Γ_inc cancellation)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_polynom, ff_cv2, ff_cv</p></td>
+<td><p>polynom, cv</p></td>
+<td><p>exact</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>ff_generalized_form_factor, ff_lesser_generalized_form_factor, _2</p></td>
+<td><p>generalized_formfactor</p></td>
+<td><p>~1e-12 (sigma_a = 0)</p></td>
+<td><p>gFF with sigma_a ≠ 0: C fixed 2026-11-18 (was uninitialised); log-normal average by Gauss-Hermite (C: 99.9 % range, ~3e-4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_beaucage_exppowlaw, _2, ff_broad_peak, ff_debye_anderson_brumberger, ff_g_dab, ff_def_g_dab, ff_extended_guinier_law, ff_generalized_guinier_porod_law, ff_ornstein_zernike, ff_spinodal, ff_spinodal2, ff_teubner_strey</p></td>
+<td><p>non_particulate</p></td>
+<td><p>~1e-13</p></td>
+<td><p>closed forms; def_g_dab: 96-point Gauss-Legendre over cos θ. C fixed 2026-11-18 (Beaucage laws NaN at q = 0, spinodal2 printed every call, GGP law NaN for Rg2²/(3-s2) &lt;= Rg1²/(3-s1), now a domain error)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_linear_pearls</p></td>
+<td><p>linear_pearls</p></td>
+<td><p>~1e-13</p></td>
+<td><p>uses sasfit_sphere_fc (core, fixed 2026-11-18: series up to qR = 0.1). Normalisation changed 2026-11-18 (C and Python): I(0) = (Δη N V)², the SASfit convention (was divided by N V, the SASview convention)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_pearl_necklace, _ext, _mod</p></td>
+<td><p>pearl_necklace</p></td>
+<td><p>~1e-15</p></td>
+<td><p>finite geometric sums (integer Np) or binomial series in 1-γ (_mod, real Np); I(0) = (m β_r + Np β_s)² with m rods (SASfit convention; C and Python were normalised to P(0) = 1 until 2026-11-18). C fixed 2026-11-18 (0/0 at q = 0, cancellation for small q(l+2R), Psi series coefficient 1/240 → 1/280). _ext rewritten 2026-11-18 (C and Python): g freely jointed rods of length l between neighbouring pearls, the end rods radial to their pearls (bonds R+l, l, …, l+R); g = 1 now equals pearl_necklace exactly (the old formula used rods of length l+2R in the rod-rod terms, 35 % off at q(l+2R) ≈ 50); checked against the exact Rg² and a Monte Carlo Debye sum</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_fisher_burford, ff_massfractexp, ff_massfractgauss, ff_dlcaggregation, ff_rlcaggregation</p></td>
+<td><p>fractal_obj</p></td>
+<td><p>~1e-13</p></td>
+<td><p>massfractgauss via Kummer 1F1(D/2; 3/2; -x) (C fixed 2026-11-18: overflow / asymptotic branch off by 4e-4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_aggregate__exp__x_a__cut_off_, ff_aggregate__overlapsph_cut_off_</p></td>
+<td><p>fractal_obj</p></td>
+<td><p>~1e-12</p></td>
+<td><p>oscillatory integrals with Gauss-Jacobi/Legendre panels (graded at 0 for non-integer α), all q; C extrapolates a power law beyond q ξ = 100 / 50 (excluded from the comparison)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_dumbbellshell, ff_two_attached_spheres, ff_doubleshellchain, ff_tetrahedrondoubleshell, ff_stackdiscs</p></td>
+<td><p>fractal_obj</p></td>
+<td><p>~1e-10</p></td>
+<td><p>C fixed 2026-11-18: two_attached_spheres_v used 4/.3; doubleshellchain summed only the last row for non-integer n. tetrahedrondoubleshell: the 5th sphere sits at √(8/3) R12 from the 4th (two face-sharing tetrahedra; C fixed 2026-11-18, the old √(6/3) distances are not realisable in 3D)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_two_attached_spheres_w_distr</p></td>
+<td><p>fractal_obj</p></td>
+<td><p>~1e-5 (C cuts the log-normals at 99.9 %)</p></td>
+<td><p>2D log-normal average by Gauss-Legendre in ln R1, ln R2; C fixed: _f/_v used the median of R1 for both radii</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_fractal_series1, 2, 3</p></td>
+<td><p>fractal_series</p></td>
+<td><p>~1e-15</p></td>
+<td><p>∫ SD(x) x⁶/(1+q²x²)² dx computed directly; C fixed 2026-11-18 (closed forms with a three-term series for q xmax &lt; 0.32: errors up to 7e-3)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_power_law, ff_profile__power_law</p></td>
+<td><p>powerlaw</p></td>
+<td><p>~1e-11 (mpmath)</p></td>
+<td><p>sphere with the profile Δη(1-(r/R)^α): Gauss-Jacobi for ∫ t^(α+2) sinc; C uses sasfit_pfq (not in the reference library)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_guwelop_sphere, _cyl_Pcs, _planar_Pcs, _profile</p></td>
+<td><p>guwelop</p></td>
+<td><p>~1e-11 (mpmath)</p></td>
+<td><p>Fourier integrals of N(1-F_GUWELOP(x)) with panels at quantiles of F; compared with C for q λ &lt; 15 (C loses relative accuracy beyond, up to 1e-4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_ribbon_mono, peaks_ribbon_w_sd</p></td>
+<td><p>ribbon</p></td>
+<td><p>~1e-14 (mpmath), C ~1e-12</p></td>
+<td><p>thin rod × ribbon cross section (A &lt;&lt; B): F(x) = 1F2(1/2;3/2,2;-x²) = [J1(2x)+2Σ_{k≥1}J_{2k+1}(2x)]/x by Miller recurrence; Schulz average of the width as 2∫₀¹K(w)Re[k(k+1)θ²(1-iqθw)^-(k+2)]dw (≤ (k+2)/4 oscillations for any q). C rewritten 2026-11-18 (was sasfit_pfq plus the asymptotes 2/(qB) for qB/2 &gt; 3, errors up to 2.3 %, and 2B/q); _v of ribbon_mono now returns ABC</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_fuzzysphere, ff_linshell, ff_linshell2, ff_expshell, ff_coreshellmicrogel (+ radial profiles)</p></td>
+<td><p>fuzzysphere</p></td>
+<td><p>~1e-11 (mpmath)</p></td>
+<td><p>core φ(qR) stable; linear shells closed form with χ(x) = ∫₀¹t³sinc(xt)dt (series below x = 1), exponential and parabolic zones by Gauss-Legendre (panels ≤ 2 rad, split at the kinks). C fixed 2026-11-23: the closed forms divided by q³…q⁵ (LinShell: 100 % errors at q R = 1e-3, fuzzysphere 1e-5 at q R = 1e-6), LinShell2 macro R1 = RTOT-DR unparenthesised (q<em>R1 = q</em>RTOT - DR), LinShell(2)_v returned 0; now same series/quadrature for small q</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_gen__exp__sphere, ff_gen__gauss__sphere (+ profiles)</p></td>
+<td><p>gen_exp_sphere</p></td>
+<td><p>~1e-14 (mpmath)</p></td>
+<td><p>generalised exponential / Gaussian profiles r^α e^(-…): (θ/u) sinc form, Kummer 1F1(β/2; 3/2; -x). C fixed 2026-11-23: the gen_gauss fallback (GSL error) read an uninitialised value and kept only the Gaussian term; now the full asymptotic expansion</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_clipped_random_waves_1…5, _twocut_1…5, _twocut_intersection_1…5</p></td>
+<td><p>stochastic_models</p></td>
+<td><p>~1e-9 (scipy QAWO); C ~1e-3 (intdeo)</p></td>
+<td><p>level-cut Gaussian fields: γ = X(g)/(φ(1-φ)), X = 1/2π∫₀^asin g e^(-α²/(1+sin θ)) (one cut), 1/π∫[e^(-α²/(1+s)) - e^(-α²/(1-s))] (two cuts), 2φX_s + X_s² (intersection), γ(0) = 1; θ rule graded towards ±π/2. C fixed 2026-11-23: one cut subtracted φ² (γ(∞) ≠ 0), two cuts used the sum with 1/2π, intersection C11²/2π - φ², integer abs() on asin g (γ = 0 for |asin g| &lt; 1), gy4 not normalised at r = 0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_boolean_union_model, ff_dead_leaves_model</p></td>
+<td><p>stochastic_models</p></td>
+<td><p>~1e-10; C ~1e-4 (intdeo)</p></td>
+<td><p>log-normal spheres, ThetaK closed form checked against the covariogram average. C fixed 2026-11-23: Boolean γ used e^(K-1) instead of e^K - 1; dead leaves leaked its workspace. ff_boolean_intersection_model is a stub in C (returns 0), not ported</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_sphere_chains_rw_, __rc, __nagg</p></td>
+<td><p>spherical_ellipsoidal_micelles</p></td>
+<td><p>~1e-14</p></td>
+<td><p>Pedersen sphere + Gaussian chains</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_ell_chains_rw_, __rc, __nagg</p></td>
+<td><p>spherical_ellipsoidal_micelles</p></td>
+<td><p>~1e-13</p></td>
+<td><p>spheroid + Gaussian chains, Gauss-Legendre over cos α. C fixed 2026-11-18 (spheroid surface: oblate ε → ε², prolate ae/tan → ae/sin; _nagg: R_core with 4/3 = 1)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_worms_ps1_, ff_worms_ps2_, ff_worms_ps3_</p></td>
+<td><p>polymer_semi_flexible + thin_objects</p></td>
+<td><p>~1e-11 vs C</p></td>
+<td><p>Pedersen–Schurtenberger methods 1–3 (with / without excluded volume); method 3 continuous in value and slope at q0. C fixed 2026-11-23: fRg2 cancelled for L &lt;&lt; b (series), IDebye was 1 - u/3 below u = 0.01 (8e-6), Sharp–Bloomfield term 7/(15u)(1 - e^-u) cancelled (expm1), dS/dq at q0 with the absolute step 1e-8 (now 1e-3 q0)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_kholodenko_worm</p></td>
+<td><p>polymer_semi_flexible + thin_objects</p></td>
+<td><p>~1e-13 vs C, 1e-9 vs scipy</p></td>
+<td><p>contour integral by Gauss-Legendre (geometric panels, or 1.5 rad panels in the oscillating regime q lb &gt; 3)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_freely_joined_chain_of_rods</p></td>
+<td><p>polymer_semi_flexible + thin_objects</p></td>
+<td><p>~1e-14 vs C, 1e-12 vs direct sum</p></td>
+<td><p>C fixed 2026-11-23: (1-γ)⁻¹ - n⁻¹(1-γⁿ)(1-γ)⁻² cancelled for small qb (100 % at qb = 1e-5; the series branch below 1e-6 gave S(0) = 1 - 2/(3n)); γⁿ NaN for γ = j0(qb) &lt; 0 and non-integer n (now |γ|ⁿ cos πn)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_sphere_chains_saw_, __rc, __nagg</p></td>
+<td><p>spherical_ellipsoidal_micelles</p></td>
+<td><p>~1e-13</p></td>
+<td><p>Pedersen model 39 with self-avoiding worm chains. C fixed 2026-11-23: R_core/n_agg variant used the core volume V/(1 - xsolv) instead of V(1 - xsolv); _nagg: xsolv_core &gt;= 1 checked</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_sphere_r__a, _rc, _nagg</p></td>
+<td><p>spherical_ellipsoidal_micelles</p></td>
+<td><p>~1e-13</p></td>
+<td><p>r^-α corona (Gauss-Legendre, Gauss-Jacobi from r = 0), chains: worm (exvol 0, 1) or generalized Gaussian coil (exvol 2: L = Rg, b = ν). C fixed 2026-11-23: n_agg = 0 returned Φ² without volume and contrast; _nagg: xsolv_core &gt;= 1 checked. Not ported: sphere_2nd+R^-a_Rc, sphere_smooth_interface+R^-a_Nagg (stubs returning 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_koyama_worm</p></td>
+<td><p>polymer_semi_flexible + thin_objects</p></td>
+<td><p>~1e-12 vs C, 1e-10 vs scipy</p></td>
+<td><p>Koyama (1973): pair distribution from &lt;R²&gt; and &lt;R⁴&gt; of the worm-like chain, contour integral by Gauss-Legendre on panels of the phase and the Gaussian exponent; &lt;R⁴&gt; by series below x = 1 (the closed form cancels; C uses its series only below 1e-4, ~1e-9 at L &lt;&lt; lb), rod and Gaussian limits checked</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_pcs_ellcylsh</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-13 (σ = 0) vs C, 1e-9 vs scipy</p></td>
+<td><p>elliptical core-shell cross-section, log-normal R and t, average over the orientation α of the ellipse. C fixed 2026-11-24: for ε ≠ 1 the α integral was not divided by π/2 (π/2 too large, discontinuous at ε = 1)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_rod_sd_ellcylsh</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-13 (σ = 0)</p></td>
+<td><p>Pcs:ellCylSh · P’(q) of a thin rod with log-normal length</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_worm_ps1_sd_ellcylsh, ff_worm_ps2_sd_ellcylsh, ff_worm_ps3_sd_ellcylsh, ff_worm_kholodenko_sd_ellcylsh</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-11 (σ = 0)</p></td>
+<td><p>Pcs:ellCylSh · L² S(q) of the worm. C fixed 2026-11-24: the parameter vector was passed to Pcs unchanged, so methods 1–3 used lb as σ_t of the thickness distribution and the Kholodenko variant read the contrasts one place too early. Method 3 without excluded volume (header: dummy), as in C</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_pcs_homogeneouscyl, ff_pcs_homogeneousplate, ff_pcs_twoinfinitelythinlayers, ff_pcs_bilayergauss, ff_pcs_layeredcentrosymmetricxs, ff_pcs_plate_chains_rw_</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-14 (σ = 0) vs C, 1e-10 vs scipy</p></td>
+<td><p>cross-section form factors with log-normal widths. C fixed 2026-11-24: Pcs:BilayerGauss used an uninitialised parameter structure for its log-normal</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_disc_sd_homoxs, ff_disc_sd_bilayergauss</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-14 (σ = 0) vs C, 1e-13 vs mpmath</p></td>
+<td><p>P’(q) of a thin disc times a plate or bilayer cross-section. C fixed 2026-11-24: P’(q) of the thin disc was NaN at q = 0 and cancelled for small qR (series); ff_disc_sd_homoxs used half of R0 as the radius</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_cylinder, ff_disc, ff_rod</p></td>
+<td><p>cylinders</p></td>
+<td><p>~1e-14 vs C, 1e-11 vs scipy / 1e-13 vs mpmath</p></td>
+<td><p>randomly oriented cylinder (orientation integral by Gauss-Legendre on phase panels), infinitely thin disc and rod. C fixed 2026-11-24: ff_cylinder_f did not set q (amplitude of a previous q); the disc and its amplitude lost digits for 1e-6 &lt; qR &lt; 1e-2 (series only below 1e-6, 1 - cos instead of 2 sin²)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_longcylinder, ff_flatcylinder, ff_porodcylinder, ff_porodcylinder_v2</p></td>
+<td><p>cylinders</p></td>
+<td><p>~1e-12 vs C, 1e-10 vs mpmath</p></td>
+<td><p>Porod’s approximations for long and flat cylinders (Struve functions), blended by 2R/L; the flat approximation holds for qL ≲ 1 and becomes negative beyond. C fixed 2026-11-24: both closed forms cancelled for small q (long: 2e-4 at qL = 1e-4; series below q·max(L, 2R) = 0.3, 8/σ²(3J₂ + J₀ - 1) by its series), flatcylinder _f and _v swapped, porodcylinder_v2 used an uninitialised parameter structure</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_longcylshell</p></td>
+<td><p>cylinders</p></td>
+<td><p>~1e-13 vs C</p></td>
+<td><p>Pcs of a circular core-shell cross-section · P’(q) of a thin rod</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_ellcylshell1, ff_ellcylshell2, ff_cylshell1, ff_cylshell2</p></td>
+<td><p>cylinders</p></td>
+<td><p>~1e-14 vs C, 1e-9 vs scipy</p></td>
+<td><p>core-shell cylinder with elliptical (circular) cross-section, shell around the mantle (1) or also on the caps (2). C fixed 2026-11-24: for ε ≠ 1 the orientation average weighted A² with sin α/(4π) although sasfit_orient_avg is already uniform in cos α (result ~1/(4π) too small, discontinuous at ε = 1); the volumes of the type-2 shells lacked the caps (L or L + t instead of L + 2t)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_torus</p></td>
+<td><p>cylinders</p></td>
+<td><p>~1e-15 vs C</p></td>
+<td><p>ring torus with shell and height ratio ν (tube integral in r = R + a sin β). C fixed 2026-11-24: the core integral started at R - a &lt; 0 for a &gt; R</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_ellipsoidal_shell_0, _0t, _rp, _rp_t, _re, _re_t, _2, _2t</p></td>
+<td><p>ellipsoidal_shell</p></td>
+<td><p>~1e-14 (σ = 0) vs C, 1e-9 vs scipy</p></td>
+<td><p>core-shell spheroids with solvent fractions, log-normal scale of t, R_p, R_e or combinations. C fixed 2026-11-24: _re and _re_t scaled the polar instead of the equatorial radius; _re_v, _2t_v (0) and _0_v (core only) volumes</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_spheroid_R, ff_spheroid_V, ff_spheroid_nu</p></td>
+<td><p>ellipsoidal_shell</p></td>
+<td><p>~1e-14 vs C</p></td>
+<td><p>homogeneous spheroid given by (R_p, R_e), (V, R_e) or (ν = R_p/R_e, R_e). C fixed 2026-11-24: spheroid_V put R_e into the polar axis (volume ≠ V, I(0) ≠ (Δη V)²)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_triax_ellip_shell, _t, _1, _1t, _2, _2t, _3, _3t</p></td>
+<td><p>triax_ellip_shell</p></td>
+<td><p>~1e-11 (σ = 0) vs C, 1e-9 vs scipy nquad</p></td>
+<td><p>triaxial core-shell ellipsoid, log-normal scale of t and/or a, b, c (suffix: number of scaled axes, t: also the shell); φ, μ by Gauss-Legendre on 6 rad phase panels, ν in ln ν (σ &gt; 0: C ~5e-5, truncated range). C fixed 2026-11-24: the base function and its _f read a third cubature coordinate for σ = 0 and integrated ν without the log-normal weight; the _v functions used the ν of the last cubature point, ignored the distributed parameter (_t_v wrong); Φ(u) = 3(sin u - u cos u)/u³ cancelled at small u (adaptive cubature stalled at q = 1e-3)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_triax_ellip_shell_syl</p></td>
+<td><p>triax_ellip_shell</p></td>
+<td><p>~1e-14 vs C</p></td>
+<td><p>swollen shell: polymer volume v·V_core in the shell, macroscopic n P(q) with n = φ/((1 + v) V_c); rule w &gt;= 0</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_ellsh_sd_homoxs, ff_ellsh_sd_bilayergauss, ff_cylsh_sd_homoxs, ff_cylsh_sd_bilayergauss</p></td>
+<td><p>thin_objects</p></td>
+<td><p>~1e-14 (σ = 0) vs C, 1e-9 vs scipy</p></td>
+<td><p>P’(q) of thin ellipsoidal shells (log-normal R0, axial ratio ε) and closed hollow cylinders (log-normal R, H) times a plate or bilayer cross-section; _f and _v of the ellipsoidal shells. C fixed 2026-11-24: ff_pcs_bilayergauss_f was a stub (0), the ellsh _v returned 0 (now the mean shell volume)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_comb_hetero, ff_comb_random, ff_comb_regular</p></td>
+<td><p>hyperbranched_polymer</p></td>
+<td><p>~1e-15 vs C</p></td>
+<td><p>Gaussian combs written with g(z) = (e^-z - 1 + z)/z², h(z) = (1 - e^-z)/z (no cancelling terms). C fixed 2026-11-24: the O(x⁴) numerators were differences of O(x²) terms (all digits lost at small q Rg) and the 0/0 fallbacks returned NaN or 2 I0/x² (K = 0)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_ideal_dendrimer</p></td>
+<td><p>hyperbranched_polymer</p></td>
+<td><p>~1e-13 vs mpmath</p></td>
+<td><p>generations 0–9, I = 2 Σ c_k λ_k² g(λ_k u); fractional g interpolates linearly. C fixed 2026-11-24: summed exponentials with coefficients up to 786432 (2e-4 error at u = 1e-3, g = 9), rounded g with rint and read past its table for g = 9</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_fract_hyperbranched_polym, ff_f_funct_homo_polym</p></td>
+<td><p>hyperbranched_polymer</p></td>
+<td><p>~1e-14 vs C, 1e-12 vs scipy</p></td>
+<td><p>fractal hyperbranched polymer P_DB/P_lin; f-functional homopolymer (types 0–3: Zimm, Burchard, excluded-volume integrals). C fixed 2026-11-24: types 2 and 3 were not multiplied by I0</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_round_helix, ff_beads_helix, ff_fan_helix</p></td>
+<td><p>helix</p></td>
+<td><p>~1e-14 vs C</p></td>
+<td><p>layer-line sums (all n &lt; qP/2π; C stops when two terms change the sum by &lt; 1e-12 or after 200) times thinrod_helix(q, H) = H²(2 Si(qH)/qH - sinc²(qH/2)); fan blades’ Bessel integrals by Gauss-Legendre. C fixed 2026-11-24: beads_helix and fan_helix had an extra factor H² (I(0) = (Δη V H)²), round_helix lost the n = 0 term at q = 0, fan_helix returned 0 and beads_helix NaN at q = 0</p></td>
+</tr>
+<tr class="row-odd"><td><p>ff_superhelices_straight, ff_superhelices_coiled</p></td>
+<td><p>helix</p></td>
+<td><p>~1e-14 vs C</p></td>
+<td><p>thin helical line: ∫ 2(L - w) sinc(qΨ(w)) dw; coiled superhelix: Debye double integral on a Gauss-Legendre grid from the explicit positions (Numba when installed), I(0) = L². C fixed 2026-11-24 (coiled): pitch angle atan(R2/(2πP)) instead of atan(2πR2/P) and sin(γ1 - γ2) where the distance needs sin(N(γ1 - γ2)) (1–20 % off)</p></td>
+</tr>
+<tr class="row-even"><td><p>ff_boucher_cyl, ff_boucher2_cyl, ff_fuzzy_cyl, ff_linsh_cyl, ff_rc_exp_sh_cyl (+ radial profiles)</p></td>
+<td><p>pcs_fuzzy_cyl</p></td>
+<td><p>~1e-13 (σ_R = 0) vs C, 1e-9 vs scipy</p></td>
+<td><p>cross sections Pcs of cylinders with radial profiles (Boucher 0F1, Gaussian-smeared disc, linear shell, exponential shell with Fermi cut-off); profiles and amplitudes checked as Hankel pairs. C fixed 2026-11-24: boucher_cyl_f did not set q; the Boucher profiles used integer abs(r); profile_fuzzy_cyl read σ from p[2], dropped η_sol (unparenthesised Δη), multiplied by Δη twice and clobbered r (now the exact disc ⊗ Gaussian convolution); profile_linsh_cyl read the SLDs from p[3..6] (header p[5..8]); linsh_cyl_v was 0; rc_exp_sh_cyl_v shifted the distributed index; rc_exp_sh_cyl_f integrated over the SLD step at Rc (1e-5)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Batch 2 (2026-11-18), not ported:</strong> local_cyl_micelle and local_planar_micelles are stubs in the C sources (all
+functions return 0). The sphere+R^-a and sphere+chains(SAW) functions of spherical_ellipsoidal_micelles call the
+worm form factor sasfit_sq_p__q___worm_ps3_ (Pedersen-Schurtenberger); ported in batch 5 (2026-11-23). The core
+functions sasfit_sphere_fc and sasfit_gauss_fc (sasfit_common/sasfit_utils.c) now use their series up to
+qR = 0.1 and (qRg)² = 0.5 (before 1e-4: up to ~1e-8 relative error from cancellation); rebuild of the SASfit core
+needed.</p>
+<p><strong>Batch 6 (2026-11-24):</strong> all functions with a log-normal size distribution agree with the C code only to
+~1e-4 (up to 1e-3 at large q): SASfit’s find_LogNorm_int_range ends the integral 3.7 σ above the peak of
+x^(2 dim) LN(x) (sasfit_common, not changed), the ports integrate over ±8 σ. Not ported yet in thin_objects:
+ff_ellsh_sd_homoxs, ff_ellsh_sd_bilayergauss, ff_cylsh_sd_homoxs, ff_cylsh_sd_bilayergauss (P’(q) of thin
+ellipsoidal shells and closed hollow cylinders) and the P’(q) structure-factor-slot functions (worm_ps3 PRISM/RPA,
+thin spherical shell, gGC). The four shell functions are ported in batch 8.</p>
+<p><strong>Batch 7 (2026-11-24):</strong> plugins cylinders and ellipsoidal_shell. Not ported: ff_alignedcylshell (oriented,
+ψ-dependent). The ellipsoidal shells with σ &gt; 0 agree with C to ~1e-6 (C’s truncated log-normal range); the
+spheroids and ellipsoidal_shell_0 do not depend on their p[4] (dummy).</p>
+<p><strong>Batch 8 (2026-11-24):</strong> plugins triax_ellip_shell, hyperbranched_polymer, helix, pcs_fuzzy_cyl and the
+remaining thin_objects shells (fuzzysphere was already complete). Not ported: ff_carved_triax_ellip_shell (undocumented work in
+progress) and ff_triax_ellip_shell_sq_baba_ahmed_1/2 (need the Baba-Ahmed structure factor of another plugin). Functions with a log-normal
+distribution (triax σ &gt; 0, pcs_fuzzy_cyl σ_R &gt; 0) agree with C to ~1e-4 (C’s truncated range) and with scipy to
+~1e-9. The volumes of pcs_fuzzy_cyl are cross-section areas (Pcs), those of the thin superhelices contour lengths.</p>
+<p><strong>Batch 9 (2026-11-24), distributions and peaks</strong> (<code class="docutils literal notranslate"><span class="pre">ports/distributions.py</span></code>, 39 functions): plugins
+peak_trapezoidal (8 trapezoids + 2 smoothed), q_distribution (q-exponential, q-Gaussian, q-Weibull, area and
+amplitude), kappa_generalized_distribution (κ-generalized gamma and logistic), generalized_distributions (GEV,
+generalized hyperbolic, generalized inverse Gaussian, generalized normal, exponentiated generalized Pareto),
+metalog (sd_metalog_clipped/<em>log_clipped/<em>logit) and t_r_y (sd_fgld</em>, sd_egu_w_l, sd_w_l_e</em>, sd_n_l_c_,
+sd_n_u_gl__, sd_u_e_gl__). Every port has a complete <code class="docutils literal notranslate"><span class="pre">_v</span></code> (all selectors 0–10, see below); statistics the C code
+lacks come from closed forms, scipy.stats (genextreme, genhyperbolic, geninvgauss, genpareto, beta/t for the
+q-Gaussian) or quadrature/root finding. All agree with the fixed C code to ≤ 2e-14 (intensity) and ≤ 1e-12 (<code class="docutils literal notranslate"><span class="pre">_v</span></code>).
+The five generalized <code class="docutils literal notranslate"><span class="pre">_ampl_</span></code> functions are stubs in C (Python only). Not ported: sd_e_l_ll_, sd_g_c_e__,
+sd_ll_l_gl__, sd_p_w_gl__ (C stubs) and the t_r_y/metalog form-factor wrappers.</p>
+<p><strong>Batch 3 (2026-11-18), not ported yet:</strong> fuzzysphere, stochastic_models, gen_exp_sphere
+(large tabulated data), the structure factors of fractal_obj (sq_*), the worm form factors of thin_objects
+(sasfit_sq_p__q___worm_ps3_, needed for the sphere+R^-a / SAW micelles).</p>
+<p>Deviations of the C code before 2026-11-17, all fixed in the SASfit sources on 2026-11-17 (plugins
+deformed_polymer_network, reptating_chain, shearflow, shearflow_polymers_lin; rebuild needed). The ports compute
+the corrected result; <code class="docutils literal notranslate"><span class="pre">intensity(...,</span> <span class="pre">c_compat=True)</span></code> reproduces the old C behaviour for comparisons with an old
+SASfit build: <code class="docutils literal notranslate"><span class="pre">tools/port_check.py</span> <span class="pre">--old-sasfit</span></code> (or <code class="docutils literal notranslate"><span class="pre">check.compare(...,</span> <span class="pre">old_sasfit=True)</span></code>) uses it.</p>
+<ul class="simple">
+<li><p><strong>polymer_under_shearflow:</strong> the sector average is divided by 2Δ instead of Δ (result halved), Δθ0 = 0 divides by
+0, and the averaged sector is θ0 ± Δθ0/4 instead of ± Δθ0/2 (also <strong>ring_under_shearflow</strong>).</p></li>
+<li><p><strong>ring_under_shearflow2:</strong> for Δθ0 &gt; 0 the sector integral is not divided by its width, Δθ0 = 0 divides by 0.</p></li>
+<li><p><strong>polymer_under_shearflow1:</strong> ψ is read from p[7]; the parameter list has ψ at p[2].</p></li>
+<li><p><strong>reptating_chain:</strong> I0 is never applied.</p></li>
+<li><p><strong>shearflow_lin_g1:</strong> Δφ = 0 gives 0/0.</p></li>
+<li><p><strong>two-stage formula</strong> (polymer_under_shearflow2, shearflow_lin*): 2(e^{-bf}/c + (1-e^{-bf})(1/b-1/b²) + …) loses
+digits for small q (relative error ~1e-5 at q Rg ≈ 0.005) and is 0/0 at q = 0; the port uses the closed form of
+2∫(1-x)e^{-g(x)}dx with stable (1-e^{-z})/z terms. Likewise D(x) = 2(x-1+e^{-x})/x² in the reptating chain.</p></li>
+<li><p><strong>WE networks, reptating chain:</strong> a ψ &lt; 0 check on a scratch value before it is set (removed); the reptating chain
+now uses the series of D(x) for |x| &lt; 0.2 and returns I0·D(α) for λ = 1.</p></li>
+<li><p><strong>polymer/ring_under_shearflow1:</strong> no I0 (p[1] was a dummy parameter, now I0); ring_under_shearflow1 had the
+weight (1-x) instead of 2(1-x), so P(0) = 1/2 (now P(0) = 1).</p></li>
+</ul>
+<p><strong>Sheared objects</strong> (<code class="docutils literal notranslate"><span class="pre">ports/sheared.py</span></code>): core-shell cylinders and spheroids with an orientation distribution
+p(θ, φ) and a log-normal size distribution. I(q, ψ) = &lt;∫ p |A(q, γ)|² dΩ&gt;_ν with ∫ p dΩ = 1, so I(0) = (Δη V)².
+Checked against independent references (isotropic average for κ = 0, full-sphere double integrals, the aligned
+limit, the log-normal average) and against the corrected C sources (~1e-13 for σ = 0;
+<code class="docutils literal notranslate"><span class="pre">tests/studio/test_sheared_ports.py</span></code>). For σ &gt; 0 the C function cuts the ν integral at the 99.9 % point of the
+ν⁶-weighted log-normal (deviations ~1e-5), so the comparison samples σ = 0.</p>
+<p><em>Methods and speed (2026-11-18).</em></p>
+<ul class="simple">
+<li><p><strong>Legendre method</strong> (default): A²(q, γ) is expanded in Legendre polynomials of cos γ,
+a_l(q) = ∫ A² P_l dt, and I(q, ψ) = Σ_l (l+½) a_l(q) g_l(ψ) with g_l(ψ) = ∫ p(û) P_l(û·q̂) dΩ. For the axially
+symmetric distributions g_l = p_l P_l(cos ψ) (addition theorem) with the moments p_l of p(θ); for Hayter-Penfold
+from the Fourier series of p in φ (even m) and normalised associated Legendre functions (cost ~ l·m·n_θ;
+the θ, φ quadrature only above l = <code class="docutils literal notranslate"><span class="pre">HP_LMAX</span></code>). Per q only a 1D
+integral over cos γ is needed (l up to ~1.2 q D + 40), and every ψ costs a Legendre sum: a 64 × 36 map takes
+0.01 s (σ = 0) instead of ~1 s. Agrees with the quadrature method to ~1e-12.</p></li>
+<li><p><strong>Size average</strong>: A(q, γ; ν) = ν³ A(qν, γ; 1), so I(q) = Σ_k w_k ν_k⁶ I₁(q ν_k). The ν nodes (composite
+Gauss-Legendre in ν) resolve the oscillations of I₁(q ν) in ν, ~3 per period π/(q D). <strong>Correction:</strong> the
+24-node Gauss-Hermite rule used until 2026-11-18 did not; for σ &gt; 0 the ports were off by 4e-4 at q D ≈ 13 and
+up to tens of percent at q D ~ 100 (the comparison with C only sampled σ = 0).</p></li>
+<li><p><strong>Schulz-Zimm</strong> (<code class="docutils literal notranslate"><span class="pre">size_dist=&quot;schulz&quot;</span></code>, ports <code class="docutils literal notranslate"><span class="pre">ff_sheared_{cylinders,spheroids}__&lt;kind&gt;__schulz_</span></code>, Python only):
+mean 1, relative standard deviation σ &lt; 1. For spheroids the size average of A² is analytic (series and closed
+forms of the sphere block, <code class="docutils literal notranslate"><span class="pre">pysasfit.scatter.blocks</span></code>, Wagener &amp; Förster 2023), for cylinders by ν nodes.</p></li>
+<li><p><strong>Quadrature method</strong> (<code class="docutils literal notranslate"><span class="pre">method=&quot;quadrature&quot;</span></code>, as the C plugin): θ, φ double integral; with Numba as a compiled
+kernel in parallel over the q points (<code class="docutils literal notranslate"><span class="pre">ports/_sheared_numba.py</span></code>, J₁ from Cephes as in SciPy). Choose with
+<code class="docutils literal notranslate"><span class="pre">sheared_intensity(...,</span> <span class="pre">method=...,</span> <span class="pre">backend=...)</span></code>, <code class="docutils literal notranslate"><span class="pre">sheared.METHOD</span></code> / <code class="docutils literal notranslate"><span class="pre">PYSASFIT_SHEARED_METHOD</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sheared.BACKEND</span></code> / <code class="docutils literal notranslate"><span class="pre">PYSASFIT_SHEARED_BACKEND</span></code>.</p></li>
+</ul>
+<p>Errors of the C plugin, <strong>fixed in the SASfit sources on 2026-11-17</strong> (plugin sheared_objects; rebuild needed —
+older builds give wrong results):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">abs()</span></code> of a double in pMaierSaupe, pGauss, pOnsager, pHeavysidePi and pLegendre truncated θ to the integer 0 or 1
+→ <code class="docutils literal notranslate"><span class="pre">fabs()</span></code>.</p></li>
+<li><p>θ ∈ [0, π/2], φ ∈ [0, π] is a quarter of the sphere; only the cylinder Boltzmann function multiplied by 4, and the
+cylinder amplitude had an extra factor 2 (<code class="docutils literal notranslate"><span class="pre">2*gsl_sf_bessel_j0</span></code>) → factor 4 everywhere, no factor 2.</p></li>
+<li><p>Hayter-Penfold missed the half with γ₋ → <code class="docutils literal notranslate"><span class="pre">cubature_param.gam2</span> <span class="pre">=</span> <span class="pre">gamHPminus</span></code> is added in the integrand, factor 2;
+the spheroid version never set <code class="docutils literal notranslate"><span class="pre">cparam.gam</span></code> → set.</p></li>
+<li><p>pOnsager used cos(x) instead of cos(θ) for κ &gt; 10 → fixed. The Heaviside θ range was wrong for |κ| &gt; 2/π (band:
+[1/|κ|, π/2] instead of [π/2-1/|κ|, π/2]) → fixed.</p></li>
+<li><p>Boltzmann cylinder: the φ limits were never set (strategy switch) → same sasfit_cubature call as the others.</p></li>
+<li><p>pLegendre wrote 8 values into Pl[7] (unused) → removed; sheared_cylinders__legendre_ did not compile (<code class="docutils literal notranslate"><span class="pre">ierr</span></code>) and
+was not exported → fixed, added to interface.c, CMakeLists.txt and the header (parameters P2, P4, P6).</p></li>
+</ul>
+<p>Observations on the C code made while porting, and the fixes made in the SASfit sources on 2026-11-17
+(<code class="docutils literal notranslate"><span class="pre">src/plugins/polymer_rings/sasfit_ff_ringpolymerB{MB,Z}.c</span></code>, <code class="docutils literal notranslate"><span class="pre">src/plugins/deformed_polymers/*.c</span></code>; they take
+effect after rebuilding the SASfit plugins):</p>
+<ul class="simple">
+<li><p><strong>Rings (BMB, BZ):</strong> the kernels exp(-μ (x(1-x))^a) are concentrated in a layer of width μ^{-1/a} at the end
+points for large q Rg. Adaptive integration over [0, 1] misses it. SASfit (default settings) gave wrong values
+from q Rg ≈ 350 on and 0 beyond. Plain GSL QAGS failed from q Rg ≈ 30, CQUAD was off by ~1e-3 at q Rg ≈ 45.
+<em>Fix:</em> the exponent is symmetric under x → 1-x, so P = 2 ∫_0^{1/2} exp(-μ s(x)) dx, and the upper limit is cut
+where μ s(x) &gt; 45. Now plain QAGS gives 1e-9 up to q Rg = 10³, and the C functions are 3–10× faster.</p></li>
+<li><p><strong>Deformed generalized Gaussian chain:</strong> the Guinier approximation exp(-β/3) for √β &lt; 0.1 (error up to ~4e-6)
+and the cancellation just above it were replaced by the exact series for u &lt; 1. C and port now agree to 1e-14.</p></li>
+<li><p><strong>Deformed rings:</strong></p>
+<ul>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">psi</span> <span class="pre">&lt;</span> <span class="pre">0</span></code> check read the scratch value p[MAXPAR-1] before it was set; it and the <code class="docutils literal notranslate"><span class="pre">theta_0</span> <span class="pre">&lt;</span> <span class="pre">0</span></code> check were
+removed (any angle is allowed);</p></li>
+<li><p>the parameter structure passed to the ring function is now initialised with <code class="docutils literal notranslate"><span class="pre">sasfit_init_param</span></code>, and its
+errors are passed on.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="statistics-of-distributions-and-peaks-v">
+<h2>Statistics of distributions and peaks (<code class="docutils literal notranslate"><span class="pre">_v</span></code>)<a class="headerlink" href="#statistics-of-distributions-and-peaks-v" title="Link to this heading"></a></h2>
+<p>For size distributions and peaks the third argument of <code class="docutils literal notranslate"><span class="pre">_v(u,</span> <span class="pre">p,</span> <span class="pre">dist)</span></code> selects a statistic
+(<code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">sasfit_dist</span></code>, sasfit_common.h); pySASstudio calls it as <code class="docutils literal notranslate"><span class="pre">SASfitFunction.volume(u,</span> <span class="pre">dist=...)</span></code>, the ports as
+<code class="docutils literal notranslate"><span class="pre">spec.volume(u,</span> <span class="pre">p,</span> <span class="pre">dist)</span></code> (constants in <code class="docutils literal notranslate"><span class="pre">ports.distributions</span></code>). For form factors it remains the volume index.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>dist</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>argument u</p></th>
+<th class="head"><p>port result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>TYPE</p></td>
+<td><p>–</p></td>
+<td><p>1: defined by its quantile function, 3: by its density</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>QUANTILE</p></td>
+<td><p>y ∈ (0, 1)</p></td>
+<td><p>Q(y)</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>QUANTILE_DENS</p></td>
+<td><p>y</p></td>
+<td><p>q(y) = dQ/dy = 1/p(Q(y))</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>PROBABILITY</p></td>
+<td><p>x</p></td>
+<td><p>N·p(x) (size distributions), p(x) (peaks)</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>CUMULATIVE</p></td>
+<td><p>x</p></td>
+<td><p>N·F(x), F(x)</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>MODE</p></td>
+<td><p>–</p></td>
+<td><p>position of the maximum of p (end point if p diverges there)</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>MEAN</p></td>
+<td><p>–</p></td>
+<td><p>E[X] (inf/nan if it does not exist)</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>VARIANCE</p></td>
+<td><p>–</p></td>
+<td><p>Var[X] (inf/nan if it does not exist)</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>MEDIAN</p></td>
+<td><p>–</p></td>
+<td><p>Q(1/2)</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>SKEWNESS</p></td>
+<td><p>–</p></td>
+<td><p>Bowley: (Q(¾) + Q(¼) − 2Q(½)) / (Q(¾) − Q(¼))</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>EXCESS_KURTOSIS</p></td>
+<td><p>–</p></td>
+<td><p>Moors ratio (Q(⅞) − Q(⅝) + Q(⅜) − Q(⅛)) / (Q(¾) − Q(¼)), as in C (1.2331 for a normal distribution; not an excess)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Statistics refer to the normalised shape: without amplitude A, background, the x^−α weighting of the metalog
+intensity and the clipping to [bl, bu]. Checked in <code class="docutils literal notranslate"><span class="pre">tests/studio/test_batch9_ports.py</span></code> against C, quadrature
+(∫p = 1, F, mean, variance), Q(F(x)) = x, q·p = 1, the maximum of p and scipy.stats closed forms.</p>
+<p>C fixes (batch 9, <code class="docutils literal notranslate"><span class="pre">patches_2026-11-24/11_batch9_distributions_peaks.patch</span></code>): q-exponential/-Gaussian/-Weibull
+normalisations (area at SHIFT, ln_q with q′ = 1/(2−q), no cut at z &lt; 0, q-Weibull peak height), κ-exponential in
+the asinh form (cancellation in the tails), κ-gamma κ = 0 branch missing 1/σ, κ-logistic amplitude normalised at
+its own mode, metalog QUANTILE_DENS = 1/q (gave q, so PROBABILITY was q²), t_r_y: egu_w_l statistics from its own
+quantile (called fgld), n_l_c exp(−t²/2) and N in the CDF, w_l_e N in the CDF, n_u_gl N in <code class="docutils literal notranslate"><span class="pre">_f</span></code>, u_e_gl zero for
+x &lt; 0; parameter tables of sd_fgld_, sd_n_u_gl__, sd_u_e_gl__ and the generalized <code class="docutils literal notranslate"><span class="pre">_ampl_</span></code> headers.</p>
+</section>
+<section id="parameter-domains-and-default-values">
+<h2>Parameter domains and default values<a class="headerlink" href="#parameter-domains-and-default-values" title="Link to this heading"></a></h2>
+<p>Every port has a description of its parameters, <code class="docutils literal notranslate"><span class="pre">spec.params</span></code> (:mod:<code class="docutils literal notranslate"><span class="pre">pysasfit.studio.ports.params</span></code>): for each
+parameter its domain (lower/upper bound, open or closed), a default value and a kind (length, sld, intensity,
+angle, exponent, count, fraction, dimensionless, dummy; lengths in the unit reciprocal to q, the numbers chosen
+for q in nm⁻¹). It comes from</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ports/param_table.py</span></code>, generated by <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">tools/gen_port_params.py</span></code>: the names of the plugin headers and
+the bounds parsed from the <code class="docutils literal notranslate"><span class="pre">SASFIT_CHECK_COND*</span></code> domain checks of the C sources (a check of one parameter
+against a number becomes a bound, other checks become rules), kinds guessed from the names;</p></li>
+<li><p>default values by kind;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ports/param_defaults.py</span></code>: hand-written defaults and corrections (per parameter name and per port).</p></li>
+</ol>
+<p>Derived from it:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">spec.check(p)</span></code> / <code class="docutils literal notranslate"><span class="pre">spec.validate(p)</span></code>: the domain check with the C messages (<code class="docutils literal notranslate"><span class="pre">R(-3)</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>); the Python
+functions call it once per evaluation, so an invalid value gives the same error as the C plugin;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spec.defaults()</span></code>: the default vector; the explorer starts new contributions with it (<code class="docutils literal notranslate"><span class="pre">ff_py_*</span></code>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spec.suggest(q,</span> <span class="pre">I)</span></code>: values suggested for measured data: all lengths scaled together so that the largest
+is 2/q_mid (q_mid: geometric mean of the q range), then I0 (or the contrasts) matched to the data at low q.
+The explorer button <em>Suggest from data</em> does the same for any function (also C plugins: kinds guessed from the
+names) and sets the scale (or the amplitude N of the size distribution).</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">tools/write_header_defaults.py</span> <span class="pre">&lt;SASfitGit/src/plugins&gt;</span></code> writes the defaults and domains into the
+parameter tables of the plugin headers: every row gets, after the description, a cell with the default value and
+one with the domain (syntax agreed 2026-11-24)::</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> *       &lt;td&gt;\b R_c&lt;/td&gt;
+ *       &lt;td&gt;core radius containing solvent&lt;/td&gt;
+ *       &lt;td&gt;(default=10)&lt;/td&gt;
+ *       &lt;td&gt;[0;+inf)&lt;/td&gt;
+</pre></div>
+</div>
+<p>The domain uses <code class="docutils literal notranslate"><span class="pre">;</span></code>, <code class="docutils literal notranslate"><span class="pre">+inf</span></code> / <code class="docutils literal notranslate"><span class="pre">-inf</span></code>, square brackets for closed and round brackets for open bounds; a bound
+may also be the name of another parameter (<code class="docutils literal notranslate"><span class="pre">[0;R_c]</span></code>). A row without description keeps an empty description
+cell, so the order is name, description, default, domain. Values already in the header that differ from the
+port are kept (set by hand; the tool reports them so that the port can follow, <code class="docutils literal notranslate"><span class="pre">--force</span></code> overwrites). The
+pySASfit header parser reads the cells in any order after the name; the older paragraph
+<code class="docutils literal notranslate"><span class="pre">\par</span> <span class="pre">Default</span> <span class="pre">values</span> <span class="pre">and</span> <span class="pre">domains:</span></code> is obsolete, removed from all headers and only read as a fallback.</p>
+<p><strong>Systematic check (2026-11-24).</strong> The defaults and domains are written for every ported plugin function (267 functions in
+44 plugin headers; the Python-only variants <code class="docutils literal notranslate"><span class="pre">ff_sheared_*__schulz_</span></code> and the libsasfit core functions have no
+plugin header). Every port is checked at its defaults: each default lies inside its domain and satisfies the
+rules between parameters, and the function is finite, not identically zero and (form factors) not negative on
+q = 1e-3 … 10. Reading the written headers back with the pySASfit parser gives exactly the defaults and domains
+of the ports. <code class="docutils literal notranslate"><span class="pre">write_header_defaults.py</span></code> writes only the parameters listed in the header table (trailing unused
+parameters of a port are left out; other count differences are reported, not written) and 12 significant
+digits for the bounds. Domain policy: lengths, radii, widths ≥ 0 (or &gt; 0 where the function divides by them);
+scattering length densities, contrasts and excess scattering lengths are <strong>not</strong> restricted – the template
+checks <code class="docutils literal notranslate"><span class="pre">eta</span> <span class="pre">&lt;</span> <span class="pre">0</span></code> / <code class="docutils literal notranslate"><span class="pre">beta_r</span> <span class="pre">&lt;</span> <span class="pre">0</span></code> of SASfit’s plugin skeleton were removed from rod, flat/Porod cylinders,
+Kratky sphere, Teubner–Strey, the three pearl necklaces and the multilamellar vesicle (C and ports). Header
+fixes found on the way: missing <code class="docutils literal notranslate"><span class="pre">&lt;/table&gt;</span></code> (sphere+R^-a ×3), malformed <code class="docutils literal notranslate"><span class="pre">/td&gt;</span></code> (two thin_objects tables), an
+unterminated comment block and <code class="docutils literal notranslate"><span class="pre">&lt;/tr&gt;&lt;/tr&gt;</span></code> (boucher_cyl), and the unused 8th parameter of the modified
+pearl necklace (was documented as g). Defaults set by hand in <code class="docutils literal notranslate"><span class="pre">sasfit_sphericalshells.h</span></code> (sphere, hollow sphere, spherical shells i–iii, multilamellar vesicle) were taken over by the ports, except ν of spherical shell ii (inner radius νR, the C code requires 0 ≤ ν &lt; 1: default 0.8, domain [0;1)). Each new port batch runs the tool for its plugins.</p>
+</section>
+<section id="magnetic-ports-2026-11-23">
+<h2>Magnetic ports (2026-11-23)<a class="headerlink" href="#magnetic-ports-2026-11-23" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ff_magnetic_shell_psi</span></code> and <code class="docutils literal notranslate"><span class="pre">ff_superparamagnetic_ff_psi</span></code> (libsasfit core) are ported with an additional
+<code class="docutils literal notranslate"><span class="pre">PortSpec.terms(q,</span> <span class="pre">p,</span> <span class="pre">psi)</span></code> that returns the magnetic basis terms (NN, NM, MH, MSF, CH). The channel of a data set
+is then a setting of the data set, not a separate function (<a class="reference internal" href="polarisation.html"><span class="doc">Polarised neutrons</span></a>). Without a setting the ports give
+the SASfit result with their <code class="docutils literal notranslate"><span class="pre">pol</span></code> parameter; the comparison with the C functions runs as for every port.
+C fix: <code class="docutils literal notranslate"><span class="pre">ff_magnetic_shell_cross</span></code> wrote ψ = π/2 into the caller’s ψ parameter and read it as degrees
+(sin²ψ = 7.5e-4 instead of 1); it now uses ψ = 90°.</p>
+</section>
+<section id="writing-a-port">
+<h2>Writing a port<a class="headerlink" href="#writing-a-port" title="Link to this heading"></a></h2>
+<p>A port module defines functions <code class="docutils literal notranslate"><span class="pre">f(q,</span> <span class="pre">p,</span> <span class="pre">psi=None)</span></code> and a list <code class="docutils literal notranslate"><span class="pre">SPECS</span></code> of dictionaries with the fields of
+<code class="docutils literal notranslate"><span class="pre">PortSpec</span></code> (name, intensity, parameters, psi_index, sample ranges, tolerance, C source, notes); it is registered
+in <code class="docutils literal notranslate"><span class="pre">ports._load()</span></code>. Quadratures should be vectorised over q (e.g. <code class="docutils literal notranslate"><span class="pre">ports.quadrature.tanh_sinh_01</span></code>).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="polarisation.html" class="btn btn-neutral float-left" title="Polarised neutrons" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="results.html" class="btn btn-neutral float-right" title="Results and export" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

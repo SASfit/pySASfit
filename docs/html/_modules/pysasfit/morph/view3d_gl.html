@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.morph.view3d_gl &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.morph.view3d_gl</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.morph.view3d_gl</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""3D panel of pySASmorph: interface surfaces drawn with pyqtgraph.opengl, inside the Qt window.</span>
+
+<span class="sd">Needs ``pyqtgraph`` and ``PyOpenGL`` (pure Python, ``pip install pyqtgraph PyOpenGL``); marching</span>
+<span class="sd">cubes from scikit-image when installed (faster), else from pyqtgraph. Without pyqtgraph the panel</span>
+<span class="sd">shows the import error and the installation hint instead.</span>
+
+<span class="sd">Controls: phase (each phase of a two- or multi-phase result, or all), surface (exact cut of the field, smoothed voxels, voxels),</span>
+<span class="sd">largest cluster in a second colour, clipping plane (axis and position), box outline, view reset,</span>
+<span class="sd">image export. The meshes are computed only while the panel is visible.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6</span><span class="w"> </span><span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.surface</span><span class="w"> </span><span class="kn">import</span> <span class="n">label_surface</span><span class="p">,</span> <span class="n">largest_cluster</span><span class="p">,</span> <span class="n">marching_cubes_backend</span><span class="p">,</span> <span class="n">vertices_in</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MorphGLView"</span><span class="p">,</span> <span class="s2">"gl_problem"</span><span class="p">,</span> <span class="s2">"phase_data"</span><span class="p">,</span> <span class="s2">"phase_colour"</span><span class="p">]</span>
+
+<span class="n">PORE_COLOUR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.49</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>      <span class="c1"># teal, the pySASmorph colour</span>
+<span class="n">SOLID_COLOUR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.78</span><span class="p">,</span> <span class="mf">0.76</span><span class="p">,</span> <span class="mf">0.72</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>     <span class="c1"># light stone</span>
+<span class="c1">#: colour of phase i (phase 0 stone, phase 1 teal, then orange, violet, blue, olive, ...)</span>
+<span class="n">PHASE_COLOURS</span> <span class="o">=</span> <span class="p">[</span><span class="n">SOLID_COLOUR</span><span class="p">,</span> <span class="n">PORE_COLOUR</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.42</span><span class="p">,</span> <span class="mf">0.27</span><span class="p">,</span> <span class="mf">0.76</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+                 <span class="p">(</span><span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.93</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.60</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.60</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">,</span> <span class="mf">0.20</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
+
+
+<div class="viewcode-block" id="phase_colour">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.phase_colour">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">phase_colour</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">PHASE_COLOURS</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">PHASE_COLOURS</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="phase_data">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.phase_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">phase_data</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(labels, levels, names, psi) of a two-phase MorphResult or a multi-phase MultiResult; labels None</span>
+<span class="sd">    before a reconstruction."""</span>
+    <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[],</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"labels"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">levels</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">names</span><span class="p">),</span> <span class="n">res</span><span class="o">.</span><span class="n">psi</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"matrix"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"pore"</span><span class="p">],</span> <span class="kc">None</span>
+    <span class="n">lev</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">),</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lev</span><span class="p">])</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lev</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span> <span class="p">[</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"pore"</span><span class="p">],</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">psi</span><span class="p">)</span></div>
+
+<span class="n">LARGEST_COLOUR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.78</span><span class="p">,</span> <span class="mf">0.14</span><span class="p">,</span> <span class="mf">0.43</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>   <span class="c1"># magenta, as SAXSMorph's highlighted pore</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">headlight_shader</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Name of a two-sided 'headlight' variant of pyqtgraph's 'shaded' shader (light along the view</span>
+<span class="sd">    direction, |n . l|, so every surface facing the camera is lit, cut faces included); falls back to</span>
+<span class="sd">    'shaded' if the pyqtgraph shader source has an unexpected form."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pyqtgraph.opengl</span><span class="w"> </span><span class="kn">import</span> <span class="n">shaders</span>
+
+    <span class="k">if</span> <span class="s2">"sasmorph"</span> <span class="ow">in</span> <span class="n">shaders</span><span class="o">.</span><span class="n">ShaderProgram</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"sasmorph"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">shaders</span><span class="o">.</span><span class="n">ShaderProgram</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="s2">"shaded"</span><span class="p">]</span>
+        <span class="n">vert</span><span class="p">,</span> <span class="n">frag</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">shaders</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base</span><span class="o">.</span><span class="n">shaders</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">frag</span><span class="o">.</span><span class="n">code</span>
+        <span class="n">light</span> <span class="o">=</span> <span class="s2">"normalize(vec3(1.0, -1.0, -1.0))"</span>
+        <span class="n">clamp</span> <span class="o">=</span> <span class="s2">"p = p &lt; 0. ? 0. : p * 0.8;"</span>
+        <span class="k">if</span> <span class="n">light</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">code</span> <span class="ow">or</span> <span class="n">clamp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">code</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"shaded"</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">light</span><span class="p">,</span> <span class="s2">"normalize(vec3(0.35, 0.45, 1.0))"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">clamp</span><span class="p">,</span> <span class="s2">"p = abs(p) * 0.72;"</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"(0.2 + p)"</span><span class="p">,</span> <span class="s2">"(0.28 + p)"</span><span class="p">)</span>
+        <span class="n">shaders</span><span class="o">.</span><span class="n">ShaderProgram</span><span class="p">(</span><span class="s2">"sasmorph"</span><span class="p">,</span> <span class="p">[</span><span class="n">shaders</span><span class="o">.</span><span class="n">VertexShader</span><span class="p">(</span><span class="n">vert</span><span class="o">.</span><span class="n">code</span><span class="p">),</span> <span class="n">shaders</span><span class="o">.</span><span class="n">FragmentShader</span><span class="p">(</span><span class="n">code</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="s2">"sasmorph"</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="k">return</span> <span class="s2">"shaded"</span>
+
+
+<div class="viewcode-block" id="gl_problem">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.gl_problem">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gl_problem</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""None if pyqtgraph.opengl imports, else the error text."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph.opengl</span>  <span class="c1"># noqa: F401</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"import pyqtgraph.opengl failed: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"Python: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">Install for this Python:</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"    </span><span class="se">\"</span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="si">}</span><span class="se">\"</span><span class="s2"> -m pip install pyqtgraph PyOpenGL scikit-image"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reset_shader_programs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Forget the compiled shader programs of pyqtgraph (cached globally, they belong to a GL context)."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph.opengl</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pyqtgraph.opengl</span><span class="w"> </span><span class="kn">import</span> <span class="n">shaders</span>
+    <span class="k">for</span> <span class="n">prog</span> <span class="ow">in</span> <span class="n">shaders</span><span class="o">.</span><span class="n">ShaderProgram</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">prog</span><span class="o">.</span><span class="n">prog</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># items with a class-level program (pyqtgraph &gt;= 0.14: GLLinePlotItem, GLScatterPlotItem, ...)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">gl</span><span class="p">):</span>
+        <span class="n">klass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">gl</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"_shaderProgram"</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+            <span class="n">klass</span><span class="o">.</span><span class="n">_shaderProgram</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="n">_VIEW_CLASS</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_view_class</span><span class="p">(</span><span class="n">gl</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""GLViewWidget that notices a new GL context. Qt destroys the context of a QOpenGLWidget when it moves</span>
+<span class="sd">    to another top-level window (a dock or tab detached into its own window). Without</span>
+<span class="sd">    Qt.AA_ShareOpenGLContexts (set by the pySASfit launcher and the pySASmorph main) pyqtgraph's shader</span>
+<span class="sd">    programs and the buffers of the items are then invalid (GLError 1281 'invalid value' in glUseProgram /</span>
+<span class="sd">    glGetAttribLocation): the shader cache is cleared and ``context_recreated`` asks for new items."""</span>
+    <span class="k">global</span> <span class="n">_VIEW_CLASS</span>
+    <span class="k">if</span> <span class="n">_VIEW_CLASS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_VIEW_CLASS</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">_GLView</span><span class="p">(</span><span class="n">gl</span><span class="o">.</span><span class="n">GLViewWidget</span><span class="p">):</span>
+        <span class="n">context_recreated</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_context_lost</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_shared</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QCoreApplication</span><span class="o">.</span><span class="n">testAttribute</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ApplicationAttribute</span><span class="o">.</span><span class="n">AA_ShareOpenGLContexts</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_on_context_destroyed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_context_lost</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared</span><span class="p">():</span>
+                <span class="n">_reset_shader_programs</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">initializeGL</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">aboutToBeDestroyed</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_context_destroyed</span><span class="p">)</span>
+            <span class="n">lost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_lost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_lost</span><span class="p">,</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">lost</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared</span><span class="p">():</span>
+                <span class="c1"># items initialised in the old context: take them out before pyqtgraph draws them again</span>
+                <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">removeItem</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+                <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="o">.</span><span class="n">singleShot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_recreated</span><span class="o">.</span><span class="n">emit</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initializeGL</span><span class="p">()</span>
+
+    <span class="n">_VIEW_CLASS</span> <span class="o">=</span> <span class="n">_GLView</span>
+    <span class="k">return</span> <span class="n">_GLView</span>
+
+
+<div class="viewcode-block" id="MorphGLView">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MorphGLView</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_unit</span> <span class="o">=</span> <span class="s2">"Å"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">setContentsMargins</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="n">gl_problem</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">problem</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QPlainTextEdit</span><span class="p">(</span><span class="n">problem</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">Alternatively: File → Export voxel matrix (VTK) "</span>
+                                           <span class="s2">"and open it in ParaView."</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setReadOnly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph.opengl</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gl</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gl</span> <span class="o">=</span> <span class="n">gl</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_phase_items</span><span class="p">([</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"pore"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"exact cut of ψ"</span><span class="p">,</span> <span class="s2">"field"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"voxels, smoothed"</span><span class="p">,</span> <span class="s2">"smoothed"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"voxels"</span><span class="p">,</span> <span class="s2">"voxels"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"exact cut: iso-surface of the Gaussian field at the cut level (smooth);</span><span class="se">\n</span><span class="s2">"</span>
+                               <span class="s2">"voxels: the binary matrix as it is exported"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largest</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="s2">"largest cluster"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Largest connected cluster of the shown phase in magenta"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span><span class="o">.</span><span class="n">addItems</span><span class="p">([</span><span class="s2">"no clip"</span><span class="p">,</span> <span class="s2">"clip x"</span><span class="p">,</span> <span class="s2">"clip y"</span><span class="p">,</span> <span class="s2">"clip z"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSlider</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Orientation</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">setRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="s2">"box"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">reset</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QToolButton</span><span class="p">()</span>
+        <span class="n">reset</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">"reset view"</span><span class="p">)</span>
+        <span class="n">reset</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reset_camera</span><span class="p">)</span>
+        <span class="n">save</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QToolButton</span><span class="p">()</span>
+        <span class="n">save</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">"save image…"</span><span class="p">)</span>
+        <span class="n">save</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_save_image</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span><span class="p">):</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="n">save</span><span class="p">):</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">bar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">_view_class</span><span class="p">(</span><span class="n">gl</span><span class="p">)()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">context_recreated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_context_recreated</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">setBackgroundColor</span><span class="p">(</span><span class="s2">"w"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">"Reconstruct to see the structure"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">"color: grey"</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_field</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_prefer_field"</span><span class="p">,</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_clip_axis</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clip_timer</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">singleShot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clip_timer</span><span class="o">.</span><span class="n">timeout</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">valueChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clip_timer</span><span class="o">.</span><span class="n">start</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_phase_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+            <span class="n">pm</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+            <span class="n">pm</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="o">.</span><span class="n">fromRgbF</span><span class="p">(</span><span class="o">*</span><span class="n">phase_colour</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="n">pm</span><span class="p">),</span> <span class="n">n</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"all phases"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">findText</span><span class="p">(</span><span class="n">cur</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">j</span> <span class="k">if</span> <span class="n">j</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------ state</span>
+<div class="viewcode-block" id="MorphGLView.state">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"phase"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">currentText</span><span class="p">(),</span> <span class="s2">"source"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">(),</span>
+                <span class="s2">"largest"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="s2">"box"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()}</span></div>
+
+
+<div class="viewcode-block" id="MorphGLView.set_state">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.set_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"phase"</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">findText</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"phase"</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">findText</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"phase"</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="p">[</span><span class="s2">"source"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"source"</span><span class="p">])</span>                 <span class="c1"># source 0 also sets _prefer_field</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"largest"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"box"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="MorphGLView.set_result">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.set_result">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">length_unit</span><span class="o">=</span><span class="s2">"Å"</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_unit</span> <span class="o">=</span> <span class="n">length_unit</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">labels</span><span class="p">,</span> <span class="n">levels</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">psi</span> <span class="o">=</span> <span class="n">phase_data</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_phase_items</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">setRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">has_field</span> <span class="o">=</span> <span class="n">psi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">levels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">model</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">has_field</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_field</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">has_field</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefer_field</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_camera</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_context_recreated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MorphGLView.showEvent">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.showEvent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">showEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">showEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_camera</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_on_clip_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MorphGLView.clip">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.clip">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_axis</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_pos</span><span class="o">.</span><span class="n">value</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ drawing</span>
+<div class="viewcode-block" id="MorphGLView.meshes">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.meshes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">meshes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""[(mesh, colours or colour)] for the current settings (no drawing; used by the tests and STL export)."""</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+        <span class="n">labels</span><span class="p">,</span> <span class="n">levels</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">psi</span> <span class="o">=</span> <span class="n">phase_data</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span>
+        <span class="n">phases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)))</span> <span class="k">if</span> <span class="n">sel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sel</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[</span><span class="n">sel</span><span class="p">]</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ph</span> <span class="ow">in</span> <span class="n">phases</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">label_surface</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">ph</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="n">psi</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">clip</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">colour</span> <span class="o">=</span> <span class="n">phase_colour</span><span class="p">(</span><span class="n">ph</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">largest</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+                <span class="n">big</span> <span class="o">=</span> <span class="n">largest_cluster</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">ph</span><span class="p">)</span>
+                <span class="n">hit</span> <span class="o">=</span> <span class="n">vertices_in</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">big</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span><span class="p">)</span>
+                <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">colour</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">vertices</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">cols</span><span class="p">[</span><span class="n">hit</span><span class="p">]</span> <span class="o">=</span> <span class="n">LARGEST_COLOUR</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">cols</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">colour</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="MorphGLView.redraw">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.redraw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">gl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gl</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">it</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">removeItem</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+        <span class="k">if</span> <span class="n">phase_data</span><span class="p">(</span><span class="n">res</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">"Reconstruct to see the structure"</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">CursorShape</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">meshes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meshes</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">"surface failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+        <span class="n">ntri</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">shader</span> <span class="o">=</span> <span class="n">headlight_shader</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">meshes</span><span class="p">:</span>
+            <span class="n">md</span> <span class="o">=</span> <span class="n">gl</span><span class="o">.</span><span class="n">MeshData</span><span class="p">(</span><span class="n">vertexes</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">md</span><span class="o">.</span><span class="n">setVertexColors</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="n">gl</span><span class="o">.</span><span class="n">GLMeshItem</span><span class="p">(</span><span class="n">meshdata</span><span class="o">=</span><span class="n">md</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shader</span><span class="o">=</span><span class="n">shader</span><span class="p">,</span> <span class="n">glOptions</span><span class="o">=</span><span class="s2">"opaque"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="n">gl</span><span class="o">.</span><span class="n">GLMeshItem</span><span class="p">(</span><span class="n">meshdata</span><span class="o">=</span><span class="n">md</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">shader</span><span class="o">=</span><span class="n">shader</span><span class="p">,</span> <span class="n">glOptions</span><span class="o">=</span><span class="s2">"opaque"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">ntri</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_box</span><span class="p">()</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">box_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ntri</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> triangles · box </span><span class="si">{</span><span class="n">L</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length_unit</span><span class="si">}</span><span class="s2"> · marching cubes: "</span>
+                          <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">marching_cubes_backend</span><span class="p">()</span><span class="si">}</span><span class="s2"> · drag: rotate, right/wheel: zoom, middle: pan"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="sa">f</span><span class="s2">"3D: </span><span class="si">{</span><span class="n">ntri</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> triangles"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">voxel_size</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="n">phase_data</span><span class="p">(</span><span class="n">res</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)],</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">)]</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">e</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gl</span><span class="o">.</span><span class="n">GLLinePlotItem</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="n">pts</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"lines"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                       <span class="n">antialias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MorphGLView.reset_camera">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.reset_camera">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_camera</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">phase_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">voxel_size</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="s2">"center"</span><span class="p">]</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVector3D</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">setCameraPosition</span><span class="p">(</span><span class="n">distance</span><span class="o">=</span><span class="mf">3.3</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="n">elevation</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">azimuth</span><span class="o">=</span><span class="mi">35</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MorphGLView.grab_image">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.grab_image">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grab_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">grabFramebuffer</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MorphGLView.on_save_image">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.view3d_gl.MorphGLView.on_save_image">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_save_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Save 3D image"</span><span class="p">,</span> <span class="s2">"sasmorph_3d.png"</span><span class="p">,</span>
+                                                        <span class="s2">"PNG (*.png);;JPEG (*.jpg);;TIFF (*.tif)"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grab_image</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="sa">f</span><span class="s2">"written: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

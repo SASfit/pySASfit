@@ -1,0 +1,426 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.morph.pipeline &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.morph.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.morph.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The SASmorph chain: I(q) -&gt; gamma(r) -&gt; g(r) -&gt; f(k) -&gt; clipped Gaussian random field.</span>
+
+<span class="sd">    from pysasfit.core import load_data</span>
+<span class="sd">    from pysasfit.morph import MorphParameters, reconstruct</span>
+
+<span class="sd">    q, I, s, _ = load_data("sample.dat")</span>
+<span class="sd">    res = reconstruct(q, I, s, MorphParameters(porosity=0.3, box_size=2000, n=128))</span>
+<span class="sd">    res.matrix          # bool (n, n, n), True = phase 2 ("pore")</span>
+<span class="sd">    res.statistics      # S/V, connectivity, bicontinuity</span>
+<span class="sd">    print(res.report())</span>
+
+<span class="sd">Steps (Ingham et al., J. Appl. Cryst. 44 (2011) 221; Berk, Phys. Rev. A 44 (1991) 5069;</span>
+<span class="sd">Quintanilla, Modelling Simul. Mater. Sci. Eng. 15 (2007) S337):</span>
+
+<span class="sd">1. extrapolate I(q) to q = 0 and (Porod) to infinity, invariant Q</span>
+<span class="sd">2. gamma(r) = (1/Q) integral q^2 I(q) sin(qr)/(qr) dq</span>
+<span class="sd">3. g(r) from phi (1-phi) gamma(r) = F_alpha(g(r))  (level-cut relation)</span>
+<span class="sd">4. spectral function f(k) (3D Fourier transform of g)</span>
+<span class="sd">5. Gaussian random field with correlation g on an n^3 grid, cut at alpha</span>
+<span class="sd">6. statistics and the back-calculated scattering of the structure</span>
+
+<span class="sd">The reconstruction is *a* morphology with the measured two-point statistics, not</span>
+<span class="sd">*the* morphology: it is meaningful for isotropic, non-periodic two-phase samples</span>
+<span class="sd">whose data reach the Porod regime.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span> <span class="k">as</span> <span class="n">dc_field</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.correlation</span><span class="w"> </span><span class="kn">import</span> <span class="n">LevelCut</span><span class="p">,</span> <span class="n">spectral_function</span><span class="p">,</span> <span class="n">wavevector_distribution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.extrapolation</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtrapolatedCurve</span><span class="p">,</span> <span class="n">extrapolate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.grf</span><span class="w"> </span><span class="kn">import</span> <span class="n">cut_level</span><span class="p">,</span> <span class="n">field_cosine</span><span class="p">,</span> <span class="n">field_fft</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.scattering</span><span class="w"> </span><span class="kn">import</span> <span class="n">contrast_from_invariant</span><span class="p">,</span> <span class="n">levelcut_intensity</span><span class="p">,</span> <span class="n">voxel_intensity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">morphology_statistics</span><span class="p">,</span> <span class="n">specific_surface_porod</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MorphParameters"</span><span class="p">,</span> <span class="s2">"MorphResult"</span><span class="p">,</span> <span class="s2">"reconstruct"</span><span class="p">,</span> <span class="s2">"correlations"</span><span class="p">,</span> <span class="s2">"suggest_box"</span><span class="p">,</span>
+           <span class="s2">"porosity_from_invariant"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="MorphParameters">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.MorphParameters">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MorphParameters</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""All settings of a reconstruction (lengths in the inverse unit of q)."""</span>
+
+    <span class="n">porosity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>            <span class="c1"># volume fraction of phase 2 ("pore")</span>
+    <span class="n">box_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># edge L of the cube; None: suggest_box</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>                     <span class="c1"># voxels per edge</span>
+    <span class="n">qmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># data range used</span>
+    <span class="n">qmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">low_q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"guinier"</span>           <span class="c1"># guinier | linear | constant | none</span>
+    <span class="n">low_q_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">porod_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># last points for the Porod fit (default 15 %)</span>
+    <span class="n">porod_qmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># ... or all points above this q</span>
+    <span class="n">porod_auto</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>          <span class="c1"># neither given: range chosen from the data (else the last 15 %)</span>
+    <span class="n">fit_background</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>     <span class="c1"># Porod fit with flat background B</span>
+    <span class="n">refine</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>                  <span class="c1"># log-log nodes per data interval</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fft"</span>              <span class="c1"># fft | cosine</span>
+    <span class="n">n_waves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4000</span>              <span class="c1"># cosine method only</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"quantile"</span>      <span class="c1"># quantile | alpha</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">nr</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>            <span class="c1"># r points (default from voxel size and q_max)</span>
+    <span class="n">nk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>                   <span class="c1"># k points of the spectral function</span>
+
+<div class="viewcode-block" id="MorphParameters.to_dict">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.MorphParameters.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MorphParameters.from_dict">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.MorphParameters.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__dataclass_fields__</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">names</span><span class="p">})</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MorphResult">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.MorphResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MorphResult</span><span class="p">:</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">MorphParameters</span>
+    <span class="n">curve</span><span class="p">:</span> <span class="n">ExtrapolatedCurve</span>
+    <span class="n">invariant</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">r</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">g</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">Pk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">levelcut</span><span class="p">:</span> <span class="n">LevelCut</span>
+    <span class="n">q_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">I_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">sigma_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">I_levelcut</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>            <span class="c1"># model intensity at q_data (ensemble average)</span>
+    <span class="n">q_voxel</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">I_voxel</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">psi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># the Gaussian field (keep_field=True)</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>              <span class="c1"># cut level: matrix = psi &gt; level</span>
+    <span class="n">statistics</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">dc_field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">S_over_V_porod</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">drho2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">chi2_levelcut</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">dc_field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">timings</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">dc_field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">voxel_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">box_size</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">n</span>
+
+<div class="viewcode-block" id="MorphResult.report">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.MorphResult.report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">statistics</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">"SASmorph reconstruction"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  data range           q = </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ... </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  low-q extrapolation  </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">low_q</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s1">.4g</span><span class="si">}</span><span class="s1">'</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">low_q_info</span><span class="o">.</span><span class="n">items</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  Porod fit            K = </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">K</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> +- </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dK</span><span class="si">:</span><span class="s2">.2g</span><span class="si">}</span><span class="s2"> on q = </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">porod_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> ... </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">porod_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">porod_mode</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", background B = </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">B</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> +- </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dB</span><span class="si">:</span><span class="s2">.2g</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">fit_background</span> <span class="k">else</span> <span class="s2">""</span><span class="p">),</span>
+            <span class="sa">f</span><span class="s2">"  invariant            Q = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">invariant</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2">  (Porod tail </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">porod_invariant_fraction</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> %)"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  contrast (from Q)    drho^2 = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">drho2</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  porosity             phi = </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">porosity</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">, level alpha = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">levelcut</span><span class="o">.</span><span class="n">alpha</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  S/V (Porod)          </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">S_over_V_porod</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  box                  L = </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">box_size</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2">, n = </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">, voxel a = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">voxel_size</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">, method = </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  model vs data        chi2_red(level-cut) = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">chi2_levelcut</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">st</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">"  voxel porosity       </span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="s1">'porosity_voxels'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"  S/V (voxels, x 2/3)  </span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="s1">'S_over_V_voxels'</span><span class="p">]</span><span class="si">:</span><span class="s2">.5g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"  pore  clusters </span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="s1">'pore'</span><span class="p">][</span><span class="s1">'clusters'</span><span class="p">]</span><span class="si">}</span><span class="s2">, largest </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">st</span><span class="p">[</span><span class="s1">'pore'</span><span class="p">][</span><span class="s1">'largest_fraction'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> %, "</span>
+                <span class="sa">f</span><span class="s2">"percolates x/y/z </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'+'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'-'</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">st</span><span class="p">[</span><span class="s1">'pore'</span><span class="p">][</span><span class="s1">'percolates'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"  solid clusters </span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="s1">'solid'</span><span class="p">][</span><span class="s1">'clusters'</span><span class="p">]</span><span class="si">}</span><span class="s2">, largest </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">st</span><span class="p">[</span><span class="s1">'solid'</span><span class="p">][</span><span class="s1">'largest_fraction'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> %, "</span>
+                <span class="sa">f</span><span class="s2">"percolates x/y/z </span><span class="si">{</span><span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'+'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'-'</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">st</span><span class="p">[</span><span class="s1">'solid'</span><span class="p">][</span><span class="s1">'percolates'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"  bicontinuous         </span><span class="si">{</span><span class="s1">'yes'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">st</span><span class="p">[</span><span class="s1">'bicontinuous'</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'no'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"  degree of connectivity </span><span class="si">{</span><span class="n">st</span><span class="p">[</span><span class="s1">'degree_of_connectivity'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timings</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  timings              "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> s"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">timings</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Warnings:"</span><span class="p">)</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">warnings</span><span class="p">]</span>
+        <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="porosity_from_invariant">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.porosity_from_invariant">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">porosity_from_invariant</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">delta_rho</span><span class="p">,</span> <span class="n">q_unit</span><span class="o">=</span><span class="s2">"A"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Volume fraction (the root &lt;= 0.5) from an absolute invariant.</span>
+
+<span class="sd">    Q in cm^-1 * (q unit)^-3 with q in 1/Angstrom (``q_unit='A'``) or 1/nm ('nm'),</span>
+<span class="sd">    delta_rho the scattering length density difference in cm^-2.</span>
+<span class="sd">    """</span>
+    <span class="n">conv</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"A"</span><span class="p">:</span> <span class="mf">1e24</span><span class="p">,</span> <span class="s2">"nm"</span><span class="p">:</span> <span class="mf">1e21</span><span class="p">}[</span><span class="n">q_unit</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">*</span> <span class="n">conv</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">delta_rho</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mf">0.25</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"phi (1-phi) = </span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> is outside (0, 1/4]: check units, contrast or calibration"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="suggest_box">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.suggest_box">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">suggest_box</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(L, n): about 5 x 2 pi / q* (q* = maximum of the Kratky plot q^2 I), limited so that the</span>
+<span class="sd">    voxel size is not larger than twice pi / q_max of the data."""</span>
+    <span class="n">qd</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q</span><span class="p">[(</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="n">Id</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">I</span><span class="p">[(</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span> <span class="o">&gt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">q</span> <span class="o">&lt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="n">qd</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">qd</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">Id</span><span class="p">)]</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">qs</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">L</span><span class="p">),</span> <span class="n">n</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_r_grid</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">box_size</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">rmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">box_size</span> <span class="o">*</span> <span class="mf">1.02</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">a</span><span class="p">)</span>
+    <span class="n">dr</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mf">16.0</span> <span class="o">*</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>      <span class="c1"># q_max r steps of pi/16: accurate model I(q) at q_max</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">nr</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">rmax</span> <span class="o">/</span> <span class="n">dr</span><span class="p">),</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">20000</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">rmax</span><span class="p">,</span> <span class="n">nr</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="correlations">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.correlations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">correlations</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Steps 1-4 only (fast): returns a MorphResult without field and matrix."""</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">MorphParameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">params</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">curve</span> <span class="o">=</span> <span class="n">extrapolate</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">qmin</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">qmin</span><span class="p">,</span> <span class="n">qmax</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">qmax</span><span class="p">,</span> <span class="n">low_q</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">low_q</span><span class="p">,</span> <span class="n">low_q_points</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">low_q_points</span><span class="p">,</span>
+                        <span class="n">porod_points</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">porod_points</span><span class="p">,</span> <span class="n">porod_qmin</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">porod_qmin</span><span class="p">,</span> <span class="n">fit_background</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">fit_background</span><span class="p">,</span>
+                        <span class="n">porod_auto</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">porod_auto</span><span class="p">,</span>
+                        <span class="n">refine</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">refine</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">box_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">box_size</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">suggest_box</span><span class="p">(</span><span class="n">curve</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"box size not given: using L = </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">box_size</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> (5 x 2 pi / q* of the Kratky maximum)"</span><span class="p">)</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">invariant</span>
+    <span class="k">if</span> <span class="n">curve</span><span class="o">.</span><span class="n">K</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Porod constant K &lt;= 0: the data do not reach a q^-4 regime; S/V and the finest "</span>
+                 <span class="s2">"structure are not reliable"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">curve</span><span class="o">.</span><span class="n">porod_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"message"</span><span class="p">):</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Porod range: </span><span class="si">{</span><span class="n">curve</span><span class="o">.</span><span class="n">porod_info</span><span class="p">[</span><span class="s1">'message'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">curve</span><span class="o">.</span><span class="n">porod_invariant_fraction</span> <span class="o">&gt;</span> <span class="mf">0.2</span><span class="p">:</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">curve</span><span class="o">.</span><span class="n">porod_invariant_fraction</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> % of the invariant comes from the Porod tail: "</span>
+                 <span class="s2">"the q range is probably too short"</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_r_grid</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">curve</span><span class="p">)</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">lc</span> <span class="o">=</span> <span class="n">LevelCut</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">porosity</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">lc</span><span class="o">.</span><span class="n">g_from_gamma</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lc</span><span class="o">.</span><span class="n">clipped</span><span class="p">:</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gamma(r) outside the range of a level-cut field at </span><span class="si">{</span><span class="n">lc</span><span class="o">.</span><span class="n">clipped</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> r points "</span>
+                 <span class="s2">"(values clipped): the porosity may not match the data"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">gamma</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">:</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gamma(r_max) = </span><span class="si">{</span><span class="n">gamma</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">: correlations extend beyond half the box diagonal, "</span>
+                 <span class="s2">"use a larger box"</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">nk</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">spectral_function</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">Pk</span> <span class="o">=</span> <span class="n">wavevector_distribution</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="n">drho2</span> <span class="o">=</span> <span class="n">contrast_from_invariant</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">porosity</span><span class="p">)</span>
+    <span class="c1"># data points actually used (without the refinement nodes)</span>
+    <span class="n">qq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">qq</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">qq</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">qq</span> <span class="o">&gt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">qq</span> <span class="o">&lt;=</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">q_data</span><span class="p">,</span> <span class="n">I_data</span> <span class="o">=</span> <span class="n">qq</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="nb">float</span><span class="p">)[</span><span class="n">m</span><span class="p">]</span> <span class="o">-</span> <span class="n">curve</span><span class="o">.</span><span class="n">B</span>
+    <span class="n">s_data</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)[</span><span class="n">m</span><span class="p">]</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">q_data</span><span class="p">)</span>
+    <span class="n">q_data</span><span class="p">,</span> <span class="n">I_data</span> <span class="o">=</span> <span class="n">q_data</span><span class="p">[</span><span class="n">o</span><span class="p">],</span> <span class="n">I_data</span><span class="p">[</span><span class="n">o</span><span class="p">]</span>
+    <span class="n">s_data</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s_data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">s_data</span><span class="p">[</span><span class="n">o</span><span class="p">]</span>
+    <span class="n">I_lc</span> <span class="o">=</span> <span class="n">levelcut_intensity</span><span class="p">(</span><span class="n">q_data</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">lc</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">g</span><span class="p">),</span> <span class="n">drho2</span><span class="p">)</span>
+    <span class="n">chi2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">if</span> <span class="n">s_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">s_data</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">chi2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(((</span><span class="n">I_lc</span> <span class="o">-</span> <span class="n">I_data</span><span class="p">)</span> <span class="o">/</span> <span class="n">s_data</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">box_size</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"voxel size a = </span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> does not resolve the data up to q_max (pi/a = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">a</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> &lt; "</span>
+                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">curve</span><span class="o">.</span><span class="n">q_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">): structure finer than a is lost"</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">MorphResult</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">curve</span><span class="o">=</span><span class="n">curve</span><span class="p">,</span> <span class="n">invariant</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">g</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">Pk</span><span class="o">=</span><span class="n">Pk</span><span class="p">,</span> <span class="n">levelcut</span><span class="o">=</span><span class="n">lc</span><span class="p">,</span>
+                      <span class="n">q_data</span><span class="o">=</span><span class="n">q_data</span><span class="p">,</span> <span class="n">I_data</span><span class="o">=</span><span class="n">I_data</span><span class="p">,</span> <span class="n">sigma_data</span><span class="o">=</span><span class="n">s_data</span><span class="p">,</span> <span class="n">I_levelcut</span><span class="o">=</span><span class="n">I_lc</span><span class="p">,</span>
+                      <span class="n">S_over_V_porod</span><span class="o">=</span><span class="n">specific_surface_porod</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">porosity</span><span class="p">),</span> <span class="n">drho2</span><span class="o">=</span><span class="n">drho2</span><span class="p">,</span>
+                      <span class="n">chi2_levelcut</span><span class="o">=</span><span class="n">chi2</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">timings</span><span class="p">[</span><span class="s2">"correlations"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="reconstruct">
+<a class="viewcode-back" href="../../../morph/api.html#pysasfit.morph.pipeline.reconstruct">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reconstruct</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_field</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">statistics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Full chain (steps 1-6). ``progress(fraction, text)`` is called between the steps."""</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">MorphParameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">params</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">tell</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">progress</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="n">tell</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="s2">"correlation functions"</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">correlations</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">box_size</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">tell</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Gaussian random field (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">^3)"</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"fft"</span><span class="p">:</span>
+        <span class="n">psi</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">field_fft</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s2">"negative_power"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.01</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">info</span><span class="p">[</span><span class="s1">'negative_power'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> % negative spectral power discarded "</span>
+                                <span class="s2">"(box too small for the correlation length?)"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">p</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"cosine"</span><span class="p">:</span>
+        <span class="n">psi</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">field_cosine</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">n_waves</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">n_waves</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
+                                 <span class="n">progress</span><span class="o">=</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tell</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="s2">"random waves"</span><span class="p">))</span> <span class="k">if</span> <span class="n">progress</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s2">"fraction_beyond_nyquist"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">info</span><span class="p">[</span><span class="s1">'fraction_beyond_nyquist'</span><span class="p">]</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> % of the waves are finer than the "</span>
+                                <span class="s2">"voxel grid (aliasing): increase n or decrease the box"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown method </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">method</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">timings</span><span class="p">[</span><span class="s2">"field"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">level</span> <span class="o">=</span> <span class="n">cut_level</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">porosity</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">levelcut</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">psi</span> <span class="o">&gt;</span> <span class="n">res</span><span class="o">.</span><span class="n">level</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">mat</span>
+    <span class="k">if</span> <span class="n">keep_field</span><span class="p">:</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">psi</span> <span class="o">=</span> <span class="n">psi</span>
+    <span class="n">periodic</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">"fft"</span>
+    <span class="n">tell</span><span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="s2">"scattering of the structure"</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">q_voxel</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">I_voxel</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">voxel_intensity</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">drho2</span><span class="p">,</span> <span class="n">periodic</span><span class="o">=</span><span class="n">periodic</span><span class="p">)</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">timings</span><span class="p">[</span><span class="s2">"scattering"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="k">if</span> <span class="n">statistics</span><span class="p">:</span>
+        <span class="n">tell</span><span class="p">(</span><span class="mf">0.85</span><span class="p">,</span> <span class="s2">"statistics"</span><span class="p">)</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">statistics</span> <span class="o">=</span> <span class="n">morphology_statistics</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">periodic</span><span class="o">=</span><span class="n">periodic</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">timings</span><span class="p">[</span><span class="s2">"statistics"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    <span class="n">tell</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">"done"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

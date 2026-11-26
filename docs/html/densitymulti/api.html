@@ -1,0 +1,1221 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyDENSSmulti: API reference &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="pyDENsity: API reference" href="../density/api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api/index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core_api.html">Shared infrastructure (core)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sldprofile/api.html">SLD profile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../inversion/api/index.html">Size distribution / p(r)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../oz/api.html">Ornstein–Zernike</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../studio_api.html">studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sasred/api.html">pySASred</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toolbox/api.html">pyTOOLbox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scatter/api.html">pySCAtter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../seb/api.html">pySEBpolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../atsas/api.html">pyATsas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../density/api.html">pyDENsity</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyDENSSmulti</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.SLD_H2O"><code class="docutils literal notranslate"><span class="pre">SLD_H2O</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.PRESETS"><code class="docutils literal notranslate"><span class="pre">PRESETS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.Component"><code class="docutils literal notranslate"><span class="pre">Component</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.name"><code class="docutils literal notranslate"><span class="pre">Component.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.sld_h2o"><code class="docutils literal notranslate"><span class="pre">Component.sld_h2o</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.sld_d2o"><code class="docutils literal notranslate"><span class="pre">Component.sld_d2o</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.exchange"><code class="docutils literal notranslate"><span class="pre">Component.exchange</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.sld_xray"><code class="docutils literal notranslate"><span class="pre">Component.sld_xray</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.sld"><code class="docutils literal notranslate"><span class="pre">Component.sld()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.match_point"><code class="docutils literal notranslate"><span class="pre">Component.match_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.to_dict"><code class="docutils literal notranslate"><span class="pre">Component.to_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Component.from_dict"><code class="docutils literal notranslate"><span class="pre">Component.from_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast"><code class="docutils literal notranslate"><span class="pre">Contrast</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.name"><code class="docutils literal notranslate"><span class="pre">Contrast.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.q"><code class="docutils literal notranslate"><span class="pre">Contrast.q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.I"><code class="docutils literal notranslate"><span class="pre">Contrast.I</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.dI"><code class="docutils literal notranslate"><span class="pre">Contrast.dI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.d2o"><code class="docutils literal notranslate"><span class="pre">Contrast.d2o</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.radiation"><code class="docutils literal notranslate"><span class="pre">Contrast.radiation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.solvent_sld"><code class="docutils literal notranslate"><span class="pre">Contrast.solvent_sld</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.sld_override"><code class="docutils literal notranslate"><span class="pre">Contrast.sld_override</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.conc"><code class="docutils literal notranslate"><span class="pre">Contrast.conc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.weight"><code class="docutils literal notranslate"><span class="pre">Contrast.weight</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.bg"><code class="docutils literal notranslate"><span class="pre">Contrast.bg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.qmin"><code class="docutils literal notranslate"><span class="pre">Contrast.qmin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.qmax"><code class="docutils literal notranslate"><span class="pre">Contrast.qmax</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.solvent"><code class="docutils literal notranslate"><span class="pre">Contrast.solvent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.component_sld"><code class="docutils literal notranslate"><span class="pre">Contrast.component_sld()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast.data"><code class="docutils literal notranslate"><span class="pre">Contrast.data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiError"><code class="docutils literal notranslate"><span class="pre">MultiError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings"><code class="docutils literal notranslate"><span class="pre">Settings</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.dmax_nm"><code class="docutils literal notranslate"><span class="pre">Settings.dmax_nm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.scheme"><code class="docutils literal notranslate"><span class="pre">Settings.scheme</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.oversampling"><code class="docutils literal notranslate"><span class="pre">Settings.oversampling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.n"><code class="docutils literal notranslate"><span class="pre">Settings.n</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.nmax"><code class="docutils literal notranslate"><span class="pre">Settings.nmax</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.shell_width"><code class="docutils literal notranslate"><span class="pre">Settings.shell_width</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.max_steps"><code class="docutils literal notranslate"><span class="pre">Settings.max_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.min_steps"><code class="docutils literal notranslate"><span class="pre">Settings.min_steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.conv_window"><code class="docutils literal notranslate"><span class="pre">Settings.conv_window</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.conv_tol"><code class="docutils literal notranslate"><span class="pre">Settings.conv_tol</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_start"><code class="docutils literal notranslate"><span class="pre">Settings.shrinkwrap_start</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_every"><code class="docutils literal notranslate"><span class="pre">Settings.shrinkwrap_every</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_threshold"><code class="docutils literal notranslate"><span class="pre">Settings.shrinkwrap_threshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.sigma_start"><code class="docutils literal notranslate"><span class="pre">Settings.sigma_start</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.sigma_end"><code class="docutils literal notranslate"><span class="pre">Settings.sigma_end</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.sigma_decay"><code class="docutils literal notranslate"><span class="pre">Settings.sigma_decay</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.connectivity_step"><code class="docutils literal notranslate"><span class="pre">Settings.connectivity_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.recentre_until"><code class="docutils literal notranslate"><span class="pre">Settings.recentre_until</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.scale"><code class="docutils literal notranslate"><span class="pre">Settings.scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.conc_mg_ml"><code class="docutils literal notranslate"><span class="pre">Settings.conc_mg_ml</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.mw_kda"><code class="docutils literal notranslate"><span class="pre">Settings.mw_kda</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.lsq_iters"><code class="docutils literal notranslate"><span class="pre">Settings.lsq_iters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.beyond_factor"><code class="docutils literal notranslate"><span class="pre">Settings.beyond_factor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.occupancy_percentile"><code class="docutils literal notranslate"><span class="pre">Settings.occupancy_percentile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.sld_bounds"><code class="docutils literal notranslate"><span class="pre">Settings.sld_bounds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.min_occupancy"><code class="docutils literal notranslate"><span class="pre">Settings.min_occupancy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.seed"><code class="docutils literal notranslate"><span class="pre">Settings.seed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.h2o"><code class="docutils literal notranslate"><span class="pre">Settings.h2o</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.d2o"><code class="docutils literal notranslate"><span class="pre">Settings.d2o</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.Settings.to_dict"><code class="docutils literal notranslate"><span class="pre">Settings.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult"><code class="docutils literal notranslate"><span class="pre">MultiResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.scheme"><code class="docutils literal notranslate"><span class="pre">MultiResult.scheme</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.component_names"><code class="docutils literal notranslate"><span class="pre">MultiResult.component_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.contrast_names"><code class="docutils literal notranslate"><span class="pre">MultiResult.contrast_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.phi"><code class="docutils literal notranslate"><span class="pre">MultiResult.phi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.rho"><code class="docutils literal notranslate"><span class="pre">MultiResult.rho</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.drho"><code class="docutils literal notranslate"><span class="pre">MultiResult.drho</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.support"><code class="docutils literal notranslate"><span class="pre">MultiResult.support</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.voxel"><code class="docutils literal notranslate"><span class="pre">MultiResult.voxel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.C"><code class="docutils literal notranslate"><span class="pre">MultiResult.C</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.solvent"><code class="docutils literal notranslate"><span class="pre">MultiResult.solvent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.fits"><code class="docutils literal notranslate"><span class="pre">MultiResult.fits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.chi2"><code class="docutils literal notranslate"><span class="pre">MultiResult.chi2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.rg"><code class="docutils literal notranslate"><span class="pre">MultiResult.rg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.volumes"><code class="docutils literal notranslate"><span class="pre">MultiResult.volumes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.scale"><code class="docutils literal notranslate"><span class="pre">MultiResult.scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.steps"><code class="docutils literal notranslate"><span class="pre">MultiResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.stats"><code class="docutils literal notranslate"><span class="pre">MultiResult.stats</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.settings"><code class="docutils literal notranslate"><span class="pre">MultiResult.settings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.seconds"><code class="docutils literal notranslate"><span class="pre">MultiResult.seconds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.warnings"><code class="docutils literal notranslate"><span class="pre">MultiResult.warnings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.seed"><code class="docutils literal notranslate"><span class="pre">MultiResult.seed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.workdir"><code class="docutils literal notranslate"><span class="pre">MultiResult.workdir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.match_sld"><code class="docutils literal notranslate"><span class="pre">MultiResult.match_sld</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.chi2_total"><code class="docutils literal notranslate"><span class="pre">MultiResult.chi2_total</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.support_volume"><code class="docutils literal notranslate"><span class="pre">MultiResult.support_volume</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.occupancy"><code class="docutils literal notranslate"><span class="pre">MultiResult.occupancy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult.sld_map"><code class="docutils literal notranslate"><span class="pre">MultiResult.sld_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult"><code class="docutils literal notranslate"><span class="pre">AverageResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.mean"><code class="docutils literal notranslate"><span class="pre">AverageResult.mean</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.phi_sd"><code class="docutils literal notranslate"><span class="pre">AverageResult.phi_sd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.rho_sd"><code class="docutils literal notranslate"><span class="pre">AverageResult.rho_sd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.runs"><code class="docutils literal notranslate"><span class="pre">AverageResult.runs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.correlation"><code class="docutils literal notranslate"><span class="pre">AverageResult.correlation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.improper"><code class="docutils literal notranslate"><span class="pre">AverageResult.improper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.chi2_sd"><code class="docutils literal notranslate"><span class="pre">AverageResult.chi2_sd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.rg_sd"><code class="docutils literal notranslate"><span class="pre">AverageResult.rg_sd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult.volumes_sd"><code class="docutils literal notranslate"><span class="pre">AverageResult.volumes_sd</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.contrast_matrix"><code class="docutils literal notranslate"><span class="pre">contrast_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.identifiability"><code class="docutils literal notranslate"><span class="pre">identifiability()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve"><code class="docutils literal notranslate"><span class="pre">SmoothCurve</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.r"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.r</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.p"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.p</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.dr"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.dr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.chi2"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.chi2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.lam"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.lam</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.I0"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.I0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.densitymulti.core.SmoothCurve.rg"><code class="docutils literal notranslate"><span class="pre">SmoothCurve.rg</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.smooth_curve"><code class="docutils literal notranslate"><span class="pre">smooth_curve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.make_grid"><code class="docutils literal notranslate"><span class="pre">make_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.debye_profile"><code class="docutils literal notranslate"><span class="pre">debye_profile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.match_sld"><code class="docutils literal notranslate"><span class="pre">match_sld()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.reconstruct"><code class="docutils literal notranslate"><span class="pre">reconstruct()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.reconstruct_many"><code class="docutils literal notranslate"><span class="pre">reconstruct_many()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.align_and_average"><code class="docutils literal notranslate"><span class="pre">align_and_average()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.project_capped_simplex"><code class="docutils literal notranslate"><span class="pre">project_capped_simplex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.bounded_lsq"><code class="docutils literal notranslate"><span class="pre">bounded_lsq()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.core_shell_curves"><code class="docutils literal notranslate"><span class="pre">core_shell_curves()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.dumbbell_curves"><code class="docutils literal notranslate"><span class="pre">dumbbell_curves()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.sphere_curves"><code class="docutils literal notranslate"><span class="pre">sphere_curves()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.selftest"><code class="docutils literal notranslate"><span class="pre">selftest()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.save_result"><code class="docutils literal notranslate"><span class="pre">save_result()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.load_result"><code class="docutils literal notranslate"><span class="pre">load_result()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.number_density"><code class="docutils literal notranslate"><span class="pre">number_density()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.densitymulti.core.fit_tail_background"><code class="docutils literal notranslate"><span class="pre">fit_tail_background()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api/index.html">API reference</a></li>
+      <li class="breadcrumb-item active">pyDENSSmulti: API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/densitymulti/api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pydenssmulti-api-reference">
+<h1>pyDENSSmulti: API reference<a class="headerlink" href="#pydenssmulti-api-reference" title="Link to this heading"></a></h1>
+<p>Generated from the docstrings.</p>
+<p id="module-pysasfit.densitymulti.core">pyDENSSmulti core: 3D reconstruction from several SAS contrasts with a DENSS-type iteration (own numpy code).</p>
+<p>The iteration follows the DENSS algorithm of T. D. Grant (Nature Methods 15, 191 (2018)): Fourier transform of the
+map, replacement of the shell-averaged intensity by the measured one (phases kept), back transform, real-space
+constraints, shrink-wrap support. It is written here from the published description; no DENSS code is used or
+imported.</p>
+<p>Two schemes combine the contrasts:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;components&quot;</span></code> (default, the component basis)</dt><dd><p>The particle is made of M components with known scattering-length densities ρ_c(f_k) in every contrast k
+(D2O fraction f_k, partial H/D exchange, or X-rays). The unknowns are volume fractions φ_c(x) ∈ [0, 1] with
+Σ_c φ_c ≤ 1 (the rest is solvent). Contrast k sees Δρ_k(x) = Σ_c C[k, c] φ_c(x) with the contrast matrix
+C[k, c] = ρ_c(f_k) − ρ_s(f_k). After the Fourier step every contrast proposes its own Δρ’_k(x); the new φ(x)
+is the weighted, bounded least-squares solution of Δρ’_k(x) ≈ Σ_c C[k, c] φ_c(x) in every voxel. A contrast
+in which a component is matched has a zero in that column: it says nothing about that component and everything
+about the others, so match points help instead of pulling the matched component towards the solvent.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;average&quot;</span></code> (after DENSS-Multiple, Sumner &amp; Qian, BBA Advances 2, 100063 (2022); written from the paper)</dt><dd><p>One SLD map ρ(x), the same in every contrast (no H/D exchange), and an occupancy b(x) ∈ [0, 1]: contrast k sees
+Δρ_k = b (ρ − ρ_s,k). After the Fourier step b follows from a per-voxel least-squares fit of the proposals, and
+ρ is DENSS-Multiple’s real-space (weighted) average of the proposals ρ_s,k + Δρ’_k / b, which is also the
+least-squares SLD for that occupancy. The occupancy is an addition to the paper’s scheme: without it the
+solvent region becomes a fictitious material with the mean solvent SLD and the particle is not localised. Kept
+for comparison: with H/D exchange or matched components its single SLD per voxel is a compromise.</p>
+</dd>
+</dl>
+<p>Units: q in 1/nm on input and output (as everywhere in pySASfit), Å inside (grid, voxel, maps); SLD in
+1e-6 Å⁻² (= 1e10 cm⁻²); intensities in the unit of the data. With <code class="docutils literal notranslate"><span class="pre">scale=&quot;absolute&quot;</span></code> the intensity is
+I(q) = n_p |A(q)|² in 1/cm with the particle number density n_p from concentration (mg/ml) and molar mass (kDa).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SLD_H2O">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">SLD_H2O</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-0.561</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.SLD_H2O" title="Link to this definition"></a></dt>
+<dd><p>neutron SLD of light and heavy water and X-ray SLD of water at 20 °C, 1e-6 Å⁻²</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.PRESETS">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">PRESETS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'custom':</span> <span class="pre">(1.0,</span> <span class="pre">1.0,</span> <span class="pre">10.0),</span> <span class="pre">'lipid</span> <span class="pre">tails,</span> <span class="pre">d</span> <span class="pre">(typical)':</span> <span class="pre">(6.9,</span> <span class="pre">6.9,</span> <span class="pre">7.8),</span> <span class="pre">'lipid</span> <span class="pre">tails,</span> <span class="pre">h</span> <span class="pre">(typical)':</span> <span class="pre">(-0.39,</span> <span class="pre">-0.39,</span> <span class="pre">7.8),</span> <span class="pre">'perdeuterated</span> <span class="pre">protein</span> <span class="pre">(typical)':</span> <span class="pre">(6.9,</span> <span class="pre">8.2,</span> <span class="pre">12.3),</span> <span class="pre">'protein</span> <span class="pre">(typical)':</span> <span class="pre">(1.82,</span> <span class="pre">3.13,</span> <span class="pre">12.3)}</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.PRESETS" title="Link to this definition"></a></dt>
+<dd><p>(in H2O, in D2O at full exchange of labile H, X-ray). Typical values only:
+compute your own from the composition (e.g. a contrast calculator) and edit them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>typical component SLDs (1e-6 Å⁻²)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">Component</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sld_h2o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sld_d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exchange</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sld_xray</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Component"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Component" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A component of the particle.</p>
+<p><code class="docutils literal notranslate"><span class="pre">sld_h2o</span></code>: neutron SLD in 100 % H2O; <code class="docutils literal notranslate"><span class="pre">sld_d2o</span></code>: neutron SLD in 100 % D2O when all labile H are exchanged
+(None: no exchangeable H, same as <code class="docutils literal notranslate"><span class="pre">sld_h2o</span></code>); <code class="docutils literal notranslate"><span class="pre">exchange</span></code>: fraction of the labile H that actually exchanges
+(buried regions exchange less); <code class="docutils literal notranslate"><span class="pre">sld_xray</span></code>: X-ray SLD (for SAXS curves). All in 1e-6 Å⁻².</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>sld_h2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sld_d2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>exchange</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sld_xray</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Component.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.sld_h2o">
+<span class="sig-name descname"><span class="pre">sld_h2o</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Component.sld_h2o" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.sld_d2o">
+<span class="sig-name descname"><span class="pre">sld_d2o</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Component.sld_d2o" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.exchange">
+<span class="sig-name descname"><span class="pre">exchange</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Component.exchange" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.sld_xray">
+<span class="sig-name descname"><span class="pre">sld_xray</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">nan</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Component.sld_xray" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.sld">
+<span class="sig-name descname"><span class="pre">sld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d2o</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Component.sld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Component.sld" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.match_point">
+<span class="sig-name descname"><span class="pre">match_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.561</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.364</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Component.match_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Component.match_point" title="Link to this definition"></a></dt>
+<dd><p>D2O fraction at which the component is matched (may lie outside 0 … 1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Component.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Component.to_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Component.from_dict">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Component.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Component.from_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">Contrast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radiation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'neutron'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_sld</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sld_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Contrast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>One measured curve and its contrast.</p>
+<p>q (1/nm), I, dI: the data (a flat background <code class="docutils literal notranslate"><span class="pre">bg</span></code> is subtracted before use); <code class="docutils literal notranslate"><span class="pre">d2o</span></code>: D2O fraction of the
+solvent (0 … 1) for neutrons; <code class="docutils literal notranslate"><span class="pre">radiation</span></code>: “neutron” or “xray”; <code class="docutils literal notranslate"><span class="pre">solvent_sld</span></code>: override of the solvent SLD
+(None: from <code class="docutils literal notranslate"><span class="pre">d2o</span></code> or water for X-rays); <code class="docutils literal notranslate"><span class="pre">sld_override</span></code>: {component name: SLD} to override single entries
+of the contrast matrix; <code class="docutils literal notranslate"><span class="pre">conc</span></code>: relative concentration of this sample (the model intensity is multiplied by
+it; all 1 for one stock solution); <code class="docutils literal notranslate"><span class="pre">weight</span></code>: weight of this contrast in the per-voxel combination;
+<code class="docutils literal notranslate"><span class="pre">qmin</span></code>/<code class="docutils literal notranslate"><span class="pre">qmax</span></code> (1/nm): range used (None: all).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>I</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>dI</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>d2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>radiation</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>solvent_sld</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sld_override</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>conc</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>bg</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>qmin</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>qmax</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.q">
+<span class="sig-name descname"><span class="pre">q</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.q" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.I">
+<span class="sig-name descname"><span class="pre">I</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.I" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.dI">
+<span class="sig-name descname"><span class="pre">dI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.dI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.d2o">
+<span class="sig-name descname"><span class="pre">d2o</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.d2o" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.radiation">
+<span class="sig-name descname"><span class="pre">radiation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'neutron'</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.radiation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.solvent_sld">
+<span class="sig-name descname"><span class="pre">solvent_sld</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.solvent_sld" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.sld_override">
+<span class="sig-name descname"><span class="pre">sld_override</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.sld_override" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.conc">
+<span class="sig-name descname"><span class="pre">conc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.conc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.weight">
+<span class="sig-name descname"><span class="pre">weight</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.weight" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.bg">
+<span class="sig-name descname"><span class="pre">bg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.bg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.qmin">
+<span class="sig-name descname"><span class="pre">qmin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.qmin" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.qmax">
+<span class="sig-name descname"><span class="pre">qmax</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.qmax" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.solvent">
+<span class="sig-name descname"><span class="pre">solvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.561</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.364</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Contrast.solvent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.solvent" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.component_sld">
+<span class="sig-name descname"><span class="pre">component_sld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Contrast.component_sld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.component_sld" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>comp</strong> (<a class="reference internal" href="#pysasfit.densitymulti.core.Component" title="pysasfit.densitymulti.core.Component"><em>Component</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Contrast.data">
+<span class="sig-name descname"><span class="pre">data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Contrast.data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Contrast.data" title="Link to this definition"></a></dt>
+<dd><p>(q in 1/nm, I − bg, dI) in the q range, finite points with dI &gt; 0 only.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">MultiError</span></span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#MultiError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.MultiError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a></p>
+<p>A problem with the input or the reconstruction (message for the user).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">Settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dmax_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'components'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">96</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrinkwrap_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrinkwrap_every</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrinkwrap_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_decay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connectivity_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recentre_until</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fitted'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conc_mg_ml</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mw_kda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lsq_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beyond_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">occupancy_percentile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">99.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sld_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_occupancy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.561</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.364</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Settings" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Options of one reconstruction (defaults close to DENSS’ FAST mode).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dmax_nm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>scheme</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>oversampling</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>nmax</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>shell_width</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>min_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>conv_window</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>conv_tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>shrinkwrap_start</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>shrinkwrap_every</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>shrinkwrap_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sigma_start</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sigma_end</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sigma_decay</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>connectivity_step</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>recentre_until</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>conc_mg_ml</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>mw_kda</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>lsq_iters</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>beyond_factor</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>occupancy_percentile</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>sld_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>min_occupancy</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>h2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>d2o</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.dmax_nm">
+<span class="sig-name descname"><span class="pre">dmax_nm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.dmax_nm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.scheme">
+<span class="sig-name descname"><span class="pre">scheme</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'components'</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.scheme" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.oversampling">
+<span class="sig-name descname"><span class="pre">oversampling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.oversampling" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.n">
+<span class="sig-name descname"><span class="pre">n</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.n" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.nmax">
+<span class="sig-name descname"><span class="pre">nmax</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">96</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.nmax" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.shell_width">
+<span class="sig-name descname"><span class="pre">shell_width</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.shell_width" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.max_steps">
+<span class="sig-name descname"><span class="pre">max_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3000</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.max_steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.min_steps">
+<span class="sig-name descname"><span class="pre">min_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.min_steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.conv_window">
+<span class="sig-name descname"><span class="pre">conv_window</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.conv_window" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.conv_tol">
+<span class="sig-name descname"><span class="pre">conv_tol</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.conv_tol" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.shrinkwrap_start">
+<span class="sig-name descname"><span class="pre">shrinkwrap_start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.shrinkwrap_every">
+<span class="sig-name descname"><span class="pre">shrinkwrap_every</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_every" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.shrinkwrap_threshold">
+<span class="sig-name descname"><span class="pre">shrinkwrap_threshold</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.shrinkwrap_threshold" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.sigma_start">
+<span class="sig-name descname"><span class="pre">sigma_start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.sigma_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.sigma_end">
+<span class="sig-name descname"><span class="pre">sigma_end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.5</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.sigma_end" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.sigma_decay">
+<span class="sig-name descname"><span class="pre">sigma_decay</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.99</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.sigma_decay" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.connectivity_step">
+<span class="sig-name descname"><span class="pre">connectivity_step</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">500</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.connectivity_step" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.recentre_until">
+<span class="sig-name descname"><span class="pre">recentre_until</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.recentre_until" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.scale">
+<span class="sig-name descname"><span class="pre">scale</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fitted'</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.conc_mg_ml">
+<span class="sig-name descname"><span class="pre">conc_mg_ml</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.conc_mg_ml" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.mw_kda">
+<span class="sig-name descname"><span class="pre">mw_kda</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.mw_kda" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.lsq_iters">
+<span class="sig-name descname"><span class="pre">lsq_iters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.lsq_iters" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.beyond_factor">
+<span class="sig-name descname"><span class="pre">beyond_factor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.beyond_factor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.occupancy_percentile">
+<span class="sig-name descname"><span class="pre">occupancy_percentile</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">99.5</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.occupancy_percentile" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.sld_bounds">
+<span class="sig-name descname"><span class="pre">sld_bounds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.sld_bounds" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.min_occupancy">
+<span class="sig-name descname"><span class="pre">min_occupancy</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.05</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.min_occupancy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.seed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.h2o">
+<span class="sig-name descname"><span class="pre">h2o</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-0.561</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.h2o" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.d2o">
+<span class="sig-name descname"><span class="pre">d2o</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6.364</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.d2o" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.Settings.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#Settings.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.Settings.to_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">MultiResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contrast_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warnings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_sld</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#MultiResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>One reconstruction. Maps on an n³ grid, voxel (Å), centred in the box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scheme</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>component_names</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>contrast_names</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>phi</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>rho</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>drho</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>voxel</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>C</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>solvent</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fits</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>chi2</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>rg</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>volumes</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>stats</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>settings</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>seconds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>warnings</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>workdir</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>match_sld</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.scheme">
+<span class="sig-name descname"><span class="pre">scheme</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.scheme" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.component_names">
+<span class="sig-name descname"><span class="pre">component_names</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.component_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.contrast_names">
+<span class="sig-name descname"><span class="pre">contrast_names</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.contrast_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.phi">
+<span class="sig-name descname"><span class="pre">phi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.phi" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.rho">
+<span class="sig-name descname"><span class="pre">rho</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.rho" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.drho">
+<span class="sig-name descname"><span class="pre">drho</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.drho" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.support">
+<span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.support" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.voxel">
+<span class="sig-name descname"><span class="pre">voxel</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.voxel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.C">
+<span class="sig-name descname"><span class="pre">C</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.C" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.solvent">
+<span class="sig-name descname"><span class="pre">solvent</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.solvent" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.fits">
+<span class="sig-name descname"><span class="pre">fits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.fits" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.chi2">
+<span class="sig-name descname"><span class="pre">chi2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.chi2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.rg">
+<span class="sig-name descname"><span class="pre">rg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.rg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.volumes">
+<span class="sig-name descname"><span class="pre">volumes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.volumes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.scale">
+<span class="sig-name descname"><span class="pre">scale</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.scale" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.steps">
+<span class="sig-name descname"><span class="pre">steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.stats">
+<span class="sig-name descname"><span class="pre">stats</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.stats" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.settings">
+<span class="sig-name descname"><span class="pre">settings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.settings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.seconds">
+<span class="sig-name descname"><span class="pre">seconds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.seconds" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.warnings">
+<span class="sig-name descname"><span class="pre">warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.warnings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.seed">
+<span class="sig-name descname"><span class="pre">seed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.seed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.workdir">
+<span class="sig-name descname"><span class="pre">workdir</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.workdir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.match_sld">
+<span class="sig-name descname"><span class="pre">match_sld</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">nan</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.match_sld" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.chi2_total">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">chi2_total</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.chi2_total" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.support_volume">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">support_volume</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.support_volume" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.occupancy">
+<span class="sig-name descname"><span class="pre">occupancy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#MultiResult.occupancy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.occupancy" title="Link to this definition"></a></dt>
+<dd><p>Total particle map Σ φ_c (the occupancy in the averaging scheme).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.MultiResult.sld_map">
+<span class="sig-name descname"><span class="pre">sld_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#MultiResult.sld_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.MultiResult.sld_map" title="Link to this definition"></a></dt>
+<dd><p>SLD map of the particle in contrast k (solvent outside).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">AverageResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phi_sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correlation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">improper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2_sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rg_sd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes_sd</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#AverageResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Aligned and averaged maps of several reconstructions (same fields as <a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiResult</span></code></a> for the average,
+plus the spread).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><em>MultiResult</em></a>)</p></li>
+<li><p><strong>phi_sd</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rho_sd</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>runs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>correlation</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>improper</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>chi2_sd</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>rg_sd</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>volumes_sd</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><span class="pre">MultiResult</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.mean" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.phi_sd">
+<span class="sig-name descname"><span class="pre">phi_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.phi_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.rho_sd">
+<span class="sig-name descname"><span class="pre">rho_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.rho_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.runs">
+<span class="sig-name descname"><span class="pre">runs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.runs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.correlation">
+<span class="sig-name descname"><span class="pre">correlation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.correlation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.improper">
+<span class="sig-name descname"><span class="pre">improper</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.improper" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.chi2_sd">
+<span class="sig-name descname"><span class="pre">chi2_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.chi2_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.rg_sd">
+<span class="sig-name descname"><span class="pre">rg_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.rg_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.AverageResult.volumes_sd">
+<span class="sig-name descname"><span class="pre">volumes_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.AverageResult.volumes_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.contrast_matrix">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">contrast_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contrasts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.561</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.364</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#contrast_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.contrast_matrix" title="Link to this definition"></a></dt>
+<dd><p>(C [K, M], ρ_s [K], ρ_c [K, M]): contrast matrix, solvent SLDs and component SLDs (1e-6 Å⁻²).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>components</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference internal" href="#pysasfit.densitymulti.core.Component" title="pysasfit.densitymulti.core.Component"><em>Component</em></a><em>]</em>)</p></li>
+<li><p><strong>contrasts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast" title="pysasfit.densitymulti.core.Contrast"><em>Contrast</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.identifiability">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">identifiability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#identifiability"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.identifiability" title="Link to this definition"></a></dt>
+<dd><p>Can the components be separated with these contrasts?</p>
+<p>Returns a dict: <code class="docutils literal notranslate"><span class="pre">rank</span></code>, <code class="docutils literal notranslate"><span class="pre">cond</span></code> (condition number of W^½ C), <code class="docutils literal notranslate"><span class="pre">sensitivity</span></code> (per component: 1/√((CᵀWC)⁻¹)_cc,
+the contrast with which the component is determined, in 1e-6 Å⁻²; 0 if not determined), <code class="docutils literal notranslate"><span class="pre">matched</span></code> (per
+component: indices of the contrasts in which it is matched within <code class="docutils literal notranslate"><span class="pre">tol</span></code> × the largest contrast) and
+<code class="docutils literal notranslate"><span class="pre">messages</span></code> (human-readable warnings; empty if everything is fine).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">SmoothCurve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#SmoothCurve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Regularised p(r) fit of a curve (q in 1/Å inside): I(q) = Σ_j p_j 4π Δr sin(q r_j)/(q r_j).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>p</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>dr</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>chi2</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>lam</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.r">
+<span class="sig-name descname"><span class="pre">r</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.r" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.p">
+<span class="sig-name descname"><span class="pre">p</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.p" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.dr">
+<span class="sig-name descname"><span class="pre">dr</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.dr" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.chi2">
+<span class="sig-name descname"><span class="pre">chi2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.chi2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.lam">
+<span class="sig-name descname"><span class="pre">lam</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.lam" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.I0">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">I0</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.I0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.SmoothCurve.rg">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">rg</span></span><a class="headerlink" href="#pysasfit.densitymulti.core.SmoothCurve.rg" title="Link to this definition"></a></dt>
+<dd><p>Rg (Å) from p(r); NaN when Σ p r² / Σ p is negative (mixed-sign contrast).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.smooth_curve">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">smooth_curve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dmax_A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">npoints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#smooth_curve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.smooth_curve" title="Link to this definition"></a></dt>
+<dd><p>Regularised (second-difference Tikhonov) p(r) fit up to <code class="docutils literal notranslate"><span class="pre">dmax_A</span></code>, without positivity (a contrast with
+components of opposite sign has a p(r) with negative parts). λ by the discrepancy principle (reduced χ² ≈ 1, or
+1.2 × the smallest reachable χ² when the errors are underestimated).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.make_grid">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">make_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dmax_A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmax_A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shell_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#make_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.make_grid" title="Link to this definition"></a></dt>
+<dd><p>Cubic grid of side oversampling × Dmax with n points (even); n from the data qmax when None
+(q_max of the grid = π / voxel ≥ qmax of the data). The q shells are <code class="docutils literal notranslate"><span class="pre">shell_width</span></code> × 2π/side wide: half the
+Fourier sampling of the box (default) fits the minima of the curves markedly better than full-width shells
+(sphere test: χ² 86 instead of 309 with 1 % noise; Rg +1.7 % instead of +3.2 %).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.debye_profile">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">debye_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_A</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#debye_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.debye_profile" title="Link to this definition"></a></dt>
+<dd><p>Exact orientational average |A(q)|² of the voxel map <code class="docutils literal notranslate"><span class="pre">d</span></code> (Σ_voxels d e^{iqr}, voxel-volume units) at the
+given q (1/Å): Debye sum over the pair-distance histogram of the lattice (autocorrelation by a zero-padded FFT,
+binned by the integer r²), times the form factor of a sphere with the voxel volume. Used for the final fits;
+the iteration itself works on shells.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.match_sld">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">match_sld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">I0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#match_sld"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.match_sld" title="Link to this definition"></a></dt>
+<dd><p>Solvent SLD at the match point of the whole particle (1e-6 Å⁻²) from the forward intensities of several
+contrasts, I0_k = b c_k (ρ̄ − ρ_s,k)² (classical contrast variation: √I0 is linear in ρ_s and vanishes at the
+match point; with H/D exchange ρ̄ changes with the D2O fraction and the result is the solvent SLD at which it is
+matched). NaN if not determined (fewer than two contrasts or no change of the solvent).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.reconstruct">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">reconstruct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contrasts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cancel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#reconstruct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.reconstruct" title="Link to this definition"></a></dt>
+<dd><p>One reconstruction from all contrasts. <code class="docutils literal notranslate"><span class="pre">progress(step,</span> <span class="pre">χ²)</span></code> is called every 10 steps; <code class="docutils literal notranslate"><span class="pre">cancel()</span></code> → stop
+after the current step (the result so far is returned with a warning).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>components</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference internal" href="#pysasfit.densitymulti.core.Component" title="pysasfit.densitymulti.core.Component"><em>Component</em></a><em>]</em>)</p></li>
+<li><p><strong>contrasts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference internal" href="#pysasfit.densitymulti.core.Contrast" title="pysasfit.densitymulti.core.Contrast"><em>Contrast</em></a><em>]</em>)</p></li>
+<li><p><strong>settings</strong> (<a class="reference internal" href="#pysasfit.densitymulti.core.Settings" title="pysasfit.densitymulti.core.Settings"><em>Settings</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>progress</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>cancel</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><em>Callable</em></a><em>[</em><em>[</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><em>MultiResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.reconstruct_many">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">reconstruct_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contrasts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cancel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#reconstruct_many"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.reconstruct_many" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">nmaps</span></code> independent reconstructions (different seeds), in <code class="docutils literal notranslate"><span class="pre">cores</span></code> threads. <code class="docutils literal notranslate"><span class="pre">progress(i_done,</span> <span class="pre">n)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>settings</strong> (<a class="reference internal" href="#pysasfit.densitymulti.core.Settings" title="pysasfit.densitymulti.core.Settings"><em>Settings</em></a><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.align_and_average">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">align_and_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#align_and_average"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.align_and_average" title="Link to this definition"></a></dt>
+<dd><p>Align every map onto a reference (the one with the lowest χ² unless given) by its principal axes, trying the
+8 sign choices of the axes (rotations and mirror images: the enantiomer cannot be told from SAS data), keep the
+choice with the highest correlation of the total maps, then average the maps (and their spread).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a><em>[</em><a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><em>MultiResult</em></a><em>]</em>)</p></li>
+<li><p><strong>reference</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pysasfit.densitymulti.core.AverageResult" title="pysasfit.densitymulti.core.AverageResult"><em>AverageResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.project_capped_simplex">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">project_capped_simplex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phi</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#project_capped_simplex"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.project_capped_simplex" title="Link to this definition"></a></dt>
+<dd><p>Euclidean projection of every column of <code class="docutils literal notranslate"><span class="pre">phi</span></code> (M, N) onto {φ ≥ 0, Σ φ ≤ 1}.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.bounded_lsq">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">bounded_lsq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">C</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#bounded_lsq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.bounded_lsq" title="Link to this definition"></a></dt>
+<dd><p>Per-voxel weighted least squares  min Σ_k w_k (D_k − Σ_c C_kc φ_c)²  with φ ≥ 0, Σ_c φ_c ≤ 1.</p>
+<p>D (K, N) proposed contrast maps, C (K, M), w (K). Accelerated projected gradient (FISTA), vectorised over the N
+voxels, started from the projected unconstrained solution (or <code class="docutils literal notranslate"><span class="pre">x0</span></code>). Returns φ (M, N).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.core_shell_curves">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">core_shell_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R_core_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R_shell_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.42,</span> <span class="pre">0.7,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conc_mg_ml</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mw_kda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#core_shell_curves"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.core_shell_curves" title="Link to this definition"></a></dt>
+<dd><p>Synthetic curves of a core-shell sphere: core = components[0], shell = components[1] (defaults: a
+perdeuterated core in a protein shell). Returns (components, [Contrast]). Without concentration and molar mass the
+intensity is |A|² × 1e-8 (arbitrary unit), else n_p |A|² in 1/cm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.dumbbell_curves">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">dumbbell_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R1_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R2_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2o</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.42,</span> <span class="pre">0.7,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#dumbbell_curves"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.dumbbell_curves" title="Link to this definition"></a></dt>
+<dd><p>Synthetic curves of two touching spheres of different components (defaults: a perdeuterated protein R1 and a
+protein R2; the second is matched near 42 % D2O). Returns (components, [Contrast]); arbitrary intensity unit.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.sphere_curves">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">sphere_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#sphere_curves"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.sphere_curves" title="Link to this definition"></a></dt>
+<dd><p>One contrast of a homogeneous sphere (one component, protein in H2O). Returns (components, [Contrast]).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.selftest">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">selftest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">print&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1500</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#selftest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.selftest" title="Link to this definition"></a></dt>
+<dd><p>Sphere R = 2 nm (Rg 15.49 Å) with one contrast: passes when the map’s Rg is within 10 %.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.save_result">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">save_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'multi'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#save_result"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.save_result" title="Link to this definition"></a></dt>
+<dd><p>Write the maps (MRC: one per component, per contrast, support, SLD map), the fits (one text file per
+contrast: q (1/nm), I, err, model) and a JSON summary into <code class="docutils literal notranslate"><span class="pre">folder</span></code>. Returns the folder.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.load_result">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">load_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'multi'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#load_result"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.load_result" title="Link to this definition"></a></dt>
+<dd><p>Read a result written by <a class="reference internal" href="#pysasfit.densitymulti.core.save_result" title="pysasfit.densitymulti.core.save_result"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_result()</span></code></a> back (maps, fits, summary) as a <a class="reference internal" href="#pysasfit.densitymulti.core.MultiResult" title="pysasfit.densitymulti.core.MultiResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiResult</span></code></a>
+(an average is read as its mean map; the per-step statistics only if written).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.number_density">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">number_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conc_mg_ml</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mw_kda</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#number_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.number_density" title="Link to this definition"></a></dt>
+<dd><p>Particle number density (1/cm³) from concentration (mg/ml) and molar mass (kDa).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conc_mg_ml</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>mw_kda</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)">float</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.densitymulti.core.fit_tail_background">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.densitymulti.core.</span></span><span class="sig-name descname"><span class="pre">fit_tail_background</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dI</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fraction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exponent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/densitymulti/core.html#fit_tail_background"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.densitymulti.core.fit_tail_background" title="Link to this definition"></a></dt>
+<dd><p>Flat background of the tail (last <code class="docutils literal notranslate"><span class="pre">fraction</span></code> of the points): weighted fit of I = A q^-B + bg with B fixed
+(default 4, Porod). Returns (bg, σ_bg).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../density/api.html" class="btn btn-neutral float-left" title="pyDENsity: API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

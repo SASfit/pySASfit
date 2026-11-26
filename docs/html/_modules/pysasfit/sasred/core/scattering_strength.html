@@ -1,0 +1,605 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.core.scattering_strength &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.core.scattering_strength</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.core.scattering_strength</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""How strongly does a sample scatter? Transmission modes, the coherent scattering probability</span>
+<span class="sd">p_cS and the regime of the reduction formula (Strunz, Šaroun, Keiderling, Wiedenmann &amp;</span>
+<span class="sd">Przenioslo, J. Appl. Cryst. 33 (2000) 829).</span>
+
+<span class="sd">Symbols of the paper:</span>
+
+<span class="sd">* t_S     transmission for absorption and large-angle coherent (Bragg) scattering;</span>
+<span class="sd">* T_Si    = t_S (1 - p_iS): absorption and incoherent scattering (what a transmission measured</span>
+<span class="sd">  over a wide solid angle gives once all small-angle scattering is collected: the plateau);</span>
+<span class="sd">* τ_S     = T_Si (1 - p_cS): total removal transmission (what a transmission through the direct</span>
+<span class="sd">  beam spot only would give; measurable only as an upper limit τ_UL &gt; τ_S because neutrons</span>
+<span class="sd">  scattered into the beam spot are always counted);</span>
+<span class="sd">* p_cS    = d_S ∫ dΣ/dΩ dΩ: probability of at least one coherent small-angle scattering event.</span>
+
+<span class="sd">The cross-section from a sample in a container or on a substrate (EB) is (their eq. 3/8)</span>
+
+<span class="sd">    [(S - Cd)/(T_EB T_Si) - (EB - Cd)/T_EB · (1 - p_cS)] / (d_S I_prim η ΔΩ)</span>
+
+<span class="sd">so (1 - p_cS) multiplies the background, and T_Si (not τ_S) divides the sample. With τ_S in the</span>
+<span class="sd">first term (their eq. 9, aqueous samples where incoherent attenuation dominates) the whole curve</span>
+<span class="sd">is shifted by (1 - p_cS). BerSANS implements the general form with a user-given "scattering</span>
+<span class="sd">probability" p(S) (default 0) and a transmission whose meaning depends on the detector area used.</span>
+
+<span class="sd">This module provides</span>
+
+<span class="sd">* :func:`aperture_transmission`: T(α) from a direct-beam run with and without sample, summed over</span>
+<span class="sd">  growing discs; the plateau gives T_Si, the beam spot τ_UL, and 1 - τ_UL/T_Si ≤ p_cS;</span>
+<span class="sd">* :func:`scattering_probability`: p_cS from a cross-section in absolute units, with Guinier and</span>
+<span class="sd">  Porod extrapolations outside the measured q range;</span>
+<span class="sd">* :func:`scale_probability` / :func:`thickness_for`: p_cS ∝ d λ² for single scattering;</span>
+<span class="sd">* :func:`assess`: the regime (weak / moderate / strong) and what to do;</span>
+<span class="sd">* :func:`self_consistent_probability`: the formula is an integral equation in p_cS; iterate</span>
+<span class="sd">  reduce -&gt; p_cS -&gt; reduce until p_cS is stable.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TransmissionCurve"</span><span class="p">,</span> <span class="s2">"aperture_transmission"</span><span class="p">,</span> <span class="s2">"aperture_transmission_runs"</span><span class="p">,</span> <span class="s2">"Probability"</span><span class="p">,</span>
+           <span class="s2">"scattering_probability"</span><span class="p">,</span> <span class="s2">"scale_probability"</span><span class="p">,</span> <span class="s2">"thickness_for"</span><span class="p">,</span> <span class="s2">"Assessment"</span><span class="p">,</span> <span class="s2">"assess"</span><span class="p">,</span>
+           <span class="s2">"self_consistent_probability"</span><span class="p">,</span> <span class="s2">"solid_angle_of_cone"</span><span class="p">,</span> <span class="s2">"plot_transmission"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="solid_angle_of_cone">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.solid_angle_of_cone">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solid_angle_of_cone</span><span class="p">(</span><span class="n">two_theta_max</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""α = 2π (1 - cos 2θ_max), the solid angle of the cone up to 2θ_max (sr)."""</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">two_theta_max</span><span class="p">,</span> <span class="nb">float</span><span class="p">)))</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------- transmission modes</span>
+<div class="viewcode-block" id="TransmissionCurve">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.TransmissionCurve">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransmissionCurve</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Transmission summed over discs of radius R around the beam (Strunz et al. fig. 1)."""</span>
+    <span class="n">radius_px</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">alpha_sr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">T</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">beam_radius_px</span><span class="p">:</span> <span class="nb">float</span>          <span class="c1"># disc holding (beam_fraction) of the empty-beam counts</span>
+    <span class="n">T_si</span><span class="p">:</span> <span class="nb">float</span>                    <span class="c1"># plateau (largest disc)</span>
+    <span class="n">T_si_sigma</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">tau_ul</span><span class="p">:</span> <span class="nb">float</span>                  <span class="c1"># beam spot only</span>
+    <span class="n">tau_ul_sigma</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">plateau_reached</span><span class="p">:</span> <span class="nb">bool</span>          <span class="c1"># T no longer changes over the outer part of the detector</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">ratio_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>       <span class="c1"># σ of τ_UL / T_Si (the beam disc is part of the full sum)</span>
+    <span class="n">ring_edges_px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># radial average of the two runs per ring</span>
+    <span class="n">ring_sample</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># mean per pixel, background subtracted</span>
+    <span class="n">ring_empty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ring_sample_sigma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ring_background</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># subtracted background per pixel</span>
+
+<div class="viewcode-block" id="TransmissionCurve.scattered">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.TransmissionCurve.scattered">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scattered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Radially averaged scattering outside the transmitted beam: S - τ_UL E per pixel and ring</span>
+<span class="sd">        (≈ 0 inside the beam spot, the small-angle and incoherent halo outside)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ring_sample</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau_ul</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ring_empty</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ring_sample_sigma</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_cs_lower</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Lower limit of the coherent scattering probability: 1 - τ_UL / T_Si (≥ 0)."""</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau_ul</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_si</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">p_cs_lower_sigma</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ratio_sigma</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">incoherent_share</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Rough part of 1 - τ_UL/T_Si caused by incoherent scattering into the detector: the</span>
+<span class="sd">        removed fraction 1 - T_Si spread isotropically over 4π, seen in the detector solid angle α</span>
+<span class="sd">        (Strunz et al. section 5). Water in a flat cell scatters more forward (K0 ≈ 1.4 at 6 Å)."""</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_si</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_si</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha_sr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="aperture_transmission">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.aperture_transmission">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aperture_transmission</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="n">pixel_size_m</span><span class="p">,</span> <span class="n">SD_m</span><span class="p">,</span> <span class="n">sample_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">empty_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">cd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cd_var</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">radii_px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">beam_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span> <span class="n">flat_background</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
+                          <span class="n">n_rings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransmissionCurve</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""T(α) = Σ_disc(S - B) / Σ_disc(E - B) for discs of growing radius around ``centre``, and the</span>
+<span class="sd">    radially averaged sample/empty ratio per ring.</span>
+
+<span class="sd">    ``sample``, ``empty`` (and ``cd``) are images normalised to the same monitor (direct beam with</span>
+<span class="sd">    and without the sample, beam stop out, attenuated as needed); the variances default to the</span>
+<span class="sd">    values themselves (Poisson counts). ``pixel_size_m`` is (x, y) or one number.</span>
+
+<span class="sd">    Background B: the Cd run when given. Without one, ``flat_background="auto"`` takes the mean of</span>
+<span class="sd">    the empty-beam run in the outer half of the detector as a flat, beam-independent background per</span>
+<span class="sd">    pixel (a number can be given instead; ``None`` = no background). Without it, the large discs</span>
+<span class="sd">    collect background in both runs and T(α) drifts towards 1 by about (1 - T) · B_total / E_total."""</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">empty</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">vS</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">sample_var</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample_var</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">vE</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">empty_var</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">empty_var</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="n">valid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pixel_size_m</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+    <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">ny</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">nx</span><span class="p">]</span>
+    <span class="n">r_px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">centre</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yy</span> <span class="o">-</span> <span class="n">centre</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">r_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">((</span><span class="n">xx</span> <span class="o">-</span> <span class="n">centre</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">px</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="n">yy</span> <span class="o">-</span> <span class="n">centre</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">px</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">rmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r_px</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">vb</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>                 <span class="c1"># flat background per pixel and the variance of its mean</span>
+    <span class="k">if</span> <span class="n">cd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cd</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">vC</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">cd_var</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cd_var</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">C</span><span class="p">,</span> <span class="n">vC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flat_background</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">flat_background</span> <span class="o">==</span> <span class="s2">"auto"</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&gt;=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">rmax</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">E</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+            <span class="n">vb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">vE</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">**</span><span class="mi">2</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no Cd run: flat background </span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> per pixel from the outer half of the empty beam"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">flat_background</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">flat_background</span><span class="p">)</span>
+    <span class="c1"># beam spot from the empty beam</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">E</span> <span class="o">-</span> <span class="n">C</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">r_px</span><span class="p">[</span><span class="n">ok</span><span class="p">])</span>
+    <span class="n">cum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="n">ok</span><span class="p">][</span><span class="n">order</span><span class="p">])</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">cum</span><span class="p">,</span> <span class="n">beam_fraction</span> <span class="o">*</span> <span class="n">cum</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">beam_r</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">r_px</span><span class="p">[</span><span class="n">ok</span><span class="p">][</span><span class="n">order</span><span class="p">][</span><span class="nb">min</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]))</span>
+    <span class="k">if</span> <span class="n">radii_px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">radii_px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">beam_r</span><span class="p">),</span> <span class="n">rmax</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="p">[</span><span class="n">beam_r</span><span class="p">]]))</span>
+    <span class="n">radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">radii_px</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">disc</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">n</span> <span class="o">*</span> <span class="n">b</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">E</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">n</span> <span class="o">*</span> <span class="n">b</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="p">(</span><span class="n">vS</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">vE</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">vC</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">vb</span><span class="p">))</span> <span class="o">/</span> <span class="n">den</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">den</span>
+
+    <span class="n">T</span><span class="p">,</span> <span class="n">sT</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">R</span> <span class="ow">in</span> <span class="n">radii</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&lt;=</span> <span class="n">R</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">disc</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">sT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+        <span class="n">rm</span> <span class="o">=</span> <span class="n">r_m</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">alpha</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solid_angle_of_cone</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">rm</span> <span class="o">/</span> <span class="n">SD_m</span><span class="p">)))</span>
+    <span class="n">T</span><span class="p">,</span> <span class="n">sT</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sT</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">ib</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">radii</span> <span class="o">-</span> <span class="n">beam_r</span><span class="p">)))</span>
+    <span class="c1"># τ_UL / T_Si with the correlation of the two sums (inner disc + rest); background neglected here</span>
+    <span class="n">m_in</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&lt;=</span> <span class="n">radii</span><span class="p">[</span><span class="n">ib</span><span class="p">])</span>
+    <span class="n">m_out</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&lt;=</span> <span class="n">radii</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">m_in</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Si</span><span class="p">,</span> <span class="n">Ei</span> <span class="o">=</span> <span class="n">disc</span><span class="p">(</span><span class="n">m_in</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">So</span><span class="p">,</span> <span class="n">Eo</span> <span class="o">=</span> <span class="n">disc</span><span class="p">(</span><span class="n">m_out</span><span class="p">)</span>
+    <span class="n">Sa</span><span class="p">,</span> <span class="n">Ea</span> <span class="o">=</span> <span class="n">Si</span> <span class="o">+</span> <span class="n">So</span><span class="p">,</span> <span class="n">Ei</span> <span class="o">+</span> <span class="n">Eo</span>
+    <span class="n">rel2</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Si</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">Sa</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">vS</span><span class="p">[</span><span class="n">m_in</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Sa</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">vS</span><span class="p">[</span><span class="n">m_out</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Ei</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">Ea</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">vE</span><span class="p">[</span><span class="n">m_in</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Ea</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">vE</span><span class="p">[</span><span class="n">m_out</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">ratio_sigma</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">Si</span> <span class="o">/</span> <span class="n">Ei</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">Sa</span> <span class="o">/</span> <span class="n">Ea</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rel2</span><span class="p">))</span>
+    <span class="c1"># radial average per ring: where do the scattered neutrons land?</span>
+    <span class="n">ring_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">beam_r</span><span class="p">),</span> <span class="n">rmax</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">n_rings</span><span class="p">)]))</span>
+    <span class="n">rs</span><span class="p">,</span> <span class="n">re_</span><span class="p">,</span> <span class="n">rsig</span><span class="p">,</span> <span class="n">rbg</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ring_edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ring_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">r_px</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">n</span> <span class="o">-</span> <span class="n">b</span>
+        <span class="n">em</span> <span class="o">=</span> <span class="p">(</span><span class="n">E</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">n</span> <span class="o">-</span> <span class="n">b</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sm</span><span class="p">)</span>
+        <span class="n">re_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">em</span><span class="p">)</span>
+        <span class="n">rsig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vS</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">vC</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">rbg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">C</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">outer</span> <span class="o">=</span> <span class="n">radii</span> <span class="o">&gt;=</span> <span class="mf">0.7</span> <span class="o">*</span> <span class="n">radii</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">plateau</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">T</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">T</span><span class="p">[</span><span class="n">outer</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">sT</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sT</span><span class="p">[</span><span class="n">outer</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">plateau</span><span class="p">:</span>
+        <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"T still rises at the detector edge: not all small-angle scattering is collected, "</span>
+                     <span class="s2">"T_Si is a lower limit (shorter distance or longer counting)"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">TransmissionCurve</span><span class="p">(</span><span class="n">radii</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">sT</span><span class="p">,</span> <span class="n">beam_r</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">T</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sT</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                            <span class="nb">float</span><span class="p">(</span><span class="n">T</span><span class="p">[</span><span class="n">ib</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">sT</span><span class="p">[</span><span class="n">ib</span><span class="p">]),</span> <span class="n">plateau</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">ratio_sigma</span><span class="p">,</span>
+                            <span class="n">ring_edges</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">re_</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rsig</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rbg</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">p_cs_lower</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">incoherent_share</span><span class="p">,</span> <span class="n">ratio_sigma</span><span class="p">):</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"1 - τ_UL/T_Si = </span><span class="si">{</span><span class="n">out</span><span class="o">.</span><span class="n">p_cs_lower</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> is of the order of its uncertainty or of the "</span>
+                         <span class="sa">f</span><span class="s2">"incoherent scattering into the detector (</span><span class="si">{</span><span class="n">out</span><span class="o">.</span><span class="n">incoherent_share</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> if isotropic; "</span>
+                         <span class="s2">"more forward for flat water-like samples): no measurable coherent scattering "</span>
+                         <span class="s2">"probability"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="aperture_transmission_runs">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.aperture_transmission_runs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aperture_transmission_runs</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="n">cd</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instrument</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                               <span class="n">check_beamstop</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransmissionCurve</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`aperture_transmission` from raw runs. Each run is corrected like a scattering run</span>
+<span class="sd">    (counting error, dead time, attenuator, monitor: :func:`reduce.normalised_counts`), so sample</span>
+<span class="sd">    and empty beam may use different attenuators and count rates.</span>
+
+<span class="sd">    Both runs must show the direct beam (beam stop out of the beam,</span>
+<span class="sd">    :func:`catalogue.looks_like_direct_beam`) and be at the same distance. The dead-time factor of each run is</span>
+<span class="sd">    reported; above the preference ``sasred.transmission.deadtime_warn`` (1.05) the run is close to</span>
+<span class="sd">    saturation and a (stronger) attenuator is recommended."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..catalogue</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_transmission</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span><span class="p">,</span> <span class="n">normalised_counts</span>
+    <span class="n">inst</span> <span class="o">=</span> <span class="n">instrument</span> <span class="ow">or</span> <span class="n">load_instrument</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">SD_m</span> <span class="o">-</span> <span class="n">empty</span><span class="o">.</span><span class="n">SD_m</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">empty</span><span class="o">.</span><span class="n">SD_m</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sample at SD = </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">SD_m</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m, empty beam at </span><span class="si">{</span><span class="n">empty</span><span class="o">.</span><span class="n">SD_m</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">check_beamstop</span><span class="p">:</span>
+        <span class="n">inbeam</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">run</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">cd</span><span class="p">)</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_transmission</span><span class="p">(</span><span class="n">r</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">inbeam</span> <span class="ow">and</span> <span class="n">cd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">inbeam</span> <span class="o">==</span> <span class="p">[</span><span class="n">cd</span><span class="o">.</span><span class="n">run</span><span class="p">]:</span>
+            <span class="n">inbeam</span> <span class="o">=</span> <span class="p">[]</span>                       <span class="c1"># a Cd run may be measured with the beam stop in place</span>
+        <span class="k">if</span> <span class="n">inbeam</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run(s) </span><span class="si">{</span><span class="n">inbeam</span><span class="si">}</span><span class="s2">: the image shows no direct beam (beam stop in the beam?): "</span>
+                             <span class="s2">"not a transmission run"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">...core</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+        <span class="n">warn</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">effective</span><span class="p">(</span><span class="s2">"sasred.transmission.deadtime_warn"</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="n">warn</span> <span class="o">=</span> <span class="mf">1.05</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">cd</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">normalised_counts</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">inst</span><span class="p">,</span> <span class="n">notes</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">factor</span><span class="o">.</span><span class="n">value</span><span class="p">))</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">factor</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">factor</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="o">&gt;</span> <span class="n">warn</span><span class="p">:</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="si">}</span><span class="s2">: dead-time factor </span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> (attenuator </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">attenuator</span><span class="si">}</span><span class="s2">): close to "</span>
+                         <span class="s2">"saturation, use a (stronger) attenuator"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="si">}</span><span class="s2">: dead-time factor </span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, attenuator </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">attenuator</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">systematic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">vs</span><span class="p">),</span> <span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ve</span><span class="p">),</span> <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">vc</span><span class="p">)</span> <span class="o">=</span> <span class="n">images</span>
+    <span class="k">if</span> <span class="n">sample</span><span class="o">.</span><span class="n">attenuator</span> <span class="o">!=</span> <span class="n">empty</span><span class="o">.</span><span class="n">attenuator</span><span class="p">:</span>
+        <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"attenuator </span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">attenuator</span><span class="si">}</span><span class="s2"> (sample) vs </span><span class="si">{</span><span class="n">empty</span><span class="o">.</span><span class="n">attenuator</span><span class="si">}</span><span class="s2"> (empty beam): their "</span>
+                     <span class="s2">"factors enter T directly (uncertainty not known)"</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">aperture_transmission</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">centre</span><span class="p">,</span> <span class="n">sample</span><span class="o">.</span><span class="n">pixel_size_m</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="s2">"SD_effective_m"</span><span class="p">,</span> <span class="n">sample</span><span class="o">.</span><span class="n">SD_m</span><span class="p">),</span>
+                              <span class="n">vs</span><span class="p">,</span> <span class="n">ve</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">vc</span><span class="p">,</span> <span class="n">valid</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">notes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">notes</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">notes</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+
+<div class="viewcode-block" id="plot_transmission">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.plot_transmission">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_transmission</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">TransmissionCurve</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""T(α) with τ_UL and T_Si, and the radially averaged runs per ring."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+    <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+    <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">alpha_sr</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"o-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">T_si</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#2E8B57"</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">"--"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"T_Si = </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">T_si</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">tau_ul</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#C8283C"</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s2">":"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"τ_UL = </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">tau_ul</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"α [sr]"</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"T(α)"</span><span class="p">)</span>
+    <span class="n">a1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"p_cS ≥ </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">p_cs_lower</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">title_fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">rc</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">ring_edges_px</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">ring_edges_px</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">ring_empty</span><span class="p">,</span> <span class="s2">"s-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"empty beam"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">ring_sample</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">ring_sample_sigma</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"o-"</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"sample"</span><span class="p">)</span>
+    <span class="n">sc</span><span class="p">,</span> <span class="n">ss_</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">scattered</span><span class="p">()</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sc</span><span class="p">),</span> <span class="n">ss_</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"."</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"|sample - τ_UL · empty|"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rc</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">ring_background</span><span class="p">,</span> <span class="s2">"k--"</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"background subtracted"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">"log"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_formatter</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">NullFormatter</span><span class="p">())</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"ring radius [px]"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"per pixel and monitor"</span><span class="p">)</span>
+    <span class="n">a2</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------- p_cS from a curve</span>
+<div class="viewcode-block" id="Probability">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.Probability">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Probability</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""p_cS = d ∫ dΣ/dΩ dΩ split into the measured part and the two extrapolations."""</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span>                   <span class="c1"># counting statistics of the measured part only</span>
+    <span class="n">measured</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">low_q</span><span class="p">:</span> <span class="nb">float</span>                   <span class="c1"># 0 .. q_min (Guinier or constant)</span>
+    <span class="n">high_q</span><span class="p">:</span> <span class="nb">float</span>                  <span class="c1"># q_max .. ∞ (Porod q^-4)</span>
+    <span class="n">guinier_rg_A</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">porod_B</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extrapolated_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">low_q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">high_q</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_domega_dq</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">lam</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""dΩ/dq for a ring at q (exact, elastic): 2π sin 2θ · d2θ/dq."""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-12</span><span class="p">)</span>
+    <span class="n">tt</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="scattering_probability">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.scattering_probability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scattering_probability</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dsdo</span><span class="p">,</span> <span class="n">thickness_cm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                           <span class="n">background</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">n_low</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_high</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                           <span class="n">low</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"guinier"</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"porod"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Probability</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Coherent small-angle scattering probability of a sample from its cross-section.</span>
+
+<span class="sd">    ``q`` in 1/Å, ``dsdo`` in cm⁻¹ sr⁻¹ (coherent part; give the flat incoherent level as</span>
+<span class="sd">    ``background`` to remove it), thickness in cm. Extrapolations: ``low`` = "guinier" (fit of the</span>
+<span class="sd">    first ``n_low`` points, constant if the fit fails) or "constant" or "none"; ``high`` = "porod"</span>
+<span class="sd">    (B q⁻⁴ from the last ``n_high`` points) or "none"."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dsdo</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-</span> <span class="n">background</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="n">o</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">o</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">o</span><span class="p">]</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="n">good</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="n">good</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="n">good</span><span class="p">]</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength_A</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">_domega_dq</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="c1"># trapezoid with its variance</span>
+    <span class="n">dq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">c</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dq</span>
+    <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">dq</span>
+    <span class="n">measured</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">I</span><span class="p">))</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">c</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">notes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">low_q</span><span class="p">,</span> <span class="n">rg</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">low</span> <span class="o">!=</span> <span class="s2">"none"</span><span class="p">:</span>
+        <span class="n">qq</span><span class="p">,</span> <span class="n">Il</span> <span class="o">=</span> <span class="n">q</span><span class="p">[:</span><span class="n">n_low</span><span class="p">],</span> <span class="n">I</span><span class="p">[:</span><span class="n">n_low</span><span class="p">]</span>
+        <span class="n">I0</span><span class="p">,</span> <span class="n">rg2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">Il</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="o">==</span> <span class="s2">"guinier"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">Il</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">qq</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">qq</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">Il</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">I0</span><span class="p">,</span> <span class="n">rg2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="o">-</span><span class="mi">3</span> <span class="o">*</span> <span class="n">b</span>
+                <span class="n">rg</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rg2</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"no Guinier region at the lowest q (rising or flat): constant extrapolation"</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">400</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">I0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">g</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rg2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">rg2</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">low_q</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trapezoid</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="n">_domega_dq</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">lam</span><span class="p">),</span> <span class="n">g</span><span class="p">))</span>
+    <span class="n">high_q</span><span class="p">,</span> <span class="n">B</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">high</span> <span class="o">==</span> <span class="s2">"porod"</span><span class="p">:</span>
+        <span class="n">qq</span><span class="p">,</span> <span class="n">Ih</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="n">n_high</span><span class="p">:],</span> <span class="n">I</span><span class="p">[</span><span class="o">-</span><span class="n">n_high</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">Ih</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Ih</span> <span class="o">*</span> <span class="n">qq</span><span class="o">**</span><span class="mi">4</span><span class="p">))</span>
+            <span class="n">qmax_geom</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">lam</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">)</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">qmax_geom</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+            <span class="n">high_q</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trapezoid</span><span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">g</span><span class="o">**-</span><span class="mi">4</span> <span class="o">*</span> <span class="n">_domega_dq</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">lam</span><span class="p">),</span> <span class="n">g</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"negative intensities at the highest q: no Porod tail (background too high?)"</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">thickness_cm</span> <span class="o">*</span> <span class="p">(</span><span class="n">measured</span> <span class="o">+</span> <span class="n">low_q</span> <span class="o">+</span> <span class="n">high_q</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Probability</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">thickness_cm</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="p">),</span> <span class="n">thickness_cm</span> <span class="o">*</span> <span class="n">measured</span><span class="p">,</span> <span class="n">thickness_cm</span> <span class="o">*</span> <span class="n">low_q</span><span class="p">,</span>
+                      <span class="n">thickness_cm</span> <span class="o">*</span> <span class="n">high_q</span><span class="p">,</span> <span class="n">rg</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">notes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">extrapolated_fraction</span> <span class="o">&gt;</span> <span class="mf">0.3</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">out</span><span class="o">.</span><span class="n">extrapolated_fraction</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> % of p_cS is extrapolated: "</span>
+                         <span class="s2">"measure a wider q range (lower q at a longer distance)"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="scale_probability">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.scale_probability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scale_probability</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">d_from</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">d_to</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lam_from</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lam_to</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""p_cS at another thickness and wavelength, single scattering: p ∝ d λ² (dΣ/dΩ(q) fixed)."""</span>
+    <span class="k">return</span> <span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">d_to</span> <span class="o">/</span> <span class="n">d_from</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">lam_to</span> <span class="o">/</span> <span class="n">lam_from</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="thickness_for">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.thickness_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">thickness_for</span><span class="p">(</span><span class="n">p_target</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">lam_to</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Thickness that gives ``p_target`` (e.g. 0.1) at wavelength ``lam_to`` (default: the same)."""</span>
+    <span class="n">lam_to</span> <span class="o">=</span> <span class="n">lam</span> <span class="k">if</span> <span class="n">lam_to</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">lam_to</span>
+    <span class="k">return</span> <span class="n">d</span> <span class="o">*</span> <span class="n">p_target</span> <span class="o">/</span> <span class="n">p</span> <span class="o">*</span> <span class="p">(</span><span class="n">lam</span> <span class="o">/</span> <span class="n">lam_to</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------- regime</span>
+<div class="viewcode-block" id="Assessment">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.Assessment">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Assessment</span><span class="p">:</span>
+    <span class="n">regime</span><span class="p">:</span> <span class="nb">str</span>                    <span class="c1"># weak | moderate | strong</span>
+    <span class="n">p_cs</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># which form of the reduction formula is adequate</span>
+    <span class="n">actions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="assess">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.assess">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assess</span><span class="p">(</span><span class="n">p_cs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">thickness_cm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+           <span class="n">background_fraction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plateau_reached</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+           <span class="n">weak</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">strong</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Assessment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Regime of a sample and the actions for the reduction and the measurement.</span>
+
+<span class="sd">    ``background_fraction``: (EB - Cd) / (S - Cd) summed near the beam stop; when the</span>
+<span class="sd">    background is comparable to the sample signal the (1 - p_cS) factor changes the shape, not only</span>
+<span class="sd">    the scale (Strunz et al., fig. 2)."""</span>
+    <span class="n">acts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">plateau_reached</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"the wide-angle transmission has not reached its plateau: T_Si is a lower limit"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p_cs</span> <span class="o">&lt;</span> <span class="n">weak</span><span class="p">:</span>
+        <span class="n">regime</span> <span class="o">=</span> <span class="s2">"weak"</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="s2">"eq. 9 with p_cS ≈ 0 (BerSANS default p(S) = 0): T_Si ≈ τ_S"</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"multiple scattering negligible; transmission through the beam spot is adequate"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">p_cs</span> <span class="o">&lt;</span> <span class="n">strong</span><span class="p">:</span>
+        <span class="n">regime</span> <span class="o">=</span> <span class="s2">"moderate"</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="s2">"eq. 8: sample / (T_EB T_Si), background × (1 - p_cS); BerSANS: p(S) = p_cS"</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"use p_cS = </span><span class="si">{</span><span class="n">p_cs</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> for the background term; neglecting it shifts the absolute "</span>
+                    <span class="sa">f</span><span class="s2">"scale by up to </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">p_cs</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> %"</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"measure the transmission over a wide solid angle (T_Si, plateau), not only the beam spot"</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"iterate: reduce -&gt; p_cS from the curve -&gt; reduce (self_consistent_probability)"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">regime</span> <span class="o">=</span> <span class="s2">"strong"</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="s2">"eq. 8 with modelled p_cS; the measured curve is a multiple-scattering curve"</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"the shape is broadened by multiple scattering (Schelten &amp; Schmatz 1980): I(0), Rg and "</span>
+                    <span class="s2">"the invariant are not those of single scattering"</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"τ_S cannot be measured (beam spot contaminated): take p_cS from the model of the "</span>
+                    <span class="s2">"data analysis or from 1 - τ_UL/T_Si as a lower limit"</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"check with a thickness or wavelength series: the curves divided by d must agree "</span>
+                    <span class="s2">"(grouping.equivalence on I/d); broadening that grows with d λ² is multiple scattering"</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"analyse with multiple scattering in the model, or measure a thinner sample"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p_cs</span> <span class="o">&gt;=</span> <span class="n">weak</span> <span class="ow">and</span> <span class="n">thickness_cm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d_new</span> <span class="o">=</span> <span class="n">thickness_for</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">p_cs</span><span class="p">,</span> <span class="n">thickness_cm</span><span class="p">)</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"p_cS = </span><span class="si">{</span><span class="n">target</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> needs d ≈ </span><span class="si">{</span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">d_new</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> mm at the same wavelength"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">wavelength_A</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lam_new</span> <span class="o">=</span> <span class="n">wavelength_A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">target</span> <span class="o">/</span> <span class="n">p_cs</span><span class="p">)</span>
+            <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"or λ ≈ </span><span class="si">{</span><span class="n">lam_new</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> Å at the same thickness (p ∝ d λ²)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">background_fraction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">background_fraction</span> <span class="o">&gt;</span> <span class="mf">0.2</span> <span class="ow">and</span> <span class="n">p_cs</span> <span class="o">&gt;=</span> <span class="n">weak</span><span class="p">:</span>
+        <span class="n">acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the background is </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">background_fraction</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> % of the signal near the beam stop: "</span>
+                    <span class="s2">"a wrong (1 - p_cS) changes the curve shape, not only the scale"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Assessment</span><span class="p">(</span><span class="n">regime</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">p_cs</span><span class="p">),</span> <span class="n">formula</span><span class="p">,</span> <span class="n">acts</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="self_consistent_probability">
+<a class="viewcode-back" href="../../../../sasred/api.html#pysasfit.sasred.core.scattering_strength.self_consistent_probability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">self_consistent_probability</span><span class="p">(</span><span class="n">reduce</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">],</span> <span class="n">thickness_cm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                <span class="n">p0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Solve the integral equation for p_cS by iteration.</span>
+
+<span class="sd">    ``reduce(p)`` returns (q, dΣ/dΩ, σ) in absolute units for a given p_cS. Returns</span>
+<span class="sd">    (p_cS, Probability of the last curve, list of iterates). Raises if it does not converge."""</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">hist</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p0</span><span class="p">),</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p0</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+        <span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">pr</span> <span class="o">=</span> <span class="n">scattering_probability</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">thickness_cm</span><span class="p">,</span> <span class="n">wavelength_A</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">p_new</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">pr</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">hist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span> <span class="o">-</span> <span class="n">p</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">p_new</span><span class="p">,</span> <span class="n">pr</span><span class="p">,</span> <span class="n">hist</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p_new</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"p_cS did not converge: </span><span class="si">{</span><span class="n">hist</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

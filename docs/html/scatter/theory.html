@@ -1,0 +1,651 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySCAtter: theory and formulas &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySCAtter: validation against CrystalScatter" href="validation.html" />
+    <link rel="prev" title="pySCAtter: scattering patterns of particles and ordered structures" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySCAtter</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#panels">Panels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#fitting-measured-data">Fitting measured data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#validation">Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#calculation-speed">Calculation speed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#differences-from-sasscatter2-and-limitations">Differences from SasScatter2 and limitations</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#references">References</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pySCAtter: theory and formulas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#intensity">Intensity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#size-distribution">Size distribution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#particles">Particles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#orientation-distributions">Orientation distributions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lattice-factor">Lattice factor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fitting">Fitting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="validation.html">pySCAtter: validation against CrystalScatter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySCAtter: scattering patterns of particles and ordered structures</a></li>
+      <li class="breadcrumb-item active">pySCAtter: theory and formulas</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scatter/theory.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pyscatter-theory-and-formulas">
+<h1>pySCAtter: theory and formulas<a class="headerlink" href="#pyscatter-theory-and-formulas" title="Link to this heading"></a></h1>
+<p>This page gives the formulas behind pySCAtter, with the conventions of the CrystalScatter (SasScatter2) C++ code
+that the program follows. All lengths are in nm and q is in 1/nm. Equation numbers in brackets refer to the papers
+in the <a class="reference internal" href="#references">references</a>.</p>
+<section id="intensity">
+<h2>Intensity<a class="headerlink" href="#intensity" title="Link to this heading"></a></h2>
+<p>Without a lattice, pySCAtter computes the intensity as</p>
+<div class="math notranslate nohighlight">
+\[
+I(\mathbf q) = I_0 \left[ \langle P(\mathbf q)\rangle + \beta(q)\,\langle P(\mathbf q)\rangle\,\bigl(S(q) - 1\bigr)\right] + B,
+\qquad \beta(q) = \frac{\langle F(q)\rangle^2}{\langle P(q)\rangle},
+\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p>P = |F|² is the particle form factor, normalised to P(0) = 1;</p></li>
+<li><p>F is the amplitude;</p></li>
+<li><p>⟨…⟩ is the average over the size and orientation distributions;</p></li>
+<li><p>S(q) is an optional structure factor (Percus–Yevick, sticky hard spheres or mass fractal), used in the decoupling
+approximation (Kotlarchyk &amp; Chen 1983);</p></li>
+<li><p>I₀ is the scale (<code class="docutils literal notranslate"><span class="pre">I0</span></code>) and B the flat background (<code class="docutils literal notranslate"><span class="pre">Base</span></code>).</p></li>
+</ul>
+<p>With a lattice, the structure factor is replaced by the lattice factor Z(q) of the CrystalScatter form:</p>
+<div class="math notranslate nohighlight">
+\[
+I(\mathbf q) = I_0 \left[ S_\mathrm{lat}(\mathbf q)\,\langle P(\mathbf q)\rangle \right] + B,
+\qquad
+S_\mathrm{lat} = 1 + \beta(q)\,\bigl(Z(\mathbf q) - 1\bigr)\,G(q),
+\qquad
+G(q) = \exp\!\left(-\tfrac{1}{3}\sigma_\mathrm{DW}^2 q^2\right).
+\]</div>
+<p>G(q) is the Debye–Waller factor. σ_DW (<code class="docutils literal notranslate"><span class="pre">EditDebyeWaller</span></code>, nm) is the root-mean-square displacement of a particle
+from its lattice point (Förster 2005, eq. 25; C++ <code class="docutils literal notranslate"><span class="pre">dwfactor</span> <span class="pre">=</span> <span class="pre">σ²/3</span></code>). At high q it damps the Bragg peaks and
+returns the intensity to the diffuse ⟨P⟩. <code class="docutils literal notranslate"><span class="pre">EditBFactor</span></code> in <code class="docutils literal notranslate"><span class="pre">.ini</span></code> files is not used by the C++ code, and pySCAtter
+ignores it too.</p>
+</section>
+<section id="size-distribution">
+<h2>Size distribution<a class="headerlink" href="#size-distribution" title="Link to this heading"></a></h2>
+<p>All sizes follow a Schulz–Zimm distribution of the reduced size x = R/R̄:</p>
+<div class="math notranslate nohighlight">
+\[
+h(x) = \frac{(z+1)^{z+1}}{\Gamma(z+1)}\, x^{z}\, e^{-(z+1)x},
+\qquad \sigma = \frac{\sigma_R}{\bar R} = \frac{1}{\sqrt{z+1}} .
+\]</div>
+<p>The relative width σ is the parameter <code class="docutils literal notranslate"><span class="pre">EditSigma</span></code> (or <code class="docutils literal notranslate"><span class="pre">SigmaL</span></code> for the second length). The averages ⟨Rⁿ⟩ have the
+closed form ⟨xⁿ⟩ = Γ(z+1+n)/(Γ(z+1)(z+1)ⁿ). This makes the size-averaged form factors expandable as hypergeometric
+series in q (Wagener &amp; Förster 2023).</p>
+<section id="hypergeometric-algorithm">
+<h3>Hypergeometric algorithm<a class="headerlink" href="#hypergeometric-algorithm" title="Link to this heading"></a></h3>
+<p>Wagener &amp; Förster (2023) write each form factor as a product of generalised hypergeometric functions. The amplitude of a sphere is
+F = ₀F₁(5/2; −q²R²/4). With the Schulz average, every pixel is evaluated by one of three routes, chosen by its own
+error estimate:</p>
+<ol class="arabic simple">
+<li><p>a power series in (qR)² with the Schulz moments as coefficients, used for small qR;</p></li>
+<li><p>closed-form asymptotics, which are the large-q expansions of the averaged Bessel products and are exact for
+σ → 0;</p></li>
+<li><p>Gauss–Laguerre quadrature over x, for the region in between.</p></li>
+</ol>
+<p>For very narrow distributions (z + s &gt; 140) the Laguerre nodes overflow. A uniform grid of x over ±9 standard
+deviations is then used instead, and also as a last resort whenever the other routes return a non-finite value.</p>
+</section>
+</section>
+<section id="particles">
+<h2>Particles<a class="headerlink" href="#particles" title="Link to this heading"></a></h2>
+<p>The form factors below are for monodisperse particles. pySCAtter averages them over the Schulz distributions
+above and over the orientation distribution.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>particle</p></th>
+<th class="head"><p>form factor / amplitude</p></th>
+<th class="head"><p>parameters (C++ meaning)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sphere</p></td>
+<td><p>F = 3[sin(qR) − qR cos(qR)]/(qR)³</p></td>
+<td><p>R = <code class="docutils literal notranslate"><span class="pre">EditRadius</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>ellipsoid of revolution</p></td>
+<td><p>F = F_sphere(q r(μ)), r² = R²(1−μ²) + L²μ²</p></td>
+<td><p>R equatorial, L = <code class="docutils literal notranslate"><span class="pre">Length</span></code> polar semi-axis</p></td>
+</tr>
+<tr class="row-even"><td><p>triaxial ellipsoid</p></td>
+<td><p>F_sphere(q r), r² = a²μ_a² + b²μ_b² + c²μ_c²</p></td>
+<td><p>R, L, R₂</p></td>
+</tr>
+<tr class="row-odd"><td><p>cylinder</p></td>
+<td><p>F = [2J₁(q_⊥R)/(q_⊥R)] · [sin(q_∥L)/(q_∥L)]</p></td>
+<td><p>R radius, <strong>L = half-length</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>disk</p></td>
+<td><p>same as the cylinder</p></td>
+<td><p><strong><code class="docutils literal notranslate"><span class="pre">EditRadius</span></code> = half-thickness, <code class="docutils literal notranslate"><span class="pre">Length</span></code> = disk radius</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>vesicle (thin shell)</p></td>
+<td><p>F = [V_o F_s(qR_o) − V_i F_s(qR_i)]/(V_o − V_i)</p></td>
+<td><p><strong><code class="docutils literal notranslate"><span class="pre">EditRadius</span></code> = inner radius, <code class="docutils literal notranslate"><span class="pre">Length</span></code> = outer radius</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>cube / parallelepiped</p></td>
+<td><p>F = Π_k sin(q_k a_k)/(q_k a_k)</p></td>
+<td><p>half-edges a, b, c</p></td>
+</tr>
+<tr class="row-odd"><td><p>superball</p></td>
+<td><p>|x|^{2p} + |y|^{2p} + |z|^{2p} ≤ R^{2p}, tabulated</p></td>
+<td><p>R, p</p></td>
+</tr>
+<tr class="row-even"><td><p>excluded-volume chain</p></td>
+<td><p>Regime I series (Förster &amp; Burger 1998), Regime II ∝ q^{−1/ν}</p></td>
+<td><p>R = R_g</p></td>
+</tr>
+<tr class="row-odd"><td><p>Kratky–Porod chain</p></td>
+<td><p>Kholodenko (1993) interpolation between rod and Gaussian coil</p></td>
+<td><p>Kuhn length b, contour length L</p></td>
+</tr>
+<tr class="row-even"><td><p>Teubner–Strey</p></td>
+<td><p>P ∝ 1/(a₂ + c₁q² + c₂q⁴) with peak at q² = k² − ξ⁻², k = 2π/d</p></td>
+<td><p>ξ, d</p></td>
+</tr>
+</tbody>
+</table>
+<p>Here q_∥ = q·n and q_⊥ = |q − q_∥ n| for the particle axis n, and μ is the cosine of the angle between q and n.</p>
+<section id="cylinders-and-disks-c-conventions">
+<h3>Cylinders and disks (C++ conventions)<a class="headerlink" href="#cylinders-and-disks-c-conventions" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Length.</strong> The C++ code takes <code class="docutils literal notranslate"><span class="pre">Length</span></code> as the half-length. This holds for cylinders and for the
+<code class="docutils literal notranslate"><span class="pre">Length</span></code> of disks, which is their radius.</p></li>
+<li><p><strong>Two distributions.</strong> σ (<code class="docutils literal notranslate"><span class="pre">EditSigma</span></code>) on the radius and σ_L (<code class="docutils literal notranslate"><span class="pre">SigmaL</span></code>) on the length are independent Schulz
+distributions. The orientation-averaged form factor is
+$<span class="math notranslate nohighlight">\(
+\langle P\rangle = \int_0^1 d\mu\;\Bigl\langle \bigl[2J_1(qR\sqrt{1-\mu^2})/(qR\sqrt{1-\mu^2})\bigr]^2\Bigr\rangle_R
+\Bigl\langle \bigl[\sin(qL\mu)/(qL\mu)\bigr]^2\Bigr\rangle_L .
+\)</span>$
+pySCAtter evaluates this exactly (<code class="docutils literal notranslate"><span class="pre">CylinderRL</span></code>), with each factor computed by the hypergeometric blocks.</p></li>
+<li><p><strong>C++ factorisation.</strong> For L/R ≥ 2 the C++ code uses P ≈ P_rod(q)·P_cs(q), and evaluates the cross-section factor
+at |q| even for oriented cylinders. The isotropic curves differ from the exact average by 1–2 %. In oriented
+patterns, the streak perpendicular to the axis is much weaker in the C++ code than it physically is. pySCAtter
+keeps the exact form; see the validation page.</p></li>
+<li><p><strong>Disks.</strong> A disk is the same cylinder with the roles exchanged: radius = <code class="docutils literal notranslate"><span class="pre">Length</span></code>, half-thickness =
+<code class="docutils literal notranslate"><span class="pre">EditRadius</span></code>. The C++ disk formula fails (gives wrong values) for <code class="docutils literal notranslate"><span class="pre">Length</span></code> &lt; <code class="docutils literal notranslate"><span class="pre">EditRadius</span></code>, which is a rod, not a
+disk.</p></li>
+</ul>
+</section>
+<section id="vesicles">
+<h3>Vesicles<a class="headerlink" href="#vesicles" title="Link to this heading"></a></h3>
+<p>The shell amplitude is</p>
+<div class="math notranslate nohighlight">
+\[
+F(q) = \frac{R_o^3 F_s(qR_o) - R_i^3 F_s(qR_i)}{R_o^3 - R_i^3},
+\qquad F_s(x) = 3\frac{\sin x - x\cos x}{x^3},
+\]</div>
+<p>with inner radius R_i (<code class="docutils literal notranslate"><span class="pre">EditRadius</span></code>) and outer radius R_o (<code class="docutils literal notranslate"><span class="pre">Length</span></code>). The mean radius and the half-thickness carry
+independent Schulz distributions (σ, σ_L), as in the C++ <code class="docutils literal notranslate"><span class="pre">polyvesicle</span></code> routine. pySCAtter averages the exact shell
+amplitude (<code class="docutils literal notranslate"><span class="pre">VesicleRD</span></code>), while the C++ code uses a thin-shell closed form. The two differ by an overall factor 1.02
+and by less than 2 % in shape.</p>
+</section>
+<section id="interiors">
+<h3>Interiors<a class="headerlink" href="#interiors" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Core + shell.</strong> The amplitude is
+$<span class="math notranslate nohighlight">\(
+F = \frac{(\rho_c - \rho_s) V_c F_c(qR_c) + \rho_s V F(qR)}{(\rho_c - \rho_s) V_c + \rho_s V},
+\)</span>$
+with the core contrast set to 1 and the shell contrast ρ_s (<code class="docutils literal notranslate"><span class="pre">EditRho</span></code>). This form holds for spheres, cylinders,
+disks and ellipsoids. For core–shell cylinders the shell ratio is ν = L/R_t.</p></li>
+<li><p><strong>Power-law shell.</strong> The shell density is ρ(r) ∝ (r/R_c)^α, built from 20–120 thin homogeneous sub-shells.
+α = −4/3 describes star polymers in a good solvent (Förster &amp; Burger 1998).</p></li>
+<li><p><strong>Multi-shell / myelin.</strong> These use the exact multilayer sum Σ_k Δρ_k V_k F_s(qR_k).</p></li>
+</ul>
+</section>
+</section>
+<section id="orientation-distributions">
+<h2>Orientation distributions<a class="headerlink" href="#orientation-distributions" title="Link to this heading"></a></h2>
+<p>The particle axis n makes the angle δ with the director n₀. The distributions h(δ) are:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">Ordis</span></code></p></th>
+<th class="head"><p>h(δ)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gaussian</p></td>
+<td><p>exp(−δ²/(2w²))</p></td>
+</tr>
+<tr class="row-odd"><td><p>exponential, Laguerre</p></td>
+<td><p>exp(−|δ|/w)</p></td>
+</tr>
+<tr class="row-even"><td><p>Onsager</p></td>
+<td><p>cosh(cos δ /(2w²))</p></td>
+</tr>
+<tr class="row-odd"><td><p>Maier–Saupe</p></td>
+<td><p>exp(cos²δ / w²)</p></td>
+</tr>
+<tr class="row-even"><td><p>cut-off</p></td>
+<td><p>1 for δ &lt; w (smoothed edge)</p></td>
+</tr>
+<tr class="row-odd"><td><p>mirrored …</p></td>
+<td><p>h(δ) + h(π − δ): the same pattern, since all particles have a centre of symmetry</p></td>
+</tr>
+<tr class="row-even"><td><p>z-dir</p></td>
+<td><p>δ = 0 (perfect alignment)</p></td>
+</tr>
+<tr class="row-odd"><td><p>isotropic</p></td>
+<td><p>1 (powder average)</p></td>
+</tr>
+<tr class="row-even"><td><p>fiber pattern</p></td>
+<td><p>uniform rotation about the fibre axis (the beam)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The width w is <code class="docutils literal notranslate"><span class="pre">EditDbeta</span></code> in degrees; values below 0.5° are taken as 0.5°.</p>
+<p>The distributions h(δ) are calculated for particles with one axis: cylinder, disk and ellipsoid, with or without
+a core + shell interior. The cube is calculated for the isotropic and the perfectly aligned case only. The
+triaxial ellipsoid, the super ellipsoid and the superball are orientation averaged whatever <code class="docutils literal notranslate"><span class="pre">Ordis</span></code> is. With a
+lattice, h(δ) acts on the particle term ⟨P⟩ only; the orientation of the lattice is described under
+<a class="reference internal" href="#lattices">Lattices</a>.</p>
+<p>The oriented pattern is
+$<span class="math notranslate nohighlight">\(
+\langle P(\mathbf q)\rangle = \frac{\int h(\delta)\,P(\mathbf q, \mathbf n)\, d\Omega_n}{\int h(\delta)\, d\Omega_n}.
+\)</span>$</p>
+<section id="quadrature-of-the-orientation-averages">
+<h3>Quadrature of the orientation averages<a class="headerlink" href="#quadrature-of-the-orientation-averages" title="Link to this heading"></a></h3>
+<p>No general spherical grid (Lebedev, Fibonacci, spherical t-design) is used. Every average uses the symmetry of
+the problem to reduce the dimension, then applies product Gauss–Legendre rules.</p>
+<ul>
+<li><p><strong>Isotropic, axisymmetric particles</strong> (ellipsoid, cylinder, disk, core–shell, lens, dumbbell): a 1D
+Gauss–Legendre rule in μ = cos∠(q, n) on [0, 1]. The number of nodes is n = clip(60 + 6 qR_max ν, 80, 1500),
+at most 400–600 per particle, so the count grows with the number of oscillations in μ. <code class="docutils literal notranslate"><span class="pre">CylinderRL</span></code> uses
+n = clip(80 + 8 q max(R, L), 120, 2000). The size averages are done inside the integrand by the hypergeometric
+blocks.</p></li>
+<li><p><strong>Isotropic, non-axisymmetric particles</strong> (triaxial ellipsoid, parallelepiped / cube, superball, super-ellipsoid):
+a product Gauss–Legendre rule in μ ∈ [0, 1] × φ ∈ [0, π/2]. One octant suffices because of the mirror symmetry.</p></li>
+<li><p><strong>Orientation distributions h(δ) about a director</strong>: the averaged particle is axially symmetric about the
+director, so ⟨P⟩ depends on (q_∥, q_⊥) only. pySCAtter tabulates it on a 56 × 36 grid and interpolates bilinearly
+to the pixels. At each grid node the average uses:</p>
+<ul class="simple">
+<li><p>Gauss–Legendre in δ ∈ [0, π] (40 nodes, weight h(δ) sin δ);</p></li>
+<li><p>the midpoint rule in the azimuth ψ (16 points; spectrally accurate for the periodic integrand);</p></li>
+<li><p>7–21 nodes of the size distribution.</p></li>
+</ul>
+<p>The fibre pattern is the same table with h = 1 about the beam axis. Perfect orientation (z-dir) needs no average.</p>
+</li>
+<li><p><strong>Lattices</strong>: the powder average is analytic in the radial form above, with the azimuthal normalisation N(g)
+computed by a 200-node Gauss–Legendre rule. The fibre texture of a lattice averages 240 uniform rotations about
+the fibre axis. An oriented single crystal needs no average.</p></li>
+</ul>
+<p>The moment series of Wagener &amp; Förster (2023, eqs. 13–15) for oriented cylinders is in
+<code class="docutils literal notranslate"><span class="pre">pysasfit.scatter.orient.pattern_series</span></code>. The engine does not use it at present.</p>
+</section>
+<section id="frames">
+<h3>Frames<a class="headerlink" href="#frames" title="Link to this heading"></a></h3>
+<p>In the C++ frame, q_x and q_y lie in the detector plane (horizontal and vertical) and z is along the beam. The
+director is</p>
+<div class="math notranslate nohighlight">
+\[
+\mathbf n_C = (\sin\theta\cos\varphi,\ \sin\theta\sin\varphi,\ \cos\theta).
+\]</div>
+<p>The pySCAtter engine uses x along the beam, y horizontal and z vertical, so n = (n_{C,z}, n_{C,x}, n_{C,y}):</p>
+<ul class="simple">
+<li><p>θ = 0: the axis is along the beam;</p></li>
+<li><p>θ = 90°, φ = 0: the axis is horizontal in the detector plane;</p></li>
+<li><p>θ = 90°, φ = 90°: the axis is vertical. The streak of long cylinders is then horizontal.</p></li>
+</ul>
+<p>The q map of a 2D image is built in one of two ways:</p>
+<ul class="simple">
+<li><p><strong>Preset mode</strong> (Qmax): q_x = q_max·i/N and q_y = q_max·j/N.</p></li>
+<li><p><strong>Detector mode</strong>: q is computed from the detector distance, the pixel size and the wavelength. The beam
+component q_beam = −q²/(2k) comes from the Ewald sphere.</p></li>
+</ul>
+</section>
+</section>
+<section id="lattice-factor">
+<h2>Lattice factor<a class="headerlink" href="#lattice-factor" title="Link to this heading"></a></h2>
+<p>For every reflection <strong>G</strong> (Miller indices hkl, multiplicity m, structure factor f), the lattice factor adds a
+radial peak in |q| − g, with g = |G|, multiplied by an azimuthal factor in the angle ψ between <strong>q</strong> and <strong>G</strong>
+(Förster 2005, 2011; C++ <code class="docutils literal notranslate"><span class="pre">sc_gpu_generic.h</span></code>):</p>
+<div class="math notranslate nohighlight">
+\[
+Z(\mathbf q) = \frac{2\pi}{n V} \sum_{\mathbf G} m\, |f_{hkl}|^2\; s_q\bigl(|\mathbf q| - g\bigr)\;
+\frac{g_3\, A(\psi)}{N(g)},
+\qquad g_3 = \frac{2\pi}{g^2}.
+\]</div>
+<ul class="simple">
+<li><p>V is the unit-cell volume (the cell area in 2D) and n the number of particles per cell.</p></li>
+<li><p>A(ψ) is a Gaussian (or the matching peak shape) in the arc length qψ with width φ_w = 4/<code class="docutils literal notranslate"><span class="pre">EditAzi</span></code> (1/nm), for
+example A = exp(−4q²ψ²/(π φ_w²)). <code class="docutils literal notranslate"><span class="pre">EditAzi</span></code> is an azimuthal domain size in nm, the analogue of D for the radial
+width.</p></li>
+<li><p>N(g) = ∫₀^π A(ψ) sin ψ dψ normalises A over the sphere. It is computed with Gauss–Legendre quadrature.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">EditAzi</span></code> = 0 there is no azimuthal dependence, A = 1 and N = 2, which gives the powder pattern.</p></li>
+<li><p>For the isotropic orientation (<code class="docutils literal notranslate"><span class="pre">Ordis</span></code> = isotropic) the same holds whatever <code class="docutils literal notranslate"><span class="pre">EditAzi</span></code> is: the average of
+A(ψ)/N(g) over all orientations of the crystal is 1/2, so every reflection is spread uniformly over its sphere
+|q| = g and the 2D pattern shows Debye–Scherrer rings. The 1D curve I(q) is always this powder average.</p></li>
+</ul>
+<p>The factor g₃ = 2π/g² is evaluated at the reflection, not at q (the 1/q² of the textbook powder average). Near a
+peak the two agree. In the tails, the C++ form keeps the peak symmetric in q.</p>
+<section id="peak-shapes">
+<h3>Peak shapes<a class="headerlink" href="#peak-shapes" title="Link to this heading"></a></h3>
+<p>With x = |q| − g, δ the width and the C++ constants c₁ = 4, c₂ = 4(√2 − 1), c₃ = 4(2^{2/3} − 1),
+c₄ = 2^{1/β} − 1, the radial peak shapes are:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">ComboBoxPeak</span></code></p></th>
+<th class="head"><p>s_q(x)</p></th>
+<th class="head"><p>area</p></th>
+<th class="head"><p>FWHM</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0 Lorentzian</p></td>
+<td><p>√c₁ / (πδ [1 + c₁x²/δ²])</p></td>
+<td><p>1</p></td>
+<td><p>δ</p></td>
+</tr>
+<tr class="row-odd"><td><p>1 Gaussian</p></td>
+<td><p>exp(−4x²/(πδ²)) / (πδ/2)</p></td>
+<td><p>1</p></td>
+<td><p>√(π ln 2) δ = 1.476 δ</p></td>
+</tr>
+<tr class="row-even"><td><p>2 modified Lorentzian I</p></td>
+<td><p>2√c₂ / (πδ [1 + c₁x²/δ²]²)</p></td>
+<td><p>0.64</p></td>
+<td><p>0.64 δ</p></td>
+</tr>
+<tr class="row-odd"><td><p>3 modified Lorentzian II</p></td>
+<td><p>√c₃ / (2δ [1 + c₁x²/δ²]^{3/2})</p></td>
+<td><p>0.77</p></td>
+<td><p>0.77 δ</p></td>
+</tr>
+<tr class="row-even"><td><p>4 pseudo-Voigt</p></td>
+<td><p>η·Lorentzian + (1 − η) exp(−x²/δ²)/(√π δ), η = PeakPar/100</p></td>
+<td><p>see below</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>5 Pearson VII</p></td>
+<td><p>Γ(β) 2c₄ / (Γ(β−½) π δ [1 + 4c₄x²/δ²]^β), β = PeakPar</p></td>
+<td><p>√(c₄/π)</p></td>
+<td><p>δ</p></td>
+</tr>
+<tr class="row-even"><td><p>6 Gamma</p></td>
+<td><p>Förster 2005 generalised shape</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>7 anisotropic Gaussian</p></td>
+<td><p>Gaussian with δ = |(4/σ_x, 4/σ_y, 4/σ_z)|/3</p></td>
+<td><p>1</p></td>
+<td><p>1.476 δ</p></td>
+</tr>
+</tbody>
+</table>
+<p>These are the shapes as the C++ code implements them, constants included:</p>
+<ul class="simple">
+<li><p><strong>Modified Lorentzians.</strong> The denominator uses c₁ but the prefactor uses c₂ or c₃. The peak areas are therefore
+0.64 and 0.77 instead of 1, and the widths shrink by the same factors.</p></li>
+<li><p><strong>Pseudo-Voigt.</strong> The C++ normalisation <code class="docutils literal notranslate"><span class="pre">peaknorm2</span></code> of the Gaussian part is never set. The summed term is
+therefore divided by η·N_L only, and the intensity scales as 1/η. pySCAtter reproduces this, so that fits give
+the same I₀.</p></li>
+<li><p><strong>Gamma peak.</strong> It is switched off in the C++ code (<code class="docutils literal notranslate"><span class="pre">#ifdef</span> <span class="pre">undef</span></code>), which gives s_q = 1. pySCAtter evaluates the
+Förster (2005) shape instead.</p></li>
+</ul>
+</section>
+<section id="peak-width">
+<h3>Peak width<a class="headerlink" href="#peak-width" title="Link to this heading"></a></h3>
+<p>The width δ is set by two radio buttons, as in the C++ code:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>mode</p></th>
+<th class="head"><p>δ</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Debye–Scherrer (<code class="docutils literal notranslate"><span class="pre">RadButDebyeScherrer</span></code>, default)</p></td>
+<td><p>δ = 4/D</p></td>
+</tr>
+<tr class="row-odd"><td><p>paracrystal (<code class="docutils literal notranslate"><span class="pre">RadioButtonPara</span></code>)</p></td>
+<td><p>δ(q) = 4/D + (σ_DW/d_nn)²·d_nn·q²</p></td>
+</tr>
+<tr class="row-even"><td><p>neither</p></td>
+<td><p>δ = 1 nm⁻¹ (fixed)</p></td>
+</tr>
+</tbody>
+</table>
+<p>D (<code class="docutils literal notranslate"><span class="pre">EditDomainSize</span></code>) is the domain size in nm, an absolute length and not a multiple of the unit cell. The relation
+D = N a = 4/δ is Förster 2011, eqs. 91–92: a domain of N cells has peaks of width ∝ 1/(N a), whatever the
+lattice. δ is therefore the same for every reflection and every lattice constant. For a Gaussian the FWHM is
+√(π ln 2)·4/D = 5.90/D. The C++ code does not check D against the lattice constant. A domain smaller than about
+three unit cells has no physical meaning, and the peaks then merge into a broad hump.</p>
+<p>In the paracrystal mode, d_nn is the nearest-neighbour distance:</p>
+<ul class="simple">
+<li><p>a for sc, lamellae, cylinder packings, hcp and bct;</p></li>
+<li><p>a√2/2 for fcc and Fd3m;</p></li>
+<li><p>a√3/2 for bcc, Ia3d and Im3m.</p></li>
+</ul>
+<p>The width grows as q², so higher orders broaden (Hosemann’s paracrystal, cumulative disorder). σ_DW
+(<code class="docutils literal notranslate"><span class="pre">EditDebyeWaller</span></code>) sets both this width and the Debye–Waller factor.</p>
+</section>
+<section id="lattices">
+<h3>Lattices<a class="headerlink" href="#lattices" title="Link to this heading"></a></h3>
+<p>pySCAtter generates the reflections from the lattice type, its cell parameters and hkl up to
+<code class="docutils literal notranslate"><span class="pre">HKLmax</span></code>. It applies the structure factor of the motif and the extinction rules of CrystalScatter:</p>
+<ul class="simple">
+<li><p>sc, bcc, fcc, hcp, bct, Fd3m and orthorhombic;</p></li>
+<li><p>lamellae and the 2D cylinder packings (hexagonal, square, centred rectangular);</p></li>
+<li><p>gyroid (Ia3d), OBDD (Pn3m) and Plumber’s Nightmare (Im3m), with the reflection conditions of the bicontinuous
+phases;</p></li>
+<li><p>the GISAXS entries, calculated as the same lattices in transmission.</p></li>
+</ul>
+<p>Each lattice type takes only the cell parameters that define it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>lattice</p></th>
+<th class="head"><p>cell</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sc, bcc, fcc, Fd3m, Ia3d, Pn3m, Im3m</p></td>
+<td><p>a = b = c, α = β = γ = 90°</p></td>
+</tr>
+<tr class="row-odd"><td><p>bct</p></td>
+<td><p>a = b, c; angles 90°</p></td>
+</tr>
+<tr class="row-even"><td><p>hcp</p></td>
+<td><p>a = b, c (c = a in the file: c = 1.633 a), γ = 120°</p></td>
+</tr>
+<tr class="row-odd"><td><p>lamellae</p></td>
+<td><p>a (1D lattice along <strong>a</strong>)</p></td>
+</tr>
+<tr class="row-even"><td><p>hexagonally packed cylinders</p></td>
+<td><p>a = b, γ = 120° (2D lattice in the <strong>a</strong>, <strong>b</strong> plane, rods along <strong>c</strong>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>square, centred-rectangular cylinders</p></td>
+<td><p>a, b, γ (rods along <strong>c</strong>)</p></td>
+</tr>
+<tr class="row-even"><td><p>orthorhombic</p></td>
+<td><p>a, b, c, α, β, γ (any cell)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The cell is built in its own frame with <strong>a</strong> along x, <strong>b</strong> in the x–y plane and <strong>c</strong> completing it; without
+a rotation this frame is the laboratory frame (x along the beam, y horizontal, z vertical).</p>
+<p><strong>Orientation.</strong> The cell is oriented by a zone axis [uvw] and a rotation ψ about it (Förster 2011, section 3).
+The real-space direction <strong>v</strong> = u<strong>a</strong> + v<strong>b</strong> + w<strong>c</strong> is turned onto the beam by the rotation about
+<strong>v</strong> × <strong>x̂</strong> through the angle between them; the crystal is then rotated by ψ about the beam:</p>
+<div class="math notranslate nohighlight">
+\[
+\mathsf R = \mathsf R_{\hat{\mathbf x}}(\psi)\;\mathsf R_{\mathbf v\times\hat{\mathbf x}}\bigl(\angle(\mathbf v, \hat{\mathbf x})\bigr),
+\qquad \mathbf G_\mathrm{lab} = \mathsf R\,\mathbf G .
+\]</div>
+<p>The same rotation applies to the 1D and 2D lattices, for which <strong>b</strong> and <strong>c</strong> (lamellae) or <strong>c</strong> (rods) are
+the non-periodic directions:</p>
+<ul class="simple">
+<li><p>cylinder packings with the zone axis [001] have the rods along the beam, and the reflections hk0 lie in the
+detector plane; with [100] and ψ = 0 the rods are vertical;</p></li>
+<li><p>lamellae with the zone axis [010] (layer normal horizontal at ψ = 0) or [001] (vertical) are edge-on, and
+the reflections h00 lie in the detector plane, turned by ψ; with [100] the layer normal is along the beam and
+no reflection reaches the detector.</p></li>
+</ul>
+<p>For the isotropic orientation the rotation drops out, and for the fibre pattern the lattice is averaged over
+240 rotations about the beam after it. The fibre average uses point-like 3D peaks; the modified Lorentzian II
+(exponent 3/2) cannot be normalised in 3D and is not available there.</p>
+</section>
+</section>
+<section id="fitting">
+<h2>Fitting<a class="headerlink" href="#fitting" title="Link to this heading"></a></h2>
+<p>The fit minimises</p>
+<div class="math notranslate nohighlight">
+\[
+\chi^2 = \sum_i \left(\frac{I_\mathrm{model}(q_i) - I_i}{\sigma_i}\right)^2
+\]</div>
+<p>by trust-region-reflective least squares, within the parameter ranges of the SasScatter GUI.</p>
+<ul class="simple">
+<li><p>In 1D the model is folded with the Gaussian q resolution σ_q (Qdev) by 15-point Gauss–Hermite quadrature.</p></li>
+<li><p>In 2D the model is evaluated at the q vector of every used pixel.</p></li>
+<li><p>The standard errors are √diag((JᵀJ)⁻¹ χ²ᵣ).</p></li>
+<li><p>The optional relative residuals use ln I·|I|/σ in place of I.</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>M. Wagener, S. Förster, <em>Fast calculation of scattering patterns using hypergeometric function algorithms</em>,
+Sci. Rep. <strong>13</strong>, 780 (2023).</p></li>
+<li><p>S. Förster, A. Timmann, M. Konrad, C. Schellbach, A. Meyer, S. S. Funari, P. Mulvaney, R. Knott, <em>Scattering
+curves of ordered mesoscopic materials</em>, J. Phys. Chem. B <strong>109</strong>, 1347 (2005).</p></li>
+<li><p>S. Förster, S. Fischer, K. Zielske, C. Schellbach, M. Sztucki, P. Lindner, J. Perlich, <em>Calculation of
+scattering-patterns of ordered nano- and mesoscale materials</em>, Adv. Colloid Interface Sci. <strong>163</strong>, 53 (2011).</p></li>
+<li><p>S. Förster, L. Apostol, W. Bras, <em>Scatter: software for the analysis of nano- and mesoscale small-angle
+scattering</em>, J. Appl. Cryst. <strong>43</strong>, 639 (2010).</p></li>
+<li><p>S. Förster, C. Burger, <em>Scattering functions of polymeric core-shell structures and excluded volume chains</em>,
+Macromolecules <strong>31</strong>, 879 (1998).</p></li>
+<li><p>M. Kotlarchyk, S.-H. Chen, <em>Analysis of small angle neutron scattering spectra from polydisperse interacting
+colloids</em>, J. Chem. Phys. <strong>79</strong>, 2461 (1983).</p></li>
+<li><p>G. V. Schulz, Z. Phys. Chem. B <strong>43</strong>, 25 (1939); B. H. Zimm, J. Chem. Phys. <strong>16</strong>, 1099 (1948).</p></li>
+<li><p>R. Hosemann, S. N. Bagchi, <em>Direct Analysis of Diffraction by Matter</em>, North-Holland (1962).</p></li>
+<li><p>J. K. Percus, G. J. Yevick, Phys. Rev. <strong>110</strong>, 1 (1958); R. J. Baxter, J. Chem. Phys. <strong>49</strong>, 2770 (1968).</p></li>
+<li><p>J. Teixeira, J. Appl. Cryst. <strong>21</strong>, 781 (1988); M. Teubner, R. Strey, J. Chem. Phys. <strong>87</strong>, 3195 (1987);
+A. L. Kholodenko, Macromolecules <strong>26</strong>, 4179 (1993).</p></li>
+<li><p>K. G. Yager, Y. Zhang, F. Lu, O. Gang, J. Appl. Cryst. <strong>47</strong>, 118 (2014).</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="pySCAtter: scattering patterns of particles and ordered structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="validation.html" class="btn btn-neutral float-right" title="pySCAtter: validation against CrystalScatter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,406 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySCAtter: validation against CrystalScatter &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySEBpolymers: structures of linked sub-units" href="../seb/index.html" />
+    <link rel="prev" title="pySCAtter: theory and formulas" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySCAtter</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#panels">Panels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#models">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#fitting-measured-data">Fitting measured data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#validation">Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#calculation-speed">Calculation speed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#differences-from-sasscatter2-and-limitations">Differences from SasScatter2 and limitations</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#references">References</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory.html">pySCAtter: theory and formulas</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pySCAtter: validation against CrystalScatter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#method">Method</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#results">Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changes-made-in-pyscatter-to-match-the-c-code">Changes made in pySCAtter to match the C++ code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#defects-and-approximations-found-in-the-c-code">Defects and approximations found in the C++ code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#not-yet-compared">Not yet compared</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySCAtter: scattering patterns of particles and ordered structures</a></li>
+      <li class="breadcrumb-item active">pySCAtter: validation against CrystalScatter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scatter/validation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pyscatter-validation-against-crystalscatter">
+<h1>pySCAtter: validation against CrystalScatter<a class="headerlink" href="#pyscatter-validation-against-crystalscatter" title="Link to this heading"></a></h1>
+<p>pySCAtter was compared pixel by pixel with the CrystalScatter C++ code (SasScatter2, console build
+<code class="docutils literal notranslate"><span class="pre">sas_scatter2Cons</span></code>). Both programs got the same parameter file, and pySCAtter evaluated its model at the q vectors
+of the C++ image.</p>
+<section id="method">
+<h2>Method<a class="headerlink" href="#method" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>C++ build.</strong> The C++ code was built with qmake6 (Qt 6). Two small patches were needed:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;chrono&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">QLatin1String</span></code> in <code class="docutils literal notranslate"><span class="pre">XMLCOMP</span></code>, to compile;</p></li>
+<li><p>the console’s <code class="docutils literal notranslate"><span class="pre">generateSingleImage</span></code> writes q_x, q_y, q_z and I of every pixel to a text file and skips the
+parameter check, which otherwise aborts some runs.</p></li>
+</ul>
+</li>
+<li><p><strong>Images.</strong> 128 × 128 pixels in preset mode (q_max = 2 nm⁻¹, <code class="docutils literal notranslate"><span class="pre">GridPoints</span></code> = 64). The C++ (q_x, q_y, q_z) maps to
+the engine’s (q_y, q_z, q_x).</p></li>
+<li><p><strong>Orientation.</strong> The lattice cases of the table are isotropic. pySCAtter then uses the powder form of the
+lattice factor, without the azimuthal factor. Until 13 November 2026 the azimuthal factor was applied for the
+isotropic orientation too whenever <code class="docutils literal notranslate"><span class="pre">EditAzi</span></code> &gt; 0, which gave single-crystal spots. The lattice rows below were
+obtained before that correction and have not been re-run since.</p></li>
+<li><p><strong>Statistics.</strong> For every case:</p>
+<ul>
+<li><p>the median ratio C++/pySCAtter, which is the scale;</p></li>
+<li><p>the median, 95th percentile and maximum of |ratio/scale − 1|;</p></li>
+<li><p>the maximum restricted to pixels with I &gt; 10⁻⁴ I_max.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>case</p></th>
+<th class="head"><p>scale</p></th>
+<th class="head"><p>median</p></th>
+<th class="head"><p>95 %</p></th>
+<th class="head"><p>max (I &gt; 10⁻⁴ I_max)</p></th>
+<th class="head"><p>remark</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sphere, σ = 0.1</p></td>
+<td><p>1.0000</p></td>
+<td><p>2 × 10⁻⁵</p></td>
+<td><p>2.5 × 10⁻³</p></td>
+<td><p>0.6 %</p></td>
+<td><p>maxima at the form-factor minima</p></td>
+</tr>
+<tr class="row-odd"><td><p>sphere, σ = 0.02</p></td>
+<td><p>0.9999</p></td>
+<td><p>1.3 × 10⁻³</p></td>
+<td><p>1.6 %</p></td>
+<td><p>5.7 %</p></td>
+<td><p>C++ <code class="docutils literal notranslate"><span class="pre">pq3</span></code> typo (see below)</p></td>
+</tr>
+<tr class="row-even"><td><p>ellipsoid, isotropic</p></td>
+<td><p>1.0000</p></td>
+<td><p>3.5 × 10⁻⁴</p></td>
+<td><p>2.7 %</p></td>
+<td><p>3.0 %</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>triaxial ellipsoid</p></td>
+<td><p>0.9999</p></td>
+<td><p>2.3 × 10⁻⁴</p></td>
+<td><p>6 × 10⁻⁴</p></td>
+<td><p>2.0 %</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>cube, isotropic</p></td>
+<td><p>0.9998</p></td>
+<td><p>8 × 10⁻⁴</p></td>
+<td><p>5.2 %</p></td>
+<td><p>40 %</p></td>
+<td><p>C++ switches to the Porod limit at high q</p></td>
+</tr>
+<tr class="row-odd"><td><p>core + shell sphere</p></td>
+<td><p>0.9999</p></td>
+<td><p>2.7 × 10⁻⁴</p></td>
+<td><p>3 × 10⁻³</p></td>
+<td><p>0.3 %</p></td>
+<td><p>after correcting the C++ <code class="docutils literal notranslate"><span class="pre">ac9</span></code> term</p></td>
+</tr>
+<tr class="row-even"><td><p>vesicle</p></td>
+<td><p>1.021</p></td>
+<td><p>2 × 10⁻³</p></td>
+<td><p>4.7 × 10⁻³</p></td>
+<td><p>2.0 %</p></td>
+<td><p>exact shell vs. C++ thin-shell form</p></td>
+</tr>
+<tr class="row-odd"><td><p>ellipsoid, z-dir (oriented)</p></td>
+<td><p>0.998</p></td>
+<td><p>4.8 × 10⁻⁴</p></td>
+<td><p>8 × 10⁻³</p></td>
+<td><p>1.3 %</p></td>
+<td><p>confirms the director frame</p></td>
+</tr>
+<tr class="row-even"><td><p>sc / bcc / fcc spheres, Gaussian, σ_DW = 1</p></td>
+<td><p>0.9999</p></td>
+<td><p>2.6 × 10⁻³</p></td>
+<td><p>3.5 %</p></td>
+<td><p>5.6 %</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>fcc spheres, Lorentzian</p></td>
+<td><p>0.9999</p></td>
+<td><p>2.7 × 10⁻³</p></td>
+<td><p>3.7 %</p></td>
+<td><p>5.7 %</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>cylinder, isotropic</p></td>
+<td><p>0.962</p></td>
+<td><p>1.7 %</p></td>
+<td><p>15 %</p></td>
+<td><p>17 %</p></td>
+<td><p>C++ factorised P_rod·P_cs (see below)</p></td>
+</tr>
+<tr class="row-odd"><td><p>disk, isotropic</p></td>
+<td><p>0.81</p></td>
+<td><p>16 %</p></td>
+<td><p>45 %</p></td>
+<td><p>24 %</p></td>
+<td><p>C++ disk approximation</p></td>
+</tr>
+<tr class="row-even"><td><p>cylinder, oriented</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p>C++ evaluates P_cs at |q|, see below</p></td>
+</tr>
+<tr class="row-odd"><td><p>gyroid spheres</p></td>
+<td><p>0.953</p></td>
+<td><p>4 %</p></td>
+<td><p>23 %</p></td>
+<td><p>30 %</p></td>
+<td><p>not traced</p></td>
+</tr>
+<tr class="row-even"><td><p>hexagonal cylinders, lamellae</p></td>
+<td><p>—</p></td>
+<td><p>13–16 %</p></td>
+<td><p>—</p></td>
+<td><p>—</p></td>
+<td><p>not matched, see below</p></td>
+</tr>
+</tbody>
+</table>
+<section id="lattice-factor-alone">
+<h3>Lattice factor alone<a class="headerlink" href="#lattice-factor-alone" title="Link to this heading"></a></h3>
+<p>The lattice factor Z was also compared on its own: P = 1, 1D mode, with the C++ peak-width switches.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>peak shape / width mode</p></th>
+<th class="head"><p>max. relative difference</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gaussian, sc and fcc, with Debye–Waller</p></td>
+<td><p>1 × 10⁻⁵</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gaussian, paracrystal</p></td>
+<td><p>2 × 10⁻⁶</p></td>
+</tr>
+<tr class="row-even"><td><p>modified Lorentzian I / II, Pearson VII</p></td>
+<td><p>2 × 10⁻⁵</p></td>
+</tr>
+<tr class="row-odd"><td><p>pseudo-Voigt</p></td>
+<td><p>1 × 10⁻³</p></td>
+</tr>
+<tr class="row-even"><td><p>Lorentzian; fixed width (neither switch)</p></td>
+<td><p>2–4 × 10⁻³</p></td>
+</tr>
+<tr class="row-odd"><td><p>anisotropic Gaussian, isotropic orientation</p></td>
+<td><p>median 0.1 %, isolated outliers</p></td>
+</tr>
+</tbody>
+</table>
+<p>The tests in <code class="docutils literal notranslate"><span class="pre">tests/scatter/test_cpp_lattice.py</span></code> check the width modes:</p>
+<ul class="simple">
+<li><p>the Gaussian FWHM is √(π ln 2)·4/D, independent of the lattice constant;</p></li>
+<li><p>the Lorentzian FWHM is 4/D;</p></li>
+<li><p>the paracrystal width grows as 4/D + c g²;</p></li>
+<li><p>the Debye–Waller factor is exp(−σ²q²/3).</p></li>
+</ul>
+</section>
+</section>
+<section id="changes-made-in-pyscatter-to-match-the-c-code">
+<h2>Changes made in pySCAtter to match the C++ code<a class="headerlink" href="#changes-made-in-pyscatter-to-match-the-c-code" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Peak width.</strong> δ = 4/D (Debye–Scherrer), the paracrystal width 4/D + (σ/d_nn)² d_nn q², or the fixed width 1. The
+two radio buttons became the <em>peak width</em> combo of the Model panel.</p></li>
+<li><p><strong>Lattice factor.</strong> The lattice factor now has the C++ form: g₃ = 2π/g² at the reflection, the azimuthal
+normalisation N(g), and the peak shapes with the C++ constants.</p></li>
+<li><p><strong>Pseudo-Voigt.</strong> η = PeakPar/100, as in the C++ code; it was PeakPar before.</p></li>
+<li><p><strong>Reflections.</strong> Only reflections with |h|, |k|, |l| ≤ <code class="docutils literal notranslate"><span class="pre">HKLmax</span></code> are used. pySCAtter used HKLmax + 3 before, which
+changed the diffuse level between the peaks by up to 15 %.</p></li>
+<li><p><strong>Debye–Waller factor.</strong> G(q) = exp(−σ_DW² q²/3) from <code class="docutils literal notranslate"><span class="pre">EditDebyeWaller</span></code>. <code class="docutils literal notranslate"><span class="pre">EditBFactor</span></code> is ignored, as in the C++
+code.</p></li>
+<li><p><strong>Lengths.</strong> The cylinder <code class="docutils literal notranslate"><span class="pre">Length</span></code> is the half-length; the disk takes <code class="docutils literal notranslate"><span class="pre">EditRadius</span></code> as the half-thickness and
+<code class="docutils literal notranslate"><span class="pre">Length</span></code> as the radius; the vesicle takes <code class="docutils literal notranslate"><span class="pre">EditRadius</span></code> as the inner and <code class="docutils literal notranslate"><span class="pre">Length</span></code> as the outer radius. σ and σ_L
+are independent distributions.</p></li>
+<li><p><strong>Director.</strong> The director (θ, φ) is defined in the C++ frame: θ = 90°, φ = 90° is vertical on the detector.</p></li>
+<li><p><strong>Narrow distributions.</strong> A Schulz average on a uniform grid replaces the Gauss–Laguerre rule for narrow
+distributions (z &gt; 140). The Laguerre rule gave NaN there.</p></li>
+<li><p><strong>Isotropic lattices.</strong> The azimuthal factor is left out for the isotropic orientation (powder rings), and
+I(q) is always the powder average.</p></li>
+<li><p><strong>Cell parameters.</strong> Cubic lattices use a only, bct and hcp a and c, the cylinder packings a (hexagonal) or
+a, b, γ, and lamellae a.</p></li>
+</ul>
+</section>
+<section id="defects-and-approximations-found-in-the-c-code">
+<h2>Defects and approximations found in the C++ code<a class="headerlink" href="#defects-and-approximations-found-in-the-c-code" title="Link to this heading"></a></h2>
+<p>These are left as they are in the C++ code. pySCAtter follows the C++ code where it is a convention, and the
+physics where it is an approximation or a defect.</p>
+<ol class="arabic simple">
+<li><p><strong>Sphere <code class="docutils literal notranslate"><span class="pre">pq3</span></code> term.</strong> A typo in the asymptotic sphere expression causes up to 6 % error for narrow
+distributions (σ = 0.02), near the minima.</p></li>
+<li><p><strong>Core/shell <code class="docutils literal notranslate"><span class="pre">ac9</span></code> term.</strong> A wrong coefficient in the core/shell cross term. pySCAtter uses the correct form.</p></li>
+<li><p><strong>Cylinder factorisation.</strong> For L/R ≥ 2 the C++ code computes P ≈ P_rod·P_cs instead of the orientation
+average of the product. The isotropic curve differs by 1–2 % (up to 17 % near minima). For oriented cylinders
+the cross-section factor is evaluated at |q| instead of q_⊥, which strongly suppresses the streak
+perpendicular to the axis. pySCAtter keeps the exact average.</p></li>
+<li><p><strong>Disk.</strong> The C++ disk formula gives wrong values for <code class="docutils literal notranslate"><span class="pre">Length</span></code> &lt; <code class="docutils literal notranslate"><span class="pre">EditRadius</span></code>. For proper disks it differs from
+the exact average by 1–4 % at mid q and by about 15 % at high q.</p></li>
+<li><p><strong>Modified Lorentzians.</strong> The denominators use c₁ = 4 while the prefactors use c₂ or c₃. The peak areas are
+0.64 and 0.77 instead of 1. pySCAtter reproduces this.</p></li>
+<li><p><strong>Pseudo-Voigt.</strong> The Gaussian normalisation <code class="docutils literal notranslate"><span class="pre">peaknorm2</span></code> is never set, so the intensity scales as 1/η.
+pySCAtter reproduces this.</p></li>
+<li><p><strong>Gamma peak.</strong> It is not implemented (<code class="docutils literal notranslate"><span class="pre">#ifdef</span> <span class="pre">undef</span></code>), which gives s_q = 1.</p></li>
+<li><p><strong>No check of D.</strong> Domain sizes smaller than the unit cell are accepted without a warning.</p></li>
+<li><p><strong>Cube.</strong> The C++ code switches to the Porod asymptote at high q, which gives tails up to 40 % different.</p></li>
+<li><p><strong>Spheres on a lattice.</strong> A residual of up to 5 % appears between the peaks, in a band of q starting where
+qR ≈ 5. It is probably in the C++ amplitude ⟨F⟩ but has not been traced.</p></li>
+</ol>
+</section>
+<section id="not-yet-compared">
+<h2>Not yet compared<a class="headerlink" href="#not-yet-compared" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Core + shell ellipsoid.</strong> The C++ run ends without output.</p></li>
+<li><p><strong>Excluded-volume chain.</strong> The C++ output is empty.</p></li>
+<li><p><strong>Inhomogeneous shell.</strong> The C++ definition differs (probably a power-law profile); the median difference is 60 %.</p></li>
+<li><p><strong>Core + shell cylinder.</strong> It differs by 44 %, because of the length convention in the shell branch.</p></li>
+<li><p><strong>Superball.</strong> The C++ run takes more than 10 min per image.</p></li>
+<li><p><strong>Oriented lattices.</strong> The zone-axis and ψ rotation conventions are not compared yet. Rod and lamellar
+lattices are rotated by the zone axis and ψ since November 2026; how the C++ code orients them has not been
+checked.</p></li>
+<li><p><strong>Hexagonal cylinders and lamellae on a lattice.</strong> The diffuse part differs by a smooth factor of 0.2–0.6.
+The C++ code probably uses a different particle term in the 2D-lattice branch; this is not resolved. The
+comparison was made before the rotation of these lattices was introduced and has to be repeated with it.</p></li>
+<li><p><strong>Wiring.</strong> Whether every parameter and combo entry reaches the calculation is checked by
+<code class="docutils literal notranslate"><span class="pre">tests/scatter/test_wiring.py</span></code> within pySCAtter (see the main page); it is not a comparison with the C++ code.</p></li>
+<li><p><strong>Kratky–Porod chain, Teubner–Strey and the structure factors.</strong> These exist only in pySCAtter. They are
+checked against their analytic limits (see the main page).</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="pySCAtter: theory and formulas" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../seb/index.html" class="btn btn-neutral float-right" title="pySEBpolymers: structures of linked sub-units" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

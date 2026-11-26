@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masks &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reduction steps and uncertainties" href="reduction.html" />
+    <link rel="prev" title="Using the pySASred window" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASred</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#status">Status</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usage.html">Using the pySASred window</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Masks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#one-mask-per-instrument-configuration">One mask per instrument configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transmission-region">Transmission region</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#suggested-mask">Suggested mask</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#editing">Editing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mask-files">Mask files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reduction.html">Reduction steps and uncertainties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="formula.html">The cross-section formula and its simplifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="grouping.html">Grouping and summing repeated runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scripting.html">Scripts and output files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="polarisation.html">Polarised data without spin analysis (SANSPOL)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sans_llb.html">SANS-LLB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASred: SANS data reduction</a></li>
+      <li class="breadcrumb-item active">Masks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sasred/masks.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="masks">
+<h1>Masks<a class="headerlink" href="#masks" title="Link to this heading"></a></h1>
+<p>A mask excludes pixels from the average. pySASred keeps it as an integer image of the detector shape: 0 means
+the pixel is used, any set bit excludes it and says why.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>bit</p></th>
+<th class="head"><p>reason</p></th>
+<th class="head"><p>colour</p></th>
+<th class="head"><p>origin</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>border</p></td>
+<td><p>near-black</p></td>
+<td><p>the standard mask: the outer rows and columns (2 by default)</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>beamstop</p></td>
+<td><p>red</p></td>
+<td><p>the first guess (a square around the beam centre), the rectangle around the shadow found by <em>Suggest</em>, or your adjustment of it</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>user</p></td>
+<td><p>magenta</p></td>
+<td><p>drawn or loaded</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>dead time</p></td>
+<td><p>white</p></td>
+<td><p>pixels whose dead-time factor exceeds the flag limit (set by the reduction)</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>hot</p></td>
+<td><p>cyan</p></td>
+<td><p>isolated pixels far above their neighbourhood, found by <em>Suggest</em></p></td>
+</tr>
+<tr class="row-odd"><td><p>32</p></td>
+<td><p>efficiency</p></td>
+<td><p>orange</p></td>
+<td><p>no detector-efficiency estimate for the pixel (its whole row or column was masked in the water run; set by the reduction)</p></td>
+</tr>
+</tbody>
+</table>
+<p>A new detector image starts with the standard mask and a <strong>first guess of the beamstop</strong>: a square of half
+width 6 pixels around the beam centre (the SANS-I beamstops are square; shape and size under <em>beamstop</em>
+on the Reduction panel). It is only a start and is meant to be adjusted with the mask tools or replaced by
+<em>Suggest</em>. As long as the mask is untouched, the guess follows the beam centre and the size; <em>Into mask</em> puts
+the current guess into an edited mask (replacing its beamstop pixels). The mask is used at once by the live
+I(q), by <em>Reduce selected</em> and by the polar view, and it is kept with the last session.</p>
+<img alt="detector panel with the mask tools and a suggested mask" src="../_images/mask_cartesian.png" style="width: 70%;" />
+<p><em>Run 82140 after Suggest and one drawn rectangle: border (near-black frame), beamstop shadow (red), the pixels
+leaking at its left edge (cyan, under the outline) and the rectangle (magenta).</em></p>
+<section id="one-mask-per-instrument-configuration">
+<h2>One mask per instrument configuration<a class="headerlink" href="#one-mask-per-instrument-configuration" title="Link to this heading"></a></h2>
+<p>Every instrument configuration has its own mask: collimation coll and detector distance SD (0.1 m), wavelength
+(0.1 Å), beam stop type (<code class="docutils literal notranslate"><span class="pre">SANS/beam_stop/out_flag</span></code>, BerSANS “Beamstop”) and beam stop position x, y (1 mm)
+(<code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.sasred.catalogue.mask_key()</span></code>). Selecting a run of another configuration switches the mask in the
+editor; the edited mask of the previous configuration is kept. The line below the mask tools names the
+configuration of the mask shown and how many configurations have edited masks.</p>
+<p>Reductions take the mask of the configuration of their (first) run: the one in the editor, a stored one, or,
+if none was edited for that configuration, the suggested mask of the run; the notes say which. <em>File → Save
+masks of all configurations…</em> / <em>Load masks of configurations…</em> write and read all of them in one HDF5 file
+(one group per configuration with <code class="docutils literal notranslate"><span class="pre">pixel_mask</span></code>, the key and a label); the last session keeps them too.</p>
+</section>
+<section id="transmission-region">
+<h2>Transmission region<a class="headerlink" href="#transmission-region" title="Link to this heading"></a></h2>
+<p>A semi-transparent beam stop lets part of the direct beam through. The mask tools have a second layer for it:
+<strong>edit: transmission region (use)</strong>. Its pixels are the opposite of masked pixels: they define where the
+transmitted beam is counted and leave the scattering untouched (a pixel can be masked for the scattering and
+belong to the region at the same time, which is the usual case behind the beam stop). The region is drawn in
+translucent green with a green outline above the mask.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>control (region layer)</p></th>
+<th class="head"><p>action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>+ / − tools</p></td>
+<td><p>add pixels to the region / take them out</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Suggest</strong></p></td>
+<td><p>an ellipse around the beam centre: 3 σ of the direct-beam profile of the configuration (at least 1.5 px), or the brush radius + 2 px without a profile</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reset</strong></p></td>
+<td><p>clears the region (the mask is kept)</p></td>
+</tr>
+<tr class="row-odd"><td><p>undo / redo</p></td>
+<td><p>as for the mask (one history for both layers)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Like the mask, the region belongs to an instrument configuration (including the beam stop and its position):
+configurations without a semi-transparent beam stop simply have none. <em>Save masks of all configurations…</em> writes
+it as <code class="docutils literal notranslate"><span class="pre">transmission_region</span></code> next to <code class="docutils literal notranslate"><span class="pre">pixel_mask</span></code>, and the session keeps it.</p>
+<p><strong>Checking it.</strong> <em>Reduction → Transmission through the semi-transparent beam stop…</em> lists for every row of the
+reduction table shown:</p>
+<ul class="simple">
+<li><p>I_bs: the counts of its scattering runs in the region, corrected for dead time and attenuator, per monitor
+(or per second, as the normalisation of the Reduction panel), runs summed;</p></li>
+<li><p>T_bs = I_bs / I_bs(reference), with a reference row (the empty beam with the beam stop in, or the empty
+cell: T_bs is then relative to the cell), with its statistical σ;</p></li>
+<li><p>T: the transmission of the table (from the transmission runs, beam stop out), divided by the reference’s
+transmission, so that both refer to the same reference;</p></li>
+<li><p>T_bs / T and z = (T_bs − T) / σ (red beyond 3).</p></li>
+</ul>
+<p>Scattered neutrons landing in the region are counted too, which makes T_bs too high for strong scatterers; this
+table shows how large that is. <em>Copy</em> and <em>Save CSV…</em> export it; the log keeps a copy. The table is not changed
+(<a class="reference internal" href="api.html#module-pysasfit.sasred.core.beamstop_transmission" title="pysasfit.sasred.core.beamstop_transmission"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.sasred.core.beamstop_transmission</span></code></a> does the calculation for scripts).</p>
+</section>
+<section id="suggested-mask">
+<h2>Suggested mask<a class="headerlink" href="#suggested-mask" title="Link to this heading"></a></h2>
+<p><strong>Suggest</strong> (detector panel) proposes the mask for the image shown, with the current beam centre:</p>
+<ul class="simple">
+<li><p><strong>border</strong>: the standard outer rows and columns;</p></li>
+<li><p><strong>beamstop</strong>: the image is median-filtered (3 × 3) against counting noise; the <em>rim level</em> is the 90th
+percentile of the counts within the search radius (20 pixels) around the beam centre, i.e. the bright
+scattering around the beamstop. Every pixel below 0.3 × rim level is “low”; the shadow is the connected low
+region that reaches to within 3 pixels of the beam centre, with holes filled and grown by 1 pixel to cover
+the penumbra. The whole <strong>rectangle</strong> around this shadow is masked (square beamstops, no ragged edge with
+half-shadowed pixels; <em>Preferences → beamstop: suggested shape</em> = <em>shadow</em> masks only the low pixels).
+Without a sudden drop at the beam centre (a direct-beam run with the beamstop out) no beamstop is suggested;</p></li>
+<li><p><strong>hot pixels</strong>: more than 5 × the median of their 5 × 5 neighbourhood and more than 10 Poisson standard
+deviations above it. Hot pixels at the beamstop edge are reported separately: they are usually beam leaking
+past the beamstop. Without a beamstop no hot pixels are searched near the beam centre (the direct beam
+itself).</p></li>
+</ul>
+<p>Pixels you drew yourself (bit <em>user</em>) are kept; the suggested beamstop replaces the first guess. The log lists
+what was found, for example for run 82140 of the Vifor beam time:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>mask suggested from run 82140 (beam centre 61.73, 63.93):
+    border: 1008 px (2 outer rows and columns)
+    beamstop (rectangle around the shadow): 169 px, x 57…69, y 58…70 (counts below 37.5 = 0.3 × rim level 125;
+    median in the shadow 12); it replaces the first guess
+    hot pixels: 7 (7 at the beamstop edge: beam leaking past it)
+</pre></div>
+</div>
+<p>The numbers of the suggestion (border width, drop fraction, search radius, growth, hot pixels on/off) are in
+<strong>Settings → Preferences → SANS reduction → Mask suggestion</strong>.</p>
+</section>
+<section id="editing">
+<h2>Editing<a class="headerlink" href="#editing" title="Link to this heading"></a></h2>
+<p>The second row of controls of the detector panel:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>control</p></th>
+<th class="head"><p>action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Suggest</strong></p></td>
+<td><p>the suggested mask for the image shown (see above)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tool</p></td>
+<td><p><em>navigate</em> (zoom and pan with the plot tool bar; no editing), or add (+) / remove (−) pixels with a <strong>rectangle</strong>, an <strong>ellipse</strong> (inscribed in the dragged rectangle), a <strong>polygon</strong> (click the corners, close it on the first one) or a <strong>brush</strong> (drag; radius in pixels, 0 = one pixel)</p></td>
+</tr>
+<tr class="row-even"><td><p>◀ ▶</p></td>
+<td><p>undo / redo (also Ctrl+Z / Ctrl+Y in the panel), up to 100 steps</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Reset</strong></p></td>
+<td><p>the standard mask and the first-guess beamstop</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Load… / Save…</strong></p></td>
+<td><p>mask files, see below</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>colours / own scale / hidden</strong>, opacity</p></td>
+<td><p>how the masked pixels are drawn: in the mask colours with this opacity (80 % by default); on their <strong>own grey scale</strong> with a second colour bar, so you see what is behind the mask (e.g. how well the beamstop is placed) without it affecting the image colours; or hidden. A black-and-white outline along the pixel edges of the masked area is always drawn, so the mask stays visible on any colour map</p></td>
+</tr>
+<tr class="row-even"><td><p><em>n px masked</em></p></td>
+<td><p>the number of masked pixels; the tooltip gives the numbers per reason</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>colour range of the detector image comes from the unmasked pixels only</strong>: a few very bright pixels next to
+a badly placed beamstop would otherwise take most of the colour scale and make the rest of the detector look
+flat.</p>
+<img alt="the same detector image with the masked pixels in colours, on their own grey scale and hidden" src="../_images/mask_display.png" />
+<p><em>Run 82140 with the first-guess square: masked pixels in the mask colours, on their own grey scale (up to 10³
+counts behind the mask, against 200 counts at most on the unmasked detector), and hidden.</em></p>
+<p>A shape selects <strong>every pixel it touches</strong>, including the pixel where you start and the one where you end: a
+drag along one row masks that row, a single click with the rectangle masks one pixel, and the edges of a
+polygon include the pixels they pass through. <em>Remove</em> clears every reason of a pixel, so it can also
+unmask part of the border. Editing works in the cartesian view; the polar view shows the mask in the same
+colours.</p>
+</section>
+<section id="mask-files">
+<h2>Mask files<a class="headerlink" href="#mask-files" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>extension</p></th>
+<th class="head"><p>content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.h5</span></code> (default)</p></td>
+<td><p>NeXus-like HDF5: <code class="docutils literal notranslate"><span class="pre">/entry/instrument/detector/pixel_mask</span></code> (uint32, the bits above, their names as attribute <code class="docutils literal notranslate"><span class="pre">bits</span></code>), the beam centre, the run and the date. Loading restores every reason</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">.npy</span></code></p></td>
+<td><p>the uint32 array (NumPy)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">.txt</span></code></p></td>
+<td><p>a 0/1 matrix (1 = masked; row = y, column = x), for other programs. Loaded pixels get the reason <em>user</em></p></td>
+</tr>
+</tbody>
+</table>
+<p>Loading checks that the mask has the shape of the detector of the run shown.</p>
+<p>From Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sasred.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">mask</span> <span class="k">as</span> <span class="n">mk</span>
+
+<span class="n">m</span><span class="p">,</span> <span class="n">report</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">suggest_mask</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="p">,</span> <span class="p">(</span><span class="mf">61.73</span><span class="p">,</span> <span class="mf">63.93</span><span class="p">))</span>       <span class="c1"># border + beamstop + hot pixels</span>
+<span class="n">m</span><span class="p">[</span><span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_rectangle</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">)]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">USER</span>     <span class="c1"># a drawn rectangle</span>
+<span class="n">mk</span><span class="o">.</span><span class="n">save_mask</span><span class="p">(</span><span class="s2">"vifor_8m.h5"</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">beam_center_px</span><span class="o">=</span><span class="p">(</span><span class="mf">61.73</span><span class="p">,</span> <span class="mf">63.93</span><span class="p">),</span> <span class="n">run</span><span class="o">=</span><span class="mi">82140</span><span class="p">)</span>
+<span class="n">m</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">load_mask</span><span class="p">(</span><span class="s2">"vifor_8m.h5"</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>       <span class="c1"># pixels per reason and in total</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Using the pySASred window" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reduction.html" class="btn btn-neutral float-right" title="Reduction steps and uncertainties" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

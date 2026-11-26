@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySASmorph: anisotropic data (texture) &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pySASmorph: API reference" href="api.html" />
+    <link rel="prev" title="pySASmorph: theory and mathematics" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASmorph</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#method">Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#multi-phase-structures-and-contrast-series">Multi-phase structures and contrast series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#sesans-data">SESANS data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#differences-from-saxsmorph-2-2">Differences from SAXSMorph 2.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#d-panel">3D panel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#choosing-the-parameters">Choosing the parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#limits">Limits</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#validation-tests-morph">Validation (tests/morph)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory.html">pySASmorph: theory and mathematics</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">pySASmorph: anisotropic data (texture)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#data">Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#two-models">Two models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-symmetry-axis">The symmetry axis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#settings">Settings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#results">Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#limits">Limits</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#validation-tests-morph-test-anisotropic-py">Validation (tests/morph/test_anisotropic.py)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">pySASmorph: API reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pySASmorph: 3D two- and multi-phase morphologies from SAS data</a></li>
+      <li class="breadcrumb-item active">pySASmorph: anisotropic data (texture)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/morph/texture.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysasmorph-anisotropic-data-texture">
+<h1>pySASmorph: anisotropic data (texture)<a class="headerlink" href="#pysasmorph-anisotropic-data-texture" title="Link to this heading"></a></h1>
+<p>pySASmorph also builds 3D structures from a <strong>2D pattern of an oriented sample</strong>, when the sample is
+rotationally symmetric about an axis that lies in the detector plane (fibre or uniaxial texture). Typical
+examples:</p>
+<ul class="simple">
+<li><p>stretched elastomers and drawn polymers;</p></li>
+<li><p>extruded, flow-aligned or field-aligned samples;</p></li>
+<li><p>compressed foams.</p></li>
+</ul>
+<p>One 2D pattern then fixes the full 3D intensity, because the detector plane contains every angle to the axis.</p>
+<p><em>File → Anisotropic 2D data (texture)…</em> in pySASmorph opens the window. In Python the module is
+<a class="reference internal" href="api.html#module-pysasfit.morph.anisotropic" title="pysasfit.morph.anisotropic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.morph.anisotropic</span></code></a>. The theory is in <a class="reference internal" href="theory.html"><span class="doc">pySASmorph: theory and mathematics</span></a>, section 12.</p>
+<section id="data">
+<h2>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h2>
+<p>Load one 2D pattern with the background subtracted, or fit the flat background B in the window:</p>
+<ul class="simple">
+<li><p><strong>NXcanSAS 2D</strong>, e.g. pySASred’s <em>File → Save 2D NXcanSAS</em>. The file has I, Idev, Qx, Qy and Mask; masked
+pixels are dropped.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">.npz</span></code></strong> with <code class="docutils literal notranslate"><span class="pre">qx,</span> <span class="pre">qy,</span> <span class="pre">I</span></code> and optionally <code class="docutils literal notranslate"><span class="pre">sigma,</span> <span class="pre">mask</span></code>.</p></li>
+<li><p><strong>Text file</strong> with the columns q_x q_y I [dI].</p></li>
+</ul>
+<p>Lengths are in the inverse unit of q. q_x, q_y and the axis angle follow the frame of pySASfit
+(<a class="reference internal" href="../conventions.html"><span class="doc">Axis and angle conventions</span></a>): q_x horizontal (to the right in the view towards the sample), q_y up, angles
+counter-clockwise from +q_x. pySASred 2D files written before 2026-11-23 (q_x of the other sign) are corrected
+when read.</p>
+</section>
+<section id="two-models">
+<h2>Two models<a class="headerlink" href="#two-models" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>A – affine stretch</p></th>
+<th class="head"><p>B – uniaxial (Legendre)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>structure</p></td>
+<td><p>an isotropic structure stretched by λ along the axis</p></td>
+<td><p>any structure with uniaxial symmetry</p></td>
+</tr>
+<tr class="row-odd"><td><p>fitted from the 2D data</p></td>
+<td><p>λ and the axis angle, by collapsing log I onto one curve of q_eff = (λ²q∥² + q⊥²)^½</p></td>
+<td><p>the Legendre components I_l(q), l = 0, 2, …, l_max</p></td>
+</tr>
+<tr class="row-even"><td><p>then</p></td>
+<td><p>the collapsed curve goes through the isotropic pipeline; γ(r) = γ_iso((r∥²/λ² + r⊥²)^½)</p></td>
+<td><p>γ(r) from the components by the plane-wave expansion</p></td>
+</tr>
+<tr class="row-odd"><td><p>use when</p></td>
+<td><p>the iso-intensity lines are ellipses</p></td>
+<td><p>streaks, meridional peaks, any shape</p></td>
+</tr>
+</tbody>
+</table>
+<p>Both then use the same steps:</p>
+<ol class="arabic simple">
+<li><p>The level-cut inversion <span class="math notranslate nohighlight">\(g = F^{-1}(\varphi(1-\varphi)\gamma)\)</span>, direction by direction.</p></li>
+<li><p>FFT synthesis of the Gaussian field from <span class="math notranslate nohighlight">\(g(\mathbf r)\)</span> on the periodic grid.</p></li>
+<li><p>The cut, the voxel scattering, and the statistics.</p></li>
+</ol>
+</section>
+<section id="the-symmetry-axis">
+<h2>The symmetry axis<a class="headerlink" href="#the-symmetry-axis" title="Link to this heading"></a></h2>
+<p>The 2D pattern is mirror-symmetric about two perpendicular lines. <strong>Which of them is the 3D symmetry axis is a
+choice:</strong> the 3D structure is rotated about it.</p>
+<ul class="simple">
+<li><p><strong>estimate</strong> sets the axis perpendicular to the direction of maximum intensity (the fibre convention). Fibres
+and stretched networks scatter an equatorial streak perpendicular to the axis.</p></li>
+<li><p><strong>+90°</strong> takes the other line, for layers along the axis (meridional peaks).</p></li>
+<li><p>Model A refines the angle (<em>refine the axis</em>).</p></li>
+</ul>
+<p>In the result the axis is the box <strong>x</strong> axis and the beam the box <strong>z</strong> axis.</p>
+</section>
+<section id="settings">
+<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>l_max</strong> (B): the highest even Legendre order. Strong anisotropy needs more orders, noisy data fewer; 6–8 is
+typical.</p></li>
+<li><p><strong>Coverage:</strong> q bins without full azimuthal coverage are left out and listed in the warnings. These are the
+bins at the beam stop and in the detector corners.</p></li>
+<li><p><strong>volume fraction φ, box size L, voxels n, seed:</strong> as in the isotropic case. L defaults to 5·2π/q* of the
+Kratky maximum of I_0; in model A it is enlarged by λ.</p></li>
+<li><p><strong>q range, low-q extrapolation, Porod range, background:</strong> as in the isotropic case. The Porod range is
+automatic by default (or the last N points, q ≥ q_min, the last 15 %). <em>fit flat (incoherent) background B</em> is
+on by default; untick it to use the fixed B (empty = 0). They apply to I_0 (model B) or to the collapsed curve
+(model A).</p></li>
+</ul>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>tab</p></th>
+<th class="head"><p>shows</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>2D data / model</p></td>
+<td><p>the pattern with the axis (dashed); the data folded into the quadrant (q∥, q⊥); the level-cut model on the same scale</p></td>
+</tr>
+<tr class="row-odd"><td><p>Components I_l(q)</p></td>
+<td><p>I_0(q) and I_l/I_0 for l ≥ 2: data (points), level-cut model (lines), voxel structure (×)</p></td>
+</tr>
+<tr class="row-even"><td><p>Correlations γ, g</p></td>
+<td><p>γ(r∥, r⊥) and g(r∥, r⊥) of the Gaussian field</p></td>
+</tr>
+<tr class="row-odd"><td><p>Structure</p></td>
+<td><p>slices: a plane containing the axis (x, y) and one perpendicular to it (y, z)</p></td>
+</tr>
+<tr class="row-even"><td><p>3D</p></td>
+<td><p>the interface (as in the isotropic case)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Results</p></td>
+<td><p>the report</p></td>
+</tr>
+</tbody>
+</table>
+<p>The report lists:</p>
+<ul class="simple">
+<li><p>the model;</p></li>
+<li><p>the axis and λ;</p></li>
+<li><p>Q_0, K_0, the contrast and S/V (Porod);</p></li>
+<li><p>clipped γ values;</p></li>
+<li><p>χ² of the level-cut model against all pixels;</p></li>
+<li><p>S/V of the voxels;</p></li>
+<li><p>the <strong>share of interface faces normal to x / y / z</strong>, each 1/3 when isotropic;</p></li>
+<li><p>the <strong>mean chord lengths</strong> of both phases along and across the axis;</p></li>
+<li><p>clusters and percolation per direction.</p></li>
+</ul>
+<p>For a structure stretched by λ, the chords along the axis are λ times those across it.</p>
+<p><em>File → Export components and maps…</em> writes four files: the data and model components (text), γ and g on the
+(r, μ) table (<code class="docutils literal notranslate"><span class="pre">.npz</span></code>), and the report. <em>Export voxel matrix…</em> writes VTK, TIFF or npy.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.morph.anisotropic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnisoParameters</span><span class="p">,</span> <span class="n">load_2d</span><span class="p">,</span> <span class="n">reconstruct_aniso</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">load_2d</span><span class="p">(</span><span class="s2">"stretched_2d.h5"</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">reconstruct_aniso</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">AnisoParameters</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"B"</span><span class="p">,</span> <span class="n">axis_deg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">porosity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">lmax</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">report</span><span class="p">())</span>           <span class="c1"># axis None: estimated (fibre convention), noted in the warnings</span>
+</pre></div>
+</div>
+</section>
+<section id="limits">
+<h2>Limits<a class="headerlink" href="#limits" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Uniaxial only.</strong> A general texture without a symmetry axis needs several sample orientations, as in SAXS
+tensor tomography (to come).</p></li>
+<li><p><strong>Not for locally varying orientations.</strong> A sample made of differently oriented domains, like a polycrystal,
+is not one stationary Gaussian field and is outside the model.</p></li>
+<li><p><strong>Axis in the detector plane.</strong> An axis tilted out of the plane leaves part of the μ range unmeasured.</p></li>
+<li><p><strong>Realisability.</strong> As in the isotropic case, γ values a level-cut field cannot reach are clipped and counted.
+Negative spectral power of the anisotropic g is reported.</p></li>
+</ul>
+</section>
+<section id="validation-tests-morph-test-anisotropic-py">
+<h2>Validation (tests/morph/test_anisotropic.py)<a class="headerlink" href="#validation-tests-morph-test-anisotropic-py" title="Link to this heading"></a></h2>
+<p>The tests use exact synthetic data: a level-cut structure with a Gaussian g, stretched by λ = 2 along 30°, with
+1 % noise. They check:</p>
+<ul class="simple">
+<li><p><strong>Model A:</strong> it recovers λ to 0.2 % and the axis to 0.2°.</p></li>
+<li><p><strong>γ(r∥, r⊥):</strong> models A and B both reproduce it within 0.025 at six points along, across and between the
+axes.</p></li>
+<li><p><strong>Fit quality:</strong> the contrast is right within 3 % and χ² stays below 20 (it is about 4–12).</p></li>
+<li><p><strong>Isotropic data:</strong> they give no higher components, I_l/I_0 &lt; 2 %.</p></li>
+<li><p><strong>Reconstruction:</strong> the voxel porosity is exact; the chords along the axis are λ times those across; fewer
+interface faces are normal to the axis. Voxel and Porod S/V agree, and less than 2 % negative power is
+discarded.</p></li>
+<li><p><strong>Constants:</strong> the tail integrals ∫j_l/x² dx have their closed forms.</p></li>
+<li><p><strong>Files and window:</strong> loading NXcanSAS, npz and text files; the window, opened from pySASmorph’s File menu.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="pySASmorph: theory and mathematics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="pySASmorph: API reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

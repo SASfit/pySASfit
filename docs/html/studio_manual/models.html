@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building models &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Fitting" href="fitting.html" />
+    <link rel="prev" title="The model explorer" href="explorer.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pySASstudio</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="explorer.html">The model explorer</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Building models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#contributions">Contributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#structure-factor-approaches">Structure-factor approaches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#integration-of-the-size-distribution">Integration of the size distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#own-functions">Own functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sesans_msas.html">SESANS and multiple scattering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="polarisation.html">Polarised neutrons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python_ports.html">Python ports of SASfit plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="results.html">Results and export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Extending studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../studio.html">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#about-the-pictures-and-examples">About the pictures and examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">studio manual</a></li>
+      <li class="breadcrumb-item active">Building models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/studio_manual/models.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="building-models">
+<h1>Building models<a class="headerlink" href="#building-models" title="Link to this heading"></a></h1>
+<section id="contributions">
+<h2>Contributions<a class="headerlink" href="#contributions" title="Link to this heading"></a></h2>
+<p>A model is a <strong>mixture</strong>: I(q) = Σ<sub>i</sub> scale<sub>i</sub> · I<sub>i</sub>(q) + background (+ A·q<sup>−α</sup>).
+Each contribution I<sub>i</sub> is built from up to three functions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">spheres</span> <span class="o">=</span> <span class="n">ScatteringContribution</span><span class="p">(</span>
+    <span class="s2">"ff_sphere"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"R"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"eta"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>                       <span class="c1"># form factor and its fixed parameters</span>
+    <span class="n">size_distribution</span><span class="o">=</span><span class="s2">"sd_LogNorm"</span><span class="p">,</span>                        <span class="c1"># N(x) ...</span>
+    <span class="n">sd_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"N"</span><span class="p">:</span> <span class="mf">1e-11</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"mu"</span><span class="p">:</span> <span class="mi">70</span><span class="p">},</span>
+    <span class="n">distributed</span><span class="o">=</span><span class="s2">"R"</span><span class="p">,</span>                                       <span class="c1"># ... smears the parameter R</span>
+    <span class="n">structure_factor</span><span class="o">=</span><span class="s2">"sq_HardSphere"</span><span class="p">,</span>
+    <span class="n">sq_params</span><span class="o">=</span><span class="p">{</span><span class="s2">"RHS"</span><span class="p">:</span> <span class="mi">70</span><span class="p">,</span> <span class="s2">"fp"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">"lma"</span><span class="p">,</span>                                        <span class="c1"># 'monodisperse' | 'decoupling' | 'lma'</span>
+<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelFunction</span><span class="p">([</span><span class="n">spheres</span><span class="p">],</span> <span class="n">background</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">bg_A</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">bg_alpha</span><span class="o">=</span><span class="mf">4.0</span><span class="p">)</span>   <span class="c1"># + 0.1 + A q^-alpha</span>
+</pre></div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>part</p></th>
+<th class="head"><p>function</p></th>
+<th class="head"><p>role</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>form factor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ff_…</span></code></p></td>
+<td><p>the shape; one of its parameters can be <em>distributed</em></p></td>
+</tr>
+<tr class="row-odd"><td><p>size distribution</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sd_…</span></code></p></td>
+<td><p>weight N(x) of that parameter; its amplitude N is the scale</p></td>
+</tr>
+<tr class="row-even"><td><p>structure factor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sq_…</span></code></p></td>
+<td><p>interaction between the particles</p></td>
+</tr>
+</tbody>
+</table>
+<p>Without a size distribution the contribution is monodisperse and multiplied by its scale. With a size
+distribution the scale is fixed to 1 because N is the scale.</p>
+</section>
+<section id="structure-factor-approaches">
+<h2>Structure-factor approaches<a class="headerlink" href="#structure-factor-approaches" title="Link to this heading"></a></h2>
+<p>With a size distribution and a structure factor the <em>approach</em> decides how they are combined (SASfit manual,
+chapter 4.1):</p>
+<ul class="simple">
+<li><p><strong>monodisperse:</strong> S(q) · ∫N P dx;</p></li>
+<li><p><strong>decoupling:</strong> ∫N P dx + (∫N F dx)²/∫N dx · (S − 1);</p></li>
+<li><p><strong>local monodisperse (lma):</strong> ∫N P S(q; R<sub>V</sub>(x)) dx.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">approach</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"monodisperse"</span><span class="p">,</span> <span class="s2">"decoupling"</span><span class="p">,</span> <span class="s2">"lma"</span><span class="p">):</span>
+    <span class="n">spheres</span><span class="o">.</span><span class="n">set_approach</span><span class="p">(</span><span class="n">approach</span><span class="p">)</span>
+    <span class="n">curves</span><span class="p">[</span><span class="n">approach</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">background</span></code> is a constant. The rows <code class="docutils literal notranslate"><span class="pre">bg.A</span></code> and <code class="docutils literal notranslate"><span class="pre">bg.alpha</span></code> add a power law A·q<sup>−α</sup> (α starts at 4, the Porod
+value); with A = 0 it is off. In the plot the background is the dashed grey line.</p>
+</section>
+<section id="integration-of-the-size-distribution">
+<h2>Integration of the size distribution<a class="headerlink" href="#integration-of-the-size-distribution" title="Link to this heading"></a></h2>
+<p>The x integral uses Gauss–Legendre nodes on the support of N(x), or SASfit’s integrators. <em>Settings →
+Integration…</em> sets the number of nodes and tolerances. <strong>Check nodes</strong> in the Fit dock compares the result for
+increasing node numbers and proposes the smallest sufficient one; <strong>Profile model</strong> shows where the time of one
+evaluation goes. See the <a class="reference internal" href="../studio.html#faster-fits-dfo-ls-variable-projection-cache-coarse-to-fine-fixed-grid"><span class="std std-ref">reference</span></a>.</p>
+</section>
+<section id="own-functions">
+<h2>Own functions<a class="headerlink" href="#own-functions" title="Link to this heading"></a></h2>
+<p>Python functions can be registered as plugins and then appear in the menus like SASfit’s own; see <a class="reference internal" href="extending.html"><span class="doc">Extending studio</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="explorer.html" class="btn btn-neutral float-left" title="The model explorer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fitting.html" class="btn btn-neutral float-right" title="Fitting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

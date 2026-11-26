@@ -1,0 +1,1218 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The generic polydisperse tab &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI" href="README.html" />
+    <link rel="prev" title="The graphical interface" href="gui.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyOZsolver</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="manual.html">ozLib — manual and quick reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">The graphical interface</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The generic polydisperse tab</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#files">Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-pair-potential-18-setters-reused-none-rewritten">1. The pair potential: 18 setters reused, none rewritten</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#yukawa-potentials-sign-and-range-conventions">Yukawa potentials: sign and range conventions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#size-classes-the-rule-depends-on-the-distribution">2. Size classes: the rule depends on the distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#two-class-counts-and-why">3. Two class counts, and why</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-bug-this-fixed">The bug this fixed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#length-scale-radius-and-the-q-axis">4. Length scale, radius, and the Q axis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#closures">5. Closures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#thermodynamic-consistency-solving-for-alpha">6. Thermodynamic consistency: solving for alpha</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fitting-to-measured-data">7. Fitting to measured data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scale-and-background-are-not-fitted-nonlinearly">Scale and background are not fitted nonlinearly</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deflation-applies-to-compute-not-to-fit">Deflation applies to Compute, not to Fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verified">Verified</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#interrupt">Interrupt</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cost-and-what-to-do-about-it">Cost, and what to do about it</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#resolution-smearing">Resolution smearing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parameter-uncertainties-and-correlations">Parameter uncertainties and correlations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#measured-alternatives">Measured alternatives</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-search-and-uncertainties-the-bumps-back-end">Global search and uncertainties: the bumps back end</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#open-items">8. Open items</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="README.html">Changes since pyOZgui</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#where-to-start">Where to start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#a-note-on-the-two-halves">A note on the two halves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#report-and-manuscript">Report and manuscript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#citing">Citing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Ornstein–Zernike</a></li>
+      <li class="breadcrumb-item active">The generic polydisperse tab</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/oz/generic_polydisperse_tab.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="the-generic-polydisperse-tab">
+<h1>The generic polydisperse tab<a class="headerlink" href="#the-generic-polydisperse-tab" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">Polydisperse</span> <span class="pre">(any</span> <span class="pre">potential)</span></code> — any potential x any closure x any form
+factor, with the exact I(Q) shown against all six of SASfit’s approximate
+schemes.</p>
+<p>The tabs it replaced are special cases of it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>tab</p></th>
+<th class="head"><p>potential</p></th>
+<th class="head"><p>closure</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Polydisperse Yukawa <em>(retired)</em></p></td>
+<td><p>one-Yukawa, analytic</p></td>
+<td><p>MSA / RMSA only</p></td>
+</tr>
+<tr class="row-odd"><td><p>Robertus SHS <em>(retired)</em></p></td>
+<td><p>adhesive spheres, analytic</p></td>
+<td><p>PY only</p></td>
+</tr>
+<tr class="row-even"><td><p>RY Polydisperse Yukawa</p></td>
+<td><p>charge-coupled Yukawa, numerical</p></td>
+<td><p>RY only</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Polydisperse (any potential)</strong></p></td>
+<td><p><strong>21 potentials</strong></p></td>
+<td><p><strong>24 closures</strong></p></td>
+</tr>
+</tbody>
+</table>
+<p>The first two are no longer registered in <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.main_window.EXTRA_TABS</span></code>, though their
+modules remain importable and restoring either is one line. RY Polydisperse
+Yukawa is kept because it takes per-distribution parameters, which this tab
+does not: everything here is pinned to (mean, srel), which is what makes the
+five distributions mutually comparable but rules out an asymmetric Gamma or a
+general Beta.</p>
+<p>The counts above come from <code class="docutils literal notranslate"><span class="pre">ozLib.CLOSURE_SETTERS</span></code> and the solver’s own
+<code class="docutils literal notranslate"><span class="pre">setXXXPotential</span></code> methods. They are a snapshot: inspect those rather than
+trust this table if it matters.</p>
+<section id="files">
+<h2>Files<a class="headerlink" href="#files" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">polydisperse_nodes</span><span class="o">.</span><span class="n">py</span>          <span class="n">size</span> <span class="n">classes</span><span class="p">:</span> <span class="n">which</span> <span class="n">quadrature</span> <span class="n">rule</span><span class="p">,</span> <span class="ow">and</span> <span class="n">why</span>
+<span class="n">generic_polydisperse_sas</span><span class="o">.</span><span class="n">py</span>    <span class="n">solves</span> <span class="o">+</span> <span class="n">exposes</span> <span class="n">I_exact</span> <span class="ow">and</span> <span class="n">the</span> <span class="n">six</span> <span class="n">schemes</span>
+<span class="n">generic_polydisperse_tab</span><span class="o">.</span><span class="n">py</span>    <span class="n">the</span> <span class="n">GUI</span>
+<span class="n">oZfixpointOperator</span><span class="o">.</span><span class="n">py</span>          <span class="n">setPolydispersePotential</span><span class="p">()</span> <span class="p">(</span><span class="n">the</span> <span class="n">pair</span> <span class="n">potential</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Registered in <code class="docutils literal notranslate"><span class="pre">pysasfit.oz.gui.main_window.EXTRA_TABS</span></code> as
+<code class="docutils literal notranslate"><span class="pre">(&quot;generic_polydisperse_tab&quot;,</span> <span class="pre">&quot;GenericPolydisperseTab&quot;,</span> <span class="pre">&quot;Polydisperse</span> <span class="pre">(any</span> <span class="pre">potential)&quot;)</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="the-pair-potential-18-setters-reused-none-rewritten">
+<h2>1. The pair potential: 18 setters reused, none rewritten<a class="headerlink" href="#the-pair-potential-18-setters-reused-none-rewritten" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">setPolydispersePotential(potentialName,</span> <span class="pre">potentialArgs,</span> <span class="pre">srel,</span> <span class="pre">nbins,</span> <span class="pre">meanDiameter,</span> <span class="pre">distribution)</span></code> turns any one-component <code class="docutils literal notranslate"><span class="pre">setXXXPotential()</span></code> into
+a multicomponent <code class="docutils literal notranslate"><span class="pre">(p,p,N)</span></code> pair potential.</p>
+<p>The trick is a single hook. <code class="docutils literal notranslate"><span class="pre">getrArray()</span></code> honours an <code class="docutils literal notranslate"><span class="pre">_rArrayOverride</span></code>; the
+builder points it at <code class="docutils literal notranslate"><span class="pre">r/sigma_ij</span></code> and calls the ordinary setter. Because every
+setter measures its hard core against <code class="docutils literal notranslate"><span class="pre">hardSphereDiameter</span> <span class="pre">=</span> <span class="pre">1</span></code>, that core
+lands exactly at <code class="docutils literal notranslate"><span class="pre">sigma_ij</span></code> while the tail is evaluated at the reduced
+separation. No setter was modified.</p>
+<p><strong>Mixing rule</strong> (a modelling choice, stated not buried):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">additive</span> <span class="n">cores</span>      <span class="n">sigma_ij</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma_i</span> <span class="o">+</span> <span class="n">sigma_j</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">identical</span> <span class="n">reduced</span>   <span class="n">u_ij</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>  <span class="o">=</span> <span class="n">u</span><span class="p">(</span><span class="n">r</span><span class="o">/</span><span class="n">sigma_ij</span><span class="p">)</span>
+<span class="n">tail</span>
+</pre></div>
+</div>
+<p>Every pair sees the same interaction shape in units of its own contact
+distance — the assumption Robertus et al. make for size-independent
+stickiness. It is what makes the construction potential-agnostic: epsilon,
+delta, n, tau keep their reduced-unit meaning for every pair, so no
+per-potential mixing rule has to be invented.</p>
+<p>It is not the only defensible choice. For Lennard-Jones the conventional
+alternative is Lorentz-Berthelot, <code class="docutils literal notranslate"><span class="pre">epsilon_ij</span> <span class="pre">=</span> <span class="pre">sqrt(epsilon_i</span> <span class="pre">epsilon_j)</span></code>
+with per-species epsilon; that is a different model and needs per-species tail
+parameters, which the builder deliberately does not make up.</p>
+<p><strong>Charge-coupled potentials are refused, not mis-modelled.</strong> DLVO, DLVOHydra,
+IonicMicrogel and the dedicated polydisperse Yukawa have amplitudes that scale
+with particle size and a kappa set by the whole distribution through the
+counterion density, so the reduced-tail rule is simply wrong for them. They
+have their own tabs.</p>
+<p><strong>Verified</strong>: with <code class="docutils literal notranslate"><span class="pre">srel</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">nbins</span> <span class="pre">=</span> <span class="pre">1</span></code> the generic path reproduces the
+ordinary one-component setters <strong>bit-identically</strong> (maxdiff <code class="docutils literal notranslate"><span class="pre">0.00e+00</span></code> for
+HardSphere, SquareWell and LennardJones; the first and third match the
+recorded literature values 2.3561180274 and 2.1635946756).</p>
+<hr class="docutils" />
+<section id="yukawa-potentials-sign-and-range-conventions">
+<h3>Yukawa potentials: sign and range conventions<a class="headerlink" href="#yukawa-potentials-sign-and-range-conventions" title="Link to this heading"></a></h3>
+<p>All Yukawa methods (<code class="docutils literal notranslate"><span class="pre">Yukawa</span></code>, <code class="docutils literal notranslate"><span class="pre">HS3Yukawa</span></code>, <code class="docutils literal notranslate"><span class="pre">HardSphereDoubleYukawa</span></code>) use the
+SAME sign convention, the project-wide convention A (also for the square-well
+and piecewise-constant depths), with each tail’s amplitude independently signed:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>K_i &gt; 0  -&gt;  ATTRACTIVE tail  (beta u &lt; 0)
+K_i &lt; 0  -&gt;  REPULSIVE tail   (beta u &gt; 0)
+</pre></div>
+</div>
+<p>They differ only in how the range is parameterised:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>method</p></th>
+<th class="head"><p>range parameter</p></th>
+<th class="head"><p>tails</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HS3Yukawa(K1,</span> <span class="pre">lambda1,</span> <span class="pre">...)</span></code></p></td>
+<td><p>decay length lambda</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">HardSphereDoubleYukawa(K1,</span> <span class="pre">z1,</span> <span class="pre">K2,</span> <span class="pre">z2)</span></code></p></td>
+<td><p>screening z = 1/lambda</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<p>so, with no sign changes anywhere,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>HardSphereDoubleYukawa(K1, z1, K2, z2)
+  ==  HS3Yukawa(K1, 1/z1, K2, 1/z2, 0, 1)
+</pre></div>
+</div>
+<p>verified to 1e-16 across all four sign combinations. The double-Yukawa entry
+exists only because published parameters are usually quoted as screening
+parameters z; inverting them by hand is a slip that still produces a
+plausible-looking curve. Neither argument position is reserved for the
+attractive or the repulsive term – two attractions, two repulsions, or one
+of each are all valid.</p>
+<p>The repulsive/attractive split is assigned <strong>per term by the sign of its
+amplitude</strong>, so the closures that read it (HMSA, SMSA, CG, Carbajal-Tinoco)
+see the real decomposition for any sign combination.</p>
+<p><strong>Convergence limit.</strong> Strong attraction defeats Picard: with z1 = 1.8,
+K2 = -0.5, z2 = 6, it diverges past K1 ~ 1.5 at every volume fraction tried,
+while g_max rises smoothly (1.368, 1.444, 1.562, 2.060) below that. Use
+SUNDIALS KIN_FP or Newton-Krylov for attractive systems. If no solver
+converges, the state may genuinely be near the spinodal.</p>
+</section>
+</section>
+<section id="size-classes-the-rule-depends-on-the-distribution">
+<h2>2. Size classes: the rule depends on the distribution<a class="headerlink" href="#size-classes-the-rule-depends-on-the-distribution" title="Link to this heading"></a></h2>
+<p>All five distributions have <strong>analytic moments</strong> — that is never the problem.
+The problem is the map from moments to nodes (Golub-Welsch), which is
+classically ill-conditioned even with exact input. Measured condition numbers
+of the log-normal Hankel matrix:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>s=0.3</p></th>
+<th class="head"><p>s=0.4</p></th>
+<th class="head"><p>s=0.5</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>N=6</p></td>
+<td><p>1.6e7</p></td>
+<td><p>1.7e7</p></td>
+<td><p>1.2e8</p></td>
+</tr>
+<tr class="row-odd"><td><p>N=8</p></td>
+<td><p>2.1e10</p></td>
+<td><p>1.9e11</p></td>
+<td><p>4.7e13</p></td>
+</tr>
+<tr class="row-even"><td><p>N=10</p></td>
+<td><p>7.0e13</p></td>
+<td><p>1.7e16</p></td>
+<td><p>5.4e19</p></td>
+</tr>
+<tr class="row-odd"><td><p>N=12</p></td>
+<td><p>6.4e17</p></td>
+<td><p>1.2e21</p></td>
+<td><p>2.3e27</p></td>
+</tr>
+</tbody>
+</table>
+<p>float64 carries ~1e16, and Cholesky does <strong>not</strong> raise past that — it silently
+returns nonsense. So a closed-form rule is used wherever one exists:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>distribution</p></th>
+<th class="head"><p>rule</p></th>
+<th class="head"><p>precision</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Schulz / gamma</p></td>
+<td><p>generalised Gauss-Laguerre</p></td>
+<td><p>float64</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gaussian</p></td>
+<td><p>Gauss-Hermite</p></td>
+<td><p>float64</p></td>
+</tr>
+<tr class="row-even"><td><p>log-normal</p></td>
+<td><p>Golub-Welsch</p></td>
+<td><p>mpmath</p></td>
+</tr>
+<tr class="row-odd"><td><p>Weibull</p></td>
+<td><p>Golub-Welsch</p></td>
+<td><p>mpmath</p></td>
+</tr>
+</tbody>
+</table>
+<p>All four are moment-exact to ~1e-16 (<code class="docutils literal notranslate"><span class="pre">polydisperse_nodes.momentError()</span></code>).</p>
+<p><strong>Gaussian guard.</strong> Gauss-Hermite puts its outermost node at u ~ +/-2.86, so
+sigma goes non-positive around s ~ 0.35. A form factor tolerates a vanishing
+bin; a structure factor does not, because a hard core must be placed at every
+<code class="docutils literal notranslate"><span class="pre">sigma_ij</span></code>. Nodes below <code class="docutils literal notranslate"><span class="pre">1e-3*&lt;sigma&gt;</span></code> are dropped and the weights
+renormalised — sacrificing exactness rather than physicality. The test is
+deliberately RELATIVE: at s = 0.35 the node sits at 1e-4, positive but still a
+zero-diameter particle, so a bare <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> check is not enough.</p>
+</section>
+<hr class="docutils" />
+<section id="two-class-counts-and-why">
+<h2>3. Two class counts, and why<a class="headerlink" href="#two-class-counts-and-why" title="Link to this heading"></a></h2>
+<p><strong>Classes (S)</strong> and <strong>Classes (form f.)</strong> are separate controls, because the
+two averages behave differently in sigma:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">S_ij(Q)</span></code> varies <strong>smoothly</strong> with size — 3-5 moment-matched classes suffice,
+and the OZ solve costs O(p^2) pair transforms, so p should stay small</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;|F|^2&gt;</span></code> <strong>oscillates</strong> — at high Q the phase <code class="docutils literal notranslate"><span class="pre">Q*R</span></code> spans about
+<code class="docutils literal notranslate"><span class="pre">Q*&lt;sigma&gt;*s</span></code> radians across the distribution</p></li>
+</ul>
+<p>Rule of thumb: <strong>nFF &gt;~ Qmax * sigma * s</strong>.</p>
+<section id="the-bug-this-fixed">
+<h3>The bug this fixed<a class="headerlink" href="#the-bug-this-fixed" title="Link to this heading"></a></h3>
+<p>Reported as: <em>“for a size distribution with sigma 0.3 no oscillations should
+be visible at larger q, but they are”</em>. Correct — and the cause was not
+resolution but a convention error.</p>
+<p><code class="docutils literal notranslate"><span class="pre">S^AL_ij</span> <span class="pre">=</span> <span class="pre">delta_ij</span> <span class="pre">+</span> <span class="pre">sqrt(rho_i</span> <span class="pre">rho_j)</span> <span class="pre">h_ij</span></code>. Interpolating the <strong>whole</strong>
+matrix onto the fine grid smears the Kronecker delta into a band, which turns
+the incoherent <code class="docutils literal notranslate"><span class="pre">sum_i</span> <span class="pre">|F_i|^2</span></code> into the coherent <code class="docutils literal notranslate"><span class="pre">|sum_i</span> <span class="pre">F_i|^2</span></code> — and
+coherent addition of form factors is exactly what oscillates. Only <code class="docutils literal notranslate"><span class="pre">h_ij</span></code> is
+interpolated now; the delta is re-imposed exactly on the fine grid.</p>
+<p>Validated against brute-force integration of <code class="docutils literal notranslate"><span class="pre">&lt;|F|^2&gt;</span></code> (4000 points):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>ripple at high Q</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>brute-force reference, s = 0.3</p></td>
+<td><p>0.038</p></td>
+</tr>
+<tr class="row-odd"><td><p>5 classes (before)</p></td>
+<td><p>1.91</p></td>
+</tr>
+<tr class="row-even"><td><p>nFF = 40</p></td>
+<td><p><strong>0.041</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>nFF = 160</p></td>
+<td><p>0.041</p></td>
+</tr>
+</tbody>
+</table>
+<p>Two earlier hypotheses were wrong and are recorded because they look
+plausible: “too few classes” (disproved — the ripple did not converge away by
+30 classes) and “Gauss nodes are unsuited to oscillatory integrands” (a true
+statement, and the dense non-Gauss grid was the right change, but not the
+cause — the ripple got <em>worse</em>, 1.91 -&gt; 3.14). The brute-force reference is
+what localised it, by showing <code class="docutils literal notranslate"><span class="pre">I_dilute</span></code> correct at 0.040 while <code class="docutils literal notranslate"><span class="pre">I_exact</span></code> gave
+2.79 at phi = 1e-6, where S must be the identity.</p>
+<p>The fine grid is also constrained to lie <strong>inside the coarse hull</strong>, since
+S_ij is only known at the coarse classes and clamping a wide interval to one
+S value reintroduces ringing.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="length-scale-radius-and-the-q-axis">
+<h2>4. Length scale, radius, and the Q axis<a class="headerlink" href="#length-scale-radius-and-the-q-axis" title="Link to this heading"></a></h2>
+<p><strong>Mean radius</strong> sets the length scale. Q is then a genuine inverse length.</p>
+<p>The OZ equations are <strong>always solved in reduced units</strong> (mean diameter = 1):
+the solver’s radial grid spans only about 41 diameters, so handing it a
+physical sigma of 100 would put every hard core off the end of the grid. The
+scale is applied <em>after</em> the solve, to the diameters, the number densities
+(<code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">~</span> <span class="pre">1/L^3</span></code>, which keeps phi invariant) and the q axis (<code class="docutils literal notranslate"><span class="pre">q_reduced</span> <span class="pre">=</span> <span class="pre">Q*L</span></code>).
+The tail parameters are already reduced, so they are untouched.</p>
+<p><strong>The scattering radius is the CORE radius</strong>, <code class="docutils literal notranslate"><span class="pre">R_i</span> <span class="pre">=</span> <span class="pre">sigma_i/2</span></code>, for every
+class, and the interaction radius is whatever that form factor declares:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ff</span><span class="o">.</span><span class="n">outer_radius</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For a plain <strong>Sphere</strong> the two coincide, <code class="docutils literal notranslate"><span class="pre">outer_radius(R)</span> <span class="pre">==</span> <span class="pre">R</span></code>.</p>
+<p>For <strong>core-shell</strong> the tab builds <code class="docutils literal notranslate"><span class="pre">CoreShellFixedShell</span></code>, which puts the
+polydispersity on the CORE and gives every particle the same shell thickness,
+so <code class="docutils literal notranslate"><span class="pre">outer_radius(R)</span> <span class="pre">=</span> <span class="pre">R</span> <span class="pre">+</span> <span class="pre">dR</span></code> and the hard core sits at the shell’s outer
+surface. That is what makes the <code class="docutils literal notranslate"><span class="pre">delta</span> <span class="pre">=</span> <span class="pre">c</span> <span class="pre">*</span> <span class="pre">dR</span></code> link coherent: dR is a real
+thickness, so c = 1 means the attraction range IS the layer and c = 2 means
+two layers overlap at contact.</p>
+<blockquote>
+<div><p>An earlier version of this section said the model is polydisperse in the
+OUTER radius with the core at <code class="docutils literal notranslate"><span class="pre">ratio*R</span></code>. That describes the older
+<code class="docutils literal notranslate"><span class="pre">CoreShell</span></code> class, which the tab no longer uses. Both classes remain in
+<code class="docutils literal notranslate"><span class="pre">polydisperse_yukawa_sas.py</span></code>; only <code class="docutils literal notranslate"><span class="pre">CoreShellFixedShell</span></code> is reachable from
+the interface.</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">outer_radius()</span></code> is the hook for any other arrangement. A hydrated sphere, a
+polymer corona or a charged particle whose effective hard core exceeds its
+scattering radius is a NEW FORM FACTOR overriding that one method – not a
+GUI parameter. No interface could expose the radius conventions of every form
+factor without becoming unreadable, and the ones that matter differ in their
+scattering too, so a new class is the honest unit of extension.</p>
+<p>Verified at meanRadius = 50 (sigma = 100, R = 50): the S(Q) peak moves to
+Q = 0.06608 while <code class="docutils literal notranslate"><span class="pre">Q*sigma</span> <span class="pre">=</span> <span class="pre">6.608</span></code> (hard spheres expect ~2pi = 6.28) and
+<code class="docutils literal notranslate"><span class="pre">Q*R</span> <span class="pre">=</span> <span class="pre">4.496</span></code> at the first I(Q) minimum (exact sphere zero 4.493) — both
+unchanged from the dimensionless case, i.e. a pure change of units.</p>
+<p><strong>Known limitation</strong>: scattering size and interaction size are perfectly
+correlated by construction — no independent width, no offset. That is right
+for charged colloids or bare silica, where the particle <em>is</em> the hard core. It
+is wrong for sterically stabilised particles (the brush is often
+contrast-matched, so R_scatter &lt; sigma/2), for charged colloids at low salt
+(the effective core can exceed the physical particle), and for solvated or
+partially matched shells. A single scale factor <code class="docutils literal notranslate"><span class="pre">R</span> <span class="pre">=</span> <span class="pre">f*sigma/2</span></code> would cover
+the first two; decoupling the <em>widths</em> is a larger change, because it breaks
+the one-to-one class correspondence that lets S_ij and F share an index.</p>
+<p>This assumption is inherited from <code class="docutils literal notranslate"><span class="pre">polydisperse_yukawa_sas</span></code>, so the Yukawa and
+Robertus tabs make it too.</p>
+</section>
+<hr class="docutils" />
+<section id="closures">
+<h2>5. Closures<a class="headerlink" href="#closures" title="Link to this heading"></a></h2>
+<p>Offered: <code class="docutils literal notranslate"><span class="pre">ozLib.multicomponentCapableClosures()</span></code> — 19 of 23. The four excluded
+each need something that only exists for a single component:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>excluded</p></th>
+<th class="head"><p>reason</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Reference HNC</p></td>
+<td><p>needs a one-component hard-sphere reference solve (g0/G0)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Modified HNC</p></td>
+<td><p>needs an analytic one-component PY bridge at one packing fraction; the mixture version is the Lado variational problem</p></td>
+</tr>
+<tr class="row-even"><td><p>Rescaled MSA</p></td>
+<td><p>a one-component diameter-rescaling procedure; the polydisperse counterpart is the separate analytic <code class="docutils literal notranslate"><span class="pre">polydisperse_rmsa.py</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>EuRah</p></td>
+<td><p>uses a precomputed one-component HS/PY array</p></td>
+</tr>
+</tbody>
+</table>
+<p>MS, VM and CJVM are <strong>not</strong> excluded. They are structurally fine and do run
+multicomponent; they fail only because their square-root bridge overflows
+<code class="docutils literal notranslate"><span class="pre">exp(G+B)</span></code> for strongly coupled charged systems — a closure-domain limit that
+applies equally in one component. Hiding them would misattribute that to the
+polydispersity machinery.</p>
+<p>Extended Rogers-Young carries a second parameter <code class="docutils literal notranslate"><span class="pre">a</span></code> (a = 0 reduces exactly to
+RY); it appears automatically, declared in <code class="docutils literal notranslate"><span class="pre">ozLib.SECOND_CLOSURE_PARAM</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="thermodynamic-consistency-solving-for-alpha">
+<h2>6. Thermodynamic consistency: solving for alpha<a class="headerlink" href="#thermodynamic-consistency-solving-for-alpha" title="Link to this heading"></a></h2>
+<p>Tick <strong>solve alpha by thermodynamic consistency</strong> and alpha is fixed by
+requiring the compressibility and virial routes to the pressure to agree,
+rather than typed in. The entry is disabled while it is ticked, so the field
+and the solved value cannot silently disagree. The checkbox is only enabled
+for closures that carry a free parameter and are listed in
+<code class="docutils literal notranslate"><span class="pre">ozLib.CONSISTENT_PARAMETER_CLOSURES</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chi</span><span class="o">^-</span><span class="mi">1</span><span class="n">_comp</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n</span> <span class="n">sum_ij</span> <span class="n">x_i</span> <span class="n">x_j</span> <span class="n">chat_ij</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>          <span class="p">(</span><span class="n">quadratic</span> <span class="n">extrap</span><span class="o">.</span> <span class="n">to</span> <span class="n">q</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">chi</span><span class="o">^-</span><span class="mi">1</span><span class="n">_vir</span>  <span class="o">=</span> <span class="n">d</span><span class="p">(</span><span class="n">betaP</span><span class="p">)</span><span class="o">/</span><span class="n">dn</span>
+<span class="n">betaP</span><span class="o">/</span><span class="n">n</span>     <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="n">n</span> <span class="n">sum_ij</span> <span class="n">x_i</span> <span class="n">x_j</span> <span class="n">sigma_ij</span><span class="o">^</span><span class="mi">3</span> <span class="n">g_ij</span><span class="p">(</span><span class="n">sigma_ij</span><span class="o">+</span><span class="p">)</span>
+                <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="n">n</span> <span class="n">sum_ij</span> <span class="n">x_i</span> <span class="n">x_j</span> <span class="nb">int</span> <span class="n">r</span><span class="o">^</span><span class="mi">3</span> <span class="n">g_ij</span> <span class="p">(</span><span class="n">beta</span> <span class="n">U_ij</span><span class="p">)</span><span class="s1">' dr</span>
+</pre></div>
+</div>
+<p>The <strong>contact term</strong> is kept. D’Aguanno &amp; Klein omit it legitimately — their
+macroions are so strongly charged that <code class="docutils literal notranslate"><span class="pre">g(sigma+)</span> <span class="pre">~</span> <span class="pre">0</span></code> — but that is not safe
+for a general potential with a reachable core, where the term is first order
+in the pressure. <code class="docutils literal notranslate"><span class="pre">(beta</span> <span class="pre">U)'</span></code> is differentiated numerically, because the
+builder reuses arbitrary setters and cannot know their analytic derivative.</p>
+<p>The reduced-tail potential is density-independent, so perturbing phi leaves it
+untouched. That is not automatic: in the charge-coupled route kappa depends on
+the counterion density, and rebuilding at <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">+/-</span> <span class="pre">dn</span></code> silently differentiates a
+density-dependent potential.</p>
+<p><strong>Validated against analytic PY hard spheres at eta = 0.3:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>quantity</p></th>
+<th class="head"><p>analytic</p></th>
+<th class="head"><p>measured</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>chi^-1</p></td>
+<td><p>10.6622</p></td>
+<td><p>11.0678 (3.8%, grid)</p></td>
+</tr>
+<tr class="row-odd"><td><p>betaP/rho</p></td>
+<td><p>3.8163</p></td>
+<td><p>3.8896 (1.9%, grid)</p></td>
+</tr>
+<tr class="row-even"><td><p>PY residual</p></td>
+<td><p>+1.2482</p></td>
+<td><p>+1.3284 (6%)</p></td>
+</tr>
+</tbody>
+</table>
+<p>and the RY residual crosses zero between alpha = 0.1 and 0.5, converging on
+the HNC limit at large alpha (-4.1495 vs HNC -4.1497). A live run returns
+<code class="docutils literal notranslate"><span class="pre">alpha</span> <span class="pre">=</span> <span class="pre">0.2441</span> <span class="pre">[consistent:</span> <span class="pre">residual</span> <span class="pre">-6.94e-05,</span> <span class="pre">relative</span> <span class="pre">6.7e-06]</span></code>.</p>
+<p><strong>Consistency is judged RELATIVE to chi^-1</strong>, which is of order 10 for a dense
+fluid. An absolute threshold rejected a perfectly good root (alpha = 0.2443,
+residual -1.2e-3, i.e. a relative 1e-4) as “no consistent value found”.</p>
+<p><strong>A consistent alpha need not exist.</strong> The residual is often monotone and
+already nonzero in the alpha -&gt; 0 limit, meaning the base closure is itself
+inconsistent for that state and no mixing repairs it. That is reported, not
+hidden behind a fallback presented as a fit.</p>
+<p><strong>Caution.</strong> First tested at <code class="docutils literal notranslate"><span class="pre">srel</span> <span class="pre">=</span> <span class="pre">0.2,</span> <span class="pre">nbins</span> <span class="pre">=</span> <span class="pre">3,</span> <span class="pre">phi</span> <span class="pre">=</span> <span class="pre">0.3</span></code>, where the
+residual saturated near +2.11 with almost no alpha dependence, and this was
+wrongly read as a broken virial route. With three moment-matched classes the
+largest diameter reaches sigma ~ 2.48, so at phi = 0.3 the biggest spheres are
+at or past their own close packing: the state was unreachable, not the code
+wrong. Test consistency at phi ~ 0.15 for s = 0.2, or use fewer classes.</p>
+<p>Cost: <strong>three OZ solves per trial alpha</strong>, so it runs in the worker thread
+with progress messages.</p>
+</section>
+<hr class="docutils" />
+<section id="fitting-to-measured-data">
+<h2>7. Fitting to measured data<a class="headerlink" href="#fitting-to-measured-data" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Load</span> <span class="pre">data...</span></code> reads a two- or three-column ASCII/CSV curve (Q, I, optionally
+dI). Whitespace, comma, semicolon and tab separators are accepted, <code class="docutils literal notranslate"><span class="pre">#</span></code>, <code class="docutils literal notranslate"><span class="pre">%</span></code>
+and <code class="docutils literal notranslate"><span class="pre">//</span></code> comments and text headers are skipped, and rows that will not parse
+as numbers are dropped rather than raising – so a stray trailing line does
+not lose the file. SASfit exports load directly.</p>
+<p>Workflow:</p>
+<ol class="arabic simple">
+<li><p><strong>Compute</strong> once to get the curve roughly right by eye. This is not
+politeness: every fit evaluation is a full Ornstein-Zernike solve, so the
+starting guess is worth a minute of your time.</p></li>
+<li><p><strong>Load data…</strong></p></li>
+<li><p>Tick the parameters to <strong>vary</strong>. Mean radius, relative width and volume
+fraction are offered by default; the closure parameter and the potential’s
+own arguments appear when they exist, and the set is rebuilt whenever you
+change the potential or the closure.</p></li>
+<li><p><strong>Fit</strong>. Progress goes to the status line; the fitted values are written
+back into the input fields, so a following Compute reproduces the fit.</p></li>
+</ol>
+<section id="scale-and-background-are-not-fitted-nonlinearly">
+<h3>Scale and background are not fitted nonlinearly<a class="headerlink" href="#scale-and-background-are-not-fitted-nonlinearly" title="Link to this heading"></a></h3>
+<p>A measured curve is <code class="docutils literal notranslate"><span class="pre">I_obs</span> <span class="pre">=</span> <span class="pre">scale</span> <span class="pre">*</span> <span class="pre">I_model(p)</span> <span class="pre">+</span> <span class="pre">background</span></code>, and both enter
+LINEARLY. They are therefore obtained exactly at every iteration by a
+two-parameter weighted linear least squares against the current model shape,
+rather than being handed to the optimiser. This removes the two most strongly
+correlated parameters from the nonlinear problem – scale trades against
+volume fraction and contrast, background against everything at high Q –
+costs nothing, since the model shape is already computed, and stops the
+optimiser spending an OZ solve on a scale factor. It is why a three-parameter
+fit converges in about 30 evaluations rather than a few hundred.</p>
+</section>
+<section id="deflation-applies-to-compute-not-to-fit">
+<h3>Deflation applies to Compute, not to Fit<a class="headerlink" href="#deflation-applies-to-compute-not-to-fit" title="Link to this heading"></a></h3>
+<p>The tab has a <strong>Deflate if S(Q)&lt;0</strong> control, defaulting to 0. When a solve
+converges to a root with min S(Q) &lt; 0 — a genuine solution of the closure
+equations on a branch that does not describe a fluid — each attempt excludes
+that root and re-solves with <strong>the same solver</strong>, so your choice of solver is
+respected rather than silently swapped for one from the other family.</p>
+<p><strong>It is deliberately not passed on the fit path</strong>, and that is worth stating
+because it looks like an oversight. Three reasons:</p>
+<ul class="simple">
+<li><p>The optimiser evaluates the model hundreds of times and passes through
+unphysical territory routinely. Each rescue costs extra solves at exactly
+the hardest state points, so the cost becomes unpredictable.</p></li>
+<li><p>The refusal is <strong>information</strong>. It tells the optimiser to back off, and
+rescuing it hides the signal that the parameters are wrong.</p></li>
+<li><p>Worst, it would make the residual <strong>discontinuous</strong>. If deflation finds a
+second branch at some parameter values and not at neighbouring ones,
+chi-squared jumps between adjacent iterations. A least-squares optimiser
+assumes a smooth residual, and the convergence failures that follow look
+like bad data rather than like a discontinuous model. The same concern
+appears in the warm-start note above, where branch-switching breaks
+smoothness — deflation would do it <em>selectively</em>, which is worse than
+doing it consistently.</p></li>
+</ul>
+<p>The workflow it is for runs the other way: fit, get a result that looks
+wrong, then recompute at those parameters with deflation on, to ask whether
+a second branch exists there.</p>
+</section>
+<section id="verified">
+<h3>Verified<a class="headerlink" href="#verified" title="Link to this heading"></a></h3>
+<p>Synthetic hard-sphere data (R = 50, s = 0.22, phi = 0.18, scale 1.7e-3,
+background 0.012, 3 % noise), started deliberately wrong at R = 40, s = 0.10,
+phi = 0.30:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>parameter</p></th>
+<th class="head"><p>fitted</p></th>
+<th class="head"><p>true</p></th>
+<th class="head"><p>error</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>meanRadius</p></td>
+<td><p>49.52</p></td>
+<td><p>50.0</p></td>
+<td><p>1.0 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>srel</p></td>
+<td><p>0.2187</p></td>
+<td><p>0.22</p></td>
+<td><p>0.6 %</p></td>
+</tr>
+<tr class="row-even"><td><p>phi</p></td>
+<td><p>0.1657</p></td>
+<td><p>0.18</p></td>
+<td><p>7.9 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>scale</p></td>
+<td><p>1.82e-3</p></td>
+<td><p>1.7e-3</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>background</p></td>
+<td><p>0.0128</p></td>
+<td><p>0.012</p></td>
+<td><p>–</p></td>
+</tr>
+</tbody>
+</table>
+<p>chi2_red = 0.903 in 31 evaluations, no failed solves. The residual error on
+phi is the visible consequence of its correlation with the scale factor: it
+is the parameter such data constrains least, and a point estimate is arguably
+the wrong output for it (see “Not done”).</p>
+</section>
+<section id="interrupt">
+<h3>Interrupt<a class="headerlink" href="#interrupt" title="Link to this heading"></a></h3>
+<p><strong>Interrupt</strong> stops a running fit as well as a running single solve. The flag
+is checked BETWEEN model evaluations rather than inside the OZ solve, so the
+response time is one solve – measured at 1.5 s on a fit that would have run
+84 s. Interrupting mid-solve was deliberately not done: it would leave the
+solver partially updated with no converged Gamma to fall back on.</p>
+<p>An interrupted fit returns the <strong>best point reached</strong>, not the last one
+tried, since the optimiser may well have been probing a poor direction when
+the interrupt arrived. The summary is headed “FIT (INTERRUPTED – best point
+so far)” and the status line says so, so a partial fit cannot be mistaken for
+a converged one.</p>
+</section>
+<section id="cost-and-what-to-do-about-it">
+<h3>Cost, and what to do about it<a class="headerlink" href="#cost-and-what-to-do-about-it" title="Link to this heading"></a></h3>
+<p>Each evaluation is one OZ solve; the numerical Jacobian adds one solve per
+parameter per iteration. Keep <strong>Classes (S)</strong> at 3 while fitting and raise it
+for the final Compute – <strong>Classes (form f.)</strong> can stay high, since it does
+not enter the OZ solve.</p>
+<p>A failed solve is not an error during a fit: the optimiser explores
+unphysical corners, and those return a large residual so it walks away.
+Watch <code class="docutils literal notranslate"><span class="pre">failedEvaluations</span></code> in the summary. A nonzero count means the fit is
+straddling a region where solves fail, and a derivative-free method is then
+the better tool – DFO-LS is a one-line swap on the same <code class="docutils literal notranslate"><span class="pre">_residuals</span></code>
+callable.</p>
+</section>
+<section id="resolution-smearing">
+<h3>Resolution smearing<a class="headerlink" href="#resolution-smearing" title="Link to this heading"></a></h3>
+<p>SANS resolution dQ/Q is of order 10 % and smears form-factor oscillations in
+exactly the way polydispersity does. Fitting without it lets the model absorb
+the instrument into <code class="docutils literal notranslate"><span class="pre">srel</span></code>. Measured on smeared synthetic data with a true
+<code class="docutils literal notranslate"><span class="pre">srel</span></code> of 0.15:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>chi2_red</p></th>
+<th class="head"><p>R</p></th>
+<th class="head"><p>srel</p></th>
+<th class="head"><p>phi</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>without smearing</p></td>
+<td><p>1.073</p></td>
+<td><p>47.82</p></td>
+<td><p><strong>0.1726 (15.1 % high)</strong></p></td>
+<td><p>0.1541</p></td>
+</tr>
+<tr class="row-odd"><td><p>with smearing</p></td>
+<td><p>0.750</p></td>
+<td><p>49.96</p></td>
+<td><p><strong>0.1497 (0.2 % high)</strong></p></td>
+<td><p>0.1490</p></td>
+</tr>
+</tbody>
+</table>
+<p>Note the chi-squared: without smearing the fit does not look bad, it is
+simply wrong. That is bias, not imprecision, and more data does not fix it.</p>
+<p>To use it, supply a FOURTH column of dQ and read it with
+<code class="docutils literal notranslate"><span class="pre">loadCurve(path,</span> <span class="pre">withResolution=True)</span></code>, then pass
+<code class="docutils literal notranslate"><span class="pre">PolydisperseFit(...,</span> <span class="pre">resolution=Resolution(Q,</span> <span class="pre">dQ))</span></code>.</p>
+<p><strong>Convention:</strong> dQ is read as the Gaussian SIGMA, not the FWHM. The two
+differ by 2.355, and using the wrong one silently rescales the fitted
+polydispersity – precisely the bias smearing exists to remove. Pass
+<code class="docutils literal notranslate"><span class="pre">Resolution(Q,</span> <span class="pre">dQ,</span> <span class="pre">fwhm=True)</span></code> if the reduction writes FWHM.</p>
+<p><strong>Why it is cheap here.</strong> Smearing needs the model on an extended, denser Q
+grid, which for most models multiplies the cost several-fold. Here it is
+nearly free, because the expensive part – the Ornstein-Zernike solve – does
+not depend on the Q grid at all. It also leaves the scale/background
+elimination intact, since smearing is linear and the background is not
+smeared.</p>
+<p>Verified: dQ -&gt; 0 reproduces the unsmeared curve to 1.1e-16, kernel rows
+normalise to 1.000000, and the extended grid reaches below Q_min.</p>
+</section>
+<section id="parameter-uncertainties-and-correlations">
+<h3>Parameter uncertainties and correlations<a class="headerlink" href="#parameter-uncertainties-and-correlations" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">run()</span></code> returns <code class="docutils literal notranslate"><span class="pre">uncertainty</span></code>, <code class="docutils literal notranslate"><span class="pre">correlation</span></code> and <code class="docutils literal notranslate"><span class="pre">parameterOrder</span></code> alongside
+the fitted values, computed from the Jacobian <code class="docutils literal notranslate"><span class="pre">least_squares</span></code> has already
+produced – no extra model evaluations. On the synthetic test:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>meanRadius  49.5228 +/- 0.2262
+srel         0.2187 +/- 0.0020
+phi          0.1657 +/- 0.0060
+
+              meanRadius   srel    phi
+meanRadius        1.000  -0.224   0.751
+srel             -0.224   1.000   0.389
+phi               0.751   0.389   1.000
+</pre></div>
+</div>
+<p>The correlation matrix is the useful part. <strong>phi and R are correlated at
+0.75</strong>: the fit can compensate a slightly small radius with a slightly small
+volume fraction, since both act on the position and height of the
+structure-factor peak. That, not noise, is why phi is the least
+well-determined parameter in the table further up. Note that <code class="docutils literal notranslate"><span class="pre">scale</span></code> does not
+appear – it is eliminated analytically and never enters the Jacobian.</p>
+<p>With trustworthy dI the covariance is <code class="docutils literal notranslate"><span class="pre">(J^T</span> <span class="pre">J)^-1</span></code>; without it, it is scaled
+by chi2_red, since the absolute residual scale is then arbitrary.</p>
+<p><strong>Caveat.</strong> This is a linearised estimate, so it assumes a quadratic cost
+surface near the minimum and understates the error for bounded or strongly
+correlated problems – on the test above two parameters sit 2.1 and 2.4 sigma
+from truth on 3 % noise, which is a little far. Good for relative precision
+and for spotting correlation; for a published error bar, sample the posterior
+with <code class="docutils literal notranslate"><span class="pre">fitWithBumps(...,</span> <span class="pre">method=&quot;dream&quot;)</span></code>.</p>
+</section>
+<section id="measured-alternatives">
+<h3>Measured alternatives<a class="headerlink" href="#measured-alternatives" title="Link to this heading"></a></h3>
+<p>On the synthetic problem above, with three parameters:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>method</p></th>
+<th class="head"><p>evaluations</p></th>
+<th class="head"><p>time</p></th>
+<th class="head"><p>result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scipy.least_squares</span></code> (default)</p></td>
+<td><p>36</p></td>
+<td><p>24 s</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>DFO-LS</p></td>
+<td><p>94</p></td>
+<td><p>71 s</p></td>
+<td><p>identical to 4 d.p.</p></td>
+</tr>
+<tr class="row-even"><td><p>bumps <code class="docutils literal notranslate"><span class="pre">amoeba</span></code></p></td>
+<td><p>158</p></td>
+<td><p>80 s</p></td>
+<td><p>identical to 4 d.p.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Derivative-free loses here because with only three parameters a
+finite-difference Jacobian is cheap and yields a genuine Gauss-Newton step.
+It should win once the parameter count grows, or where solves fail.</p>
+</section>
+<section id="global-search-and-uncertainties-the-bumps-back-end">
+<h3>Global search and uncertainties: the bumps back end<a class="headerlink" href="#global-search-and-uncertainties-the-bumps-back-end" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">polydisperse_fit.fitWithBumps(fitter,</span> <span class="pre">method=...)</span></code> exposes the optimisers of
+<a class="reference external" href="https://bumps.readthedocs.io">bumps</a> – from the DANSE project, and the
+fitting engine behind Refl1D – namely <code class="docutils literal notranslate"><span class="pre">dream</span></code>, <code class="docutils literal notranslate"><span class="pre">de</span></code>, <code class="docutils literal notranslate"><span class="pre">amoeba</span></code>, <code class="docutils literal notranslate"><span class="pre">newton</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lm</span></code> and <code class="docutils literal notranslate"><span class="pre">pt</span></code>. It reuses the same residual machinery, including the exact
+linear elimination of scale and background, so both back ends optimise
+exactly the same objective and their results are directly comparable.</p>
+<p>Two of them do things <code class="docutils literal notranslate"><span class="pre">least_squares</span></code> cannot:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">de</span></code></strong> (differential evolution) is a GLOBAL search, so it does not depend
+on the user getting close by eye first. That matters less for a hard sphere
+than for a charged Yukawa with a free closure parameter.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">dream</span></code></strong> samples a POSTERIOR rather than returning a point, and adds
+<code class="docutils literal notranslate"><span class="pre">uncertainty</span></code> and <code class="docutils literal notranslate"><span class="pre">correlation</span></code> keys to the result. This is the honest
+answer to the 7.9 % error on <code class="docutils literal notranslate"><span class="pre">phi</span></code> in the table above: <code class="docutils literal notranslate"><span class="pre">phi</span></code> correlates
+strongly with the scale factor, so with 3 % noise the data does not
+constrain it well, and a correlation matrix says so where a chi-squared
+value cannot.</p></li>
+</ul>
+<p><strong>Cost.</strong> Every evaluation is one Ornstein-Zernike solve. <code class="docutils literal notranslate"><span class="pre">de</span></code> needs hundreds
+and <code class="docutils literal notranslate"><span class="pre">dream</span></code> thousands, so these are overnight tools, not interactive ones. The
+sensible pattern is a global method to find the basin, then
+<code class="docutils literal notranslate"><span class="pre">PolydisperseFit.run()</span></code> to polish – about 30 evaluations.</p>
+<p><strong>State of testing, stated plainly.</strong> <code class="docutils literal notranslate"><span class="pre">amoeba</span></code> has been run end to end and
+reproduces <code class="docutils literal notranslate"><span class="pre">least_squares</span></code> exactly. <code class="docutils literal notranslate"><span class="pre">de</span></code> and <code class="docutils literal notranslate"><span class="pre">dream</span></code> use the identical code
+path – only the fitter string differs – but have NOT been run to completion,
+so the <code class="docutils literal notranslate"><span class="pre">uncertainty</span></code> and <code class="docutils literal notranslate"><span class="pre">correlation</span></code> keys are untested plumbing rather than
+a demonstrated feature. <code class="docutils literal notranslate"><span class="pre">bumps</span></code> is an optional dependency: nothing else in
+the package imports it, and the default fit path does not need it.</p>
+<p><strong>A trap worth knowing.</strong> bumps orders the fitted parameters alphabetically,
+not in the order they are declared, so <code class="docutils literal notranslate"><span class="pre">result.x</span></code> must be matched by label.
+An earlier version zipped it against the declared order and produced a
+plausible-looking fit (chi2_red 95 instead of 0.90) in which two parameters
+held each other’s values while the third was correct. Nothing raised; it
+simply looked like a poor optimiser.</p>
+</section>
+</section>
+<section id="open-items">
+<h2>8. Open items<a class="headerlink" href="#open-items" title="Link to this heading"></a></h2>
+<ol class="arabic" start="0">
+<li><p><strong>Multi-geometry datasets with fitted per-set scales.</strong> A merged curve is
+two or more instrument settings stitched together, and stitching them by
+eye costs real accuracy: the measured dataset used for the validation in
+the manuscript has <code class="docutils literal notranslate"><span class="pre">I_low/I_high</span> <span class="pre">=</span> <span class="pre">0.883</span> <span class="pre">±</span> <span class="pre">0.083</span></code> over its 16 overlapping
+points, so the low-Q section sits 12 % below the high-Q one and not even
+by a constant. At points where <code class="docutils literal notranslate"><span class="pre">dI/I</span></code> is 1–2 %, that alone contributes
+most of the reduced chi-squared of 6.2.</p>
+<p><strong>The design, which is cheaper than it looks.</strong> A per-set scale is LINEAR
+in the model, exactly like the overall scale, the background and the
+Porod amplitude — so it does not need to be a fitted parameter at all. It
+becomes another column in <code class="docutils literal notranslate"><span class="pre">_linearScaleAndBackground</span></code>, solved exactly at
+every iteration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>I = a·model                 over all points    → overall scale
+  + δ_k·model|set k         zeros elsewhere    → extra scale for set k
+  + b                       over all points    → background
+</pre></div>
+</div>
+<p>The effective scale on set k is <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">+</span> <span class="pre">δ_k</span></code>; on the reference set it is
+just <code class="docutils literal notranslate"><span class="pre">a</span></code>. The optimiser gains nothing to search, and the solve is already
+equilibrated against the 1e20 conditioning trap documented there.</p>
+<p><strong>Take the highest-Q set as the reference</strong> and leave it unscaled, since
+the background is subtracted from it. The other n−1 get a δ.</p>
+<p><strong>The real work is resolution per set.</strong> Each geometry has its own dQ, so
+each needs its own <code class="docutils literal notranslate"><span class="pre">Resolution</span></code> matrix and its own extended Q grid;
+<code class="docutils literal notranslate"><span class="pre">PolydisperseFit</span></code> currently assumes one of each. That is the part to
+budget for, not the scales.</p>
+<p>Also needed: loading n files rather than one, a representation that
+remembers which points belong to which set, a file list in the GUI
+instead of a single Load button, and somewhere to show the fitted scales.
+Split test data is in <code class="docutils literal notranslate"><span class="pre">tests/oz</span></code> (<code class="docutils literal notranslate"><span class="pre">STJ1_lowres.dat</span></code>,
+<code class="docutils literal notranslate"><span class="pre">STJ1_highres.dat</span></code>), separated on <code class="docutils literal notranslate"><span class="pre">dQ/Q</span> <span class="pre">=</span> <span class="pre">0.09</span></code>, which divides that file
+unambiguously — there is a gap between 0.089 and 0.091 with nothing in
+it.</p>
+<p><strong>The prediction worth testing when it works</strong>: chi-squared should fall a
+long way, plausibly toward 1–2, while <strong>phi barely moves</strong>. Phi is fixed
+by the low-Q level and the peak position, both inside the low-Q set,
+which is internally consistent. If phi comes out near 0.357 again with
+the scales fitted, the validation is confirmed AND the chi-squared
+objection disappears — a considerably stronger result than the current
+“chi-squared is 6.5, and here is why”.</p>
+</li>
+<li><p><strong>The three documents are not yet consistent with each other.</strong> A check
+across them found tonight’s findings landing unevenly:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>finding</p></th>
+<th class="head"><p>manuscript</p></th>
+<th class="head"><p>supplement</p></th>
+<th class="head"><p>report</p></th>
+<th class="head"><p>Sphinx</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>S(0): type 1 low by 5.27 % at phi=0.4, type 4 by 0.036 %</p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>manual only</p></td>
+</tr>
+<tr class="row-odd"><td><p>Rician vs Gaussian, 44 % against 34 % below Qmin</p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>lstsq conditioning at 1e20</p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>Carbajal-Tinoco is the 2022 paper, not 2008</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>Carbajal-Tinoco domain, Gamma_min = -0.509</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>this file</p></td>
+</tr>
+<tr class="row-odd"><td><p>RMSA exact only where rescaling does not engage</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>two-Yukawa 0.21 %, locally reproducible</p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>manual</p></td>
+</tr>
+</tbody>
+</table>
+<p>The transform finding is the one that matters most and is the one most
+unevenly spread: it is a systematic bias in the compressibility, so a fit
+absorbs it by moving phi, and a reader of the report alone would not know.</p>
+<p>THE UNDERLYING CAUSE is that the report and the manuscript maintain
+SEPARATE BIBLIOGRAPHIES for the same papers – <code class="docutils literal notranslate"><span class="pre">daguanno1991</span></code> against
+<code class="docutils literal notranslate"><span class="pre">DAguannoKlein1991</span></code>, and so on across 37 <code class="docutils literal notranslate"><span class="pre">\bibitem</span></code> entries. A correction
+to one does not reach the other, which is exactly how the
+Carbajal-Tinoco misattribution survived in two places at once.</p>
+<p>AND IT HAS ALREADY LEAKED INTO <code class="docutils literal notranslate"><span class="pre">ozgui.bib</span></code> ITSELF, which carries NINE
+DUPLICATE PAIRS – the same paper under both conventions:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Baxter1968 / baxter1968          BlumHoye1978 / blumhoye1978
+DAguannoKlein1991 / daguanno1991 DAguannoKlein1992 / daguanno1992
+HayterPenfold1981 / hayter1981   PihlajamaaJanssen2024 / pihlajamaa2024
+Robertus1989 / robertus1989      RogersYoung1984 / rogersyoung1984
+ZerahHansen1986 / zerahhansen1986
+</pre></div>
+</div>
+<p>THE TRANSCRIPTION IS ALREADY DONE, which was not obvious until a header
+comment in <code class="docutils literal notranslate"><span class="pre">ozgui.bib</span></code> turned up: the lowercase keys were generated by
+<code class="docutils literal notranslate"><span class="pre">tools/bibitem_to_bibtex.py</span></code> from the report’s own <code class="docutils literal notranslate"><span class="pre">\bibitem</span></code> entries in
+an earlier session. They are not stray duplicates but the report’s
+bibliography already in BibTeX form, sitting beside the manuscript’s.
+The nine pairs are simply the papers both documents cite.</p>
+<p>So the remaining work is smaller than it looks:</p>
+<ol class="arabic simple">
+<li><p>deduplicate the nine pairs, checking volume, pages and year agree
+before discarding either member;</p></li>
+<li><p>rewrite the report’s <code class="docutils literal notranslate"><span class="pre">\cite</span></code> keys to the survivors;</p></li>
+<li><p>replace <code class="docutils literal notranslate"><span class="pre">thebibliography</span></code> in the report with <code class="docutils literal notranslate"><span class="pre">\bibliography{ozgui}</span></code>
+and add <code class="docutils literal notranslate"><span class="pre">bibtex</span></code> to <code class="docutils literal notranslate"><span class="pre">build_report.sh</span></code> if it is not already there.</p></li>
+</ol>
+<p>MATCH ON (VOLUME, FIRST PAGE, YEAR), not on titles and never on
+surnames. That triple is effectively unique and is present on both sides,
+where DOIs are not – the report’s 37 <code class="docutils literal notranslate"><span class="pre">\bibitem</span></code>s carry none at all, and
+only 33 of the 73 bib entries do. It resolves 31 of the 37 outright,
+including <code class="docutils literal notranslate"><span class="pre">lee1995</span></code> against <code class="docutils literal notranslate"><span class="pre">lee1999</span></code>, two papers by the same author in
+different years which a surname match conflates and which is the error
+being repaired. Six need a human decision.</p>
+<p>Success criterion: zero undefined citations from <code class="docutils literal notranslate"><span class="pre">build_report.sh</span></code> AND
+from the manuscript build, with 73 entries reduced to 64.</p>
+</li>
+<li><p>Radius conventions are per FORM FACTOR, by design, and adding one is the
+way to get a different one. <code class="docutils literal notranslate"><span class="pre">sigma/2</span></code> is the core radius; the interaction
+radius is whatever the form factor’s <code class="docutils literal notranslate"><span class="pre">outer_radius()</span></code> returns, which is
+<code class="docutils literal notranslate"><span class="pre">R</span></code> for a sphere and <code class="docutils literal notranslate"><span class="pre">R</span> <span class="pre">+</span> <span class="pre">dR</span></code> for the core-shell the tab builds (see §4).</p>
+<p>A hydrated sphere, a polymer corona, or a charged particle whose
+effective hard core exceeds its scattering radius therefore needs a new
+form factor class overriding that one method – not a new GUI control. No
+interface could carry the radius conventions of every form factor without
+becoming unreadable, and those cases differ in their SCATTERING too, so a
+class is the honest unit of extension. Recorded here because “decouple
+the scattering radius from the hard-core radius” stood as an open item
+for some time and is better read as a description of how extension works.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Carbajal-Tinoco</span></code>: <strong>the bridge equation has a bounded domain</strong>, and
+outside it there is no solution to find. This is a property of the
+closure, not a defect in the solver.</p>
+<p>THE STRUCTURE. The closure is implicit, b = T(Gamma + b) with
+T(w) = e[(2-w)e^w - 2 - w]/(e^w - 1). Substituting w = Gamma + b turns it
+into an explicit map</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Gamma(w) = w - T(w)
+</pre></div>
+</div>
+<p>whose RANGE is the set of Gamma for which a solution exists. That range
+is bounded below: Gamma(w) has a single minimum, and below it the
+equation has no root, above it exactly two.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>e</p></th>
+<th class="head"><p>Gamma_min</p></th>
+<th class="head"><p>at w</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1.0</p></td>
+<td><p>-2.000</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>2.0</p></td>
+<td><p>-0.781</p></td>
+<td><p>-1.63</p></td>
+</tr>
+<tr class="row-even"><td><p>3.0 (lambda = 0)</p></td>
+<td><p><strong>-0.509</strong></p></td>
+<td><p>-1.04</p></td>
+</tr>
+<tr class="row-odd"><td><p>3.4 (lambda = +0.4)</p></td>
+<td><p><strong>-0.447</strong></p></td>
+<td><p>-0.91</p></td>
+</tr>
+</tbody>
+</table>
+<p>Three things follow. Gamma_min RISES towards zero as e grows, so lambda &gt;
+0 shrinks the admissible region – which is the real reason that case
+fails, not the repulsive fixed point diagnosed earlier. The two roots
+above the fold are the usual physical/unphysical pair, and nothing in the
+code chooses between them. And Gamma ~ -0.5 is not an exotic value: at
+contact it is routinely of that order at moderate density, so this is
+reachable in ordinary use rather than in a corner.</p>
+<p>Gamma_min is computable rather than scanned: it is where dGamma/dw = 0,
+i.e. T’(w) = 1, a scalar root-find per e. The code could then say “this
+state point is outside the closure’s domain” precisely, instead of
+iterating 500 times and returning the last iterate whether or not it
+converged – which is what it does now, silently, including for the
+lambda &lt;= 0 that is validated to 2e-13.</p>
+<p>THE LITERATURE SAYS THIS IS NORMAL. A closure having a no-solution domain
+is a known and accepted phenomenon: Amokrane, Ayadim &amp; Malherbe
+(J. Chem. Phys. 123, 174508, 2005) describe “the major limitation of the
+RHNC closure in the case of highly asymmetric mixtures – the wide domain
+of packing fractions in which it has no solution”, and propose a modified
+closure specifically to shrink that domain. So the finding is not that
+something is broken but that this closure’s domain has never been mapped
+here, and the code does not report when it leaves it.</p>
+<p>ALSO: THE CITATION WAS WRONG, and is now fixed. The closure is
+Carbajal-Tinoco, J. Chem. Phys. 157, 204502 (2022), Eqs. 15-16 – the
+“local approximation” bridge function B_LA(r). The code cited the same
+author’s 2008 paper, JCP 128, 184507, which is a DIFFERENT closure:
+Extended Rogers-Young, implemented separately here. The error came from
+OrnsteinZernike.jl’s source docstring, which contradicts Table I of the
+paper accompanying that package – and this implementation inherited it
+along with the code, down to the <code class="docutils literal notranslate"><span class="pre">Tinoko</span></code> spelling. Reading the 2008
+paper while looking for this formula finds Eq. 13 and no trace of it,
+which is how it surfaced. Both papers are now in <code class="docutils literal notranslate"><span class="pre">ozgui.bib</span></code>, and the
+upstream package’s docstring is worth a bug report.</p>
+<p>USEFUL DETAIL FROM THE SOURCE: lambda interpolates between known
+closures. lambda = 0 recovers Martynov-Sarkisov, lambda -&gt; infinity
+recovers HNC. So the shrinking domain as lambda grows is the domain
+shrinking as the closure moves from MS towards HNC.</p>
+<p>NEITHER PAPER MENTIONS THE DOMAIN. The 2022 source notes only that
+Eq. 15 is “a transcendental equation for B(r) as a function of gamma”
+and says nothing about when it has no root. Pihlajamaa &amp; Janssen
+(Phys. Rev. E 110, 044608, 2024) repeatedly exclude closures from their
+figures “due to convergence issues at this state point” and because
+they “converged to nonphysical results”, without diagnosing which
+closures fail where or why. So the phenomenon is known and accepted –
+as Amokrane et al. also show for RHNC – but the location of the
+boundary for THIS closure appears not to be published.</p>
+<p>WHAT THE REFERENCE IMPLEMENTATION DOES: <code class="docutils literal notranslate"><span class="pre">find_zero(f,</span> <span class="pre">gamma)</span></code> from
+Roots.jl, with no domain check, so outside the domain it raises. That is
+the better behaviour and the one to match: returning the 500th iterate,
+as this code does, is not a milder failure but an undetected one. The
+obstacle is that a check on every closure evaluation fires during the
+iteration path from Gamma = 0 even when the converged solution is
+perfectly good – tried, and it broke lambda &lt;= 0 as well. A check
+applied to the CONVERGED solution rather than to each evaluation would
+give the reference’s semantics without the false alarms.</p>
+</li>
+<li><p>Uncertainty estimation is available two ways, and the plumbing of both is
+now verified. The linearised Jacobian covariance is computed on every fit
+and reported with the correlation matrix; it is reliable for spotting
+correlation. The posterior route <code class="docutils literal notranslate"><span class="pre">fitWithBumps(...,</span> <span class="pre">method=&quot;dream&quot;)</span></code> has
+now been run to completion for the first time – <code class="docutils literal notranslate"><span class="pre">tools/numerics_test.py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">testDreamPlumbing</span></code> – and all of it resolves: 3697 evaluations, none
+failed, <code class="docutils literal notranslate"><span class="pre">uncertainty</span></code> populated from <code class="docutils literal notranslate"><span class="pre">result.dx</span></code>, and <code class="docutils literal notranslate"><span class="pre">correlation</span></code> a
+(2, 2) matrix with unit diagonal and a symmetric off-diagonal. The bare
+<code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception:</span> <span class="pre">pass</span></code> around the state lookup was NOT hiding a broken
+attribute path, which was the live worry.</p>
+<p>WHAT REMAINS. The test fits noiseless synthetic data, so the likelihood is
+nearly flat: chi2 comes out at 4e-7, the returned uncertainties are
+essentially the prior widths (0.097 on a phi bounded [0.10, 0.40]) and the
+correlation is 0.06 where phi and srel would be expected to correlate
+strongly. Those are the right outputs for a zero-noise fit and say nothing
+about whether the posterior is MEANINGFUL. One run on real data with real
+error bars is still owed – and it is a far smaller job than this section
+used to claim. At 0.52 s per evaluation with five size classes, ten
+thousand evaluations is about an hour and a half, not a night. The old
+figure of 2.5 s per evaluation was measured when
+<code class="docutils literal notranslate"><span class="pre">GenericPolydisperseSAS</span></code> still defaulted to Picard, the slowest of the
+nine solvers, while <code class="docutils literal notranslate"><span class="pre">ozLib.solve()</span></code> had long defaulted to SUNDIALS
+KIN_FP; a fit constructed directly silently got the weak one. With that
+corrected the same benchmark fit takes 6.7 s rather than 19.6 s for an
+unchanged chi-squared of 0.7468.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>classes</p></th>
+<th class="head"><p>per evaluation</p></th>
+<th class="head"><p>amoeba (~200)</p></th>
+<th class="head"><p>de (~2000)</p></th>
+<th class="head"><p>dream (~10000)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>0.52 s</p></td>
+<td><p>2 min</p></td>
+<td><p>17 min</p></td>
+<td><p>1.5 h</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>1.30 s</p></td>
+<td><p>4 min</p></td>
+<td><p>43 min</p></td>
+<td><p>3.6 h</p></td>
+</tr>
+</tbody>
+</table>
+<p>Cost grows as roughly p^2.2 in the number of classes (0.065 s at one,
+2.67 s at ten), so reducing the classes remains much the cheapest way to
+make a long search viable – but the search was never as expensive as the
+old numbers suggested, and that mattered: those figures exist to help a
+user decide whether a global search is affordable, and being four times
+pessimistic could rule out something quite practical.</p>
+</li>
+<li><p>Resolution smearing <strong>is</strong> exposed in the tab: <code class="docutils literal notranslate"><span class="pre">Load</span> <span class="pre">data...</span></code> reads an
+optional 4th dQ column and enables an “apply Q resolution (dQ column)”
+checkbox, ticked by default when the column is present. Verified live:
+loading a 4-column file gave dQ/Q 0.080..0.080, built a 320-point extended
+grid, and fitted R, srel and phi to 0.1 %, 0.2 % and 0.7 % with
+chi2_red = 0.750. dQ is read as the kernel’s SIGMA; use
+<code class="docutils literal notranslate"><span class="pre">Resolution(Q,</span> <span class="pre">dQ,</span> <span class="pre">fwhm=True)</span></code> if the reduction writes FWHM.</p>
+<p>The kernel is now RICIAN rather than Gaussian. A small-angle instrument
+broadens Q in two dimensions in the detector plane and the data are
+radially averaged, so the distribution of the MAGNITUDE about a true Q0 is
+Rician; a Gaussian in Q is its large-Q0/sigma limit. At the dQ/Q = 0.08 of
+the verification above the two agree closely and those figures stand. At
+dQ/Q = 0.55, which real spherical-shell data reach at their lowest point,
+they do not: a Gaussian places 44 % of that point’s weight below Q_min and
+some of it at NEGATIVE Q, against 34 % for the Rician form, whose leading
+factor of Q excludes the origin by construction. Both reproduce the
+unsmeared curve to 2e-16 as dQ -&gt; 0, which is the check that catches a
+mis-normalised kernel. Pass <code class="docutils literal notranslate"><span class="pre">kernel=&quot;gaussian&quot;</span></code> to compare.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">S_partials</span></code> below the solver’s own q grid: the clamp is GONE, replaced
+by a Taylor extrapolation with a divergence guard. One check remains.</p>
+<p>S(q) for a liquid is even and analytic at the origin, so A + B q^2 is the
+leading behaviour rather than a convenient fit; A and B come from the
+solver’s own two lowest grid points, so it bridges only the gap between
+q_0 and zero. Verified continuous across the edge (3.7e-7), exact at q_0,
+and varying below it where the clamp held flat.</p>
+<p>A divergence is REFUSED rather than extrapolated. S ~ c q^-alpha means the
+compressibility is running away, at or near a spinodal, and there is no
+finite S(0) to extrapolate TO – a parabola through it returns a number
+that means nothing and the fit would use it without complaint. The
+discriminant is the log-log slope of the trace over the lowest few grid
+points: hard spheres at phi = 0.10, 0.30 and 0.45 give +0.0009, -0.0000
+and -0.0008; a synthetic S proportional to 1/q gives -1.000 exactly; the
+threshold is -0.1, three orders of headroom. The message says what to do,
+including that extending the q grid removes the need to extrapolate.</p>
+<p>STILL OWED: comparison against the ANALYTIC S(0). Percus-Yevick hard
+spheres have a closed form for the compressibility route, so extrapolating
+to q = 0 and comparing would show the q^2 form is RIGHT rather than merely
+continuous – which is all the above establishes. A case in
+<code class="docutils literal notranslate"><span class="pre">tools/numerics_test.py</span></code> at two or three volume fractions closes it.</p>
+<p>Separately: the mixture validation tab at phi = 0.4 shows a solve that is
+a fixed point to 7e-12, machine precision, yet differs from the analytic
+references by about 1e-3 and barely shrinks under fourfold refinement with
+the real-space range held constant. That was suspected to be this same
+question seen from the other side. With the extrapolation now in place,
+RE-RUNNING THAT COMPARISON is five minutes and the highest-value check
+available.</p>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gui.html" class="btn btn-neutral float-left" title="The graphical interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="README.html" class="btn btn-neutral float-right" title="pysasfit.oz — Ornstein–Zernike toolkit and its Qt GUI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

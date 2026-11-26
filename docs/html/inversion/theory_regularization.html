@@ -1,0 +1,437 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regularization and choice of the regularization strength &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EM, maximum entropy and signed kernels" href="theory_em_maxent.html" />
+    <link rel="prev" title="Discretization of the integral" href="theory_discretization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Usage (library)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="theory.html">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory_forward_model.html">Forward model, data and information content</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_discretization.html">Discretization of the integral</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Regularization and choice of the regularization strength</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#weighted-least-squares">Weighted least squares</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tikhonov-regularization">Tikhonov regularization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smoothness-penalties">Smoothness penalties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bayesian-evidence-bayesian-evidence">Bayesian evidence (<code class="docutils literal notranslate"><span class="pre">bayesian_evidence</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#discrepancy-principle">Discrepancy principle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#l-curve">L-curve</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generalized-cross-validation">Generalized cross-validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#arls-arlsnn">ARLS (<code class="docutils literal notranslate"><span class="pre">arlsnn</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="theory_em_maxent.html">EM, maximum entropy and signed kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_uncertainty.html">Uncertainty of the recovered distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_investigation.html">Development history and findings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#notation">Notation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#main-references">Main references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+          <li class="breadcrumb-item"><a href="theory.html">Theory</a></li>
+      <li class="breadcrumb-item active">Regularization and choice of the regularization strength</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/theory_regularization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="regularization-and-choice-of-the-regularization-strength">
+<h1>Regularization and choice of the regularization strength<a class="headerlink" href="#regularization-and-choice-of-the-regularization-strength" title="Link to this heading"></a></h1>
+<section id="weighted-least-squares">
+<h2>Weighted least squares<a class="headerlink" href="#weighted-least-squares" title="Link to this heading"></a></h2>
+<p>All linear methods work on the statistically weighted system</p>
+<div class="math notranslate nohighlight">
+\[\tilde{\mathbf A} = \mathbf{W}^{1/2}\mathbf{A},\qquad
+\tilde{\mathbf b} = \mathbf{W}^{1/2}\mathbf{b},\qquad
+\|\tilde{\mathbf A}\mathbf x-\tilde{\mathbf b}\|^2 = \chi^2 ,\]</div>
+<p>(<code class="docutils literal notranslate"><span class="pre">solver_registry._weighted</span></code>). Without the weights the few
+high-intensity low-<span class="math notranslate nohighlight">\(q\)</span> points dominate: on test.dat <span class="math notranslate nohighlight">\(\sigma\)</span>
+spans four decades (0.01 to 90).</p>
+<p>Let <span class="math notranslate nohighlight">\(\tilde{\mathbf A} = \mathbf U\boldsymbol\Sigma\mathbf V^T\)</span>
+with singular values <span class="math notranslate nohighlight">\(s_1\ge s_2\ge\dots\)</span>. The naive solution
+<span class="math notranslate nohighlight">\(\mathbf x = \sum_i (\mathbf u_i^T\tilde{\mathbf b}/s_i)\,\mathbf v_i\)</span>
+divides the noise component of <span class="math notranslate nohighlight">\(\mathbf u_i^T\tilde{\mathbf b}\)</span> by
+singular values that decay to <span class="math notranslate nohighlight">\(10^{-15}\)</span> (condition number
+<span class="math notranslate nohighlight">\(\sim10^{16}\)</span> for the <span class="math notranslate nohighlight">\(j_0\)</span> kernel on test.dat). Regularization
+replaces <span class="math notranslate nohighlight">\(1/s_i\)</span> by filtered values.</p>
+</section>
+<section id="tikhonov-regularization">
+<h2>Tikhonov regularization<a class="headerlink" href="#tikhonov-regularization" title="Link to this heading"></a></h2>
+<p>General form</p>
+<div class="math notranslate nohighlight" id="equation-tikhonov">
+<span class="eqno">(1)<a class="headerlink" href="#equation-tikhonov" title="Link to this equation"></a></span>\[\mathbf x_\lambda = \arg\min_{\mathbf x}\;
+\chi^2(\mathbf x) + \lambda^2\|\mathbf L\mathbf x\|^2
+= \left(\tilde{\mathbf A}^T\tilde{\mathbf A} + \lambda^2\mathbf L^T\mathbf L\right)^{-1}\tilde{\mathbf A}^T\tilde{\mathbf b}.\]</div>
+<dl>
+<dt>Standard form (<code class="docutils literal notranslate"><span class="pre">tikhonov_standard_gcv</span></code>)</dt><dd><p><span class="math notranslate nohighlight">\(\mathbf L=\mathbf I\)</span>; in the SVD basis the filter factors are</p>
+<div class="math notranslate nohighlight">
+\[f_i = \frac{s_i^2}{s_i^2+\lambda^2},\qquad
+\mathbf x_\lambda = \sum_i f_i\,\frac{\mathbf u_i^T\tilde{\mathbf b}}{s_i}\,\mathbf v_i .\]</div>
+</dd>
+<dt>Truncated SVD (<code class="docutils literal notranslate"><span class="pre">tsvd_gcv</span></code>)</dt><dd><p><span class="math notranslate nohighlight">\(f_i = 1\)</span> for <span class="math notranslate nohighlight">\(i\le k\)</span>, 0 otherwise.</p>
+</dd>
+<dt>General form (<code class="docutils literal notranslate"><span class="pre">general_tikhonov_gcv</span></code>)</dt><dd><p><span class="math notranslate nohighlight">\(\mathbf L\)</span> is the second-difference operator below. A
+rank-deficient <span class="math notranslate nohighlight">\(\mathbf L\in\mathbb R^{p\times N}\)</span> is handled by
+Hansen’s QR-based transformation to standard form (<code class="docutils literal notranslate"><span class="pre">std_form</span></code>,
+method 1 of Regularization Tools): with <span class="math notranslate nohighlight">\(\mathbf L^T = \mathbf K\mathbf R\)</span>
+(<span class="math notranslate nohighlight">\(\mathbf K=[\mathbf K_p,\mathbf K_0]\)</span>, <span class="math notranslate nohighlight">\(\mathbf K_0\)</span> spanning the
+null space of <span class="math notranslate nohighlight">\(\mathbf L\)</span>) and <span class="math notranslate nohighlight">\(\tilde{\mathbf A}\mathbf K_0=\mathbf H\mathbf T\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\mathbf L_p^\dagger = \mathbf K_p\mathbf R^{-T},\quad
+\bar{\mathbf A} = \mathbf H_2^T\tilde{\mathbf A}\mathbf L_p^\dagger,\quad
+\bar{\mathbf b} = \mathbf H_2^T\tilde{\mathbf b},\]</div>
+<p>the standard-form problem in <span class="math notranslate nohighlight">\(\bar{\mathbf x}\)</span> is solved with
+filter factors and mapped back by
+<span class="math notranslate nohighlight">\(\mathbf x = \mathbf L_p^\dagger\bar{\mathbf x} + \mathbf K_0\mathbf T^{-1}\mathbf H_1^T(\tilde{\mathbf b}-\tilde{\mathbf A}\mathbf L_p^\dagger\bar{\mathbf x})\)</span>.
+The result agrees with a direct solve of the normal equations to
+<span class="math notranslate nohighlight">\(10^{-11}\)</span>.</p>
+</dd>
+</dl>
+</section>
+<section id="smoothness-penalties">
+<h2>Smoothness penalties<a class="headerlink" href="#smoothness-penalties" title="Link to this heading"></a></h2>
+<p>Let <span class="math notranslate nohighlight">\(p_1\dots p_N\)</span> be the unknowns (grid values or spline
+coefficients).</p>
+<dl>
+<dt>Second difference, free ends (<code class="docutils literal notranslate"><span class="pre">second_derivative</span></code>)</dt><dd><div class="math notranslate nohighlight">
+\[S_2(\mathbf p) = \sum_{j=2}^{N-1}\left(p_{j-1}-2p_j+p_{j+1}\right)^2
+= \|\mathbf L_2\mathbf p\|^2,\qquad
+\mathbf L_2\in\mathbb R^{(N-2)\times N}.\]</div>
+<p>The null space of <span class="math notranslate nohighlight">\(\mathbf L_2\)</span> contains constants and linear
+ramps: these components are not penalized at all. Together with the
+ill-conditioned <span class="math notranslate nohighlight">\(j_0\)</span> kernel this gave <span class="math notranslate nohighlight">\(\chi^2_r\)</span> in the
+hundreds on real data with GCV or the L-curve.</p>
+</dd>
+<dt>Hansen (2000), matrix as printed (<code class="docutils literal notranslate"><span class="pre">hansen_printed</span></code>)</dt><dd><p>The text after Hansen’s eq. 19 gives the tridiagonal matrix
+<span class="math notranslate nohighlight">\(a_{ii}=1\)</span>, <span class="math notranslate nohighlight">\(a_{i,i\pm1}=-\tfrac12\)</span>, which is the Hessian of</p>
+<div class="math notranslate nohighlight">
+\[S_{pr}(\mathbf p) = \tfrac12\sum_{j=1}^{N-1}(p_j-p_{j+1})^2
++ \tfrac12 p_1^2 + \tfrac12 p_N^2 ,\]</div>
+<p>a <em>first-difference</em> penalty plus the assumption that <span class="math notranslate nohighlight">\(p\)</span>
+vanishes just outside <span class="math notranslate nohighlight">\([0,D_{max}]\)</span>. It has full rank with
+<span class="math notranslate nohighlight">\(\det = (N+1)/2^N\)</span> (checked at construction).</p>
+</dd>
+<dt>Hansen (2000) eq. 19 (<code class="docutils literal notranslate"><span class="pre">hansen_eq19</span></code>, default)</dt><dd><div class="math notranslate nohighlight" id="equation-eq19">
+<span class="eqno">(2)<a class="headerlink" href="#equation-eq19" title="Link to this equation"></a></span>\[S_{19}(\mathbf p) = \sum_{j=2}^{N-1}\left[p_j-\tfrac12(p_{j-1}+p_{j+1})\right]^2
++ \tfrac12 p_1^2 + \tfrac12 p_N^2 ,\]</div>
+<p>a <em>curvature</em> penalty with the same boundary terms; its Hessian
+<span class="math notranslate nohighlight">\(\mathbf D^T\mathbf D + \tfrac12(\mathbf e_1\mathbf e_1^T+\mathbf e_N\mathbf e_N^T)\)</span>
+(<span class="math notranslate nohighlight">\(\mathbf D\)</span> with rows <span class="math notranslate nohighlight">\((-\tfrac12,1,-\tfrac12)\)</span>) is
+five-diagonal and positive definite. The printed matrix and eq. 19 are
+therefore <em>not</em> the same penalty; both are offered. The normalized
+evidence (below) prefers eq. 19 on test.dat (<span class="math notranslate nohighlight">\(\ln Z=-153.0\)</span> vs
+<span class="math notranslate nohighlight">\(-236.2\)</span> on the 95-point grid, <span class="math notranslate nohighlight">\(-118.8\)</span> vs <span class="math notranslate nohighlight">\(-134.1\)</span>
+with 20 B-splines), which made it the default.</p>
+</dd>
+<dt>Eq. 19 with <span class="math notranslate nohighlight">\(p(0)\)</span> free (<code class="docutils literal notranslate"><span class="pre">hansen_eq19_even</span></code>)</dt><dd><p>For the lamella kernel, whose <span class="math notranslate nohighlight">\(p_t(0)&gt;0\)</span> and <span class="math notranslate nohighlight">\(p_t'(0)=0\)</span>
+(<a class="reference internal" href="theory_forward_model.html"><span class="doc">Forward model, data and information content</span></a>), the curvature term at <span class="math notranslate nohighlight">\(r=0\)</span> uses
+the mirror point <span class="math notranslate nohighlight">\(p_0=p_2\)</span> of the even extension:</p>
+<div class="math notranslate nohighlight">
+\[S_{19,e}(\mathbf p) = (p_1-p_2)^2
++ \sum_{j=2}^{N-1}\left[p_j-\tfrac12(p_{j-1}+p_{j+1})\right]^2
++ \tfrac12 p_N^2 .\]</div>
+<p>Only <span class="math notranslate nohighlight">\(p(D_{max})=0\)</span> is imposed. The Hessian is positive definite
+(the only function with zero curvature, zero slope at 0 and
+<span class="math notranslate nohighlight">\(p_N=0\)</span> is zero), so the normalized evidence exists. This is the
+“free end point” option of Hansen (2016).</p>
+</dd>
+</dl>
+<p>In all four cases <span class="math notranslate nohighlight">\(\mathbf L\)</span> is a factor with
+<span class="math notranslate nohighlight">\(\mathbf L^T\mathbf L\)</span> = Hessian of <span class="math notranslate nohighlight">\(S\)</span>
+(Cholesky factor for the Hansen penalties).</p>
+</section>
+<section id="bayesian-evidence-bayesian-evidence">
+<h2>Bayesian evidence (<code class="docutils literal notranslate"><span class="pre">bayesian_evidence</span></code>)<a class="headerlink" href="#bayesian-evidence-bayesian-evidence" title="Link to this heading"></a></h2>
+<p>Following Hansen (2000) and Vestergaard &amp; Hansen (2006) the
+regularization is read as a Gaussian prior and the likelihood as Gaussian
+noise:</p>
+<div class="math notranslate nohighlight">
+\[P(\mathbf p\mid\lambda) \propto \exp\!\left(-\lambda S(\mathbf p)\right),
+\qquad
+P(\mathbf d\mid\mathbf p) \propto \exp\!\left(-\tfrac12\chi^2(\mathbf p)\right),
+\qquad S(\mathbf p) = \mathbf p^T\mathbf L^T\mathbf L\,\mathbf p .\]</div>
+<dl>
+<dt>Posterior maximum (MAP)</dt><dd><div class="math notranslate nohighlight" id="equation-map">
+<span class="eqno">(3)<a class="headerlink" href="#equation-map" title="Link to this equation"></a></span>\[\mathbf p_\lambda = \arg\min\ \lambda S + \tfrac12\chi^2
+= \left(2\lambda\mathbf L^T\mathbf L + \mathbf B\right)^{-1}\mathbf A^T\mathbf W\mathbf b ,
+\qquad \mathbf B = \mathbf A^T\mathbf W\mathbf A .\]</div>
+<p>(<span class="math notranslate nohighlight">\(\mathbf B\)</span> is the Hessian of <span class="math notranslate nohighlight">\(\chi^2/2\)</span>,
+<span class="math notranslate nohighlight">\(\mathbf{A}_S = 2\mathbf L^T\mathbf L\)</span> that of <span class="math notranslate nohighlight">\(S\)</span>.)</p>
+</dd>
+<dt>Evidence</dt><dd><p>Integrating the posterior over <span class="math notranslate nohighlight">\(\mathbf p\)</span> (exact for this
+linear-Gaussian model) gives the probability of the data for a given
+<span class="math notranslate nohighlight">\(\lambda\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-evidence">
+<span class="eqno">(4)<a class="headerlink" href="#equation-evidence" title="Link to this equation"></a></span>\[\ln P(\mathbf d\mid\lambda) =
+\tfrac12\ln\det\!\left(\lambda\mathbf A_S\right)
+- \tfrac12\ln\det\!\left(\lambda\mathbf A_S+\mathbf B\right)
+- \lambda S(\mathbf p_\lambda) - \tfrac12\chi^2(\mathbf p_\lambda)
++ \text{const}.\]</div>
+<p>For the <span class="math notranslate nohighlight">\(\lambda\)</span> search the first term is replaced by
+<span class="math notranslate nohighlight">\(\tfrac{N-1}{2}\ln\lambda\)</span> (Vestergaard &amp; Hansen eq. 6; the
+remaining <span class="math notranslate nohighlight">\(\lambda\)</span>-independent part of
+<span class="math notranslate nohighlight">\(\det\mathbf A_S\)</span> does not move the maximum). <span class="math notranslate nohighlight">\(\lambda\)</span> is
+the maximizer on a log grid of 60 values spanning
+<span class="math notranslate nohighlight">\(10^{\pm6}\,\mathrm{median}(s_i)^2\)</span> (<span class="math notranslate nohighlight">\(s_i\)</span> singular values of <span class="math notranslate nohighlight">\(\mathbf A\)</span>).</p>
+</dd>
+<dt>Normalized evidence (penalty comparison)</dt><dd><p>To compare <em>different</em> penalties, the full prior normalization must be
+kept:</p>
+<div class="math notranslate nohighlight">
+\[\ln Z = \tfrac12\ln\det(2\lambda\mathbf L^T\mathbf L)
+- \tfrac12\ln\det(2\lambda\mathbf L^T\mathbf L+\mathbf B)
+- \lambda S - \tfrac12\chi^2 .\]</div>
+<p>It is reported in the result line. For the second difference
+<span class="math notranslate nohighlight">\(\mathbf L^T\mathbf L\)</span> is singular (improper prior) and
+<span class="math notranslate nohighlight">\(\ln Z\)</span> is not defined.</p>
+</dd>
+<dt>Unknown error scale (<code class="docutils literal notranslate"><span class="pre">noise_scale=&quot;estimate&quot;</span></code>)</dt><dd><p>If the errors are known only up to a common factor,
+<span class="math notranslate nohighlight">\(\sigma_i\to s\,\sigma_i\)</span>, the likelihood normalization adds
+<span class="math notranslate nohighlight">\(-M\ln s\)</span> to <a class="reference internal" href="#equation-evidence">(4)</a> and <span class="math notranslate nohighlight">\(s\)</span> is a second
+hyperparameter. <a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.solver_registry.estimate_noise_scale" title="pysasfit.inversion.solver_registry.estimate_noise_scale"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.solver_registry.estimate_noise_scale()</span></code></a>
+maximizes</p>
+<div class="math notranslate nohighlight">
+\[E(s) = \max_\lambda \ln P(\mathbf d\mid\lambda, s\boldsymbol\sigma) - M\ln s\]</div>
+<p>over <span class="math notranslate nohighlight">\(\ln s\in[\ln 0.01,\ln 100]\)</span> (bounded scalar search, the inner
+maximum on an 80-point <span class="math notranslate nohighlight">\(\lambda\)</span> grid over 16 decades) and then
+solves with <span class="math notranslate nohighlight">\(s\boldsymbol\sigma\)</span>. This is the Bayesian analogue
+of estimating the noise level from the residuals corrected for the
+number of fitted parameters (MacKay: at the optimum
+<span class="math notranslate nohighlight">\(\chi^2(s\boldsymbol\sigma)=M-\gamma\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span> the
+effective number of parameters determined by the data). test.dat: with
+<span class="math notranslate nohighlight">\(3\Delta I\)</span> or <span class="math notranslate nohighlight">\(\Delta I/3\)</span> the estimate is
+<span class="math notranslate nohighlight">\(s=0.323\)</span> and <span class="math notranslate nohighlight">\(2.91\)</span> (product 0.97), and <span class="math notranslate nohighlight">\(p(r)\)</span> is
+identical to the one with the file errors (correlation 1.0000); with
+errors from the local cubic fits <span class="math notranslate nohighlight">\(s=0.91\)</span>. <span class="math notranslate nohighlight">\(\chi^2_r\)</span> is
+reported for the unscaled <span class="math notranslate nohighlight">\(\sigma\)</span>.</p>
+</dd>
+<dt>Fast evaluation over <span class="math notranslate nohighlight">\(\lambda\)</span></dt><dd><p>With <span class="math notranslate nohighlight">\(\mathbf P=\mathbf L^T\mathbf L\)</span> positive definite (all
+Hansen penalties) one Cholesky factor <span class="math notranslate nohighlight">\(\mathbf P=\mathbf R^T\mathbf R\)</span>
+and one eigen-decomposition
+<span class="math notranslate nohighlight">\(\mathbf R^{-T}\mathbf B\mathbf R^{-1}=\mathbf V\,\mathrm{diag}(\mu)\,\mathbf V^T\)</span>
+give, for every <span class="math notranslate nohighlight">\(\lambda\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\ln\det(2\lambda\mathbf P+\mathbf B) = \ln\det\mathbf P
++ \sum_j\ln(2\lambda+\mu_j),\qquad
+\mathbf p_\lambda = \mathbf R^{-1}\mathbf V\,
+\mathrm{diag}\!\left(\frac{1}{2\lambda+\mu_j}\right)
+\mathbf V^T\mathbf R^{-T}\mathbf A^T\mathbf W\mathbf b ,\]</div>
+<p>i.e. <span class="math notranslate nohighlight">\(O(MN)\)</span> work per <span class="math notranslate nohighlight">\(\lambda\)</span> instead of a solve, a
+determinant and an eigen-decomposition
+(<a class="reference internal" href="api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.bayesian_evidence.FastEvidence" title="pysasfit.inversion.solvers.bayesian_evidence.FastEvidence"><code class="xref py py-class docutils literal notranslate"><span class="pre">pysasfit.inversion.solvers.bayesian_evidence.FastEvidence</span></code></a>).
+Every <span class="math notranslate nohighlight">\(\lambda\)</span> is checked through the residual of its normal
+equations: where <span class="math notranslate nohighlight">\(\mathbf P\)</span> is ill-conditioned (e.g. the
+“p(0) free” penalty, which pins only one end) the decomposition loses
+digits at small <span class="math notranslate nohighlight">\(\lambda\)</span>, and those <span class="math notranslate nohighlight">\(\lambda\)</span> are
+evaluated directly (one Cholesky factorization of
+<span class="math notranslate nohighlight">\(2\lambda\mathbf P+\mathbf B\)</span>, with the <span class="math notranslate nohighlight">\(\lambda\)</span>-independent
+parts precomputed). On test.dat (<span class="math notranslate nohighlight">\(j_0\)</span>, 95 points) the result is
+identical (<span class="math notranslate nohighlight">\(|\Delta\ln Z|&lt;5\cdot10^{-4}\)</span> on the grid, same
+<span class="math notranslate nohighlight">\(\lambda\)</span>), and the evidence solver with estimated error scale runs
+in 0.4–0.6 s instead of 3–3.3 s.</p>
+</dd>
+<dt>Number of good parameters</dt><dd><div class="math notranslate nohighlight">
+\[N_g = \sum_j \frac{\mu_j}{\lambda+\mu_j},\]</div>
+<p>with <span class="math notranslate nohighlight">\(\mu_j\)</span> the eigenvalues of <span class="math notranslate nohighlight">\(\mathbf B\)</span> (the
+<span class="math notranslate nohighlight">\(\mathbf A_S=\mathbf I\)</span> form of Vestergaard &amp; Hansen’s eq. 8),
+an estimate of the number of parameters determined by the data;
+compare with <span class="math notranslate nohighlight">\(N_s\)</span> of <a class="reference internal" href="theory_forward_model.html#equation-shannon">(7)</a>.</p>
+</dd>
+<dt>Posterior covariance</dt><dd><p>The Laplace approximation, exact here, gives
+<span class="math notranslate nohighlight">\(\mathrm{Cov}(\mathbf p) = (\lambda\mathbf A_S+\mathbf B)^{-1}\)</span>,
+shown as the analytic error band (<a class="reference internal" href="theory_uncertainty.html"><span class="doc">Uncertainty of the recovered distribution</span></a>).</p>
+</dd>
+</dl>
+</section>
+<section id="discrepancy-principle">
+<h2>Discrepancy principle<a class="headerlink" href="#discrepancy-principle" title="Link to this heading"></a></h2>
+<p>Choose the regularization parameter <span class="math notranslate nohighlight">\(\theta\)</span> (<span class="math notranslate nohighlight">\(\lambda\)</span>,
+<span class="math notranslate nohighlight">\(\lambda^2\)</span>, the EM smoothing weight <span class="math notranslate nohighlight">\(h\)</span> or the entropy weight)
+such that</p>
+<div class="math notranslate nohighlight">
+\[\chi^2_r(\theta) = 1 ,\]</div>
+<p>i.e. the residuals are as large as the stated errors. Two searches are
+implemented (<a class="reference internal" href="api/pysasfit.inversion.solvers.html#module-pysasfit.inversion.solvers.lambda_search" title="pysasfit.inversion.solvers.lambda_search"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.inversion.solvers.lambda_search</span></code></a>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">discrepancy_principle_search</span></code> starts over-smoothed and walks
+<span class="math notranslate nohighlight">\(\theta\)</span> down geometrically until <span class="math notranslate nohighlight">\(\chi^2_r-1\)</span> changes sign,
+then refines by Brent’s method (EM + smoothing).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discrepancy_principle_search_bidirectional</span></code> decides the direction
+from the sign of <span class="math notranslate nohighlight">\(\chi^2_r-1\)</span> at the start value, walks
+geometrically until the root is bracketed and refines by Brent. If the
+target is not reachable (plateau of <span class="math notranslate nohighlight">\(\chi^2_r\)</span> for four steps, or
+the search range is exhausted) the closest achievable solution is
+returned with <code class="docutils literal notranslate"><span class="pre">reachable=False</span></code> and a warning in the result line,
+stating which side failed: a too-small basis (cannot fit) or
+overestimated errors (always fits better than the target).</p></li>
+</ul>
+<p>For the Bayesian-evidence solver “Force <span class="math notranslate nohighlight">\(\chi^2_r=1\)</span>” starts at the
+evidence-maximizing <span class="math notranslate nohighlight">\(\lambda_{ev}\)</span> and allows <span class="math notranslate nohighlight">\(\lambda\)</span> to
+decrease to at most <span class="math notranslate nohighlight">\(10^{-3}\lambda_{ev}\)</span>. Reaching
+<span class="math notranslate nohighlight">\(\chi^2_r=1\)</span> only by almost removing the regularization means that
+the target is wrong for these data (underestimated <span class="math notranslate nohighlight">\(\sigma\)</span>, or
+bootstrap replicates with inflated noise) and would give an oscillating,
+unregularized <span class="math notranslate nohighlight">\(p(r)\)</span>.</p>
+<p>When the discrepancy principle fails for EM + smoothing on a point grid,
+the L-curve corner is used instead; in B-spline mode <span class="math notranslate nohighlight">\(h=0\)</span> is used
+(the basis regularizes already, and the L-curve picks far too much extra
+smoothing there).</p>
+</section>
+<section id="l-curve">
+<h2>L-curve<a class="headerlink" href="#l-curve" title="Link to this heading"></a></h2>
+<p>For a decreasing sequence <span class="math notranslate nohighlight">\(\theta_k = \theta_0/1.2^k\)</span> the points
+<span class="math notranslate nohighlight">\(P_k = (\ln\rho_k, \ln\eta_k)\)</span> with residual measure
+<span class="math notranslate nohighlight">\(\rho=\chi^2_r\)</span> and roughness <span class="math notranslate nohighlight">\(\eta=\sum_j(x_{j+1}-x_j)^2\)</span>
+are computed, and the corner is the point of maximum Menger curvature of
+consecutive triples,</p>
+<div class="math notranslate nohighlight">
+\[\kappa(P_{k-1},P_k,P_{k+1}) =
+\frac{4\,\mathcal A(P_{k-1},P_k,P_{k+1})}
+     {|P_{k-1}P_k|\,|P_kP_{k+1}|\,|P_{k-1}P_{k+1}|},\]</div>
+<p><span class="math notranslate nohighlight">\(\mathcal A\)</span> the triangle area. This mirrors the <code class="docutils literal notranslate"><span class="pre">Lcorner</span></code> branch
+of SASfit’s <code class="docutils literal notranslate"><span class="pre">DR_EM_smoothing</span></code>.</p>
+</section>
+<section id="generalized-cross-validation">
+<h2>Generalized cross-validation<a class="headerlink" href="#generalized-cross-validation" title="Link to this heading"></a></h2>
+<p>GCV chooses <span class="math notranslate nohighlight">\(\lambda\)</span> (or the TSVD rank <span class="math notranslate nohighlight">\(k\)</span>) by minimizing</p>
+<div class="math notranslate nohighlight">
+\[G(\lambda) = \frac{\|\tilde{\mathbf A}\mathbf x_\lambda-\tilde{\mathbf b}\|^2}
+                  {\left(M - \sum_i f_i\right)^2},\]</div>
+<p>the leave-one-out prediction error in rotation-invariant form (for the
+general form evaluated in the standard-form variables, for TSVD with
+<span class="math notranslate nohighlight">\(\sum_i f_i = k\)</span>). Grid: 100 values from
+<span class="math notranslate nohighlight">\(10^{-3}s_{min}\)</span> to <span class="math notranslate nohighlight">\(10\,s_{max}\)</span>; TSVD <span class="math notranslate nohighlight">\(k\le40\)</span>.</p>
+</section>
+<section id="arls-arlsnn">
+<h2>ARLS (<code class="docutils literal notranslate"><span class="pre">arlsnn</span></code>)<a class="headerlink" href="#arls-arlsnn" title="Link to this heading"></a></h2>
+<p>Jones’ automatically regularized least squares uses the discrete Picard
+condition: the Tikhonov coefficients
+<span class="math notranslate nohighlight">\(g_i(\lambda) = \beta_i s_i/(s_i^2+\lambda^2)\)</span>,
+<span class="math notranslate nohighlight">\(\boldsymbol\beta=\mathbf U^T\tilde{\mathbf b}\)</span>, should decay. The
+smallest <span class="math notranslate nohighlight">\(\lambda\)</span> for which a line and a parabola fitted to
+<span class="math notranslate nohighlight">\(\log_{10}|g_i|\)</span> both have non-positive slope is taken, then
+<span class="math notranslate nohighlight">\(\lambda\)</span> is increased as long as the residual stays below twice its
+value. Non-negativity: columns with negative coefficients are removed
+repeatedly. No parameter has to be chosen; it serves as a quick sanity
+check.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory_discretization.html" class="btn btn-neutral float-left" title="Discretization of the integral" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory_em_maxent.html" class="btn btn-neutral float-right" title="EM, maximum entropy and signed kernels" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

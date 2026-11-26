@@ -1,0 +1,586 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.seb.chains &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.seb.chains</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.seb.chains</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Linear chains given by their two-point function.</span>
+
+<span class="sd">For a homogeneous linear chain of contour length L the scattering depends only on the two-point function</span>
+<span class="sd">G(q, s) = &lt;sin(q r)/(q r)&gt; of two contour points a contour distance s apart. With t = s/L:</span>
+
+<span class="sd">    F         = 2 int_0^1 (1 - t) G(tL) dt</span>
+<span class="sd">    A_end     =   int_0^1 G(tL) dt                    Psi(end1, end2)   = G(L)</span>
+<span class="sd">    A_middle  = 2 int_0^1/2 G(tL) dt                  Psi(end, middle)  = G(L/2)</span>
+<span class="sd">    Psi(contour, end) = A_end, Psi(contour, middle) = A_middle, Psi(contour, contour) = F</span>
+
+<span class="sd">(all reference points of GaussianPolymer). The integrals are done by composite Gauss-Legendre quadrature on a grid in</span>
+<span class="sd">z = s/L that resolves the oscillations of G at large q.</span>
+
+<span class="sd">Models:</span>
+
+<span class="sd">* :class:`WormLikeChain`  -- Kholodenko's worm (A. L. Kholodenko, Macromolecules 26 (1993) 4179): contour length L,</span>
+<span class="sd">  Kuhn length b; the rod limit for s &lt;&lt; b and the Gaussian limit (Kuhn length b) for s &gt;&gt; b are exact; in between</span>
+<span class="sd">  it is Kholodenko's approximation, with &lt;R^2(s)&gt; = (b^2/3)(z coth z - 1), z = 3 s/b (the worm-like chain has</span>
+<span class="sd">  b s - (b^2/2)(1 - exp(-2 s/b)); Kholodenko's is up to 20 % larger around s ~ 0.7 b, &lt; 1 % for s &gt; 20 b).</span>
+<span class="sd">* :class:`WormLikeChainEV` -- worm-like chain with excluded volume: the form factor of Pedersen &amp; Schurtenberger</span>
+<span class="sd">  (Macromolecules 29 (1996) 7602, method 3 with excluded volume; corrections of Chen et al., Langmuir 22 (2006)</span>
+<span class="sd">  6539), the other quantities from its dependence on L (:class:`ChainFromF`); for L &lt; 2.5 b it crosses over smoothly</span>
+<span class="sd">  to Kholodenko's worm (PS is not valid for L &lt; b).</span>
+<span class="sd">* :class:`ExcludedVolumePolymer` -- excluded-volume chain with non-Gaussian distances (des Cloizeaux, J. Phys.</span>
+<span class="sd">  (Paris) 41 (1980) 223; Foerster &amp; Burger, Macromolecules 31 (1998) 879): distances with</span>
+<span class="sd">  P(r) ~ r^(2+theta) exp(-(D r)^delta), delta = 1/(1 - nu), &lt;r^2(s)&gt; ~ s^(2 nu); parameters Rg, nu. The</span>
+<span class="sd">  correlation-hole exponent depends on where the two points are: theta_0 = (gamma - 1)/nu = 0.275 between the two</span>
+<span class="sd">  ends, theta_1 = 0.46 between an end and an interior point, theta_2 = 0.71 between two interior points (self-avoiding</span>
+<span class="sd">  walk values, scaled by (nu - 1/2)/(0.588 - 1/2) for other nu, so nu = 1/2 is the Gaussian chain). F and the</span>
+<span class="sd">  amplitude about the middle use theta_2, the amplitude about an end and Psi(end, middle) theta_1, Psi(end1, end2)</span>
+<span class="sd">  theta_0.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span> <span class="k">as</span> <span class="n">sp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.subunits</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableSubUnit</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TwoPointChain"</span><span class="p">,</span> <span class="s2">"ChainFromF"</span><span class="p">,</span> <span class="s2">"WormLikeChain"</span><span class="p">,</span> <span class="s2">"WormLikeChainEV"</span><span class="p">,</span> <span class="s2">"ExcludedVolumePolymer"</span><span class="p">,</span> <span class="s2">"kholodenko_g"</span><span class="p">,</span>
+           <span class="s2">"kholodenko_r2"</span><span class="p">,</span> <span class="s2">"kholodenko_rg2"</span><span class="p">,</span>
+           <span class="s2">"des_cloizeaux_g"</span><span class="p">,</span> <span class="s2">"wlc_r2"</span><span class="p">,</span> <span class="s2">"wlc_rg2"</span><span class="p">]</span>
+
+<span class="n">_GX</span><span class="p">,</span> <span class="n">_GW</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">_GX</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">_GX</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="n">_GW</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">_GW</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_panel_nodes</span><span class="p">(</span><span class="n">edges</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gauss-Legendre nodes and weights on consecutive panels [edges[i], edges[i+1]]."""</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">_GX</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="p">((</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">_GW</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span>
+
+
+<div class="viewcode-block" id="wlc_r2">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.wlc_r2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wlc_r2</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""&lt;R^2(s)&gt; of the worm-like chain, Kuhn length b."""</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">b</span> <span class="o">*</span> <span class="n">s</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">*</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">s</span> <span class="o">/</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wlc_rg2">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.wlc_rg2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wlc_rg2</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rg^2 of the worm-like chain (Benoit &amp; Doty)."""</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">L</span> <span class="o">/</span> <span class="n">P</span>
+    <span class="k">return</span> <span class="n">P</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">-</span> <span class="n">P</span> <span class="o">*</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="n">L</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">P</span><span class="o">**</span><span class="mi">4</span> <span class="o">/</span> <span class="n">L</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="kholodenko_r2">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.kholodenko_r2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kholodenko_r2</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""&lt;R^2(s)&gt; of Kholodenko's worm: (b^2/3)(z coth z - 1), z = 3 s/b."""</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">b</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">z</span> <span class="o">&lt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="n">z</span> <span class="o">*</span> <span class="n">z</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">-</span> <span class="n">z</span><span class="o">**</span><span class="mi">4</span> <span class="o">/</span> <span class="mf">45.0</span><span class="p">,</span> <span class="n">z</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">b</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="kholodenko_rg2">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.kholodenko_rg2">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kholodenko_rg2</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rg^2 of Kholodenko's worm, int_0^1 (1 - t) &lt;R^2(tL)&gt; dt (numerically)."""</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">kholodenko_r2</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="kholodenko_g">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.kholodenko_g">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">kholodenko_g</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two-point function of Kholodenko's worm, f(z), z = 3 s/b (q: (nq, 1), s: (1, ns) arrays)."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">s</span> <span class="o">/</span> <span class="n">b</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">b</span> <span class="o">/</span> <span class="mf">3.0</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">zz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">kk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">small_z</span> <span class="o">=</span> <span class="n">zz</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
+    <span class="n">den</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">zz</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span>           <span class="c1"># 1 - exp(-2z)</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="p">(</span><span class="n">kk</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">small_z</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">kk</span> <span class="o">*</span> <span class="n">kk</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">Ez</span> <span class="o">=</span> <span class="n">E</span> <span class="o">*</span> <span class="n">zz</span>
+        <span class="c1"># sinh(Ez)/(E sinh z) = exp((E-1) z) (1 - exp(-2Ez)) / (E (1 - exp(-2z)))</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">E</span> <span class="o">&gt;</span> <span class="mf">1e-7</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">Ez</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">E</span> <span class="o">&gt;</span> <span class="mf">1e-7</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">zz</span><span class="p">)</span>
+        <span class="n">v_lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">E</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">zz</span><span class="p">)</span> <span class="o">*</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+        <span class="n">Fk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">kk</span> <span class="o">*</span> <span class="n">kk</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">v_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Fk</span> <span class="o">&gt;</span> <span class="mf">1e-7</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">Fk</span> <span class="o">*</span> <span class="n">zz</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Fk</span> <span class="o">&gt;</span> <span class="mf">1e-7</span><span class="p">,</span> <span class="n">Fk</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">zz</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">zz</span><span class="p">)</span> <span class="o">/</span> <span class="n">den</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span> <span class="o">=</span> <span class="n">v_lo</span><span class="p">[</span><span class="n">lo</span><span class="p">]</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="o">~</span><span class="n">lo</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">small_z</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span> <span class="o">=</span> <span class="n">v_hi</span><span class="p">[</span><span class="n">hi</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">small_z</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------------------- des Cloizeaux</span>
+<span class="n">_DC_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">GAMMA_SAW</span> <span class="o">=</span> <span class="mf">1.1619</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dc_table</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""g(y) = &lt;sin(y x)/(y x)&gt; over the des Cloizeaux distribution of x = r/sqrt(&lt;r^2&gt;), on a log grid."""</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nu</span><span class="p">),</span> <span class="mi">9</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="mi">9</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_DC_CACHE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_DC_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">gammaln</span><span class="p">((</span><span class="mi">5</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)</span> <span class="o">-</span> <span class="n">sp</span><span class="o">.</span><span class="n">gammaln</span><span class="p">((</span><span class="mi">3</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)))</span>
+    <span class="c1"># x grid: the density ~ x^(2+theta) exp(-(Dx)^delta) is negligible beyond (60)^(1/delta)/D</span>
+    <span class="n">xmax</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)</span> <span class="o">/</span> <span class="n">D</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">xmax</span><span class="p">,</span> <span class="mi">41</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="mi">2001</span><span class="p">)])</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">_panel_nodes</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+    <span class="n">logp</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="n">D</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="n">delta</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">logp</span> <span class="o">-</span> <span class="n">logp</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>                        <span class="c1"># exactly &lt;x^2&gt; = 1 on this grid</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m2</span><span class="p">)</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">,</span> <span class="mf">150.0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sinc</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">*</span> <span class="n">w</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># beyond the table: g ~ K y^-(3 + theta) (small-distance behaviour of the density)</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">ys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CubicSpline</span>
+    <span class="n">tab</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ys</span><span class="p">),</span> <span class="n">CubicSpline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ys</span><span class="p">),</span> <span class="n">g</span><span class="p">),</span> <span class="n">theta</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+    <span class="n">_DC_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">tab</span>
+    <span class="k">return</span> <span class="n">tab</span>
+
+
+<div class="viewcode-block" id="des_cloizeaux_g">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.des_cloizeaux_g">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">des_cloizeaux_g</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">GAMMA_SAW</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""&lt;sin(y x)/(y x)&gt; for the des Cloizeaux distribution with &lt;x^2&gt; = 1; theta defaults to (gamma - 1)/nu."""</span>
+    <span class="k">if</span> <span class="n">theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">nu</span>
+    <span class="n">ly</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">_dc_table</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">g</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)),</span> <span class="n">ly</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ly</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">small</span> <span class="o">=</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ly</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">small</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">y</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="mf">6.0</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">/</span> <span class="mf">120.0</span> <span class="o">*</span> <span class="n">_dc_m4</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
+    <span class="n">big</span> <span class="o">=</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">ly</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">big</span><span class="p">,</span> <span class="n">K</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)),</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dc_m4</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""&lt;x^4&gt; of the des Cloizeaux distribution with &lt;x^2&gt; = 1."""</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span> <span class="o">+</span> <span class="n">theta</span><span class="p">)</span> <span class="o">/</span> <span class="n">delta</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="n">sp</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">sp</span><span class="o">.</span><span class="n">gammaln</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">delta</span><span class="p">))</span>
+
+
+<span class="c1"># ----------------------------------------------------------------------------------- the base class</span>
+<div class="viewcode-block" id="TwoPointChain">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TwoPointChain</span><span class="p">(</span><span class="n">TableSubUnit</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Linear chain defined by its two-point function; sub-classes give ``length(p)`` and ``G(q, s, p)``."""</span>
+
+    <span class="n">specific</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">)</span>
+    <span class="n">distributed</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"contour"</span><span class="p">,)</span>
+    <span class="n">oscillating</span> <span class="o">=</span> <span class="kc">False</span>          <span class="c1"># G oscillates in s at large q (rod-like parts): finer quadrature</span>
+
+<div class="viewcode-block" id="TwoPointChain.length">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.length">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="TwoPointChain.G">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.G">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">G</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Panels in s on [0, upper]: fine where G may oscillate, geometric beyond."""</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">qmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">))</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">oscillating</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="mf">13.0</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>        <span class="c1"># beyond, the oscillating part has decayed by exp(-39)</span>
+            <span class="n">n1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">qmax</span> <span class="o">*</span> <span class="n">s1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">6000</span><span class="p">))</span>
+            <span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">n1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s1</span> <span class="o">&lt;</span> <span class="n">upper</span><span class="p">:</span>
+                <span class="n">e2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="n">e1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># smooth G: crowd panels at small s (where G changes on the scale 1/q at large q)</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">upper</span> <span class="o">*</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="mf">1e-12</span> <span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+            <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="mi">60</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">_panel_nodes</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">oscillating</span> <span class="ow">and</span> <span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">48</span><span class="p">:</span>
+            <span class="c1"># blocks of q: each with a grid fine enough for its own largest q</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"F"</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">,</span> <span class="s2">"ee"</span><span class="p">,</span> <span class="s2">"em"</span><span class="p">)}</span>
+            <span class="k">for</span> <span class="n">blk</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">48</span><span class="p">))):</span>
+                <span class="n">part</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="n">blk</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">blk</span><span class="p">]</span> <span class="o">=</span> <span class="n">part</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">s</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">G</span> <span class="o">*</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">Aend</span> <span class="o">=</span> <span class="p">(</span><span class="n">G</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">sm</span><span class="p">,</span> <span class="n">wm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">)</span>
+        <span class="n">Gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">sm</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">Amid</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">Gm</span> <span class="o">*</span> <span class="n">wm</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">L</span>
+        <span class="n">Gee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">L</span><span class="p">]]),</span> <span class="n">p</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">Gem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">]]),</span> <span class="n">p</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"F"</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="n">Aend</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">:</span> <span class="n">Amid</span><span class="p">,</span> <span class="s2">"ee"</span><span class="p">:</span> <span class="n">Gee</span><span class="p">,</span> <span class="s2">"em"</span><span class="p">:</span> <span class="n">Gem</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">what</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">(),</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_memo_key"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">key</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_memo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_memo_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_memo</span><span class="p">[</span><span class="n">what</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TwoPointChain.ff">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.ff">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"F"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TwoPointChain.amp">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.amp">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_ref</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="o">==</span> <span class="s2">"middle"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"F"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TwoPointChain.psi">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.psi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">psi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">r1</span> <span class="o">==</span> <span class="n">r2</span> <span class="ow">and</span> <span class="n">r1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distributed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"ee"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">"middle"</span> <span class="ow">and</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"end1"</span><span class="p">,</span> <span class="s2">"end2"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"em"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s2">"contour"</span> <span class="ow">and</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">"contour"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"F"</span><span class="p">)</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="n">b</span> <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s2">"contour"</span> <span class="k">else</span> <span class="n">a</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TwoPointChain.check">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.TwoPointChain.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WormLikeChain">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChain">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WormLikeChain</span><span class="p">(</span><span class="n">TwoPointChain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Semiflexible (worm-like) chain, Kholodenko's model: contour length L, Kuhn length b (= 2 x persistence)."""</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="s2">"WormLikeChain"</span>
+    <span class="n">size_params</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span>
+    <span class="n">oscillating</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="WormLikeChain.length">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChain.length">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="s2">"L"</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="WormLikeChain.local_length">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChain.local_length">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">local_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="WormLikeChain.check">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChain.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">"L"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"WormLikeChain: L and b must be positive"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WormLikeChain.G">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChain.G">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">G</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">kholodenko_g</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">"b"</span><span class="p">])</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChainFromF">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ChainFromF">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChainFromF</span><span class="p">(</span><span class="n">TwoPointChain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Linear chain known only by its form factor F(q; L) as a function of the contour length L. For a homogeneous</span>
+<span class="sd">    chain L^2 F(L) = 2 int_0^L (L - s) G(s) ds, so G(s) = (L^2 F)''/2 at L = s and</span>
+
+<span class="sd">        A_end = F + (L/2) F',  A_middle = F(L/2) + (L/4) F'(L/2),</span>
+<span class="sd">        Psi(end1, end2) = F + 2 L F' + (L^2/2) F'',  Psi(end, middle) = the same at L/2</span>
+
+<span class="sd">    (derivatives in L at fixed q, by central differences)."""</span>
+
+    <span class="n">rel_step</span> <span class="o">=</span> <span class="mf">2e-3</span>
+
+<div class="viewcode-block" id="ChainFromF.F_of_L">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ChainFromF.F_of_L">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">F_of_L</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""F at contour length L; ref: length at which a piecewise formula chooses its branches."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_derivs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rel_step</span> <span class="o">*</span> <span class="n">L</span>
+        <span class="n">f0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F_of_L</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F_of_L</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span> <span class="o">+</span> <span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+        <span class="n">fm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F_of_L</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span> <span class="o">-</span> <span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">L</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f0</span><span class="p">,</span> <span class="p">(</span><span class="n">fp</span> <span class="o">-</span> <span class="n">fm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">),</span> <span class="p">(</span><span class="n">fp</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">f0</span> <span class="o">+</span> <span class="n">fm</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">F</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derivs</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">Fm</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_derivs</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"F"</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="n">F</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">d1</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">:</span> <span class="n">Fm</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">m1</span><span class="p">,</span>
+                <span class="s2">"ee"</span><span class="p">:</span> <span class="n">F</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">d1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">d2</span><span class="p">,</span> <span class="s2">"em"</span><span class="p">:</span> <span class="n">Fm</span> <span class="o">+</span> <span class="n">L</span> <span class="o">*</span> <span class="n">m1</span> <span class="o">+</span> <span class="mf">0.125</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L</span> <span class="o">*</span> <span class="n">m2</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="WormLikeChainEV">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChainEV">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WormLikeChainEV</span><span class="p">(</span><span class="n">ChainFromF</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Worm-like chain with excluded volume: the form factor of Pedersen &amp; Schurtenberger (1996, method 3 with</span>
+<span class="sd">    excluded volume, as corrected by Chen et al. 2006); amplitudes and phase factors from its L dependence</span>
+<span class="sd">    (:class:`ChainFromF`). Contour length L, Kuhn length b."""</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="s2">"WormLikeChainEV"</span>
+    <span class="n">size_params</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WormLikeChainEV.length">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChainEV.length">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="s2">"L"</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="WormLikeChainEV.check">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChainEV.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">"L"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"WormLikeChainEV: L and b must be positive"</span><span class="p">)</span></div>
+
+
+    <span class="c1">#: below L = BLEND[0]*b the Pedersen-Schurtenberger formula is not valid (F &gt; 1, oscillations); there the</span>
+    <span class="c1">#: Kholodenko worm (excluded volume negligible for such stiff chains) is used, with a smooth crossover up</span>
+    <span class="c1">#: to L = BLEND[1]*b.  The weight depends on L, so the L-derivatives stay consistent.</span>
+    <span class="n">BLEND</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WormLikeChainEV.F_of_L">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.WormLikeChainEV.F_of_L">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">F_of_L</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.ps_worm</span><span class="w"> </span><span class="kn">import</span> <span class="n">sk_wr</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"b"</span><span class="p">]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">L</span> <span class="o">/</span> <span class="n">b</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">BLEND</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BLEND</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">BLEND</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">-</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>   <span class="c1"># C2 smoothstep</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">sk_wr</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span> <span class="o">*</span> <span class="n">WormLikeChain</span><span class="p">()</span><span class="o">.</span><span class="n">ff</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="p">{</span><span class="s2">"L"</span><span class="p">:</span> <span class="n">L</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">:</span> <span class="n">b</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ExcludedVolumePolymer">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ExcludedVolumePolymer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExcludedVolumePolymer</span><span class="p">(</span><span class="n">TwoPointChain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Excluded-volume chain with the des Cloizeaux distance distribution (Foerster &amp; Burger 1998): Rg, nu."""</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="s2">"ExcludedVolumePolymer"</span>
+    <span class="n">size_params</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"Rg"</span><span class="p">,</span> <span class="s2">"nu"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExcludedVolumePolymer.length">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ExcludedVolumePolymer.length">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">1.0</span>                         <span class="c1"># contour in units of the chain: t = s</span></div>
+
+
+<div class="viewcode-block" id="ExcludedVolumePolymer.check">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ExcludedVolumePolymer.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.34</span> <span class="o">&lt;=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">0.95</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ExcludedVolumePolymer: nu = </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'nu'</span><span class="p">]</span><span class="si">}</span><span class="s2"> outside 0.34 … 0.95"</span><span class="p">)</span></div>
+
+
+    <span class="n">THETA_SAW</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.275</span><span class="p">,</span> <span class="mf">0.46</span><span class="p">,</span> <span class="mf">0.71</span><span class="p">)</span>        <span class="c1"># end-end, end-interior, interior-interior (nu = 0.588)</span>
+
+<div class="viewcode-block" id="ExcludedVolumePolymer.theta">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ExcludedVolumePolymer.theta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">THETA_SAW</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">nu</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.588</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ExcludedVolumePolymer.G">
+<a class="viewcode-back" href="../../../seb/api.html#pysasfit.seb.chains.ExcludedVolumePolymer.G">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">G</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">]</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">"Rg"</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">nu</span> <span class="o">+</span> <span class="mi">2</span><span class="p">))</span>      <span class="c1"># sqrt(&lt;R^2&gt;) of the whole chain</span>
+        <span class="k">return</span> <span class="n">des_cloizeaux_g</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">R</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">nu</span><span class="p">),</span> <span class="n">nu</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">G2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">G1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">G2</span> <span class="o">*</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Aend</span> <span class="o">=</span> <span class="p">(</span><span class="n">G1</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sm</span><span class="p">,</span> <span class="n">wm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">Amid</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">sm</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">p</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">wm</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Gee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">]]),</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">Gem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">]]),</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"F"</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="n">Aend</span><span class="p">,</span> <span class="s2">"middle"</span><span class="p">:</span> <span class="n">Amid</span><span class="p">,</span> <span class="s2">"ee"</span><span class="p">:</span> <span class="n">Gee</span><span class="p">,</span> <span class="s2">"em"</span><span class="p">:</span> <span class="n">Gem</span><span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

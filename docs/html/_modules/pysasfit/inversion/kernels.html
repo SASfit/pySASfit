@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.kernels &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.kernels</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.kernels</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Discretization of the Fredholm integral::</span>
+
+<span class="sd">    I(Q) = integral_0^inf  N(s) |F(Q, s)|^2  ds</span>
+
+<span class="sd">into the linear system  A x = b  (Kohlbrecher &amp; Bressler, 2022, eq. 25/32-34).</span>
+
+<span class="sd">Two kernel families are supported (per Joachim's 2026-09-22 scoping</span>
+<span class="sd">decision):</span>
+
+<span class="sd">1. Size-distribution kernel (non-negative x, non-negative kernel) -- this</span>
+<span class="sd">   is what all six DR_* solvers in sasfit_extrapol.c operate on. Verified</span>
+<span class="sd">   directly against the published equations.</span>
+
+<span class="sd">2. Pair-distance-distribution / general kernel (signed x, signed kernel,</span>
+<span class="sd">   Chae, Martin &amp; Walker 2019) -- this is what `pysasem` implemented for</span>
+<span class="sd">   nano-disc / GluA2 / May &amp; Nowotny-style p(r) recovery, and is NOT in the</span>
+<span class="sd">   current C code. NOT YET IMPLEMENTED here: the pysasem notebook's</span>
+<span class="sd">   "Known problems and To-Dos" section documents non-obvious handling</span>
+<span class="sd">   (no normalization of the extended kernel, discarding half the result</span>
+<span class="sd">   after each update, careful sign handling) that needs to be taken</span>
+<span class="sd">   directly from that notebook or from Chae et al. (2019) rather than</span>
+<span class="sd">   guessed at -- getting this wrong silently produces a plausible-looking</span>
+<span class="sd">   but incorrect p(r). Flagging as a TODO rather than a guessed</span>
+<span class="sd">   implementation.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="FredholmSystem">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.FredholmSystem">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FredholmSystem</span><span class="p">:</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (M, N) kernel matrix</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (M,) measured, background-subtracted intensity</span>
+    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (N,) size grid</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># weighting exponent used (0=number, 3=volume, 6=intensity)</span></div>
+
+
+
+<div class="viewcode-block" id="build_size_distribution_kernel">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.build_size_distribution_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_size_distribution_kernel</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">form_factor_squared</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Build the kernel matrix A for a size-distribution inversion, following</span>
+<span class="sd">    eq. 32-34 of Kohlbrecher &amp; Bressler (2022)::</span>
+
+<span class="sd">        x_j = N(s_j) * s_j^alpha</span>
+<span class="sd">        A_ij = ds_j * s_j^-alpha * |F(Q_i, s_j)|^2</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    q : array (M,)</span>
+<span class="sd">        Scattering vector magnitudes.</span>
+<span class="sd">    s : array (N,)</span>
+<span class="sd">        Size grid (e.g. radius). Does not need to be uniformly spaced.</span>
+<span class="sd">    form_factor_squared : callable</span>
+<span class="sd">        (q, s) -&gt; squared modulus of F(q, s): squared form factor, vectorized over q for a given s (or fully</span>
+<span class="sd">        vectorized over both -- see usage below).</span>
+<span class="sd">    alpha : float</span>
+<span class="sd">        0 for number-weighted, 3 for volume-weighted, 6 for</span>
+<span class="sd">        intensity-weighted size distribution.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A : array (M, N)</span>
+<span class="sd">    """</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="c1"># trapezoid-like local spacing; replace with exact</span>
+    <span class="c1"># bin widths if the grid is deliberately non-uniform and edges matter.</span>
+
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">q</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">sj</span><span class="p">,</span> <span class="n">dsj</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ds</span><span class="p">)):</span>
+        <span class="c1"># s_j^-alpha blows up at s_j=0 for alpha&gt;0 (e.g. the sphere_rg</span>
+        <span class="c1"># kernel's default alpha=6 -&gt; 0**-6). The substitution</span>
+        <span class="c1"># x_j = N(s_j)*s_j^alpha is itself only meaningful for s_j&gt;0 when</span>
+        <span class="c1"># alpha!=0 -- there is no finite s^-alpha to assign at the exact</span>
+        <span class="c1"># origin. Physically the ds-weighted contribution of an</span>
+        <span class="c1"># infinitesimally thin bin right at s=0 is negligible anyway, so</span>
+        <span class="c1"># this column is just set to 0 rather than left as inf/nan (which</span>
+        <span class="c1"># would otherwise poison every solve that includes r=0 in the</span>
+        <span class="c1"># grid, e.g. the GUI's r-grid always starting at r=0 for p(0)=0).</span>
+        <span class="k">if</span> <span class="n">sj</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">A</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">A</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsj</span> <span class="o">*</span> <span class="n">sj</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">form_factor_squared</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">sj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A</span></div>
+
+
+
+<div class="viewcode-block" id="recover_N_from_x">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.recover_N_from_x">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">recover_N_from_x</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Undo the x_j = N(s_j) * s_j^alpha substitution.</span>
+
+<span class="sd">    At s=0 with alpha!=0 the substitution itself is singular (0**-alpha or</span>
+<span class="sd">    0**alpha depending on sign); N(0) is reported as 0 there rather than</span>
+<span class="sd">    inf/nan, matching build_size_distribution_kernel's treatment of that</span>
+<span class="sd">    same point (see its comment).</span>
+<span class="sd">    """</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="n">s</span> <span class="o">**</span> <span class="n">alpha</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">N</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># Non-uniform r grids and fine-grid integration (2026-10-10)</span>
+
+<span class="n">R_GRID_SPACINGS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"uniform"</span><span class="p">,</span> <span class="s2">"quadratic"</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="make_r_grid">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.make_r_grid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_r_grid</span><span class="p">(</span><span class="n">r_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"uniform"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""n grid points on [0, r_max], always including r=0 and r=r_max.</span>
+
+<span class="sd">    uniform   -- equidistant</span>
+<span class="sd">    quadratic -- r = r_max * u^2, u equidistant (denser at small r)</span>
+<span class="sd">    log       -- r=0 plus n-1 geometric points from r_max/(2n) to r_max</span>
+<span class="sd">    Same placement rules as the B-spline knots (spline_basis.interior_knots).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"need at least 3 r grid points"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"uniform"</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"quadratic"</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">elif</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">"log"</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown r grid spacing </span><span class="si">{</span><span class="n">spacing</span><span class="si">!r}</span><span class="s2">; use one of </span><span class="si">{</span><span class="n">R_GRID_SPACINGS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r_max</span> <span class="o">*</span> <span class="n">t</span></div>
+
+
+
+<div class="viewcode-block" id="quadrature_points">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.quadrature_points">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">quadrature_points</span><span class="p">(</span><span class="n">r_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">q_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fine integration grid size: at least 4 points per Shannon interval</span>
+<span class="sd">    pi/q_max and at least 4x the number of nodes."""</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_nodes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">r_max</span> <span class="o">*</span> <span class="n">q_max</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="hat_basis">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.hat_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hat_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""(len(r_fine), len(r_nodes)) matrix of piecewise-linear 'hat'</span>
+<span class="sd">    functions: x(r_fine) = H @ x(r_nodes) is linear interpolation between</span>
+<span class="sd">    the (possibly non-uniform) nodes."""</span>
+    <span class="n">eye</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">r_fine</span><span class="p">,</span> <span class="n">r_nodes</span><span class="p">,</span> <span class="n">eye</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">))],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<span class="n">NODE_INTERPOLATIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"linear"</span><span class="p">,</span> <span class="s2">"cubic"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="cubic_basis">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.cubic_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cubic_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""(len(r_fine), len(r_nodes)) matrix C of cardinal cubic interpolating</span>
+<span class="sd">    splines with not-a-knot end conditions: x(r_fine) = C @ x(r_nodes) is the</span>
+<span class="sd">    C2 cubic spline through the node values (2026-10-10).</span>
+
+<span class="sd">    Not-a-knot instead of "natural" ends: natural forces x'' = 0 at r=0 and</span>
+<span class="sd">    r=Dmax, but a PDDF grows like r^2 near 0 (test.dat, j0, uniform 45</span>
+<span class="sd">    nodes: chi2_r natural 2.42 vs not-a-knot 0.65).</span>
+<span class="sd">    The cardinal functions have negative lobes (down to about -3 on a log</span>
+<span class="sd">    grid), so non-negative node values do NOT imply x(r) &gt;= 0 in between</span>
+<span class="sd">    and a non-negative kernel becomes slightly signed -&gt; not for EM /</span>
+<span class="sd">    positivity-constrained solvers (use linear, or the B-spline option,</span>
+<span class="sd">    whose basis functions are &gt;= 0)."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">CubicSpline</span>
+    <span class="n">r_nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cubic interpolation needs at least 4 r grid points"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CubicSpline</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">)),</span> <span class="n">bc_type</span><span class="o">=</span><span class="s2">"not-a-knot"</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)(</span><span class="n">r_fine</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="node_basis">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.node_basis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">node_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">interpolation</span> <span class="o">==</span> <span class="s2">"linear"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hat_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">interpolation</span> <span class="o">==</span> <span class="s2">"cubic"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cubic_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown interpolation </span><span class="si">{</span><span class="n">interpolation</span><span class="si">!r}</span><span class="s2">; use one of </span><span class="si">{</span><span class="n">NODE_INTERPOLATIONS</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_kernel_on_nodes">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.kernels.build_kernel_on_nodes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel_on_nodes</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r_nodes</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">form_factor_squared</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">n_quad</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"linear"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Kernel for unknowns x(r_nodes) with x(r) piecewise linear between the</span>
+<span class="sd">    nodes, integrated on a fine equidistant grid over [0, r_nodes[-1]].</span>
+
+<span class="sd">    Needed for non-uniform grids (quadratic/log), whose wide steps at</span>
+<span class="sd">    large r undersample the kernel, and for coarse uniform grids with step</span>
+<span class="sd">    &gt; pi/q_max. test.dat, j0 kernel, Bayesian evidence: quadratic grid with</span>
+<span class="sd">    60 nodes chi2_r 20.4 (direct) -&gt; 0.53 (this); uniform 30 nodes 580 -&gt;</span>
+<span class="sd">    282 (still too few nodes); quadratic 30 nodes 516 -&gt; 1.41.</span>
+
+<span class="sd">    interpolation="cubic" (2026-10-10): cubic not-a-knot spline between the</span>
+<span class="sd">    nodes (cubic_basis). Same test, Bayesian evidence chi2_r linear -&gt; cubic:</span>
+<span class="sd">    uniform 30 nodes 282 -&gt; 1.18, uniform 45 13.9 -&gt; 0.65, log 30 2.29 -&gt;</span>
+<span class="sd">    0.81, quadratic 30 1.41 -&gt; 0.79; no change on fine grids (uniform 95).</span>
+<span class="sd">    """</span>
+    <span class="n">r_nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">r_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">n_quad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_quad</span> <span class="o">=</span> <span class="n">quadrature_points</span><span class="p">(</span><span class="n">r_max</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">q</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">))</span>
+    <span class="n">r_fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">r_max</span><span class="p">,</span> <span class="n">n_quad</span><span class="p">)</span>
+    <span class="n">A_fine</span> <span class="o">=</span> <span class="n">build_size_distribution_kernel</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">,</span> <span class="n">form_factor_squared</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A_fine</span> <span class="o">@</span> <span class="n">node_basis</span><span class="p">(</span><span class="n">r_nodes</span><span class="p">,</span> <span class="n">r_fine</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

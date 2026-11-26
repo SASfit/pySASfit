@@ -1,0 +1,474 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forward model, data and information content &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Discretization of the integral" href="theory_discretization.html" />
+    <link rel="prev" title="Theory" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Usage (library)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="theory.html">Theory</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Forward model, data and information content</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-fredholm-equation">The Fredholm equation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernels">Kernels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#information-content-and-the-choice-of-the-grid">Information content and the choice of the grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#goodness-of-fit">Goodness of fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#alternative-fit-statistics">Alternative fit statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="theory_discretization.html">Discretization of the integral</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_regularization.html">Regularization and choice of the regularization strength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_em_maxent.html">EM, maximum entropy and signed kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_uncertainty.html">Uncertainty of the recovered distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_investigation.html">Development history and findings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#notation">Notation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#main-references">Main references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+          <li class="breadcrumb-item"><a href="theory.html">Theory</a></li>
+      <li class="breadcrumb-item active">Forward model, data and information content</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/theory_forward_model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="forward-model-data-and-information-content">
+<h1>Forward model, data and information content<a class="headerlink" href="#forward-model-data-and-information-content" title="Link to this heading"></a></h1>
+<section id="the-fredholm-equation">
+<h2>The Fredholm equation<a class="headerlink" href="#the-fredholm-equation" title="Link to this heading"></a></h2>
+<p>All inversions in this package solve a Fredholm integral equation of the
+first kind</p>
+<div class="math notranslate nohighlight" id="equation-fredholm">
+<span class="eqno">(1)<a class="headerlink" href="#equation-fredholm" title="Link to this equation"></a></span>\[I(q) - I_{bg} \;=\; \int_0^{r_{max}} K(q,r)\, x(r)\, \mathrm{d}r ,\]</div>
+<p>for the unknown function <span class="math notranslate nohighlight">\(x(r)\)</span>, given <span class="math notranslate nohighlight">\(M\)</span> noisy samples
+<span class="math notranslate nohighlight">\(b_i = I(q_i)-I_{bg}\)</span> with uncertainties <span class="math notranslate nohighlight">\(\sigma_i\)</span>. The
+kernel <span class="math notranslate nohighlight">\(K\)</span> is smooth in <span class="math notranslate nohighlight">\(r\)</span>, so the integral operator damps
+high-frequency components of <span class="math notranslate nohighlight">\(x\)</span> strongly; inverting it amplifies
+noise without bound. The problem is <em>ill-posed</em> and every method below is
+a way of adding prior information (smoothness, positivity, entropy, a
+reduced basis) to obtain a stable, physically meaningful solution.</p>
+</section>
+<section id="kernels">
+<h2>Kernels<a class="headerlink" href="#kernels" title="Link to this heading"></a></h2>
+<p>Four kernels are registered in
+<code class="xref py py-data docutils literal notranslate"><span class="pre">pysasfit.inversion.kernel_registry.KERNEL_REGISTRY</span></code>: three
+pair-distance kernels for particles of spherical, cylindrical and lamellar
+symmetry (Hansen 2016, eqs. 1-3) and one size-distribution kernel.</p>
+<dl>
+<dt>Pair-distance distribution (<code class="docutils literal notranslate"><span class="pre">sinc_4pi</span></code>)</dt><dd><p>For a particle with excess scattering length density
+<span class="math notranslate nohighlight">\(\Delta\rho(\mathbf r)\)</span> the orientationally averaged intensity is
+the Debye/Fourier-sine relation</p>
+<div class="math notranslate nohighlight" id="equation-pddf">
+<span class="eqno">(2)<a class="headerlink" href="#equation-pddf" title="Link to this equation"></a></span>\[I(q) = 4\pi \int_0^{D_{max}} p(r)\, j_0(qr)\, \mathrm{d}r ,
+\qquad j_0(x) = \frac{\sin x}{x},\]</div>
+<p>with <span class="math notranslate nohighlight">\(p(r) = r^2\,\tilde\gamma(r)\)</span>, <span class="math notranslate nohighlight">\(\tilde\gamma\)</span> the
+autocorrelation of <span class="math notranslate nohighlight">\(\Delta\rho\)</span>. Hence
+<span class="math notranslate nohighlight">\(K(q,r)=4\pi j_0(qr)\)</span>; the factor <span class="math notranslate nohighlight">\(r^2\)</span> is part of the
+unknown <span class="math notranslate nohighlight">\(p(r)\)</span>. Properties used throughout:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(p(0)=0\)</span> (it vanishes like <span class="math notranslate nohighlight">\(r^2\)</span>) and <span class="math notranslate nohighlight">\(p(r)=0\)</span>
+for <span class="math notranslate nohighlight">\(r \ge D_{max}\)</span>; the <span class="math notranslate nohighlight">\(r\)</span> grid therefore always starts
+at <span class="math notranslate nohighlight">\(r=0\)</span>.</p></li>
+<li><p>The kernel is <strong>signed</strong>: <span class="math notranslate nohighlight">\(j_0(qr)&lt;0\)</span> for
+<span class="math notranslate nohighlight">\(\pi&lt;qr&lt;2\pi\)</span>, etc. Methods that require a non-negative kernel
+(plain EM, EM + MaxEnt) are not applicable.</p></li>
+<li><p><span class="math notranslate nohighlight">\(p(r)\)</span> may itself be negative for particles with an internal
+contrast that changes sign (core–shell, contrast variation). No
+positivity is imposed by default.</p></li>
+<li><p>There is no size weighting (<code class="docutils literal notranslate"><span class="pre">uses_alpha=False</span></code>).</p></li>
+</ul>
+</dd>
+<dt>Cross-section distribution of a long cylinder (<code class="docutils literal notranslate"><span class="pre">cylinder_pddf</span></code>)</dt><dd><p>For a rod of length <span class="math notranslate nohighlight">\(L \gg 2\pi/q\)</span> the orientational average
+factorizes into <span class="math notranslate nohighlight">\(\pi/(qL)\)</span> times the scattering of the
+cross-section (Glatter 1979; Hansen 2016, eq. 2). Per unit
+length</p>
+<div class="math notranslate nohighlight" id="equation-pddf-cyl">
+<span class="eqno">(3)<a class="headerlink" href="#equation-pddf-cyl" title="Link to this equation"></a></span>\[I(q)\,\big/\,L = \frac{2\pi^2}{q} \int_0^{D_{max}} p_c(r)\, J_0(qr)\, \mathrm{d}r ,\]</div>
+<p>with <span class="math notranslate nohighlight">\(p_c(r) = r\,\gamma_c(r)\)</span>, <span class="math notranslate nohighlight">\(\gamma_c\)</span> the 2D
+autocorrelation of the cross-section density and <span class="math notranslate nohighlight">\(J_0\)</span> the
+cylindrical Bessel function. <span class="math notranslate nohighlight">\(D_{max}\)</span> is the largest distance
+<em>within the cross-section</em> (its diameter); <span class="math notranslate nohighlight">\(p_c(0)=0\)</span>. As for the
+sphere the kernel is signed and <span class="math notranslate nohighlight">\(p_c\)</span> may be negative.
+The kernel diverges like <span class="math notranslate nohighlight">\(1/q\)</span>; the forward value is that of the
+reduced intensity, <span class="math notranslate nohighlight">\(\lim_{q\to0} q\,I(q) = 2\pi^2\int p_c\,\mathrm{d}r\)</span>.</p>
+</dd>
+<dt>Thickness distribution of a flat lamella (<code class="docutils literal notranslate"><span class="pre">lamella_pddf</span></code>)</dt><dd><p>For a sheet of area <span class="math notranslate nohighlight">\(A \gg (2\pi/q)^2\)</span> the Lorentz factor is
+<span class="math notranslate nohighlight">\(2\pi/(q^2 A)\)</span> (Hansen 2016, eq. 3). Per unit area</p>
+<div class="math notranslate nohighlight" id="equation-pddf-lam">
+<span class="eqno">(4)<a class="headerlink" href="#equation-pddf-lam" title="Link to this equation"></a></span>\[I(q)\,\big/\,A = \frac{4\pi}{q^2} \int_0^{D_{max}} p_t(r)\, \cos(qr)\, \mathrm{d}r ,\]</div>
+<p>with <span class="math notranslate nohighlight">\(p_t(r)=\gamma_t(r)=\int\Delta\rho(x)\,\Delta\rho(x+r)\,\mathrm{d}x\)</span>
+the 1D autocorrelation of the profile across the sheet and
+<span class="math notranslate nohighlight">\(D_{max}\)</span> the thickness. <strong>Unlike the other two,</strong>
+<span class="math notranslate nohighlight">\(p_t(0)=\int\Delta\rho^2\,\mathrm{d}x&gt;0\)</span>, and <span class="math notranslate nohighlight">\(p_t\)</span> is the
+restriction to <span class="math notranslate nohighlight">\(r\ge0\)</span> of an <em>even</em> function, so
+<span class="math notranslate nohighlight">\(p_t'(0)=0\)</span>. A smoothness prior that pulls <span class="math notranslate nohighlight">\(p(0)\)</span> to zero
+(Hansen 2000, eq. 19) is therefore wrong here; the variant
+<code class="docutils literal notranslate"><span class="pre">hansen_eq19_even</span></code> (see <a class="reference internal" href="theory_regularization.html"><span class="doc">Regularization and choice of the regularization strength</span></a>) leaves
+<span class="math notranslate nohighlight">\(p(0)\)</span> free and is selected automatically in the GUI. In a test
+with a core–shell sheet (<code class="docutils literal notranslate"><span class="pre">tests/inversion/test_cylinder_lamella_kernels.py</span></code>)
+the relative error of <span class="math notranslate nohighlight">\(p_t\)</span> is 3 % with the free end and 37 % with
+<span class="math notranslate nohighlight">\(p(0)\)</span> pinned, and the evidence prefers the free end by
+<span class="math notranslate nohighlight">\(\Delta\ln Z\approx 8.5\)</span>.</p>
+<p>General relation (Hansen 2016, eqs. 4-5): <span class="math notranslate nohighlight">\(p(r)=r^{d-1}\gamma(r)\)</span>
+with <span class="math notranslate nohighlight">\(d=3,2,1\)</span> for sphere, cylinder and lamella, and</p>
+<div class="math notranslate nohighlight">
+\[\lim_{q\to0} q^{3-d}\,I(q) = c_d \int_0^{D_{max}} p(r)\,\mathrm{d}r,
+\qquad c_3 = 4\pi,\ c_2 = 2\pi^2,\ c_1 = 4\pi ,\]</div>
+<div class="math notranslate nohighlight">
+\[R_{g,d}^2 = \frac{\int p(r)\, r^2\, \mathrm{d}r}{2\int p(r)\, \mathrm{d}r},\]</div>
+<p>the radius of gyration of the particle (<span class="math notranslate nohighlight">\(R_g\)</span>), of the
+cross-section (<span class="math notranslate nohighlight">\(R_c\)</span>) or of the thickness (<span class="math notranslate nohighlight">\(R_t\)</span>). The GUI
+reports these, plus <span class="math notranslate nohighlight">\(R=\sqrt2\,R_c\)</span> (homogeneous circular
+cross-section) and <span class="math notranslate nohighlight">\(T=\sqrt{12}\,R_t\)</span> (homogeneous sheet).</p>
+<p>The normalization is the same as in <code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.sldprofile</span></code>: a
+<span class="math notranslate nohighlight">\(p(r)\)</span> computed with <a class="reference internal" href="../sldprofile/api.html#pysasfit.sldprofile.geometry.pddf" title="pysasfit.sldprofile.geometry.pddf"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.sldprofile.geometry.pddf()</span></code></a> from
+a radial density profile reproduces the exact intensity of that profile
+with these kernels (checked in the test above). The density profile
+<span class="math notranslate nohighlight">\(\Delta\rho(r)\)</span> itself – Hansen’s direct estimate or Glatter’s
+two-step deconvolution of <span class="math notranslate nohighlight">\(p(r)\)</span> – is computed by
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.sldprofile</span></code> (<a class="reference internal" href="../sldprofile/index.html"><span class="doc">SLD profile</span></a>).</p>
+</dd>
+<dt>Sphere size distribution (<code class="docutils literal notranslate"><span class="pre">sphere_rg</span></code>)</dt><dd><p>For a dilute polydisperse system of homogeneous spheres of radius
+<span class="math notranslate nohighlight">\(R\)</span> with number distribution <span class="math notranslate nohighlight">\(N(R)\)</span></p>
+<div class="math notranslate nohighlight" id="equation-sphere">
+<span class="eqno">(5)<a class="headerlink" href="#equation-sphere" title="Link to this equation"></a></span>\[I(q) = \int_0^{\infty} N(R)\, R^6\,
+\left[ \frac{3\left(\sin qR - qR\cos qR\right)}{(qR)^3}\right]^2
+\mathrm{d}R ,\]</div>
+<p>up to the constant <span class="math notranslate nohighlight">\((4\pi/3)^2\Delta\rho^2\)</span>. The factor
+<span class="math notranslate nohighlight">\(R^6\propto V^2\)</span> must be kept: it sets the <em>relative</em> weight of
+small and large particles. The kernel is non-negative. The variable
+<span class="math notranslate nohighlight">\(r\)</span> of the grid is the <strong>radius</strong>, so the suggested
+<span class="math notranslate nohighlight">\(r_{max}\)</span> is <span class="math notranslate nohighlight">\(D_{max}/2\)</span>.</p>
+</dd>
+<dt>Size weighting</dt><dd><p>Following Kohlbrecher &amp; Bressler (2022, eq. 32–34) the unknown is
+rescaled as</p>
+<div class="math notranslate nohighlight" id="equation-alpha">
+<span class="eqno">(6)<a class="headerlink" href="#equation-alpha" title="Link to this equation"></a></span>\[x(R) = N(R)\,R^{\alpha}, \qquad
+K_\alpha(q,R) = R^{-\alpha} K(q,R),\]</div>
+<p>which leaves <a class="reference internal" href="#equation-fredholm">(1)</a> unchanged. <span class="math notranslate nohighlight">\(\alpha=0, 3, 6\)</span> give
+number, volume and volume-squared (intensity) weighted distributions.
+For the sphere kernel <span class="math notranslate nohighlight">\(\alpha=6\)</span> divides the <span class="math notranslate nohighlight">\(R^6\)</span> out of
+the kernel; with <span class="math notranslate nohighlight">\(\alpha=0\)</span> the columns of <span class="math notranslate nohighlight">\(\mathbf{A}\)</span>
+span about 15 decades and the EM iteration fails. At <span class="math notranslate nohighlight">\(R=0\)</span> the
+column is set to zero for <span class="math notranslate nohighlight">\(\alpha&gt;0\)</span>.
+<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.recover_N_from_x" title="pysasfit.inversion.kernels.recover_N_from_x"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.kernels.recover_N_from_x()</span></code></a> undoes the
+substitution.</p>
+</dd>
+</dl>
+</section>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.background.fit_background" title="pysasfit.inversion.background.fit_background"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.background.fit_background()</span></code></a> fits</p>
+<div class="math notranslate nohighlight">
+\[I(q) \approx I_{bg} + c\,q^{-\alpha_{bg}}\]</div>
+<p>by weighted non-linear least squares in a chosen <span class="math notranslate nohighlight">\(q\)</span> range. <strong>Only
+the constant</strong> <span class="math notranslate nohighlight">\(I_{bg}\)</span> is subtracted (<code class="docutils literal notranslate"><span class="pre">BackgroundFitResult.evaluate</span></code>
+deliberately evaluates the power law with <span class="math notranslate nohighlight">\(c=0\)</span>); the power law only
+serves to separate the flat background from the decaying particle
+scattering in the fit. <code class="docutils literal notranslate"><span class="pre">extrapolation_risk</span></code> measures in units of the fit
+range’s own log width how far the data extend outside the fit range,
+because a power law extrapolated by a decade can exceed the signal. A
+fixed, user-given constant can be used instead.</p>
+</section>
+<section id="information-content-and-the-choice-of-the-grid">
+<h2>Information content and the choice of the grid<a class="headerlink" href="#information-content-and-the-choice-of-the-grid" title="Link to this heading"></a></h2>
+<dl>
+<dt>Maximum dimension</dt><dd><p>Glatter’s consistency condition <span class="math notranslate nohighlight">\(q_{min}\le\pi/D_{max}\)</span> gives
+the largest dimension the low-<span class="math notranslate nohighlight">\(q\)</span> end of the data can constrain.
+The GUI suggests</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}D_{max} \approx \frac{\pi}{q_{min}},\qquad
+r_{max} = \begin{cases} D_{max} &amp; \text{PDDF}\\
+                        D_{max}/2 &amp; \text{sphere radius}\end{cases}\end{split}\]</div>
+<p>For <code class="docutils literal notranslate"><span class="pre">tests/data/test.dat</span></code> (<span class="math notranslate nohighlight">\(q_{min}=0.004016\ \mathrm{nm^{-1}}\)</span>)
+this is <span class="math notranslate nohighlight">\(D_{max}\approx 782\)</span> nm. Larger values let the solver
+“improve” <span class="math notranslate nohighlight">\(\chi^2\)</span> by fitting noise at mid <span class="math notranslate nohighlight">\(q\)</span>.</p>
+</dd>
+<dt>Shannon sampling</dt><dd><p><span class="math notranslate nohighlight">\(p(r)\)</span> on <span class="math notranslate nohighlight">\([0,D_{max}]\)</span> and <span class="math notranslate nohighlight">\(I(q)\)</span> are a Fourier pair.
+The sampling theorem says that <span class="math notranslate nohighlight">\(I(q)\)</span> is fully determined by its
+values at the Shannon points <span class="math notranslate nohighlight">\(q_k = k\pi/D_{max}\)</span>, and
+<span class="math notranslate nohighlight">\(p(r)\)</span> measured up to <span class="math notranslate nohighlight">\(q_{max}\)</span> is resolved on a length
+scale</p>
+<div class="math notranslate nohighlight">
+\[\Delta r_{Shannon} = \frac{\pi}{q_{max}} .\]</div>
+<p>The number of independent parameters (Shannon channels) in the data is</p>
+<div class="math notranslate nohighlight" id="equation-shannon">
+<span class="eqno">(7)<a class="headerlink" href="#equation-shannon" title="Link to this equation"></a></span>\[N_s = \frac{(q_{max}-q_{min})\,D_{max}}{\pi},\]</div>
+<p>which the GUI suggests as the number of <span class="math notranslate nohighlight">\(r\)</span> grid points
+(test.dat: <span class="math notranslate nohighlight">\(\pi/q_{max}=8.2\)</span> nm, <span class="math notranslate nohighlight">\(N_s\approx 95\)</span> for the
+PDDF, 47 for the sphere radius).</p>
+</dd>
+<dt>Log-spaced data</dt><dd><p>Most SAS data are equidistant in <span class="math notranslate nohighlight">\(\log q\)</span>. The number of data
+points per Shannon channel is then</p>
+<div class="math notranslate nohighlight">
+\[\frac{\mathrm{d}n}{\mathrm{d}k}
+= \frac{\pi}{D_{max}}\,\frac{\mathrm{d}n}{\mathrm{d}q}
+= \frac{\pi}{D_{max}}\,\frac{1}{q\,\Delta\ln q},\]</div>
+<p>i.e. it decreases like <span class="math notranslate nohighlight">\(1/q\)</span>. On test.dat it drops to about 0.45
+points per channel at high <span class="math notranslate nohighlight">\(q\)</span>. A model with one free parameter
+per channel (a point grid with <span class="math notranslate nohighlight">\(N\approx N_s\)</span>) can then follow
+every single high-<span class="math notranslate nohighlight">\(q\)</span> point, including its noise – this was the
+“high-<span class="math notranslate nohighlight">\(q\)</span> overfitting” analysed in <a class="reference internal" href="theory_investigation.html"><span class="doc">Development history and findings</span></a>,
+and it is the main reason for the reduced B-spline basis
+(<a class="reference internal" href="theory_discretization.html"><span class="doc">Discretization of the integral</span></a>).</p>
+</dd>
+</dl>
+</section>
+<section id="goodness-of-fit">
+<h2>Goodness of fit<a class="headerlink" href="#goodness-of-fit" title="Link to this heading"></a></h2>
+<div class="math notranslate nohighlight">
+\[\chi^2_r = \frac{1}{M}\sum_{i=1}^{M}
+\frac{\left[(\mathbf{A}\mathbf{x})_i - b_i\right]^2}{\sigma_i^2}\]</div>
+<p>is used as the fit criterion (target value 1 in the discrepancy principle).
+For diagnosing <em>where</em> a fit is too good or too bad, the residuals are
+split into the lower, middle and upper third of the <span class="math notranslate nohighlight">\(q\)</span> points and
+the mean of <span class="math notranslate nohighlight">\([(\mathbf{A}\mathbf{x})_i-b_i]^2/\sigma_i^2\)</span> is
+reported per third (“low/mid/high-<span class="math notranslate nohighlight">\(q\)</span> <span class="math notranslate nohighlight">\(\chi^2\)</span>”); a value far
+below 1 in one region means that the model follows the noise there.
+Data without error bars
+———————–</p>
+<p>Every solver needs <span class="math notranslate nohighlight">\(\sigma_i\)</span> (weights, <span class="math notranslate nohighlight">\(\chi^2_r\)</span>, discrepancy
+principle). For files without a <span class="math notranslate nohighlight">\(\Delta I\)</span> column – or to check the
+given one – <a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.estimate_errors" title="pysasfit.inversion.goodness_of_fit.estimate_errors"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.goodness_of_fit.estimate_errors()</span></code></a>
+provides three error models.</p>
+<dl>
+<dt>Local cubic fits (default without <span class="math notranslate nohighlight">\(\Delta I\)</span>)</dt><dd><p>For every point a cubic in <span class="math notranslate nohighlight">\(\ln I\)</span> versus <span class="math notranslate nohighlight">\(\ln q\)</span> is fitted
+by least squares to the point and its two neighbours on each side
+(<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.local_polynomial_scatter" title="pysasfit.inversion.goodness_of_fit.local_polynomial_scatter"><code class="xref py py-func docutils literal notranslate"><span class="pre">local_polynomial_scatter()</span></code></a>).
+With <span class="math notranslate nohighlight">\(n=5\)</span> points and <span class="math notranslate nohighlight">\(p=4\)</span> parameters the residual sum of
+squares has <span class="math notranslate nohighlight">\(\nu=n-p=1\)</span> degree of freedom, and</p>
+<div class="math notranslate nohighlight">
+\[s_i^2 = \frac{\mathrm{RSS}_i}{\nu} = \frac{1}{n-p}\sum_{k=i-2}^{i+2}
+\left[\ln I_k - P_i(\ln q_k)\right]^2\]</div>
+<p>is an unbiased estimate of the relative variance
+<span class="math notranslate nohighlight">\(\varepsilon_i^2\)</span>. (The plain mean square deviation
+<span class="math notranslate nohighlight">\(\mathrm{RSS}/n\)</span> is too small by <span class="math notranslate nohighlight">\(\nu/n=1/5\)</span>.) The cubic
+removes the local shape of the curve up to third order. For equidistant
+points the single residual degree of freedom is proportional to the
+fourth difference, <span class="math notranslate nohighlight">\(s_i\propto|y_{i-2}-4y_{i-1}+6y_i-4y_{i+1}+y_{i+2}|/\sqrt{70}\)</span>.</p>
+<p>A single <span class="math notranslate nohighlight">\(s_i\)</span> is <span class="math notranslate nohighlight">\(|z|\)</span> of one Gaussian variable
+(<span class="math notranslate nohighlight">\(s_i^2\sim\varepsilon^2\chi^2_1\)</span>): unbiased in the variance, but
+its 5–95 % range is <span class="math notranslate nohighlight">\(0.06\)</span>–<span class="math notranslate nohighlight">\(2\,\varepsilon\)</span>, and weights
+<span class="math notranslate nohighlight">\(1/\sigma_i^2\)</span> built from it can be wrong by orders of magnitude.
+The estimates are therefore combined over a window of <span class="math notranslate nohighlight">\(N\)</span> points
+(default 15) by a running median, scaled to be unbiased for Gaussian
+noise,</p>
+<div class="math notranslate nohighlight">
+\[\hat\varepsilon_i = \frac{\mathrm{median}_{j\in\mathcal W_i}\, s_j}
+{\sqrt{\mathrm{median}(\chi^2_\nu)/\nu}}
+\quad(=1.4826\,\mathrm{median}\,s_j \text{ for } \nu=1),\qquad
+\sigma_i = \hat\varepsilon_i\,|I_i| .\]</div>
+<p><span class="math notranslate nohighlight">\(N=1\)</span> is the plain per-point estimate. Near the ends the first or
+last five points are used.</p>
+</dd>
+<dt>Neighbour interpolation</dt><dd><p>Each point is compared with the line through its two neighbours in
+<span class="math notranslate nohighlight">\(\ln I\)</span> versus <span class="math notranslate nohighlight">\(\ln q\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[d_i = \ln I_i - \left[w_i\ln I_{i-1} + (1-w_i)\ln I_{i+1}\right],\qquad
+w_i = \frac{\ln q_{i+1}-\ln q_i}{\ln q_{i+1}-\ln q_{i-1}},\]</div>
+<p><span class="math notranslate nohighlight">\(\mathrm{Var}(d_i)=\varepsilon^2(1+w_i^2+(1-w_i)^2)\)</span>, combined the
+same way:
+<span class="math notranslate nohighlight">\(\hat\varepsilon_i = 1.4826\,\mathrm{median}_{\mathcal W_i}|d_j|/\sqrt{1+w_j^2+(1-w_j)^2}\)</span>.
+Only linear trends are removed, so curvature (steep slopes, form-factor
+minima) inflates the estimate.</p>
+</dd>
+</dl>
+<p>Comparison (median of <span class="math notranslate nohighlight">\(\hat\sigma/\sigma_{true}\)</span>, window 15; synthetic
+monodisperse spheres with known noise on 91 or 200 log-spaced points, 40
+noise realizations; test.dat against its file errors):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>data</p></th>
+<th class="head"><p>5-point cubic</p></th>
+<th class="head"><p>3-point neighbour</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>spheres R = 15, 5 %, 91 points</p></td>
+<td><p>1.06</p></td>
+<td><p>1.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>spheres R = 30, 3 %, 200 points</p></td>
+<td><p>1.09</p></td>
+<td><p>1.16</p></td>
+</tr>
+<tr class="row-even"><td><p>spheres R = 30, 3 %, 91 points</p></td>
+<td><p>1.22</p></td>
+<td><p>1.28</p></td>
+</tr>
+<tr class="row-odd"><td><p>spheres R = 60, 1 %, 91 points</p></td>
+<td><p>1.60</p></td>
+<td><p>1.91</p></td>
+</tr>
+<tr class="row-even"><td><p>test.dat vs file <span class="math notranslate nohighlight">\(\Delta I\)</span></p></td>
+<td><p>1.20</p></td>
+<td><p>1.18</p></td>
+</tr>
+</tbody>
+</table>
+<p>The remaining overestimate comes from the sharp minima of monodisperse
+spheres (few points, low noise); with a smooth curve and 3 % noise the
+cubic gives <span class="math notranslate nohighlight">\(\langle s^2\rangle/\sigma^2 = 1.015\)</span> per point and a
+median ratio of 1.03 combined.</p>
+<dl class="simple">
+<dt>Poisson</dt><dd><p><span class="math notranslate nohighlight">\(\sigma_i^2 = I_i\)</span>, valid only for intensities in counts.</p>
+</dd>
+<dt>Relative error</dt><dd><p><span class="math notranslate nohighlight">\(\sigma_i = r\,|I_i|\)</span> with a given <span class="math notranslate nohighlight">\(r\)</span>.</p>
+</dd>
+</dl>
+<p>If the <em>shape</em> of <span class="math notranslate nohighlight">\(\sigma_i\)</span> is right but its overall level is not
+(estimated or guessed errors), the Bayesian-evidence solver can estimate
+an overall factor (<a class="reference internal" href="theory_regularization.html"><span class="doc">Regularization and choice of the regularization strength</span></a>, “Unknown error scale”).</p>
+</section>
+<section id="alternative-fit-statistics">
+<h2>Alternative fit statistics<a class="headerlink" href="#alternative-fit-statistics" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.goodness_of_fit.fit_statistics" title="pysasfit.inversion.goodness_of_fit.fit_statistics"><code class="xref py py-func docutils literal notranslate"><span class="pre">fit_statistics()</span></code></a> reports, for the
+measured and fitted <strong>total</strong> intensities <span class="math notranslate nohighlight">\(I_i\)</span>, <span class="math notranslate nohighlight">\(F_i\)</span>
+(background included, so that both are positive):</p>
+<div class="math notranslate nohighlight">
+\[\chi^2_r = \frac1M\sum_i\frac{(I_i-F_i)^2}{\sigma_i^2},\qquad
+\frac{\chi^2_P}{M} = \frac1M\sum_i\frac{(I_i-F_i)^2}{F_i},\]</div>
+<div class="math notranslate nohighlight">
+\[\frac{G}{M} = \frac2M\sum_i\left[I_i\ln\frac{I_i}{F_i}-(I_i-F_i)\right],\qquad
+D_{KL} = \sum_i p_i\ln\frac{p_i}{\hat p_i},\quad
+p_i=\frac{I_i}{\sum_jI_j},\ \hat p_i=\frac{F_i}{\sum_jF_j} .\]</div>
+<ul class="simple">
+<li><p>Pearson’s <span class="math notranslate nohighlight">\(\chi^2_P\)</span> and the Poisson deviance (G-test)
+<span class="math notranslate nohighlight">\(G\)</span> are the <span class="math notranslate nohighlight">\(\chi^2\)</span> and the likelihood-ratio statistic for
+Poisson noise, <span class="math notranslate nohighlight">\(\sigma_i^2=F_i\)</span>. Both are <span class="math notranslate nohighlight">\(\approx M\)</span> for a
+correct model <strong>only if</strong> <span class="math notranslate nohighlight">\(I\)</span> is in counts. For intensities in
+other units they scale with the unit (<span class="math notranslate nohighlight">\(I\to cI\)</span> multiplies both by
+<span class="math notranslate nohighlight">\(c\)</span>), so they cannot replace <span class="math notranslate nohighlight">\(\chi^2_r=1\)</span> as a target.</p></li>
+<li><p><span class="math notranslate nohighlight">\(D_{KL}\)</span> of the normalized curves is scale-free (SASfit’s G-test
+is <span class="math notranslate nohighlight">\(2D_{KL}\)</span>) and needs no errors, but it has no target value: it
+can monitor or compare fits, not choose a regularization parameter.</p></li>
+<li><p>Without <span class="math notranslate nohighlight">\(\sigma_i\)</span> a stopping target therefore needs a noise model
+(above), or a parameter choice that does not use the absolute error
+level: GCV, the L-curve, or the Bayesian evidence with an estimated error
+scale.</p></li>
+</ul>
+<p>All four statistics are shown in the GUI’s result panel. The EM solvers
+also store SASfit’s G-test in <code class="docutils literal notranslate"><span class="pre">diagnostics[&quot;g_test_final&quot;]</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="Theory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory_discretization.html" class="btn btn-neutral float-right" title="Discretization of the integral" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

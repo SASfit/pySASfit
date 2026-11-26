@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.ports.magnetic &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.ports.magnetic</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.ports.magnetic</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Python ports of SASfit's magnetic core-shell spheres (libsasfit core: magnetic_shell, superparamagnetic_ff_psi).</span>
+
+<span class="sd">Each port returns the magnetic **basis terms** (NN, NM, MH, MSF, CH; :mod:`pysasfit.studio.polarisation`) of one</span>
+<span class="sd">particle at (q, ψ), ψ = angle between q and the field on the detector, field perpendicular to the beam:</span>
+
+<span class="sd">* ``ff_magnetic_shell_psi``: core-shell sphere with nuclear and magnetic SLDs of core, shell and matrix,</span>
+<span class="sd">  magnetisation saturated along the field (S1 = S2 = 1);</span>
+<span class="sd">* ``ff_superparamagnetic_ff_psi``: core-shell sphere with a magnetic core (magnetic SLD of shell and matrix 0) whose</span>
+<span class="sd">  moment follows a Langevin distribution with ξ = μH/kT (R/R_av)³ (moment ∝ core volume): S1 = L(ξ),</span>
+<span class="sd">  S2 = 1 - 3L(ξ)/ξ. Coherent and fluctuation parts as in SASfit.</span>
+
+<span class="sd">With a polarisation setting active (a data set of :class:`~pysasfit.studio.ModelFunction` with ``polarisation``)</span>
+<span class="sd">the intensity is Σ w_k T_k for the measured quantity and the ``pol`` parameter is not used; without it the ports</span>
+<span class="sd">give the SASfit result with ``pol`` in SASfit's labels (neutron moment): pol = +1 is neutron spin antiparallel to</span>
+<span class="sd">the field (I- here, -2NM), I = (1+pol)/2 I- + (1-pol)/2 I+. The quantities of a polarisation setting use the</span>
+<span class="sd">neutron spin (Moon, Riste &amp; Koehler 1969), see :mod:`pysasfit.studio.polarisation`.</span>
+
+<span class="sd">C: ``ff_magnetic_shell_cross`` (not ported, the quantity "difference" replaces it) set ψ = π/2 as degrees</span>
+<span class="sd">(sin²ψ ≈ 7.5e-4 instead of 1) and overwrote the ψ parameter of the caller; fixed 2026-11-23 (ψ = 90°, the</span>
+<span class="sd">parameter is left alone).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">polarisation</span> <span class="k">as</span> <span class="n">pol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_spec</span><span class="p">,</span> <span class="n">phi_sphere</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SPECS"</span><span class="p">,</span> <span class="s2">"magnetic_shell_terms"</span><span class="p">,</span> <span class="s2">"superparamagnetic_terms"</span><span class="p">,</span> <span class="s2">"langevin_moments"</span><span class="p">]</span>
+
+<span class="n">_SRC</span> <span class="o">=</span> <span class="s2">"sasfit_ff/"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sph</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">eta</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">eta</span> <span class="o">*</span> <span class="mf">4.0</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">phi_sphere</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ksh</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">e_c</span><span class="p">,</span> <span class="n">e_sh</span><span class="p">,</span> <span class="n">e_m</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Amplitude of a core-shell sphere: (η_sh - η_m) V(R+ΔR) Φ + (η_c - η_sh) V(R) Φ (SASfit Ksh)."""</span>
+    <span class="k">return</span> <span class="n">_sph</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span> <span class="o">+</span> <span class="n">dr</span><span class="p">,</span> <span class="n">e_sh</span> <span class="o">-</span> <span class="n">e_m</span><span class="p">)</span> <span class="o">+</span> <span class="n">_sph</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">e_c</span> <span class="o">-</span> <span class="n">e_sh</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="langevin_moments">
+<a class="viewcode-back" href="../../../../studio_api.html#pysasfit.studio.ports.magnetic.langevin_moments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">langevin_moments</span><span class="p">(</span><span class="n">xi</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(S1, S2) = (L(ξ), 1 - 3L(ξ)/ξ) with SASfit's small-ξ branch (|ξ| &lt; 1e-5: L = ξ/3, L/ξ = 1/3)."""</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-5</span><span class="p">:</span>
+        <span class="n">L</span><span class="p">,</span> <span class="n">LA</span> <span class="o">=</span> <span class="n">xi</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">3.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">xi</span>
+        <span class="n">LA</span> <span class="o">=</span> <span class="n">L</span> <span class="o">/</span> <span class="n">xi</span>
+    <span class="k">return</span> <span class="n">L</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">LA</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_psi_and_mode</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""ψ relative to the field (deg) and the averaging flag, from the active setting or the parameter."""</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">psi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">psi</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">cur</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">average</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-</span> <span class="n">cur</span><span class="o">.</span><span class="n">psi_H</span><span class="p">,</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="magnetic_shell_terms">
+<a class="viewcode-back" href="../../../../studio_api.html#pysasfit.studio.ports.magnetic.magnetic_shell_terms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">magnetic_shell_terms</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""p = [R, dR, eta_nuc_core, eta_nuc_shell, eta_nuc_matrix, eta_mag_core, eta_mag_shell, eta_mag_matrix,</span>
+<span class="sd">    psi (deg), pol] -&gt; terms (5, nq)."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">dr</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">kn</span> <span class="o">=</span> <span class="n">_ksh</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">km</span> <span class="o">=</span> <span class="n">_ksh</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+    <span class="n">ps</span><span class="p">,</span> <span class="n">avg</span> <span class="o">=</span> <span class="n">_psi_and_mode</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="p">)</span>
+    <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">angular_moments</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">avg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pol</span><span class="o">.</span><span class="n">basis_terms</span><span class="p">(</span><span class="n">kn</span><span class="p">,</span> <span class="n">km</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="superparamagnetic_terms">
+<a class="viewcode-back" href="../../../../studio_api.html#pysasfit.studio.ports.magnetic.superparamagnetic_terms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">superparamagnetic_terms</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""p = [R, dR, eta_nuc_core, eta_nuc_shell, eta_nuc_matrix, eta_mag_core, R_av, mu_kT, psi (deg), pol]."""</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">dr</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">kn</span> <span class="o">=</span> <span class="n">_ksh</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">km</span> <span class="o">=</span> <span class="n">_ksh</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">dr</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">r</span> <span class="o">/</span> <span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span> <span class="o">**</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+    <span class="n">S1</span><span class="p">,</span> <span class="n">S2</span> <span class="o">=</span> <span class="n">langevin_moments</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
+    <span class="n">ps</span><span class="p">,</span> <span class="n">avg</span> <span class="o">=</span> <span class="n">_psi_and_mode</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="p">)</span>
+    <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">angular_moments</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">avg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pol</span><span class="o">.</span><span class="n">basis_terms</span><span class="p">(</span><span class="n">kn</span><span class="p">,</span> <span class="n">km</span><span class="p">,</span> <span class="n">S1</span><span class="p">,</span> <span class="n">S2</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_intensity_from</span><span class="p">(</span><span class="n">terms_fn</span><span class="p">,</span> <span class="n">p_index</span><span class="o">=</span><span class="mi">9</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">terms_fn</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="p">)</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cur</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">weights</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">pol</span><span class="o">.</span><span class="n">Polarisation</span><span class="o">.</span><span class="n">sasfit_pol_weights</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">p_index</span><span class="p">])</span>   <span class="c1"># SASfit pol: moment labels</span>
+        <span class="k">return</span> <span class="n">pol</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">intensity</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_volume_cs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Volume of the whole particle 4π/3 (R + ΔR)³ (x replaces p[dist])."""</span>
+    <span class="n">pp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dist</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">pp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dist</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">pp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="mf">4.0</span> <span class="o">/</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dr</span><span class="p">))</span> <span class="o">**</span> <span class="mi">3</span>
+
+
+<span class="n">_MS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"R"</span><span class="p">,</span> <span class="s2">"dR"</span><span class="p">,</span> <span class="s2">"eta_nuc_core"</span><span class="p">,</span> <span class="s2">"eta_nuc_shell"</span><span class="p">,</span> <span class="s2">"eta_nuc_matrix"</span><span class="p">,</span> <span class="s2">"eta_mag_core"</span><span class="p">,</span> <span class="s2">"eta_mag_shell"</span><span class="p">,</span>
+       <span class="s2">"eta_mag_matrix"</span><span class="p">,</span> <span class="s2">"psi"</span><span class="p">,</span> <span class="s2">"pol"</span><span class="p">]</span>  <span class="c1"># fmt: skip</span>
+<span class="n">_MSS</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">60.0</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">),</span> <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">4</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span>
+        <span class="mi">5</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">6</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">7</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">8</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">180.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">9</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">)}</span>
+<span class="n">_SP</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"R"</span><span class="p">,</span> <span class="s2">"dR"</span><span class="p">,</span> <span class="s2">"eta_nuc_core"</span><span class="p">,</span> <span class="s2">"eta_nuc_shell"</span><span class="p">,</span> <span class="s2">"eta_nuc_matrix"</span><span class="p">,</span> <span class="s2">"eta_mag_core"</span><span class="p">,</span> <span class="s2">"R_av"</span><span class="p">,</span> <span class="s2">"mu_kT"</span><span class="p">,</span> <span class="s2">"psi"</span><span class="p">,</span> <span class="s2">"pol"</span><span class="p">]</span>
+<span class="n">_SPS</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">),</span> <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">4</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span>
+        <span class="mi">5</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">6</span><span class="p">:</span> <span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">),</span> <span class="mi">7</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">8</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">180.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">),</span> <span class="mi">9</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"lin"</span><span class="p">)}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_spec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">terms_fn</span><span class="p">,</span> <span class="n">pars</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">notes</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">make_spec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_intensity_from</span><span class="p">(</span><span class="n">terms_fn</span><span class="p">),</span> <span class="n">pars</span><span class="p">,</span> <span class="n">sample</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">_volume_cs</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">_SRC</span> <span class="o">+</span> <span class="n">source</span><span class="p">,</span>
+                  <span class="n">reduced</span><span class="o">=</span><span class="k">lambda</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span> <span class="n">reduced_label</span><span class="o">=</span><span class="s2">"q (R+ΔR)"</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">,</span>
+                  <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s2">"magnetic"</span><span class="p">,</span> <span class="n">notes</span><span class="o">=</span><span class="n">notes</span><span class="p">)</span>  <span class="c1"># fmt: skip</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"intensity"</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_int</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">psi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">c_compat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_intensity_from</span><span class="p">(</span><span class="n">terms_fn</span><span class="p">)(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">psi</span><span class="p">)</span>
+
+    <span class="n">_int</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">_int</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">inner</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">terms_fn</span><span class="o">.</span><span class="vm">__doc__</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">"intensity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_int</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">"psi_index"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">"terms"</span><span class="p">]</span> <span class="o">=</span> <span class="n">terms_fn</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="n">SPECS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_spec</span><span class="p">(</span><span class="s2">"ff_magnetic_shell_psi"</span><span class="p">,</span> <span class="n">magnetic_shell_terms</span><span class="p">,</span> <span class="n">_MS</span><span class="p">,</span> <span class="n">_MSS</span><span class="p">,</span> <span class="s2">"magnetic_shell/sasfit_ff_magnetic_shell_psi.c"</span><span class="p">,</span>
+          <span class="s2">"Magnetic core-shell sphere (saturated)"</span><span class="p">,</span>
+          <span class="s2">"magnetisation saturated along the field; ψ = angle between q and the field"</span><span class="p">),</span>
+    <span class="n">_spec</span><span class="p">(</span><span class="s2">"ff_superparamagnetic_ff_psi"</span><span class="p">,</span> <span class="n">superparamagnetic_terms</span><span class="p">,</span> <span class="n">_SP</span><span class="p">,</span> <span class="n">_SPS</span><span class="p">,</span>
+          <span class="s2">"superparamagnetic_ff_psi/sasfit_ff_superparamagnetic_ff_psi.c"</span><span class="p">,</span>
+          <span class="s2">"Superparamagnetic core-shell sphere (Langevin)"</span><span class="p">,</span>
+          <span class="s2">"magnetic core, Langevin statistics with ξ = mu_kT (R/R_av)³"</span><span class="p">),</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

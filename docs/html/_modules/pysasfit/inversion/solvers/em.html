@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.em &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.em</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.em</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Expectation-Maximization (Lucy-Richardson) inversion, eq. 36-46 of</span>
+<span class="sd">Kohlbrecher &amp; Bressler (2022).</span>
+
+<span class="sd">Implements:</span>
+<span class="sd">  - plain EM fixed-point iteration (eq. 36-37)</span>
+<span class="sd">  - optional single or double smoothing (eq. 41-46), operator S^(h)</span>
+
+<span class="sd">STOPPING CRITERION -- confirmed directly from FP_solver/FP_step in</span>
+<span class="sd">src/sasfit_fixed_point_acc/sasfit_fixed_point_acc.c (not guessed): the</span>
+<span class="sd">default Picard_iteration loop is</span>
+
+<span class="sd">    while (it &lt; maxsteps &amp;&amp; gNorm &gt; relerror) { gNorm = FP_step(...); }</span>
+
+<span class="sd">where FP_step computes gNorm = sqrt(sum((x_new[j] - x_old[j])**2)) -- the</span>
+<span class="sd">plain Euclidean norm of the change between successive iterates, compared</span>
+<span class="sd">against a user-set absolute tolerance `relerror` (the name is the C</span>
+<span class="sd">variable's; despite the name it's used as an absolute, not relative,</span>
+<span class="sd">tolerance in this loop). Implemented below as `tol` / `max_steps`.</span>
+
+<span class="sd">NOW IMPLEMENTED: Biggs-Andrews acceleration (see acceleration.py, ported</span>
+<span class="sd">from Joachim's own pyOZgui/biggsAndrewsOZsolver.py, itself ported from the</span>
+<span class="sd">same sasfit_fixed_point_acc.c BIGGS_ANDREWS case referenced above) --</span>
+<span class="sd">ON BY DEFAULT (accelerate=True), per Joachim's explicit preference; pass</span>
+<span class="sd">accelerate=False to get the plain Picard loop instead (kept as the</span>
+<span class="sd">reference implementation the acceleration is checked against, and still</span>
+<span class="sd">used internally whenever accelerate=False).</span>
+
+<span class="sd">NOT yet implemented:</span>
+<span class="sd">  - The signed/general-kernel (Chae et al. 2019) variant -- see</span>
+<span class="sd">    em_general.py (that has since been added there, not here -- plain</span>
+<span class="sd">    em.py intentionally stays specific to the non-negative-kernel case).</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverResult</span><span class="p">,</span> <span class="n">chi2_r</span><span class="p">,</span> <span class="n">g_test</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">acceleration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_compiled</span>
+
+
+
+<span class="c1">#Default start vector level (pySASfit preferences: inversion.opt.em_x0).</span>
+<span class="n">X0_LEVEL</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_smoothing_matrix</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Tridiagonal smoothing operator S^(h), eq. 43. 0 &lt; h &lt;~ 0.3.</span>
+<span class="sd">    Endpoints use (1-h) rather than (1-2h) so each row still sums to 1.</span>
+<span class="sd">    """</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">h</span> <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">==</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">h</span>
+    <span class="k">return</span> <span class="n">S</span>
+
+
+<div class="viewcode-block" id="em_step">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.em.em_step">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">em_step</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One plain EM/Lucy-Richardson update, eq. 36-37."""</span>
+    <span class="n">col_sums</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># sum_m A_mj</span>
+    <span class="c1"># A column can be all-zero -- e.g. the r=0 column of a size-weighted</span>
+    <span class="c1"># kernel (alpha&gt;0, see kernels.py), which is forced to 0 because</span>
+    <span class="c1"># s^-alpha is singular at s=0. 0/0 would otherwise be NaN here; since</span>
+    <span class="c1"># the numerator (A.T @ (b/Ax)) is also exactly 0 for an all-zero</span>
+    <span class="c1"># column, guarding the denominator keeps that component's correction</span>
+    <span class="c1"># at 0 (i.e. x stays pinned at 0 there), which is in fact the</span>
+    <span class="c1"># physically correct behavior at r=0 anyway (p(0)=0).</span>
+    <span class="n">col_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">col_sums</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">col_sums</span><span class="p">)</span>
+    <span class="n">Ax</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>                <span class="c1"># sum_n A_in x_n</span>
+    <span class="n">Ax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Ax</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">Ax</span><span class="p">)</span>  <span class="c1"># guard div-by-zero</span>
+    <span class="n">correction</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">Ax</span><span class="p">))</span> <span class="o">/</span> <span class="n">col_sums</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">correction</span></div>
+
+
+
+<div class="viewcode-block" id="solve">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.em.solve">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">db</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">x0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+    <span class="n">smoothing_h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">double_smoothing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
+    <span class="n">accelerate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">kin_set_maa</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A : (M, N) kernel matrix (background-subtracted convention: does not</span>
+<span class="sd">        include the flat background term).</span>
+<span class="sd">    b : (M,) background-subtracted measured intensity.</span>
+<span class="sd">    db : (M,) uncertainty on b, for chi2_r tracking.</span>
+<span class="sd">    x0 : initial guess. Defaults to a small positive constant -- the paper</span>
+<span class="sd">         notes the EM fixed point is independent of the seed, though the</span>
+<span class="sd">         *path* to it (and apparent smoothness along the way) is not.</span>
+<span class="sd">    smoothing_h : if given, apply the single (or double, see</span>
+<span class="sd">         `double_smoothing`) smoothing operator each iteration (eq. 41-46).</span>
+<span class="sd">    max_iterations : hard cap on iterations (C code's `maxsteps`).</span>
+<span class="sd">    tol : stop when ||x_new - x_old|| (Euclidean norm, matching the C</span>
+<span class="sd">          code's `gNorm`) drops below this (C code's `relerror`).</span>
+<span class="sd">    accelerate : if True, wrap the per-iteration update (EM step + any</span>
+<span class="sd">          smoothing) in Biggs-Andrews acceleration (acceleration.py)</span>
+<span class="sd">          instead of running it as plain Picard iteration. Same final</span>
+<span class="sd">          fixed point, typically far fewer iterations.</span>
+<span class="sd">    kin_set_maa : Biggs-Andrews extrapolation order/formula, passed</span>
+<span class="sd">          through to acceleration.biggs_andrews when accelerate=True.</span>
+<span class="sd">    """</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">x0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">X0_LEVEL</span><span class="p">)</span>
+
+    <span class="n">S</span> <span class="o">=</span> <span class="n">_smoothing_matrix</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">smoothing_h</span><span class="p">)</span> <span class="k">if</span> <span class="n">smoothing_h</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="c1"># Speed (2026-11-07): the column sums of A and 1/db are fixed during the iteration; em_step recomputed them</span>
+    <span class="c1"># every step, and the per-step diagnostics used np.mean / np.diff / np.linalg.norm (call overhead dominates</span>
+    <span class="c1"># for these small vectors).  Same formulas, evaluated with dot products.</span>
+    <span class="n">col_sums</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">col_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">col_sums</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">col_sums</span><span class="p">)</span>
+    <span class="n">AT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">inv_db</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">m_inv</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fast_em_step</span><span class="p">(</span><span class="n">x_in</span><span class="p">):</span>
+        <span class="n">Ax</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x_in</span>
+        <span class="n">Ax</span><span class="p">[</span><span class="n">Ax</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="k">return</span> <span class="n">x_in</span> <span class="o">*</span> <span class="p">((</span><span class="n">AT</span> <span class="o">@</span> <span class="p">(</span><span class="n">b</span> <span class="o">/</span> <span class="n">Ax</span><span class="p">))</span> <span class="o">/</span> <span class="n">col_sums</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">chi2_fast</span><span class="p">(</span><span class="n">fb</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">fb</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv_db</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span> <span class="o">@</span> <span class="n">r</span><span class="p">)</span> <span class="o">*</span> <span class="n">m_inv</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">rough</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">v</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span> <span class="o">@</span> <span class="n">d</span><span class="p">)</span>
+
+    <span class="n">chi2_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">roughness_history</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">g_norm_history</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">x_in</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">x_local</span> <span class="o">=</span> <span class="n">x_in</span>
+        <span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">double_smoothing</span><span class="p">:</span>
+            <span class="n">x_safe</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x_local</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">x_local</span><span class="p">)</span>
+            <span class="n">x_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">S</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x_safe</span><span class="p">))</span>
+        <span class="n">x_local</span> <span class="o">=</span> <span class="n">fast_em_step</span><span class="p">(</span><span class="n">x_local</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">x_local</span> <span class="o">=</span> <span class="n">S</span> <span class="o">@</span> <span class="n">x_local</span>
+        <span class="k">return</span> <span class="n">x_local</span>
+
+    <span class="k">if</span> <span class="n">accelerate</span> <span class="ow">and</span> <span class="n">_compiled</span><span class="o">.</span><span class="n">HAVE_NUMBA</span><span class="p">:</span>
+        <span class="c1"># the whole accelerated loop compiled (see _compiled.py); same steps, agrees to rounding</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">g_norm_history</span><span class="p">,</span> <span class="n">chi2_history</span><span class="p">,</span> <span class="n">roughness_history</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_compiled</span><span class="o">.</span><span class="n">accelerated_loop</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">max_iterations</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">kin_set_maa</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">smoothing_h</span><span class="o">=</span><span class="n">smoothing_h</span><span class="p">,</span> <span class="n">double_smoothing</span><span class="o">=</span><span class="n">double_smoothing</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">accelerate</span><span class="p">:</span>
+        <span class="n">x_prev_box</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">record</span><span class="p">(</span><span class="n">x_new</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">x_new</span> <span class="o">-</span> <span class="n">x_prev_box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">g_norm_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d</span> <span class="o">@</span> <span class="n">d</span><span class="p">)))</span>
+            <span class="n">x_prev_box</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_new</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">chi2_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chi2_fast</span><span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">x_new</span><span class="p">))</span>
+            <span class="n">roughness_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rough</span><span class="p">(</span><span class="n">x_new</span><span class="p">))</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">acceleration</span><span class="o">.</span><span class="n">biggs_andrews</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="n">max_iterations</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+            <span class="n">kin_set_maa</span><span class="o">=</span><span class="n">kin_set_maa</span><span class="p">,</span> <span class="n">clip_nonnegative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">clip_floor</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">on_iterate</span><span class="o">=</span><span class="n">record</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">n_iter</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">n_iterations</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">n_iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iterations</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">x_old</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">one_step</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="n">g_norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_old</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>  <span class="c1"># C code's gNorm</span>
+            <span class="n">g_norm_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g_norm</span><span class="p">)</span>
+
+            <span class="n">fitted_b</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+            <span class="n">chi2_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chi2_r</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">fitted_b</span><span class="p">,</span> <span class="n">db</span><span class="p">))</span>
+            <span class="n">roughness_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+
+            <span class="k">if</span> <span class="n">g_norm</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+    <span class="n">fitted_b</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">SolverResult</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+        <span class="n">fitted_b</span><span class="o">=</span><span class="n">fitted_b</span><span class="p">,</span>
+        <span class="n">n_iterations</span><span class="o">=</span><span class="n">n_iter</span><span class="p">,</span>
+        <span class="n">chi2_r_history</span><span class="o">=</span><span class="n">chi2_history</span><span class="p">,</span>
+        <span class="n">roughness_history</span><span class="o">=</span><span class="n">roughness_history</span><span class="p">,</span>
+        <span class="n">converged</span><span class="o">=</span><span class="n">converged</span><span class="p">,</span>
+        <span class="n">diagnostics</span><span class="o">=</span><span class="p">{</span><span class="s2">"g_test_final"</span><span class="p">:</span> <span class="n">g_test</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">fitted_b</span><span class="p">),</span> <span class="s2">"g_norm_history"</span><span class="p">:</span> <span class="n">g_norm_history</span><span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

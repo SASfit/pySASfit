@@ -1,0 +1,524 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.paths &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.paths</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.paths</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Where pysasfit.studio finds the SASfit libraries, plugin headers and Python plugins.</span>
+
+<span class="sd">Search order for the compiled SASfit libraries (``libsasfit`` plus the GSL,</span>
+<span class="sd">FFTW and compiler runtime it needs, and ``plugins/libsasfit_*``):</span>
+
+<span class="sd">1. the folder set with :func:`set_lib_dir` at run time, or saved by the GUI</span>
+<span class="sd">   (explorer: Settings -&gt; SASfit installation; stored in</span>
+<span class="sd">   ``~/.pysasfit/studio_settings.json``);</span>
+<span class="sd">2. the environment variable ``PYSASFIT_SASFIT_LIB``;</span>
+<span class="sd">3. the environment variable ``SASFIT_LOCATION`` (as used by sasfit-collab);</span>
+<span class="sd">4. ``sasfit_lib/`` inside this package (filled by ``pysasfit-studio install-binaries``).</span>
+
+<span class="sd">Every entry may name the folder holding ``libsasfit`` itself or a SASfit</span>
+<span class="sd">installation around it: ``&lt;dir&gt;``, ``&lt;dir&gt;/lib``, ``&lt;dir&gt;/bin`` and</span>
+<span class="sd">``&lt;dir&gt;/sasfit_lib`` are tried (and the parent of a ``plugins`` folder).</span>
+<span class="sd">The plugin libraries are looked for in ``&lt;lib&gt;/plugins`` and in ``&lt;lib&gt;``.</span>
+<span class="sd">A folder that does not contain libsasfit is skipped, so a wrong entry falls</span>
+<span class="sd">through to the next one. Nothing depends on the current working directory.</span>
+
+<span class="sd">Plugin libraries can also come from a SASfit source/build tree (:func:`set_plugin_build_dir`, saved</span>
+<span class="sd">setting ``plugin_build_dir``, environment variable ``PYSASFIT_PLUGIN_BUILD_DIR``), e.g.</span>
+<span class="sd">``SASfitGit/src/plugins``: every ``&lt;dir&gt;/&lt;plugin&gt;/lib/libsasfit_&lt;plugin&gt;`` found there is used instead of</span>
+<span class="sd">the library of the same name in ``&lt;lib&gt;/plugins``, and ``&lt;dir&gt;/&lt;plugin&gt;/include/sasfit_&lt;plugin&gt;.h`` instead</span>
+<span class="sd">of the bundled header. libsasfit itself still comes from the library folder above.</span>
+
+<span class="sd">The menu structure of the functions comes from Doxygen group files ``*.def``, found by</span>
+<span class="sd">:func:`def_dirs` (``&lt;lib&gt;/plugins/def`` and the like); see :mod:`pysasfit.studio.groups`.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"PACKAGE_DIR"</span><span class="p">,</span>
+    <span class="s2">"BUNDLED_HEADERS"</span><span class="p">,</span>
+    <span class="s2">"TEMPLATES"</span><span class="p">,</span>
+    <span class="s2">"LIB_EXT"</span><span class="p">,</span>
+    <span class="s2">"SETTINGS_FILE"</span><span class="p">,</span>
+    <span class="s2">"lib_dir"</span><span class="p">,</span>
+    <span class="s2">"lib_dir_source"</span><span class="p">,</span>
+    <span class="s2">"lib_dir_sources"</span><span class="p">,</span>
+    <span class="s2">"describe_lib_dir_sources"</span><span class="p">,</span>
+    <span class="s2">"find_lib_dir"</span><span class="p">,</span>
+    <span class="s2">"count_plugin_libs"</span><span class="p">,</span>
+    <span class="s2">"set_lib_dir"</span><span class="p">,</span>
+    <span class="s2">"saved_lib_dir"</span><span class="p">,</span>
+    <span class="s2">"chosen_lib_dir"</span><span class="p">,</span>
+    <span class="s2">"get_setting"</span><span class="p">,</span>
+    <span class="s2">"set_setting"</span><span class="p">,</span>
+    <span class="s2">"plugin_lib_dirs"</span><span class="p">,</span>
+    <span class="s2">"plugin_build_dir"</span><span class="p">,</span>
+    <span class="s2">"set_plugin_build_dir"</span><span class="p">,</span>
+    <span class="s2">"plugin_build_lib_dirs"</span><span class="p">,</span>
+    <span class="s2">"plugin_build_include_dirs"</span><span class="p">,</span>
+    <span class="s2">"header_dirs"</span><span class="p">,</span>
+    <span class="s2">"def_dirs"</span><span class="p">,</span>
+    <span class="s2">"python_plugin_dirs"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">PACKAGE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">BUNDLED_HEADERS</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PACKAGE_DIR</span><span class="p">,</span> <span class="s2">"headers"</span><span class="p">)</span>
+<span class="n">TEMPLATES</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PACKAGE_DIR</span><span class="p">,</span> <span class="s2">"templates"</span><span class="p">)</span>
+<span class="n">DEFAULT_LIB</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PACKAGE_DIR</span><span class="p">,</span> <span class="s2">"sasfit_lib"</span><span class="p">)</span>
+<span class="n">SETTINGS_FILE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".pysasfit"</span><span class="p">,</span> <span class="s2">"studio_settings.json"</span>
+<span class="p">)</span>
+
+<span class="n">_system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+<span class="n">LIB_EXT</span> <span class="o">=</span> <span class="s2">"dll"</span> <span class="k">if</span> <span class="n">_system</span> <span class="o">==</span> <span class="s2">"Windows"</span> <span class="k">else</span> <span class="p">(</span><span class="s2">"dylib"</span> <span class="k">if</span> <span class="n">_system</span> <span class="o">==</span> <span class="s2">"Darwin"</span> <span class="k">else</span> <span class="s2">"so"</span><span class="p">)</span>
+
+<span class="n">_override</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_build_override</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
+<span class="c1"># ------------------------------------------------------------------ settings file</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_settings</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SETTINGS_FILE</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">data</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_settings</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">SETTINGS_FILE</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SETTINGS_FILE</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fh</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_setting">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.get_setting">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_setting</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A value remembered in :data:`SETTINGS_FILE` (JSON), e.g. 'integration' or 'precision'."""</span>
+    <span class="k">return</span> <span class="n">_read_settings</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_setting">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.set_setting">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_setting</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Remember ``value`` (JSON-serialisable; None forgets the key). Raises OSError if the file cannot be written."""</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">_read_settings</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">settings</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">_write_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clean</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">_system</span> <span class="o">==</span> <span class="s2">"Windows"</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span>
+        <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"/"</span>
+        <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span>
+        <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"/"</span>
+    <span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="si">}</span><span class="s2">"</span>  <span class="c1"># MSYS/Git-Bash form /c/Users/... -&gt; C:/Users/...</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="saved_lib_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.saved_lib_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">saved_lib_dir</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The folder remembered from an earlier session (``set_lib_dir(..., save=True)``), or None."""</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">_read_settings</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lib_dir"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="chosen_lib_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.chosen_lib_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chosen_lib_dir</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The folder chosen by the user (this session's, else the saved one), valid or not."""</span>
+    <span class="k">return</span> <span class="n">_override</span> <span class="ow">or</span> <span class="n">saved_lib_dir</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="set_lib_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.set_lib_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_lib_dir</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Use ``path`` for the SASfit libraries; it takes precedence over the environment variables.</span>
+
+<span class="sd">    ``path`` may be the folder holding libsasfit or a SASfit installation around it. Functions</span>
+<span class="sd">    loaded earlier keep the libraries they were loaded from. With ``save=True`` the choice is</span>
+<span class="sd">    stored in :data:`SETTINGS_FILE` and used in later sessions; ``set_lib_dir(None, save=True)``</span>
+<span class="sd">    forgets the stored folder again (``set_lib_dir(None)`` only drops this session's choice).</span>
+<span class="sd">    Raises OSError if the settings file cannot be written (the session choice is set anyway).</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_override</span>
+    <span class="n">_override</span> <span class="o">=</span> <span class="n">_clean</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="n">_read_settings</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">_override</span><span class="p">:</span>
+            <span class="n">settings</span><span class="p">[</span><span class="s2">"lib_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_override</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"lib_dir"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">_write_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ------------------------------------------------------------------ plugin build tree</span>
+<div class="viewcode-block" id="set_plugin_build_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.set_plugin_build_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_plugin_build_dir</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Take the plugin libraries (and headers) from a SASfit plugin source tree, e.g. ``SASfitGit/src/plugins``.</span>
+
+<span class="sd">    Each ``&lt;path&gt;/&lt;plugin&gt;/lib/libsasfit_&lt;plugin&gt;`` replaces the library of the same name in the SASfit</span>
+<span class="sd">    installation. MSYS paths (``/c/Users/...``) are accepted. ``save=True`` stores the choice in</span>
+<span class="sd">    :data:`SETTINGS_FILE`; ``set_plugin_build_dir(None, save=True)`` forgets it. Call before the library</span>
+<span class="sd">    is loaded (or :func:`pysasfit.studio.library.reset_library` afterwards).</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_build_override</span>
+    <span class="n">_build_override</span> <span class="o">=</span> <span class="n">_clean</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">set_setting</span><span class="p">(</span><span class="s2">"plugin_build_dir"</span><span class="p">,</span> <span class="n">_build_override</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plugin_build_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.plugin_build_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plugin_build_dir</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The plugin source/build tree in use (session choice, saved setting, PYSASFIT_PLUGIN_BUILD_DIR), or None."""</span>
+    <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">_build_override</span><span class="p">,</span>
+        <span class="n">get_setting</span><span class="p">(</span><span class="s2">"plugin_build_dir"</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_PLUGIN_BUILD_DIR"</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">_clean</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cand</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">d</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_subdirs</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">accept</span><span class="p">):</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">plugin_build_dir</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">root</span><span class="p">)):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">accept</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">d</span><span class="p">)):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="plugin_build_lib_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.plugin_build_lib_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plugin_build_lib_dirs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""``&lt;tree&gt;/&lt;plugin&gt;/lib`` folders holding a ``libsasfit_*`` plugin library."""</span>
+    <span class="k">return</span> <span class="n">_build_subdirs</span><span class="p">(</span>
+        <span class="s2">"lib"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"libsasfit_"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"."</span> <span class="o">+</span> <span class="n">LIB_EXT</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plugin_build_include_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.plugin_build_include_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plugin_build_include_dirs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""``&lt;tree&gt;/&lt;plugin&gt;/include`` folders holding a ``sasfit_*.h`` header."""</span>
+    <span class="k">return</span> <span class="n">_build_subdirs</span><span class="p">(</span>
+        <span class="s2">"include"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"sasfit_"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".h"</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ------------------------------------------------------------------ library folder</span>
+<div class="viewcode-block" id="find_lib_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.find_lib_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_lib_dir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The folder at/below ``path`` that holds ``libsasfit``, or None."""</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">_clean</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"lib"</span><span class="p">,</span> <span class="s2">"bin"</span><span class="p">,</span> <span class="s2">"sasfit_lib"</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"plugins"</span><span class="p">:</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"libsasfit.</span><span class="si">{</span><span class="n">LIB_EXT</span><span class="si">}</span><span class="s2">"</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">d</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="count_plugin_libs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.count_plugin_libs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_plugin_libs</span><span class="p">(</span><span class="n">lib</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Number of ``libsasfit_*`` plugin libraries below the library folder ``lib``."""</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="s2">"plugins"</span><span class="p">),</span> <span class="n">lib</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"libsasfit_"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"."</span> <span class="o">+</span> <span class="n">LIB_EXT</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">n</span></div>
+
+
+
+<div class="viewcode-block" id="lib_dir_sources">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.lib_dir_sources">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lib_dir_sources</span><span class="p">(</span><span class="n">chosen</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The places searched for the libraries, in priority order.</span>
+
+<span class="sd">    Returns ``[(key, label, raw value or None, resolved library folder or None), ...]``;</span>
+<span class="sd">    ``chosen`` replaces the first entry (used by the GUI to preview an edited path).</span>
+<span class="sd">    """</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">chosen_lib_dir</span><span class="p">()</span> <span class="k">if</span> <span class="n">chosen</span> <span class="ow">is</span> <span class="n">_UNSET</span> <span class="k">else</span> <span class="p">(</span><span class="n">chosen</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">"gui"</span><span class="p">,</span> <span class="s2">"folder chosen in the GUI"</span><span class="p">,</span> <span class="n">first</span><span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">"PYSASFIT_SASFIT_LIB"</span><span class="p">,</span>
+            <span class="s2">"PYSASFIT_SASFIT_LIB"</span><span class="p">,</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_SASFIT_LIB"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">"SASFIT_LOCATION"</span><span class="p">,</span>
+            <span class="s2">"SASFIT_LOCATION"</span><span class="p">,</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"SASFIT_LOCATION"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="s2">"bundled"</span><span class="p">,</span>
+            <span class="s2">"bundled sasfit_lib"</span><span class="p">,</span>
+            <span class="n">DEFAULT_LIB</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">DEFAULT_LIB</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">find_lib_dir</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="describe_lib_dir_sources">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.describe_lib_dir_sources">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">describe_lib_dir_sources</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Plain-text table of :func:`lib_dir_sources` (``-&gt;`` marks the one in use)."""</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">lib_dir_sources</span><span class="p">()</span> <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">rows</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+        <span class="n">mark</span> <span class="o">=</span> <span class="s2">"-&gt;"</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">active</span> <span class="k">else</span> <span class="s2">"  "</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="s2">"ok "</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="p">(</span><span class="s2">"bad"</span> <span class="k">if</span> <span class="n">raw</span> <span class="k">else</span> <span class="s2">"-- "</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mark</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s2">&lt;26</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">raw</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'(not set)'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="lib_dir_source">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.lib_dir_source">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lib_dir_source</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Key of the entry in use ('gui', 'PYSASFIT_SASFIT_LIB', 'SASFIT_LOCATION', 'bundled') or None."""</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">resolved</span> <span class="ow">in</span> <span class="n">lib_dir_sources</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">key</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="lib_dir">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.lib_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lib_dir</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Directory holding ``libsasfit``, or None if no libraries are installed."""</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">resolved</span> <span class="ow">in</span> <span class="n">lib_dir_sources</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resolved</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="plugin_lib_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.plugin_lib_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plugin_lib_dirs</span><span class="p">():</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">lib_dir</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">"plugins"</span><span class="p">),</span> <span class="n">d</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="header_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.header_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">header_dirs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Header directories; later entries override earlier ones."""</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">BUNDLED_HEADERS</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">plugin_lib_dirs</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"sasfit_"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".h"</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">d</span><span class="p">)):</span>
+            <span class="n">dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">dirs</span> <span class="o">+=</span> <span class="p">(</span>
+        <span class="n">plugin_build_include_dirs</span><span class="p">()</span>
+    <span class="p">)</span>  <span class="c1"># the plugin source tree overrides the installed headers</span>
+    <span class="k">return</span> <span class="n">dirs</span></div>
+
+
+
+<div class="viewcode-block" id="def_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.def_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">def_dirs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Folders searched for the group definitions ``*.def`` (menu tree of the functions).</span>
+
+<span class="sd">    The ``def`` subfolder of the bundled headers folder and of each plugin library folder (``&lt;lib&gt;/plugins/def``,</span>
+<span class="sd">    ``&lt;lib&gt;/def``) and the folder itself, then the same for the folders in ``PYSASFIT_STUDIO_PLUGINS`` and</span>
+<span class="sd">    ``~/.pysasfit/studio_plugins``, so that your own groups (see ``templates/groups_example.def``) come last.</span>
+<span class="sd">    Existing folders only.</span>
+<span class="sd">    """</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="p">[</span><span class="n">BUNDLED_HEADERS</span><span class="p">]</span> <span class="o">+</span> <span class="n">plugin_lib_dirs</span><span class="p">()</span>
+    <span class="n">base</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_STUDIO_PLUGINS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span>
+    <span class="p">]</span>
+    <span class="n">base</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".pysasfit"</span><span class="p">,</span> <span class="s2">"studio_plugins"</span><span class="p">))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">base</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s2">"def"</span><span class="p">),</span> <span class="n">d</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cand</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="python_plugin_dirs">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.paths.python_plugin_dirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">python_plugin_dirs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Directories searched for Python plugins ``sasstudio_&lt;name&gt;.py``."""</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_STUDIO_PLUGINS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span>
+    <span class="p">]</span>
+    <span class="n">dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".pysasfit"</span><span class="p">,</span> <span class="s2">"studio_plugins"</span><span class="p">))</span>
+    <span class="n">dirs</span> <span class="o">+=</span> <span class="n">plugin_lib_dirs</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

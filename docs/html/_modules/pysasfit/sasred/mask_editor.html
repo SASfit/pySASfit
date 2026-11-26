@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.mask_editor &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.mask_editor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.mask_editor</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Interactive mask editing in the detector panel of pySASred.</span>
+
+<span class="sd">Tool bar below the colour-scale row of the detector plot:</span>
+
+<span class="sd">* **Suggest** – the mask for the image shown: standard border (2 outer rows and columns),</span>
+<span class="sd">  beamstop shadow (sudden drop around the beam centre) and hot pixels</span>
+<span class="sd">  (:func:`pysasfit.sasred.core.mask.suggest_mask`). Pixels you drew yourself are kept.</span>
+<span class="sd">* **Tool** – navigate (zoom / pan with the plot tool bar), or add (+) / remove (−) pixels</span>
+<span class="sd">  with a rectangle, an ellipse, a polygon (click the corners, close it on the first one)</span>
+<span class="sd">  or a brush (drag; size in pixels). Remove clears every reason of a pixel.</span>
+<span class="sd">* **Undo / Redo** (Ctrl+Z / Ctrl+Y), **Reset** (border only), **Load… / Save…**</span>
+<span class="sd">  (``.h5`` with the reason bits, ``.npy``, or a 0/1 ``.txt`` matrix), **show** (overlay).</span>
+
+<span class="sd">* **edit** – which of the two layers the tools draw on: the **mask** (pixels left out of the</span>
+<span class="sd">  scattering) or the **transmission region** (pixels used, not left out: the direct beam behind a</span>
+<span class="sd">  semi-transparent beam stop, whose counts give the transmission; see</span>
+<span class="sd">  :mod:`pysasfit.sasred.core.beamstop_transmission`). The region is kept per instrument configuration</span>
+<span class="sd">  like the mask and drawn as a green outline; *Suggest* proposes it around the beam centre.</span>
+
+<span class="sd">Editing works in the cartesian view; the polar view shows the masked pixels in grey.</span>
+<span class="sd">The mask is used at once by the live I(q), the reduction and the polar view, and is</span>
+<span class="sd">kept with the last session.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6</span><span class="w"> </span><span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.flowlayout</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowLayout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">mask</span> <span class="k">as</span> <span class="n">mk</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MaskEditor"</span><span class="p">,</span> <span class="s2">"OVERLAY_COLOURS"</span><span class="p">,</span> <span class="s2">"MASKED_CMAP"</span><span class="p">]</span>
+
+<span class="c1">#: overlay colour (RGB) of each reason, in the order they are painted (last on top); saturated</span>
+<span class="c1">#: colours that none of the colour maps uses, plus a black-and-white outline (see draw_overlay)</span>
+<span class="n">OVERLAY_COLOURS</span> <span class="o">=</span> <span class="p">[(</span><span class="n">mk</span><span class="o">.</span><span class="n">BORDER</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">)),</span> <span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">BEAMSTOP</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+                   <span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">USER</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">HOT</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">DEADTIME</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span>
+                   <span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">EFFICIENCY</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">outline_segments</span><span class="p">(</span><span class="n">masked</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pixel-exact boundary of a bool image as merged straight line segments (pixel centres at</span>
+<span class="sd">    integers). The edge of the image itself is not outlined."""</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">masked</span><span class="p">,</span> <span class="nb">bool</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"edge"</span><span class="p">)</span>
+    <span class="n">segs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">m</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>                 <span class="c1"># edge between rows y-1 and y</span>
+    <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">dy</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">dy</span><span class="p">[</span><span class="n">y</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="n">run</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)))</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>                 <span class="c1"># edge between columns x-1 and x</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">dx</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">dx</span><span class="p">[:,</span> <span class="n">x</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">segs</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">run</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">segs</span>
+
+<span class="n">TOOLS</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"navigate"</span><span class="p">,</span> <span class="s2">"navigate (zoom / pan)"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"+rect"</span><span class="p">,</span> <span class="s2">"+ rectangle"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"-rect"</span><span class="p">,</span> <span class="s2">"− rectangle"</span><span class="p">),</span>
+         <span class="p">(</span><span class="s2">"+ellipse"</span><span class="p">,</span> <span class="s2">"+ ellipse"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"-ellipse"</span><span class="p">,</span> <span class="s2">"− ellipse"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"+polygon"</span><span class="p">,</span> <span class="s2">"+ polygon"</span><span class="p">),</span>
+         <span class="p">(</span><span class="s2">"-polygon"</span><span class="p">,</span> <span class="s2">"− polygon"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"+brush"</span><span class="p">,</span> <span class="s2">"+ brush"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"-brush"</span><span class="p">,</span> <span class="s2">"− brush"</span><span class="p">)]</span>
+<span class="n">UNDO_DEPTH</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">FILE_FILTER</span> <span class="o">=</span> <span class="s2">"pySASred mask (*.h5);;NumPy array (*.npy);;0/1 text matrix (*.txt *.msk)"</span>
+
+
+<span class="c1">#: colour map of the masked pixels drawn on their own scale (neutral, unlike the image colour maps)</span>
+<span class="n">MASKED_CMAP</span> <span class="o">=</span> <span class="s2">"gray"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flat</span><span class="p">(</span><span class="n">colour</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListedColormap</span>
+    <span class="k">return</span> <span class="n">ListedColormap</span><span class="p">([</span><span class="n">colour</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">overlay_rgba</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">):</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="p">,))</span>
+    <span class="k">for</span> <span class="n">bit</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">OVERLAY_COLOURS</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[(</span><span class="n">m</span> <span class="o">&amp;</span> <span class="n">bit</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">col</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="MaskEditor">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaskEditor</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QObject</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mask state, its tool bar and the mouse interaction on the detector plot of ``win``</span>
+<span class="sd">    (the pySASred MainWindow)."""</span>
+
+    <span class="n">changed</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Signal</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">win</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">win</span> <span class="o">=</span> <span class="n">win</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span>                 <span class="c1"># uint32, detector shape (None until an image is shown)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="kc">None</span>               <span class="c1"># bool, detector shape: pixels of the transmitted beam (None: none)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redo</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_painting</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span> <span class="o">=</span> <span class="kc">False</span>            <span class="c1"># True while the mask is the untouched start (border + first guess)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_bar</span><span class="p">()</span>
+
+    <span class="c1"># ------------------------------------------------------------------ tool bar</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_bar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">()</span>
+        <span class="n">lay</span> <span class="o">=</span> <span class="n">FlowLayout</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>                 <span class="c1"># wraps to more rows in a narrow panel</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">sizePolicy</span><span class="p">()</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">setHeightForWidth</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">setHorizontalPolicy</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Policy</span><span class="o">.</span><span class="n">Ignored</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"mask (leave out)"</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="s2">"transmission region (use)"</span><span class="p">,</span> <span class="s2">"region"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"what the tools edit: the mask (pixels left out of the scattering) or the transmission "</span>
+                              <span class="s2">"region (pixels whose counts give the beam transmitted through a semi-transparent beam "</span>
+                              <span class="s2">"stop; nothing is left out)"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer_changed</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QPushButton</span><span class="p">(</span><span class="s2">"Suggest"</span><span class="p">)</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"mask: border + beamstop shadow (sudden drop around the beam centre) + hot pixels of the image "</span>
+                     <span class="s2">"shown; your own (user) pixels are kept. Transmission region: the direct beam around the beam "</span>
+                     <span class="s2">"centre (3 σ of the direct-beam profile, or the brush radius + 2 px)"</span><span class="p">)</span>
+        <span class="n">b</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggest_region</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggest</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tool</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">TOOLS</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"add (+) or remove (−) masked pixels on the detector image (cartesian view)"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">attach</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSpinBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">setRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">setPrefix</span><span class="p">(</span><span class="s2">"r "</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">setSuffix</span><span class="p">(</span><span class="s2">" px"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"brush radius (0 = single pixel)"</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">style</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">icon</span><span class="p">,</span> <span class="n">tip</span><span class="p">,</span> <span class="n">slot</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_ArrowBack</span><span class="p">,</span> <span class="s2">"Undo (Ctrl+Z)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">undo</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStyle</span><span class="o">.</span><span class="n">StandardPixmap</span><span class="o">.</span><span class="n">SP_ArrowForward</span><span class="p">,</span> <span class="s2">"Redo (Ctrl+Y)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">redo</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"Reset"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"standard mask (outer rows and columns) and the first-guess beamstop"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"Load…"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"load a mask file (.h5, .npy, 0/1 .txt)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_load</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"Save…"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"save the mask (.h5 with the reasons, .npy, 0/1 .txt)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_save</span><span class="p">)):</span>
+            <span class="n">bb</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QToolButton</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">icon</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bb</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">standardIcon</span><span class="p">(</span><span class="n">icon</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bb</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="n">bb</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">tip</span><span class="p">)</span>
+            <span class="n">bb</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span>
+            <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">bb</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QComboBox</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"colours"</span><span class="p">,</span> <span class="s2">"colours"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="s2">"own scale"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"hidden"</span><span class="p">,</span> <span class="s2">"hidden"</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">findData</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sasred.mask.display"</span><span class="p">))))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"masked pixels: in the mask colours; on their own grey scale with its own "</span>
+                                <span class="s2">"colour bar (to see what is behind the mask); or hidden (outline only). "</span>
+                                <span class="s2">"The colour scale of the image uses the unmasked pixels only."</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">_draw_detector</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSpinBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">setRange</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">setSingleStep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sasred.mask.opacity"</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">setSuffix</span><span class="p">(</span><span class="s2">" %"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"opacity of the mask colours (the outline is always drawn)"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">valueChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span> <span class="n">_v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">_draw_detector</span><span class="p">())</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="n">lay</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">seq</span><span class="p">,</span> <span class="n">slot</span> <span class="ow">in</span> <span class="p">((</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Undo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">undo</span><span class="p">),</span>
+                          <span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Redo</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">redo</span><span class="p">)):</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QShortcut</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">setContext</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ShortcutContext</span><span class="o">.</span><span class="n">WidgetWithChildrenShortcut</span><span class="p">)</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">activated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span>
+
+    <span class="c1"># ------------------------------------------------------------------ state</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">editing_region</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"region"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_layer_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_i</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attach</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">"transmission region: draw it with + (or Suggest); it does not mask "</span>
+                                             <span class="s2">"anything"</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MaskEditor.set_region">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.set_region">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_region</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Set the transmission region (bool image or None); undoable."""</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_push_undo</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">r</span> <span class="k">if</span> <span class="p">(</span><span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">any</span><span class="p">())</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.suggest_region">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.suggest_region">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest_region</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Transmission region around the beam centre: an ellipse of 3 σ of the direct-beam profile of the</span>
+<span class="sd">        configuration shown (at least 1.5 px), or a disc of the brush radius + 2 px without one."""</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">displayed_raw</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">information</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Transmission region"</span><span class="p">,</span> <span class="s2">"Select a run in the run table first."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">xc</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">yc</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">profile_for</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"profile_for"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">prof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">prof</span><span class="o">.</span><span class="n">sigma_x_px</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">prof</span><span class="o">.</span><span class="n">sigma_y_px</span><span class="p">):</span>
+            <span class="n">ax</span><span class="p">,</span> <span class="n">ay</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">prof</span><span class="o">.</span><span class="n">sigma_x_px</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">prof</span><span class="o">.</span><span class="n">sigma_y_px</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+            <span class="n">how</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"3 σ of the direct-beam profile (</span><span class="si">{</span><span class="n">ax</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> × </span><span class="si">{</span><span class="n">ay</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> px)"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">ay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">+</span> <span class="mf">2.0</span>
+            <span class="n">how</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"disc of </span><span class="si">{</span><span class="n">ax</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> px (no direct-beam profile of this configuration)"</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_ellipse</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">x</span> <span class="o">-</span> <span class="n">ax</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="n">ax</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="n">ay</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="n">ay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_region</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"transmission region suggested around the beam centre (</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">): "</span>
+                                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">how</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">sel</span><span class="p">))</span><span class="si">}</span><span class="s2"> px"</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""How masked pixels are drawn: colours, scale (own grey scale) or hidden."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_panel_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">displayed_raw</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">shape</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">raw</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MaskEditor.start_mask">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.start_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Standard border + the first-guess beamstop of the Reduction panel; a SANS-LLB wide-angle panel:</span>
+<span class="sd">        tube ends and dead tubes."""</span>
+        <span class="n">pr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_panel_raw</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mk</span><span class="o">.</span><span class="n">default_mask</span><span class="p">(</span><span class="n">pr</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">xc</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">yc</span><span class="o">.</span><span class="n">value</span><span class="p">()))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">border_mask</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sasred.mask.border_px"</span><span class="p">))</span>
+        <span class="n">guess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">beamstop_guess</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">guess</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">guess</span><span class="p">]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">BEAMSTOP</span>
+        <span class="k">return</span> <span class="n">m</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.ensure">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.ensure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ensure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The mask for a detector of ``shape`` (the start mask if there is none yet)."""</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_mask</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_redo</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.follow_guess">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.follow_guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">follow_guess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""While the mask is still the untouched start mask, move the first guess with the beam</span>
+<span class="sd">        centre and the size (no undo step)."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.place_guess">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.place_guess">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">place_guess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Replace the beamstop pixels of the mask by the first guess (undoable); other reasons are kept."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">BEAMSTOP</span><span class="p">)</span>
+        <span class="n">guess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">beamstop_guess</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">guess</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">guess</span><span class="p">]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">BEAMSTOP</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">m</span> <span class="o">&amp;</span> <span class="n">mk</span><span class="o">.</span><span class="n">BEAMSTOP</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"beamstop first guess put into the mask (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> px)"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_restore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">snap</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_push_undo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_snapshot</span><span class="p">())</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="p">[:</span><span class="o">-</span><span class="n">UNDO_DEPTH</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redo</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MaskEditor.set_mask">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.set_mask">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pristine</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">record</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_push_undo</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span> <span class="o">=</span> <span class="n">pristine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"total"</span> <span class="ow">and</span> <span class="n">v</span><span class="p">]</span>
+        <span class="n">nr</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">s</span><span class="p">[</span><span class="s1">'total'</span><span class="p">]</span><span class="si">}</span><span class="s2"> px masked"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", transmission region </span><span class="si">{</span><span class="n">nr</span><span class="si">}</span><span class="s2"> px"</span> <span class="k">if</span> <span class="n">nr</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">((</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="n">parts</span> <span class="k">else</span> <span class="s2">"nothing masked"</span><span class="p">)</span>
+                              <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">transmission region: </span><span class="si">{</span><span class="n">nr</span><span class="si">}</span><span class="s2"> px (used, not masked)"</span> <span class="k">if</span> <span class="n">nr</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MaskEditor.undo">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.undo">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">undo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_redo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_snapshot</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_after_history</span><span class="p">(</span><span class="s2">"undo"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.redo">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.redo">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">redo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redo</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_undo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_snapshot</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restore</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_redo</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_after_history</span><span class="p">(</span><span class="s2">"redo"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_after_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">what</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mask: </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="mi">3000</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MaskEditor.reset">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_region</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"transmission region cleared"</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">pristine</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                          <span class="n">message</span><span class="o">=</span><span class="s2">"mask reset to the standard border and the first-guess beamstop"</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ suggestion</span>
+<div class="viewcode-block" id="MaskEditor.suggest">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.suggest">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">suggest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">displayed_raw</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">information</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Suggest mask"</span><span class="p">,</span> <span class="s2">"Select a run in the run table first."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">"sasred.mask"</span><span class="p">)</span>
+        <span class="n">bc</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">xc</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">yc</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"panel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">default_mask</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">bc</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">n_hot</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">"hot"</span><span class="p">]:</span>
+                <span class="n">hot</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">suggest_hot_pixels</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">m</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">hot</span> <span class="o">=</span> <span class="n">hot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hot</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">hot</span>
+                <span class="n">m</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hot</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">HOT</span>
+                <span class="n">n_hot</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">hot</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)))</span>
+            <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">m</span> <span class="o">|=</span> <span class="n">old</span> <span class="o">&amp;</span> <span class="n">mk</span><span class="o">.</span><span class="n">USER</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"mask suggested for the </span><span class="si">{</span><span class="n">raw</span><span class="o">.</span><span class="n">bank</span><span class="si">}</span><span class="s2"> panel of run </span><span class="si">{</span><span class="n">raw</span><span class="o">.</span><span class="n">run</span><span class="si">}</span><span class="s2">: tube ends "</span>
+                                     <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">m</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">mk</span><span class="o">.</span><span class="n">BORDER</span><span class="p">))</span><span class="si">}</span><span class="s2"> px), dead tubes, hot pixels </span><span class="si">{</span><span class="n">n_hot</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">rep</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">suggest_mask</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">border_width</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"border_px"</span><span class="p">],</span> <span class="n">search_radius_px</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"search_radius_px"</span><span class="p">],</span>
+                                 <span class="n">drop</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"drop"</span><span class="p">],</span> <span class="n">grow_px</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"grow_px"</span><span class="p">],</span> <span class="n">hot</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"hot"</span><span class="p">],</span> <span class="n">beamstop_shape</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="s2">"suggest_shape"</span><span class="p">])</span>
+        <span class="n">old</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">|=</span> <span class="n">old</span> <span class="o">&amp;</span> <span class="n">mk</span><span class="o">.</span><span class="n">USER</span>                                          <span class="c1"># keep what the user drew</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">rep</span><span class="p">[</span><span class="s2">"beamstop"</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"mask suggested from run </span><span class="si">{</span><span class="n">raw</span><span class="o">.</span><span class="n">run</span><span class="si">}</span><span class="s2"> (beam centre </span><span class="si">{</span><span class="n">bc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">bc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">):"</span><span class="p">,</span>
+                 <span class="sa">f</span><span class="s2">"    border: </span><span class="si">{</span><span class="n">rep</span><span class="p">[</span><span class="s1">'border'</span><span class="p">]</span><span class="si">}</span><span class="s2"> px (</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">'border_px'</span><span class="p">]</span><span class="si">}</span><span class="s2"> outer rows and columns)"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_pixels"</span><span class="p">):</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="s2">"bbox"</span><span class="p">]</span>
+            <span class="n">what</span> <span class="o">=</span> <span class="s2">"rectangle around the shadow"</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"shape"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"rectangle"</span> <span class="k">else</span> <span class="s2">"shadow"</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    beamstop (</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">b</span><span class="p">[</span><span class="s1">'n_pixels'</span><span class="p">]</span><span class="si">}</span><span class="s2"> px, x </span><span class="si">{</span><span class="n">x0</span><span class="si">}</span><span class="s2">…</span><span class="si">{</span><span class="n">x1</span><span class="si">}</span><span class="s2">, y </span><span class="si">{</span><span class="n">y0</span><span class="si">}</span><span class="s2">…</span><span class="si">{</span><span class="n">y1</span><span class="si">}</span><span class="s2"> (counts below "</span>
+                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">b</span><span class="p">[</span><span class="s1">'threshold'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">'drop'</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> × rim level </span><span class="si">{</span><span class="n">b</span><span class="p">[</span><span class="s1">'rim_level'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">; median in the "</span>
+                         <span class="sa">f</span><span class="s2">"shadow </span><span class="si">{</span><span class="n">b</span><span class="p">[</span><span class="s1">'shadow_median'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">); it replaces the first guess"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    beamstop: none – </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'reason'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"warning"</span><span class="p">):</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    WARNING: </span><span class="si">{</span><span class="n">b</span><span class="p">[</span><span class="s1">'warning'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">"hot"</span><span class="p">]:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    hot pixels: </span><span class="si">{</span><span class="n">rep</span><span class="p">[</span><span class="s1">'hot'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">rep</span><span class="p">[</span><span class="s1">'leak'</span><span class="p">]</span><span class="si">}</span><span class="s2"> at the beamstop edge: beam leaking past it)"</span>
+                                                          <span class="k">if</span> <span class="n">rep</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"leak"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">" "</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">text</span><span class="p">(),</span> <span class="mi">10000</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ files</span>
+<div class="viewcode-block" id="MaskEditor.on_save">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.on_save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">information</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Save mask"</span><span class="p">,</span> <span class="s2">"No mask yet (select a run)."</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">folder</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"mask.h5"</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">flt</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Save mask"</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">FILE_FILTER</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">p</span> <span class="o">+=</span> <span class="s2">".npy"</span> <span class="k">if</span> <span class="s2">"npy"</span> <span class="ow">in</span> <span class="n">flt</span> <span class="k">else</span> <span class="s2">".txt"</span> <span class="k">if</span> <span class="s2">"txt"</span> <span class="ow">in</span> <span class="n">flt</span> <span class="k">else</span> <span class="s2">".h5"</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">displayed_raw</span><span class="p">()</span>
+        <span class="n">mk</span><span class="o">.</span><span class="n">save_mask</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">beam_center_px</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">xc</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">yc</span><span class="o">.</span><span class="n">value</span><span class="p">()),</span>
+                     <span class="n">run</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">run</span> <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mask saved: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.on_load">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.on_load">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Load mask"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">folder</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">FILE_FILTER</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MaskEditor.load">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.load">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">displayed_raw</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">m</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">load_mask</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span> <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="p">,</span> <span class="s2">"Load mask"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"mask loaded: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="s2">"beam_center_px"</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (saved with beam centre </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'beam_center_px'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'beam_center_px'</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ drawing and interaction</span>
+<div class="viewcode-block" id="MaskEditor.draw_overlay">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.draw_overlay">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw_overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Masked pixels on the cartesian detector image (see :attr:`mode`) and the outline of the</span>
+<span class="sd">        masked area; called by the window after each redraw. ``image``: the counts (needed for the</span>
+<span class="sd">        own grey scale of the masked pixels)."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ensure</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span> <span class="o">=</span> <span class="n">ax</span>
+        <span class="n">masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">full_mask</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"colours"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">overlay_rgba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">full_mask</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">/</span> <span class="mi">100</span><span class="p">),</span>
+                                      <span class="n">origin</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_aspect</span><span class="p">(),</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"scale"</span> <span class="ow">and</span> <span class="n">image</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">masked</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..core.colorscale</span><span class="w"> </span><span class="kn">import</span> <span class="n">decorate_colorbar</span><span class="p">,</span> <span class="n">make_norm</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="o">~</span><span class="n">masked</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_aspect</span><span class="p">(),</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                           <span class="n">cmap</span><span class="o">=</span><span class="n">MASKED_CMAP</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">make_norm</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">valid</span><span class="o">=</span><span class="n">masked</span><span class="p">))</span>
+            <span class="n">cax</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">([</span><span class="mf">1.24</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.045</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+            <span class="n">decorate_colorbar</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">cax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"masked pixels"</span><span class="p">),</span> <span class="n">scale</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"hidden"</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="o">~</span><span class="n">masked</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">masked</span><span class="o">.</span><span class="n">shape</span><span class="p">)),</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span>
+                      <span class="n">aspect</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">get_aspect</span><span class="p">(),</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">_flat</span><span class="p">(</span><span class="s2">"0.85"</span><span class="p">),</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_draw_outline</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attach</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw_region</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""The transmission region: translucent green with a green outline (above the mask)."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineCollection</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_region_artists"</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_region_artists</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_ax"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">r</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">rgba</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="p">,))</span>
+        <span class="n">rgba</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_region_artists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">rgba</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"nearest"</span><span class="p">,</span>
+                                                    <span class="n">aspect</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ax</span><span class="o">.</span><span class="n">get_aspect</span><span class="p">(),</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="n">outline_segments</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">lw</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"black"</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">),</span> <span class="p">(</span><span class="s2">"#00d936"</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">)):</span>
+            <span class="n">lc</span> <span class="o">=</span> <span class="n">LineCollection</span><span class="p">(</span><span class="n">segs</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="n">lw</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_region_artists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">lc</span><span class="p">,</span> <span class="n">autolim</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_draw_outline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Boundary of the masked area: white line on a black one, visible on any colour."""</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">LineCollection</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">full_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="n">m</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_draw_region</span><span class="p">()</span>
+            <span class="k">return</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="n">outline_segments</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">lw</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"black"</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">),</span> <span class="p">(</span><span class="s2">"white"</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">)):</span>
+            <span class="n">lc</span> <span class="o">=</span> <span class="n">LineCollection</span><span class="p">(</span><span class="n">segs</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="n">lw</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">capstyle</span><span class="o">=</span><span class="s2">"projecting"</span><span class="p">,</span>
+                                <span class="n">joinstyle</span><span class="o">=</span><span class="s2">"miter"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">lc</span><span class="p">,</span> <span class="n">autolim</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_draw_region</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MaskEditor.refresh">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.refresh">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Update the overlay (or redraw) after the mask changed."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_overlay</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">overlay_rgba</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">full_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">opacity</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">/</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_draw_outline</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">_draw_detector</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">canvas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span>
+        <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cids</span><span class="p">:</span>
+            <span class="n">canvas</span><span class="o">.</span><span class="n">mpl_disconnect</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span><span class="o">.</span><span class="n">set_active</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span><span class="o">.</span><span class="n">disconnect_events</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_navigating</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span><span class="p">,</span> <span class="s2">"toolbar"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">tb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="s2">"mode"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MaskEditor.attach">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.attach">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Activate the chosen tool on the current detector axes."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">EllipseSelector</span><span class="p">,</span> <span class="n">PolygonSelector</span><span class="p">,</span> <span class="n">RectangleSelector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_detach</span><span class="p">()</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_ax"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"navigate"</span><span class="p">:</span>
+            <span class="c1"># drawing works on the cartesian image only: switch to it instead of ignoring the mouse silently</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_view</span>
+            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cartesian"</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">findData</span><span class="p">(</span><span class="s2">"cartesian"</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">"mask tools draw on the cartesian detector image: view switched "</span>
+                                                 <span class="s2">"to cartesian"</span><span class="p">,</span> <span class="mi">6000</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>               <span class="c1"># redraws the detector and calls attach() again</span>
+                    <span class="k">return</span>
+            <span class="c1"># pan / zoom of the toolbar would swallow the mouse: switch it off</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span><span class="p">,</span> <span class="s2">"toolbar"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="s2">"mode"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span> <span class="k">if</span> <span class="n">tb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="p">(</span><span class="n">tb</span><span class="o">.</span><span class="n">pan</span> <span class="k">if</span> <span class="s2">"pan"</span> <span class="ow">in</span> <span class="n">mode</span> <span class="k">else</span> <span class="n">tb</span><span class="o">.</span><span class="n">zoom</span><span class="p">)()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">"pan / zoom switched off for drawing the mask"</span><span class="p">,</span> <span class="mi">6000</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+                    <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ax</span><span class="o">.</span><span class="n">figure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span><span class="o">.</span><span class="n">figure</span> <span class="ow">or</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"navigate"</span> \
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_view</span><span class="o">.</span><span class="n">currentData</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">"cartesian"</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">add</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"+"</span><span class="p">)</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">edgecolor</span><span class="o">=</span><span class="p">(</span><span class="s2">"#00d936"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span> <span class="k">else</span> <span class="s2">"orange"</span><span class="p">)</span> <span class="k">if</span> <span class="n">add</span> <span class="k">else</span> <span class="s2">"cyan"</span><span class="p">,</span>
+                     <span class="n">facecolor</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"rect"</span><span class="p">,</span> <span class="s2">"ellipse"</span><span class="p">):</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="n">RectangleSelector</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"rect"</span> <span class="k">else</span> <span class="n">EllipseSelector</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">done</span><span class="p">(</span><span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">add</span><span class="o">=</span><span class="n">add</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_navigating</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="s2">"pan / zoom is on: switch it off to draw the mask"</span><span class="p">,</span> <span class="mi">6000</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">(</span><span class="n">e0</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">e1</span><span class="o">.</span><span class="n">xdata</span><span class="p">):</span>
+                    <span class="k">return</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_rectangle</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"rect"</span> <span class="k">else</span> <span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_ellipse</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">e0</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">e1</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">e0</span><span class="o">.</span><span class="n">ydata</span><span class="p">,</span> <span class="n">e1</span><span class="o">.</span><span class="n">ydata</span><span class="p">),</span> <span class="n">add</span><span class="p">)</span>
+            <span class="c1"># no minimum span: a drag along one row (or a click on one pixel) must also count</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">useblit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">button</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">minspanx</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">minspany</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                                 <span class="n">spancoords</span><span class="o">=</span><span class="s2">"data"</span><span class="p">,</span> <span class="n">interactive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">props</span><span class="o">=</span><span class="n">props</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"polygon"</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">done_poly</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">add</span><span class="o">=</span><span class="n">add</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">verts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">verts</span><span class="p">),</span> <span class="n">add</span><span class="p">)</span>
+                <span class="n">QtCore</span><span class="o">.</span><span class="n">QTimer</span><span class="o">.</span><span class="n">singleShot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attach</span><span class="p">)</span>            <span class="c1"># fresh selector for the next polygon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="n">PolygonSelector</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">done_poly</span><span class="p">,</span> <span class="n">useblit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                             <span class="n">props</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"edgecolor"</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.5</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"brush"</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">win</span><span class="o">.</span><span class="n">det_canvas</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cids</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">"button_press_event"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">add</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paint</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>
+                          <span class="n">c</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">"motion_notify_event"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">add</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paint</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">a</span><span class="p">)),</span>
+                          <span class="n">c</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s2">"button_release_event"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paint_end</span><span class="p">)]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_paint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">add</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">inaxes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ax</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">xdata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_navigating</span><span class="p">():</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">start</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">button</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_painting</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pristine</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_push_undo</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_painting</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">pixels_in_disc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">ydata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">brush</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_pixels</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">add</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_paint_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_e</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_painting</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_painting</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">changed</span><span class="o">.</span><span class="n">emit</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_pixels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">add</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+            <span class="n">r</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">=</span> <span class="n">add</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">r</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">add</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">USER</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="MaskEditor.apply">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.mask_editor.MaskEditor.apply">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">add</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Add (user bit) or remove (all bits) the pixels ``sel``; on the transmission-region layer add them</span>
+<span class="sd">        to it or take them out of it. Undoable."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sel</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">editing_region</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">r</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">=</span> <span class="n">add</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_region</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">add</span><span class="p">:</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">|=</span> <span class="n">mk</span><span class="o">.</span><span class="n">USER</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mask</span><span class="p">(</span><span class="n">m</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

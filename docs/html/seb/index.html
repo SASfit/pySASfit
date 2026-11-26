@@ -1,0 +1,548 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySEBpolymers: structures of linked sub-units &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyATsas: the ATSAS programs in pySASfit" href="../atsas/index.html" />
+    <link rel="prev" title="pySCAtter: validation against CrystalScatter" href="../scatter/validation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pySEBpolymers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-pysebpolymers-panel">The pySEBpolymers panel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-designer">The designer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#formalism">Formalism</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sub-units">Sub-units</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#chains-with-a-flory-exponent">Chains with a Flory exponent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-chain-models">Further chain models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#templates-for-single-chains">Templates for single chains</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#polydisperse-and-thick-sub-units-crowded-copies">Polydisperse and thick sub-units, crowded copies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation-against-pyseb-0-4-0">Validation against pyseb 0.4.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pySEBpolymers: structures of linked sub-units</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/seb/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysebpolymers-structures-of-linked-sub-units">
+<h1>pySEBpolymers: structures of linked sub-units<a class="headerlink" href="#pysebpolymers-structures-of-linked-sub-units" title="Link to this heading"></a></h1>
+<img alt="pySEBpolymers" class="only-light" src="../_images/pySEBpolymers-light.svg" style="height: 70px;" />
+<img alt="pySEBpolymers" class="only-dark" src="../_images/pySEBpolymers-dark.svg" style="height: 70px;" />
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit.seb</span></code> computes the form factor of any tree-like structure built from <strong>sub-units</strong>
+(Gaussian chains and loops, rods, spheres, shells, disks, rings, cylinders, spheroids) that are
+joined at <strong>reference points</strong> (chain ends, centres, random points on a surface or contour).
+Micelles with grafted chains, star and dendrimer polymers, bottle brushes, rod–coil block
+copolymers or vesicles with loops are all a few lines of Python.</p>
+<p>It is a pure-Python (numpy/scipy) implementation of the formalism of Svaneborg &amp; Pedersen [1, 2] that the Scattering Equation Builder (SEB) is built on [3]. It is written from the published formalism and the textbook sub-unit
+expressions, not from SEB’s code, and needs no symbolic algebra; names of sub-units, reference
+points and parameters are those of SEB/pyseb, so structures carry over unchanged.</p>
+<section id="the-pysebpolymers-panel">
+<h2>The pySEBpolymers panel<a class="headerlink" href="#the-pysebpolymers-panel" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pysasfit-seb</span></code>, or the pySEBpolymers tab of <code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code>. Panels (View menu; each can be moved, stacked or
+detached):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>panel</p></th>
+<th class="head"><p>content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Designer</p></td>
+<td><p>the structure drawn as a graph (see below); above it the template and its options</p></td>
+</tr>
+<tr class="row-odd"><td><p>Code</p></td>
+<td><p>the Python code of the structure, written by the designer; typed code is built with <strong>Build</strong> (Ctrl+B) and drawn in the designer</p></td>
+</tr>
+<tr class="row-even"><td><p>Parameters</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">beta_&lt;tag&gt;</span></code> and the sizes of the structure, plus <code class="docutils literal notranslate"><span class="pre">scale</span></code> and <code class="docutils literal notranslate"><span class="pre">background</span></code>: value, fit, lower and upper bound, error after a fit; model (normalised F or unnormalised S), q grid; <strong>Fit</strong>, <strong>Calculate</strong>, <strong>Copy Python</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>I(q)</p></td>
+<td><p>model, data with error bars and normalised residuals (I − model)/σ, χ²_red</p></td>
+</tr>
+<tr class="row-even"><td><p>3D sketch</p></td>
+<td><p>one random realisation of the structure (random-walk chains, rods, bodies in random orientations, random surface points), one colour per tag; <strong>New realisation</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>Components</p></td>
+<td><p>sub-units, kinds, tags and the junctions</p></td>
+</tr>
+<tr class="row-even"><td><p>Log</p></td>
+<td><p>builds and fits</p></td>
+</tr>
+</tbody>
+</table>
+<section id="the-designer">
+<h3>The designer<a class="headerlink" href="#the-designer" title="Link to this heading"></a></h3>
+<p>The designer draws a structure instead of writing code. Every change that leaves a complete design rebuilds the
+structure at once (the Code panel shows the code it writes; the parameter table follows).</p>
+<ul class="simple">
+<li><p><strong>Palette</strong> (left): the 11 sub-units, the patterns and the components of the design. Drag an entry onto the
+canvas, or double-click it.</p></li>
+<li><p><strong>Canvas</strong>: a node shows its reference points as ports along its edge — round for a point (<code class="docutils literal notranslate"><span class="pre">end1</span></code>, <code class="docutils literal notranslate"><span class="pre">center</span></code>,
+<code class="docutils literal notranslate"><span class="pre">top</span></code> …), a diamond for a distributed point (<code class="docutils literal notranslate"><span class="pre">surface</span></code>, <code class="docutils literal notranslate"><span class="pre">contour</span></code>, <code class="docutils literal notranslate"><span class="pre">hull</span></code>, <code class="docutils literal notranslate"><span class="pre">rim</span></code> …). <strong>Drag from a port to a
+port</strong> to join the two points. A link that would close a loop is refused (the formalism needs a tree). Wheel:
+zoom; middle button: pan; left drag on the empty canvas: select; F: fit (Shift+F: all, however small).</p></li>
+<li><p><strong>Inspector</strong> (right): name, type and tag of a sub-unit (sub-units with the same tag share their parameters);
+pattern, element, points, counts of a pattern; for a link at a distributed point its <strong>label</strong> — the same label
+on the same node is the same point, different labels are independent random points (e.g. chains grafted at
+independent points of a surface, or several chains at one point).</p></li>
+<li><p><strong>Patterns</strong> stand for many sub-units:</p>
+<ul>
+<li><p><em>Array</em>: n copies of an element, each attached by its in-point to the point the array’s <code class="docutils literal notranslate"><span class="pre">anchor</span></code> is linked to —
+at independent random points of a distributed host point, or all at the same point;</p></li>
+<li><p><em>Chain</em>: n copies joined out-point → in-point, ports <code class="docutils literal notranslate"><span class="pre">start</span></code> and <code class="docutils literal notranslate"><span class="pre">end</span></code>;</p></li>
+<li><p><em>Generations</em>: a dendrimer — f elements at the <code class="docutils literal notranslate"><span class="pre">root</span></code>, f − 1 new elements at the out-point of every element of
+the previous generation, g generations, optionally with own parameters per generation (tags <code class="docutils literal notranslate"><span class="pre">&lt;tag&gt;0</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;tag&gt;1</span></code> …).</p></li>
+</ul>
+</li>
+<li><p><strong>Components</strong> (Editing: …, <em>+ Component</em>, <em>Component from selection</em>): designs of their own with an in-port and
+an out-port (right-click a port of a sub-unit), used as the element of a pattern — a bottle-brush segment
+(backbone block with a side chain), an A–B diblock, a rod with loops on its contour … Components may contain
+patterns and other components.</p></li>
+<li><p>Del deletes, Ctrl+C / Ctrl+V / Ctrl+D copy, paste, duplicate, Ctrl+Z / Ctrl+Y undo and redo, <em>Layout</em> arranges the
+nodes as a tree. File → <em>Open design / Save design</em> reads and writes <code class="docutils literal notranslate"><span class="pre">*.sebdesign</span></code> (JSON).</p></li>
+</ul>
+<p>Code typed in the Code panel is drawn one node per sub-unit (up to 400); its loops are not turned back into patterns.</p>
+<p>Templates start a design: micelle (sphere, shell, spheroid, cylinder or disk core with an Array of Gaussian chains,
+rods or loops, at independent random surface points or all at one point), star polymer (Array on a Point), linear or
+alternating multiblock chain (Chain of a block or of an A–B component), dendrimer (Generations, one set of
+parameters per generation), bottle brush (Chain of a segment component), rod–coil block copolymer, vesicle with
+loops, and <em>Custom</em>. The model is</p>
+<div class="math notranslate nohighlight">
+\[ I(q) = \mathrm{scale}\cdot F(q) + \mathrm{background} \quad\text{or}\quad
+   I(q) = \mathrm{scale}\cdot S(q) + \mathrm{background}, \]</div>
+<p>with lengths in the inverse unit of q (Å for q in 1/Å). Data files have the columns q, I, σ (File → <em>Load data</em>,
+Ctrl+L). The fit is a bounded least-squares fit (Trust Region Reflective, weights 1/σ²) of the ticked parameters;
+errors from the Jacobian, scaled by χ²_red. File → <em>Open / Save structure code</em> reads and writes the code,
+<em>Export model curve</em> the curve, <em>Copy Python code</em> (Ctrl+Shift+C) a script that repeats the calculation.
+Preferences (Settings → Preferences → pySEBpolymers): automatic recalculation, points of the orientational
+average, largest number of model evaluations of a fit. The last session (template, design, code, parameters, data,
+panel layout) is restored at the next start.</p>
+<p>Designs from a script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.seb.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Design</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">Design</span><span class="p">(</span><span class="s2">"micelle"</span><span class="p">)</span>
+<span class="n">core</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_unit</span><span class="p">(</span><span class="s2">"SolidSphere"</span><span class="p">,</span> <span class="s2">"core"</span><span class="p">)</span>
+<span class="n">arr</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">add_pattern</span><span class="p">(</span><span class="s2">"Array"</span><span class="p">,</span> <span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"chains"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">in_ref</span><span class="o">=</span><span class="s2">"end1"</span><span class="p">)</span>
+<span class="n">d</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"surface"</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">"anchor"</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">to_structure</span><span class="p">()</span>            <span class="c1"># or d.to_code() for the Python code</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.seb</span><span class="w"> </span><span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">builders</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s2">"micelle"</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"SolidSphere"</span><span class="p">,</span> <span class="s2">"core"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>                       <span class="c1"># 20 chains at independent random surface points</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">"GaussianPolymer"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"c</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">.end1"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"core.surface#a</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">"chain"</span><span class="p">)</span>
+
+<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"beta_core"</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">"R_core"</span><span class="p">:</span> <span class="mf">25.0</span><span class="p">,</span> <span class="s2">"beta_chain"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span> <span class="s2">"Rg_chain"</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">}</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">form_factor</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>                   <span class="c1"># normalised, F(0) = 1</span>
+<span class="n">S</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">form_factor</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">normalized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># S(0) = (sum of beta)^2</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">s</span><span class="o">.</span><span class="n">radius_of_gyration2</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="n">dendrimer</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">functionality</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="c1"># tags g0 ... g4: one Rg/beta per generation</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">add(kind,</span> <span class="pre">name,</span> <span class="pre">tag=None)</span></code> adds a sub-unit; <code class="docutils literal notranslate"><span class="pre">link(kind,</span> <span class="pre">&quot;new.ref&quot;,</span> <span class="pre">&quot;old.ref#label&quot;,</span> <span class="pre">tag=...)</span></code>
+adds one and joins it; <code class="docutils literal notranslate"><span class="pre">link(&quot;a.ref&quot;,</span> <span class="pre">&quot;b.ref&quot;)</span></code> joins two existing points; <code class="docutils literal notranslate"><span class="pre">include(other,</span> <span class="pre">prefix)</span></code>
+copies a whole structure.</p></li>
+<li><p>A distributed reference point (<code class="docutils literal notranslate"><span class="pre">surface</span></code>, <code class="docutils literal notranslate"><span class="pre">contour</span></code>, <code class="docutils literal notranslate"><span class="pre">hull</span></code>, <code class="docutils literal notranslate"><span class="pre">rim</span></code> …) takes a label:
+the same label is the same point, different labels are independent random points.</p></li>
+<li><p>Parameters are <code class="docutils literal notranslate"><span class="pre">beta_&lt;tag&gt;</span></code> (excess scattering length; default 1) and the size parameters
+<code class="docutils literal notranslate"><span class="pre">Rg_&lt;tag&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">R_&lt;tag&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">L_&lt;tag&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">Ri_&lt;tag&gt;</span></code>/<code class="docutils literal notranslate"><span class="pre">Ro_&lt;tag&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">a_&lt;tag&gt;</span></code>/<code class="docutils literal notranslate"><span class="pre">c_&lt;tag&gt;</span></code>; sub-units with the
+same tag share them.</p></li>
+<li><p>Builders: <code class="docutils literal notranslate"><span class="pre">linear_chain</span></code>, <code class="docutils literal notranslate"><span class="pre">star</span></code>, <code class="docutils literal notranslate"><span class="pre">micelle</span></code>, <code class="docutils literal notranslate"><span class="pre">dendrimer</span></code>, <code class="docutils literal notranslate"><span class="pre">bottlebrush</span></code>.</p></li>
+</ul>
+</section>
+<section id="formalism">
+<h2>Formalism<a class="headerlink" href="#formalism" title="Link to this heading"></a></h2>
+<p>For sub-units <span class="math notranslate nohighlight">\(I\)</span> with excess scattering lengths <span class="math notranslate nohighlight">\(\beta_I\)</span>, form factors <span class="math notranslate nohighlight">\(F_I\)</span>, form-factor
+amplitudes <span class="math notranslate nohighlight">\(A_{I,\alpha}\)</span> relative to reference point <span class="math notranslate nohighlight">\(\alpha\)</span> and phase factors <span class="math notranslate nohighlight">\(\Psi_{K,\alpha\omega}\)</span>
+between two reference points of <span class="math notranslate nohighlight">\(K\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[
+S(q) = \sum_I \beta_I^2 F_I + \sum_{I\neq J} \beta_I\beta_J\, A_{I,\alpha}
+\Big[\prod_{K\in\mathrm{path}(I,J)} \Psi_{K,\alpha_K\omega_K}\Big] A_{J,\omega},
+\qquad F = S/(\textstyle\sum_I\beta_I)^2 .
+\]</div>
+<p>The double sum is evaluated by a recursion over the tree of sub-units and junctions, in a time
+linear in the number of sub-units (a 1533-unit dendrimer: 0.3 s for 2000 q values).
+<code class="docutils literal notranslate"><span class="pre">form_factor_pairs</span></code> is the direct pair sum, kept for tests. Loops are rejected.</p>
+</section>
+<section id="sub-units">
+<h2>Sub-units<a class="headerlink" href="#sub-units" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>sub-unit</p></th>
+<th class="head"><p>parameters</p></th>
+<th class="head"><p>specific points</p></th>
+<th class="head"><p>distributed points</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Point</p></td>
+<td><p>–</p></td>
+<td><p>point</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>GaussianPolymer</p></td>
+<td><p>Rg</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-even"><td><p>GaussianLoop</p></td>
+<td><p>Rg</p></td>
+<td><p>–</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-odd"><td><p>FloryPolymer</p></td>
+<td><p>Rg, nu</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-even"><td><p>FloryLoop</p></td>
+<td><p>Rg, nu</p></td>
+<td><p>–</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-odd"><td><p>ExcludedVolumePolymer</p></td>
+<td><p>Rg, nu</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-even"><td><p>WormLikeChain</p></td>
+<td><p>L, b</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-odd"><td><p>WormLikeChainEV</p></td>
+<td><p>L, b</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-even"><td><p>ThinRod</p></td>
+<td><p>L</p></td>
+<td><p>end1, middle, end2</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-odd"><td><p>SolidSphere</p></td>
+<td><p>R</p></td>
+<td><p>center</p></td>
+<td><p>surface</p></td>
+</tr>
+<tr class="row-even"><td><p>ThinSphericalShell</p></td>
+<td><p>R</p></td>
+<td><p>center</p></td>
+<td><p>surface</p></td>
+</tr>
+<tr class="row-odd"><td><p>SolidSphericalShell</p></td>
+<td><p>Ri, Ro</p></td>
+<td><p>center</p></td>
+<td><p>surface, surfacei, surfaceo</p></td>
+</tr>
+<tr class="row-even"><td><p>ThinCircle</p></td>
+<td><p>R</p></td>
+<td><p>center</p></td>
+<td><p>contour</p></td>
+</tr>
+<tr class="row-odd"><td><p>ThinDisk</p></td>
+<td><p>R</p></td>
+<td><p>center</p></td>
+<td><p>surface, rim</p></td>
+</tr>
+<tr class="row-even"><td><p>SolidCylinder</p></td>
+<td><p>R, L</p></td>
+<td><p>center, top, bottom</p></td>
+<td><p>hull, ends, surface</p></td>
+</tr>
+<tr class="row-odd"><td><p>Spheroid</p></td>
+<td><p>a, c</p></td>
+<td><p>center, north, south, pole (= north)</p></td>
+<td><p>surface</p></td>
+</tr>
+</tbody>
+</table>
+<p>Closed forms are used where they exist; the cylinder, the spheroid and the disk rim are averaged
+over orientations by Gauss–Legendre quadrature, with <span class="math notranslate nohighlight">\(F=\langle\Phi^2\rangle\)</span>,
+<span class="math notranslate nohighlight">\(A_r=\langle\Phi g_r^*\rangle\)</span>, <span class="math notranslate nohighlight">\(\Psi_{rs}=\langle g_r g_s^*\rangle\)</span>. <code class="docutils literal notranslate"><span class="pre">Point</span></code> is a massless junction
+(F = A = 0) as in SEB. The spheroid surface point is uniform per area by default;
+<code class="docutils literal notranslate"><span class="pre">Spheroid(surface_measure=&quot;parametric&quot;)</span></code> reproduces pyseb (uniform in cos θ).</p>
+</section>
+<section id="chains-with-a-flory-exponent">
+<h2>Chains with a Flory exponent<a class="headerlink" href="#chains-with-a-flory-exponent" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FloryPolymer</span></code> and <code class="docutils literal notranslate"><span class="pre">FloryLoop</span></code> are Hammouda’s generalised Gaussian chain (B. Hammouda, Macromol. Theory Simul. 2
+(1993) 1; Benoit 1957): Gaussian statistics with ⟨r²ᵢⱼ⟩ = b²|i − j|^{2ν}, so ν = 1/2 is the ideal chain
+(<code class="docutils literal notranslate"><span class="pre">GaussianPolymer</span></code>, <code class="docutils literal notranslate"><span class="pre">GaussianLoop</span></code> exactly), ν ≈ 0.588 a chain in good solvent and ν = 1/3 a collapsed one. With
+U = q²⟨R²⟩/6 = q²Rg²(2ν + 1)(2ν + 2)/6 and a = 1/(2ν) (γ the lower incomplete gamma function):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>quantity</p></th>
+<th class="head"><p>expression</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>form factor</p></td>
+<td><p>F = [U^{−a} γ(a, U) − U^{−2a} γ(2a, U)] / ν</p></td>
+</tr>
+<tr class="row-odd"><td><p>amplitude about an end</p></td>
+<td><p>A_end = ∫₀¹ e^{−U t^{2ν}} dt = a U^{−a} γ(a, U)</p></td>
+</tr>
+<tr class="row-even"><td><p>amplitude about the middle</p></td>
+<td><p>A_end with U → U 2^{−2ν}</p></td>
+</tr>
+<tr class="row-odd"><td><p>phase end – end, end – middle</p></td>
+<td><p>e^{−U}, e^{−U 2^{−2ν}}</p></td>
+</tr>
+<tr class="row-even"><td><p>phase contour – end / middle / contour</p></td>
+<td><p>A_end, A_middle, F</p></td>
+</tr>
+<tr class="row-odd"><td><p>ring</p></td>
+<td><p>F = ∫₀¹ e^{−W [s(1−s)]^{2ν}} ds, W = q²Rg² / (3 B(2ν+1, 2ν+1)) (Gauss–Legendre)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Two approximations: the excluded volume acts only <strong>within</strong> a sub-unit (chains joined in a structure do not see
+each other, nor the core — four joined FloryPolymer blocks are not one long swollen chain), and distances keep a
+Gaussian distribution (the end-to-end phase factor of a real self-avoiding walk differs). <code class="docutils literal notranslate"><span class="pre">tools/seb/check_flory_mc.py</span></code>
+compares with Monte Carlo: chains with exactly the model’s statistics (fractional Brownian motion, 128 bonds)
+agree within the discreteness of the walk (F within 0.003, end amplitude 0.005 for qRg &lt; 6); self-avoiding walks on
+the cubic lattice (pivot algorithm, 128 bonds) differ from the ν = 0.588 model by up to 0.05 in F around qRg ≈ 2–6
+(lattice chains of this length are still in the crossover) and up to 0.03 in the end-to-end phase factor.
+ν is fitted between 0.3 and 1 by default.</p>
+</section>
+<section id="further-chain-models">
+<h2>Further chain models<a class="headerlink" href="#further-chain-models" title="Link to this heading"></a></h2>
+<p>All chains below are described by their two-point function G(q, s) (the average of sin(qr)/(qr) over two
+contour points a distance s apart, contour length L): F = 2∫₀¹(1 − t) G(tL) dt, A_end = ∫₀¹ G(tL) dt,
+A_middle = 2∫₀^{1/2} G(tL) dt, Ψ_end–end = G(L), Ψ_end–middle = G(L/2); contour points use A and F as for the
+Gaussian chain. The integrals use a grid adapted to the oscillations of G (fine panels up to 13 b, geometric
+beyond).</p>
+<p><strong>WormLikeChain</strong> (L, b; b = Kuhn length = 2 × persistence length) — Kholodenko’s worm (A. L. Kholodenko,
+Macromolecules 26 (1993) 4179): G = sinh(E z)/(E sinh z) for qb &lt; 3 and sin(F z)/(F sinh z) above, z = 3s/b,
+E = √(1 − (qb/3)²), F = √((qb/3)² − 1). It goes from the rod (L ≪ b) to the Gaussian chain (L ≫ b, Rg² = Lb/6).
+Note: its ⟨R²(s)⟩ = (b²/3)(z coth z − 1) is Kholodenko’s, not the exact worm-like chain value
+b s − (b²/2)(1 − e^{−2s/b}): it is up to 20 % larger around s ≈ 0.7 b and within 1 % beyond s ≈ 20 b, so Rg of short
+worms comes out up to ~9 % larger (L ≈ b; 2 % at L = 10 b) than for the exact worm-like chain.</p>
+<p><strong>WormLikeChainEV</strong> (L, b) — worm-like chain with excluded volume: the form factor of Pedersen &amp; Schurtenberger
+(Macromolecules 29 (1996) 7602, method 3 with excluded volume) with the corrections of Chen, Butler &amp; Magid
+(J. Chem. Phys. 124 (2006) 144903), a NumPy port of <code class="docutils literal notranslate"><span class="pre">wrc_cyl.c</span></code> of sasmodels (public domain; <code class="docutils literal notranslate"><span class="pre">pysasfit.seb.ps_worm</span></code>,
+equal to sasmodels’ flexible_cylinder with radius → 0 to 1e-9). Only F(q; L) is known, not G. Since
+F = 2∫(1 − t)G(tL)dt, differentiating in L gives the other quantities exactly:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>quantity</p></th>
+<th class="head"><p>from F(L)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>A_end</p></td>
+<td><p>F + (L/2) F′</p></td>
+</tr>
+<tr class="row-odd"><td><p>A_middle</p></td>
+<td><p>F(L/2) + (L/4) F′(L/2)</p></td>
+</tr>
+<tr class="row-even"><td><p>Ψ_end–end</p></td>
+<td><p>F + 2L F′ + (L²/2) F″</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ψ_end–middle</p></td>
+<td><p>the same at L/2</p></td>
+</tr>
+</tbody>
+</table>
+<p>(central differences, step 0.2 % of L; the branches of the piecewise PS formula are chosen at the reference
+length, so L ± h do not jump between branches). Checked on Kholodenko’s worm, where the relations reproduce the
+direct G to 1e-5. The PS formula is not valid for L &lt; b (F &gt; 1); between L = b and 2.5 b it is blended smoothly
+(C² in L) into Kholodenko’s worm, which is used alone below b (excluded volume is negligible for such stiff
+pieces). The PS formula itself has small kinks where its branches meet (relative steps of up to ~4e-4 in F),
+visible in very smooth data only.</p>
+<p><strong>ExcludedVolumePolymer</strong> (Rg, nu) — self-avoiding chain with the des Cloizeaux distance distribution
+(des Cloizeaux 1980; Förster &amp; Burger, Macromolecules 31 (1998) 879): P(r) ∝ r^{2+θ} exp(−(Dr)^δ),
+δ = 1/(1 − ν), with D fixed by ⟨r²⟩ ∝ s^{2ν}. Unlike FloryPolymer, the distance distribution is not Gaussian
+(correlation hole at short r, compressed tail). The exponent θ depends on where the two points are:
+θ₀ = 0.275 (end – end), θ₁ = 0.46 (end – interior), θ₂ = 0.71 (interior – interior), scaled by
+(ν − ½)/(0.588 − ½), so ν = ½ is the Gaussian chain exactly; F and A_middle use θ₂, A_end and Ψ_end–middle θ₁,
+Ψ_end–end θ₀. Valid for 0.34 ≤ ν ≤ 0.95. Against self-avoiding walks (pivot algorithm, 128 bonds,
+<code class="docutils literal notranslate"><span class="pre">tools/seb/check_flory_mc.py</span></code>): F within 0.011, A within 0.017, Ψ within 0.038 — four times closer in F than
+FloryPolymer with the same ν (0.046).</p>
+<section id="templates-for-single-chains">
+<h3>Templates for single chains<a class="headerlink" href="#templates-for-single-chains" title="Link to this heading"></a></h3>
+<p><em>Freely jointed chain</em>: n ThinRods of length b joined end to end (a structure, not a sub-unit — the
+segments are rigid, the joints free). <em>Worm-like chain</em>: one WormLikeChain or WormLikeChainEV. The chain
+choices in the micelle, star, linear, bottle-brush and dendrimer templates include all chain types.</p>
+</section>
+</section>
+<section id="polydisperse-and-thick-sub-units-crowded-copies">
+<h2>Polydisperse and thick sub-units, crowded copies<a class="headerlink" href="#polydisperse-and-thick-sub-units-crowded-copies" title="Link to this heading"></a></h2>
+<p>Three options per element in the designer (inspector), or as arguments of <code class="docutils literal notranslate"><span class="pre">Structure.add</span></code> / <code class="docutils literal notranslate"><span class="pre">link</span></code>:</p>
+<p><strong>Polydisperse</strong> (<code class="docutils literal notranslate"><span class="pre">poly=True</span></code>, parameter <code class="docutils literal notranslate"><span class="pre">sigma_&lt;tag&gt;</span></code>): a Schulz–Zimm distribution of the mass m of each
+such sub-unit (mean 1, relative width σ). Sizes scale with m (<code class="docutils literal notranslate"><span class="pre">MASS_SCALING</span></code>: chain length ∝ m,
+Rg ∝ m^ν, sphere R ∝ m^{1/3}, …), the excess scattering length with m. Each sub-unit’s F, A and Ψ are averaged
+independently, ⟨m²F⟩, ⟨mA⟩, ⟨Ψ⟩ — exact for independent polydispersity of the sub-units, because every term of
+the SEB sum contains each sub-unit at most once. The structure is normalised by (Σβ)² + Σβ²σ², so F(0) = 1.
+Quadrature: generalised Gauss–Laguerre (σ ≥ 0.1) or Gauss–Hermite (σ &lt; 0.1), 32 nodes.</p>
+<p><strong>Thick</strong> (<code class="docutils literal notranslate"><span class="pre">thick=True</span></code>, parameter <code class="docutils literal notranslate"><span class="pre">Rc_&lt;tag&gt;</span></code>): a cylindrical cross-section of radius Rc for chains, rods and
+rings, in the usual decoupling approximation: F × [2J₁(qRc)/(qRc)]², A × 2J₁(qRc)/(qRc), Ψ unchanged.</p>
+<p><strong>Copies see each other</strong> (Array pattern, parameter <code class="docutils literal notranslate"><span class="pre">vex_&lt;array&gt;</span></code>, 0 ≤ φ &lt; 1): the copies of an Array
+(e.g. the chains of a micelle) exclude each other’s volume. The interference between two different copies I, J
+becomes</p>
+<p>β_I β_J [(1 + k) A_I Ψ…Ψ A_J − k F_c(q)],  k = φ/(n − 1),</p>
+<p>with F_c the normalised scattering of one copy, n the number of copies. The added −k F_c is a correlation hole:
+at q = 0 the term is unchanged (k cancels), so F(0) = 1 and the forward scattering stays that of the mass; at
+higher q it lowers the cross terms by up to φ of the self-scattering, as excluded volume does. With φ &lt; 1 the
+intensity stays positive. This is a form in the spirit of Pedersen &amp; Gerstenberg (Macromolecules 29 (1996)
+1363) for block copolymer micelles, applied to any Array; it is not the RPA form used there, and the tree
+algorithm and the pair sum agree to rounding (tests). Arrays nested in arrays work (innermost groups first).
+In code: <code class="docutils literal notranslate"><span class="pre">s.interact('vex_name')</span></code> and <code class="docutils literal notranslate"><span class="pre">copy=[(group,</span> <span class="pre">index,</span> <span class="pre">'vex_name'),</span> <span class="pre">...]</span></code> on each sub-unit of a copy; the
+designer writes this.</p>
+</section>
+<section id="validation-against-pyseb-0-4-0">
+<h2>Validation against pyseb 0.4.0<a class="headerlink" href="#validation-against-pyseb-0-4-0" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Every F, A and Ψ that pyseb evaluates agrees to ≤ 1e-8 (most to 1e-12–1e-15); twelve composite
+structures (micelles, shells, vesicle with loops, rod stars, cylinder and disk with chains,
+spheroid, dendrimer, bottle brush) to ≤ 8e-8, at 10–100× the speed.</p></li>
+<li><p>The remaining ~1e-8 differences are pyseb’s cancellation in the Debye function near q = 1e-3
+(checked against mpmath).</p></li>
+<li><p>pyseb 0.4.0 returns the surface <em>amplitude</em> for the Spheroid phase factor Ψ(center, surface);
+a Monte Carlo average of sin(qr)/(qr) confirms the value here.</p></li>
+</ul>
+<p>API reference: <a class="reference internal" href="api.html"><span class="doc">pySEBpolymers: API reference</span></a>.</p>
+<p>Tests: <code class="docutils literal notranslate"><span class="pre">tests/seb</span></code> (<code class="docutils literal notranslate"><span class="pre">test_seb_pyseb_reference.py</span></code> runs only where pyseb is installed, i.e.
+Python ≤ 3.12). Full comparison tables: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">tools/seb/compare_pyseb_subunits.py</span></code> and
+<code class="docutils literal notranslate"><span class="pre">compare_pyseb_structures.py</span></code> from the repository root.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>C. Svaneborg, J. S. Pedersen, J. Chem. Phys. 136, 104105 (2012).</p></li>
+<li><p>C. Svaneborg, J. S. Pedersen, J. Chem. Phys. 136, 154907 (2012).</p></li>
+<li><p>T. Jarrett, C. Svaneborg, J. Appl. Cryst. 57, 587 (2024), doi:10.1107/S1600576724001729;
+code github.com/Tobionecenobi/SEB (GPL-3.0), Python bindings pyseb (BSD-3-Clause).</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../scatter/validation.html" class="btn btn-neutral float-left" title="pySCAtter: validation against CrystalScatter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../atsas/index.html" class="btn btn-neutral float-right" title="pyATsas: the ATSAS programs in pySASfit" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

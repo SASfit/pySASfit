@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Merge geometries &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="2D data" href="image2d.html" />
+    <link rel="prev" title="Using pyTOOLbox" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyTOOLbox</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Using pyTOOLbox</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Merge geometries</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reduced-curves">1. Reduced curves</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#group">2. Group</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merge">3. Merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#underlying-data-of-a-group">Underlying data of a group</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plot-and-save">4. Plot and save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scripting">Scripting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="image2d.html">2D data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data1d.html">1D data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">pyTOOLbox: small helpful tools</a></li>
+      <li class="breadcrumb-item active">Merge geometries</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/toolbox/merge.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="merge-geometries">
+<h1>Merge geometries<a class="headerlink" href="#merge-geometries" title="Link to this heading"></a></h1>
+<p>The page has three tabs on the left, one per step, so that each table gets the full height: <strong>1 · Curves</strong>
+(the curves read, with a filter field: a regular expression on file, sample or geometry), <strong>2 · Group and
+merge</strong> (grouping and merge options, button <em>Group and merge</em>) and <strong>3 · Merged groups</strong> (the result,
+selected for the plot, and saving; opened after merging). The line below the tabs counts curves,
+geometries and merged groups. The step numbers below refer to these tabs.</p>
+<p>The tab <strong>Merge geometries</strong> of pyTOOLbox (module <a class="reference internal" href="api.html#module-pysasfit.toolbox.merge" title="pysasfit.toolbox.merge"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.toolbox.merge</span></code></a>) merges the reduced curves of
+the different detector distances (and wavelengths) of a sample into one curve. Curves are grouped by the sample
+name, through a regular expression, and by any other header item with a tolerance, so that a sample measured at
+several temperatures, pressures, magnetic fields or shear rates gives one merged curve per condition. These
+can then be plotted as a series.</p>
+<section id="reduced-curves">
+<h2>1. Reduced curves<a class="headerlink" href="#reduced-curves" title="Link to this heading"></a></h2>
+<p><strong>Without files:</strong> <em>From pySASred</em> takes the reduced results of every open pySASred window (single runs and
+rows of the reduction table) directly from memory; in pySASred <em>Reduction → Send results to pyTOOLbox merge
+(no files)</em> does the same from the other side (the pyTOOLbox tab of the launcher, or a new pyTOOLbox
+window). The header items are the same as in the files (<a class="reference internal" href="api.html#pysasfit.toolbox.merge.curve_from_reduced" title="pysasfit.toolbox.merge.curve_from_reduced"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.toolbox.merge.curve_from_reduced()</span></code></a>).
+Taking them again after a new reduction replaces the curves of the same run or table row.</p>
+<p><em>Add files…</em> / <em>Add folder…</em> read:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>format</p></th>
+<th class="head"><p>recognised by</p></th>
+<th class="head"><p>q</p></th>
+<th class="head"><p>header items</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>pySASred NXcanSAS (<code class="docutils literal notranslate"><span class="pre">.h5</span></code>)</p></td>
+<td><p>HDF5, SASentry</p></td>
+<td><p>from the <code class="docutils literal notranslate"><span class="pre">units</span></code> attribute (1/nm or 1/Å)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SASprocess/metadata</span></code>: named items (<code class="docutils literal notranslate"><span class="pre">sample</span></code>, <code class="docutils literal notranslate"><span class="pre">SD_m</span></code>, <code class="docutils literal notranslate"><span class="pre">wavelength_A</span></code>, <code class="docutils literal notranslate"><span class="pre">coll_m</span></code>, <code class="docutils literal notranslate"><span class="pre">thickness_cm</span></code>, …) and every scalar entry of the raw file as <code class="docutils literal notranslate"><span class="pre">hdf:&lt;path&gt;</span></code> (a 1-D log gives its mean)</p></td>
+</tr>
+<tr class="row-odd"><td><p>pySASred ASCII (<code class="docutils literal notranslate"><span class="pre">.dat</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">pySASred</span></code></p></td>
+<td><p>header <code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">[1/nm]</span></code> or <code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">[1/A]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">metadata_json</span> <span class="pre">=</span> <span class="pre">{…}</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>BerSANS 1D (<code class="docutils literal notranslate"><span class="pre">D0082130.080</span></code>, …)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">%File</span></code> … <code class="docutils literal notranslate"><span class="pre">Type=SANSDIso</span></code></p></td>
+<td><p>1/nm</p></td>
+<td><p>every <code class="docutils literal notranslate"><span class="pre">key=value</span></code> of <code class="docutils literal notranslate"><span class="pre">%Sample</span></code>, <code class="docutils literal notranslate"><span class="pre">%Setup</span></code>, <code class="docutils literal notranslate"><span class="pre">%History</span></code> as <code class="docutils literal notranslate"><span class="pre">Sample/Temperature</span></code>, <code class="docutils literal notranslate"><span class="pre">Setup/SD</span></code>, …; <code class="docutils literal notranslate"><span class="pre">SD</span></code>, <code class="docutils literal notranslate"><span class="pre">Lambda</span></code>, <code class="docutils literal notranslate"><span class="pre">Collimation</span></code> give <code class="docutils literal notranslate"><span class="pre">SD_m</span></code>, <code class="docutils literal notranslate"><span class="pre">wavelength_A</span></code>, <code class="docutils literal notranslate"><span class="pre">coll_m</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>merged files written here</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">pyTOOLbox</span> <span class="pre">merge</span></code> / SASprocess <code class="docutils literal notranslate"><span class="pre">group_values</span></code></p></td>
+<td><p></p></td>
+<td><p>the group values</p></td>
+</tr>
+<tr class="row-even"><td><p>plain columns q, I[, dI[, dq]]</p></td>
+<td><p></p></td>
+<td><p>1/nm unless the header mentions 1/Å</p></td>
+<td><p>file name as sample</p></td>
+</tr>
+</tbody>
+</table>
+<p>pySASred writes the header items into its NXcanSAS and ASCII files from now on (<code class="docutils literal notranslate"><span class="pre">pysasfit.sasred.io.metadata</span></code>).
+Files reduced earlier have the sample name, run and parameters only. The geometry of a curve, e.g.
+<code class="docutils literal notranslate"><span class="pre">SD</span> <span class="pre">8.00</span> <span class="pre">m,</span> <span class="pre">λ</span> <span class="pre">0.600</span> <span class="pre">nm,</span> <span class="pre">coll</span> <span class="pre">8.0</span> <span class="pre">m</span></code>, comes from the recorded distance, wavelength and collimation.</p>
+</section>
+<section id="group">
+<h2>2. Group<a class="headerlink" href="#group" title="Link to this heading"></a></h2>
+<ul>
+<li><p><strong>sample name (regex)</strong>: a regular expression searched in the sample name. The capture groups <code class="docutils literal notranslate"><span class="pre">(…)</span></code> form the
+key (joined by <code class="docutils literal notranslate"><span class="pre">_</span></code>), without groups the whole match. Names that do not match are left out, and the log
+lists them. Examples for <code class="docutils literal notranslate"><span class="pre">EXP-005370-A_1</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>expression</p></th>
+<th class="head"><p>key</p></th>
+<th class="head"><p>effect</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>(empty)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">EXP-005370-A_1</span></code></p></td>
+<td><p>one group per sample name</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EXP-005370-(\w)_(\d)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">A_1</span></code></p></td>
+<td><p>same, shorter key</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EXP-005370-(\w)_</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">A</span></code></p></td>
+<td><p>all positions/repeats of sample A together (split them by further items)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EXP-005370-[AB]_1</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">EXP-005370-A_1</span></code></p></td>
+<td><p>only samples A and B, position 1</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p><strong>further header items</strong> with <em>± tolerance</em>: text must be equal, numbers lie within the tolerance (empty:
+equal values; a number: largest spread within a group; <code class="docutils literal notranslate"><span class="pre">1%</span></code>: relative), as in pySASred’s grouping. Choose,
+for example, <code class="docutils literal notranslate"><span class="pre">hdf:sample/temperature</span></code> ± 0.5 K, <code class="docutils literal notranslate"><span class="pre">Sample/Temperature</span></code> for BerSANS files, a magnetic field ± 0.01 T,
+a pressure, a shear rate, or <code class="docutils literal notranslate"><span class="pre">sample</span></code> to keep different names apart while the key joins them.</p></li>
+</ul>
+<p>Curves of the same geometry that fall into one group (repeats that are not separated by an item) are all
+kept (averaged with <em>weighted mean</em>); the group notes say so.</p>
+</section>
+<section id="merge">
+<h2>3. Merge<a class="headerlink" href="#merge" title="Link to this heading"></a></h2>
+<p>The <strong>absolute scale of every geometry is kept</strong>. <em>overlaps</em> chooses what happens where geometries overlap:</p>
+<ul class="simple">
+<li><p><strong>keep all points</strong> (default): every point of every geometry stays as it is, with its own dI and dq
+(resolution), sorted by q, as BerSANS’ merge does. The plot shows the geometries with different markers
+(no line through the interleaved points); the files carry the geometry of every point (ASCII: 5th column,
+index explained in the header; NXcanSAS: <code class="docutils literal notranslate"><span class="pre">source_geometry</span></code>).</p></li>
+<li><p><strong>weighted mean</strong>: in an overlap the points of all geometries are averaged with weights 1/dI², on the bins of
+the coarsest curve there (q = weighted mean, dq including the spread of the q values); index −1 marks
+these points.</p></li>
+</ul>
+<p>Every overlap is checked. The curve with the higher q is interpolated (log-log) at the q of the other, and the
+weighted mean of their ratio gives a <strong>mismatch factor</strong> with its statistical uncertainty, z = (f − 1)/σ_f
+and χ²/ndf of the difference. The column <em>overlap mismatch</em> shows the worst overlap of a group: orange above 2 %,
+red above 5 %. The tooltip lists all overlaps. A mismatch points to a problem in the reduction (distance offset,
+transmission, background, beam centre, the edges of a detector); the statistical σ_f does not include the
+systematic uncertainties of the absolute scale.</p>
+<p><em>scale to</em> (optional) scales the other geometries to the chosen one. Scaling is a pure multiplication: I and dI
+of a geometry are multiplied by one number; q, dq and the points are not changed.</p>
+<ul class="simple">
+<li><p><strong>one factor per geometry for all groups</strong> (default): the factor of every geometry is the weighted mean
+(1/σ²) of the overlap factors of all groups (chained from neighbour to neighbour to the reference) and is
+then applied to all merged curves alike — a calibration of that geometry, not a fit per sample. The log
+and the notes give f ± σ and the number of groups it comes from.</p></li>
+<li><p>unchecked: every group is scaled with the factors of its own overlaps.</p></li>
+</ul>
+<p>The factors are written into the output.</p>
+<p>The table of geometries holds a <strong>q range</strong> and the <strong>points dropped</strong> at the low and high q end of every
+geometry, for all groups, like BerSANS’ merge mask (<code class="docutils literal notranslate"><span class="pre">.smi</span></code>, <code class="docutils literal notranslate"><span class="pre">#</span></code> = point not used).</p>
+</section>
+<section id="underlying-data-of-a-group">
+<h2>Underlying data of a group<a class="headerlink" href="#underlying-data-of-a-group" title="Link to this heading"></a></h2>
+<p>The table of merged groups shows the sample name(s) of every group, and the legend of the plot starts with
+them. Below it, <em>Curves of the selected group</em> lists the curves that were merged: geometry, sample, source (the
+pySASred reduction-table row or run, or the file and entry), the runs summed, q range and number of points.
+<em>Show in pySASred</em> (or a double-click) selects that row or run in the open pySASred window and brings it to the
+front, where its runs, transmissions and notes are; <em>Show 2D</em> opens the 2D images of the selected curves. There
+is no need to go back to pySASred by hand.</p>
+</section>
+<section id="plot-and-save">
+<h2>4. Plot and save<a class="headerlink" href="#plot-and-save" title="Link to this heading"></a></h2>
+<p>The plot shows the selected groups: the curves of each geometry (open symbols, scaled when <em>scale to</em> is
+used), the merged curve (line with error bars in I and, where the curves carry a resolution dq, in q; <em>I error bars</em> / <em>q resolution bars</em> switch them) and the overlap regions (shaded). Several groups can be selected;
+<em>offset ×</em> separates them. <strong>series of the selected sample</strong> shows all merged curves with the same key as the
+selected group, ordered and coloured by the header item chosen under <em>by</em> (e.g. the temperature), with a
+colour bar.</p>
+<p><em>Save selected… / Save all…</em> write into a folder, with q in 1/nm or 1/Å:</p>
+<ul class="simple">
+<li><p><strong>ASCII per curve</strong>: q, I, dI, dq; the header lists the sample key, the group values, the source files and
+geometries, q cuts, scale factors, overlap checks and notes, and <code class="docutils literal notranslate"><span class="pre">group_json</span></code>;</p></li>
+<li><p><strong>NXcanSAS per curve</strong>: SASdata (Q, I, Idev, Qdev, <code class="docutils literal notranslate"><span class="pre">source_geometry</span></code> per point: index of the geometry, −1 =
+averaged), SASsample (key and group values), SASprocess (<code class="docutils literal notranslate"><span class="pre">provenance</span></code> as JSON);</p></li>
+<li><p><strong>one HDF5 with all</strong>: every merged curve as its own NXentry in <code class="docutils literal notranslate"><span class="pre">merged_all.h5</span></code>, e.g. a whole temperature
+series in one file.</p></li>
+</ul>
+<p>File names come from the group label, e.g. <code class="docutils literal notranslate"><span class="pre">A_Temperature20-20.2.dat</span></code>. All three outputs can be read again
+by the tool, for example to group merged curves of several beam times.</p>
+</section>
+<section id="scripting">
+<h2>Scripting<a class="headerlink" href="#scripting" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.toolbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge</span> <span class="k">as</span> <span class="n">mg</span>
+<span class="n">curves</span><span class="p">,</span> <span class="n">problems</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">read_folder</span><span class="p">(</span><span class="s2">"analysed"</span><span class="p">)</span>              <span class="c1"># NXcanSAS, ASCII, BerSANS</span>
+<span class="n">groups</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">group_curves</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"EXP-005370-(\w)_(\d)"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"hdf:sample/temperature"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">})</span>
+<span class="n">merged</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">merge_groups</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">cuts</span><span class="o">=</span><span class="p">{</span><span class="s2">"SD 2.00 m, λ 0.600 nm, coll 8.0 m"</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.32</span><span class="p">,</span> <span class="kc">None</span><span class="p">)})</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">merged</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">overlaps</span><span class="p">])</span>
+    <span class="n">mg</span><span class="o">.</span><span class="n">write_ascii</span><span class="p">(</span><span class="n">mg</span><span class="o">.</span><span class="n">file_stem</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">+</span> <span class="s2">".dat"</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+<span class="n">mg</span><span class="o">.</span><span class="n">write_nxcansas</span><span class="p">(</span><span class="s2">"series.h5"</span><span class="p">,</span> <span class="n">merged</span><span class="p">)</span>
+<span class="n">by_T</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">series</span><span class="p">(</span><span class="n">merged</span><span class="p">,</span> <span class="s2">"hdf:sample/temperature"</span><span class="p">)</span>       <span class="c1"># {key: [(T, merged), ...]}</span>
+</pre></div>
+</div>
+<p>With the Vifor data of September 2026 (pySASred, water calibration, +53 mm distance offset) the 2 m and 8 m
+curves of the samples A_1 … B_6 agree within −0.6 … −1.1 % in the overlap (0.30–0.63 1/nm). BerSANS data
+of July 2024 (no offset) show +2.3 % for EXP-001763_1.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Using pyTOOLbox" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="image2d.html" class="btn btn-neutral float-right" title="2D data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

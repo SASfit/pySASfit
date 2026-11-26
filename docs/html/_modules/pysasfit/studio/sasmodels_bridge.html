@@ -1,0 +1,515 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.sasmodels_bridge &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.sasmodels_bridge</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.sasmodels_bridge</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The models of SasView (the ``sasmodels`` package, ``pip install sasmodels``) as pySASstudio functions.</span>
+
+<span class="sd">Every sasmodels model becomes a function next to the SASfit plugins: ``ff_sv_&lt;name&gt;`` for form factors and</span>
+<span class="sd">shape-independent models, ``sq_sv_&lt;name&gt;`` for structure factors (menu groups "SasView: &lt;category&gt;"). They take part</span>
+<span class="sd">in everything the studio does with SASfit functions: mixtures, size distributions (the studio integrates over a</span>
+<span class="sd">parameter itself; sasmodels' polydispersity is not used), structure factors with the decoupling approximation or the</span>
+<span class="sd">local monodisperse approximation, fits, SESANS / MSAS transforms, projects and "Copy Python".</span>
+
+<span class="sd">Convention (SASfit, chosen 2026-11-13): a form factor is the intensity of one particle,</span>
+
+<span class="sd">    P(q) = (Δρ V F(q))²  = ⟨F²⟩ of sasmodels  = V · I_sasview(q; scale = 1, background = 0),</span>
+
+<span class="sd">not SasView's per-volume intensity I_sasview = scale/V · (Δρ V F)². So with a size distribution N(x) the integral</span>
+<span class="sd">∫ N(x) P(q; x) dx weights the sizes as for the SASfit plugins (V², not V), and N is a number density. The</span>
+<span class="sd">amplitude is ⟨F⟩ (decoupling approximation), the volume the form volume of sasmodels (LMA). Models without an</span>
+<span class="sd">amplitude in sasmodels (e.g. the shape-independent ones) have V = 1 there, so P = I_sasview.</span>
+
+<span class="sd">Units: sasmodels works in Å (q in 1/Å, lengths in Å, SLDs in 10⁻⁶/Å², I in 1/cm). The studio's functions carry no</span>
+<span class="sd">units, so :func:`set_length_unit` says in which length unit q and the length parameters are given ("nm" for q in</span>
+<span class="sd">1/nm, as the explorer's q unit); the bridge converts q, every parameter with a length unit (Å, Å², Å³) and the</span>
+<span class="sd">volume. SLD parameters stay in 10⁻⁶/Å² (the unit SasView uses). Then P(q) = 10⁻⁴ (Δρ V F)² in cm⁻¹ · [length]³:</span>
+<span class="sd">a number density N in 1/[length]³ gives I = N P in 1/cm.</span>
+
+<span class="sd">Parameters: sasmodels' ``scale`` and ``background`` are fixed at 1 and 0 (the studio has its own). Vector parameters</span>
+<span class="sd">(``sld[n]``, ``thickness[n]`` of core_multi_shell) become numbered parameters ``sld1`` … ``sld10``; orientation angles</span>
+<span class="sd">(2D only) and magnetic parameters are left out. Models with more parameters than SASfit's MAXPAR (50) are skipped.</span>
+<span class="sd">SasView's size distributions (gaussian, lognormal, schulz, rectangle, uniform, boltzmann of sasmodels.weights) are</span>
+<span class="sd">``sd_sv_&lt;name&gt;`` with the parameters N, center, width (σ/center) and nsigmas (see :data:`DISTRIBUTIONS`).</span>
+<span class="sd">The C kernel of a model is compiled on first use (sasmodels needs a C compiler; on Windows the ``tinycc`` package or</span>
+<span class="sd">gcc of MSYS2).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"available"</span><span class="p">,</span> <span class="s2">"register_all"</span><span class="p">,</span> <span class="s2">"set_length_unit"</span><span class="p">,</span> <span class="s2">"length_unit"</span><span class="p">,</span> <span class="s2">"model_names"</span><span class="p">,</span> <span class="s2">"PREFIX_FF"</span><span class="p">,</span> <span class="s2">"PREFIX_SQ"</span><span class="p">,</span>
+           <span class="s2">"PREFIX_SD"</span><span class="p">,</span> <span class="s2">"COLLECTION"</span><span class="p">,</span> <span class="s2">"DISTRIBUTIONS"</span><span class="p">,</span> <span class="s2">"register_distributions"</span><span class="p">,</span> <span class="s2">"sasview_distribution"</span><span class="p">]</span>  <span class="c1"># fmt: skip</span>
+
+<span class="n">PREFIX_FF</span><span class="p">,</span> <span class="n">PREFIX_SQ</span><span class="p">,</span> <span class="n">PREFIX_SD</span> <span class="o">=</span> <span class="s2">"ff_sv_"</span><span class="p">,</span> <span class="s2">"sq_sv_"</span><span class="p">,</span> <span class="s2">"sd_sv_"</span>
+<span class="n">COLLECTION</span> <span class="o">=</span> <span class="s2">"sasmodels"</span>
+<span class="n">_ANGSTROM_PER</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"A"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"Å"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"nm"</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">"m"</span><span class="p">:</span> <span class="mf">1e10</span><span class="p">,</span> <span class="s2">"um"</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">}</span>  <span class="c1"># Å per unit</span>
+<span class="n">_unit</span> <span class="o">=</span> <span class="s2">"nm"</span>
+<span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+<span class="n">_registered</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># function name -&gt; _Model</span>
+<span class="n">_kernels</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>  <span class="c1"># (model name, q bytes) -&gt; kernel</span>
+
+
+<div class="viewcode-block" id="available">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.available">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""True if the ``sasmodels`` package can be imported."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">sasmodels.core</span>  <span class="c1"># noqa: F401</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- not installed or broken</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="set_length_unit">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.set_length_unit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_length_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Length unit of q (q in 1/unit) and of the length parameters of the SasView models: "nm", "A" (Å), "m"."""</span>
+    <span class="k">global</span> <span class="n">_unit</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Å"</span><span class="p">:</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"1/nm"</span><span class="p">:</span> <span class="s2">"nm"</span><span class="p">,</span> <span class="s2">"1/Å"</span><span class="p">:</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"1/m"</span><span class="p">:</span> <span class="s2">"m"</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ANGSTROM_PER</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown length unit '</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">' (nm, A, m)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="o">!=</span> <span class="n">_unit</span><span class="p">:</span>
+        <span class="n">_unit</span> <span class="o">=</span> <span class="n">unit</span>
+        <span class="k">with</span> <span class="n">_lock</span><span class="p">:</span>
+            <span class="n">_kernels</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="length_unit">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.length_unit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">length_unit</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">_unit</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Å per user length unit."""</span>
+    <span class="k">return</span> <span class="n">_ANGSTROM_PER</span><span class="p">[</span><span class="n">_unit</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_length_power</span><span class="p">(</span><span class="n">units</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Power of the length in a sasmodels unit string ('Ang' 1, 'Ang^2' 2, '1/Ang' -1 ...); 0 otherwise.</span>
+<span class="sd">    SLD units (1e-6/Ang^2) are kept as they are."""</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">units</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"1e-6/Ang^2"</span> <span class="ow">in</span> <span class="n">u</span> <span class="ow">or</span> <span class="s2">"1e-6/Ang"</span> <span class="ow">in</span> <span class="n">u</span> <span class="ow">or</span> <span class="s2">"/Ang^2"</span> <span class="ow">in</span> <span class="n">u</span> <span class="ow">and</span> <span class="n">u</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"1e"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Ang"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Ang^2"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"Ang^3"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"1/Ang"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"1/Ang^2"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"Ang^-1"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">table</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One sasmodels model: parameter mapping, lazily compiled kernel, P(q), amplitude, volume."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_sq</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">structure_factor</span><span class="p">)</span> <span class="ow">or</span> <span class="n">info</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="s2">"structure-factor"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (studio name, sasmodels name, index or None, units, default, limits, description)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">kernel_parameters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"orientation"</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"magnetic"</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"["</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">length</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">units</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">limits</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">units</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">limits</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+    <span class="c1"># ------------------------------------------------------------------ build</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">build_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_angstrom</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">q_angstrom</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">_lock</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">_kernels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_kernels</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">k</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">()</span><span class="o">.</span><span class="n">make_kernel</span><span class="p">([</span><span class="n">q_angstrom</span><span class="p">])</span>
+        <span class="k">with</span> <span class="n">_lock</span><span class="p">:</span>
+            <span class="n">_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">_kernels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">64</span><span class="p">:</span>
+                <span class="n">old</span> <span class="o">=</span> <span class="n">_kernels</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">old</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+                    <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">k</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">pars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""sasmodels parameter dict from the studio's parameter vector p (lengths converted to Å)."""</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_c</span><span class="p">()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">_n</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">_d</span><span class="p">,</span> <span class="n">_lim</span><span class="p">,</span> <span class="n">_desc</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">c</span> <span class="o">**</span> <span class="n">_length_power</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">base</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>  <span class="c1"># sasmodels names vector entries sld1, sld2, ...</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="c1"># --------------------------------------------------------------- evaluate</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels.direct_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">call_Fq</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">qa</span> <span class="o">=</span> <span class="n">q</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span>  <span class="c1"># 1/unit -&gt; 1/Å</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">qa</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">call_Fq</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>  <span class="c1"># F1, F2, R_eff, V_shell, V_ratio (Å units)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sq</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels.direct_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">call_kernel</span>
+
+            <span class="n">qa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">call_kernel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">(</span><span class="n">qa</span><span class="p">),</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"background"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_F1</span><span class="p">,</span> <span class="n">F2</span><span class="p">,</span> <span class="n">_r</span><span class="p">,</span> <span class="n">_v</span><span class="p">,</span> <span class="n">_vr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fq</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">F2</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="mi">3</span>  <span class="c1"># (Δρ V F)²: V² in the user length unit … per V in Å³ → unit³</span>
+        <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">amplitude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">F1</span><span class="p">,</span> <span class="n">_F2</span><span class="p">,</span> <span class="n">_r</span><span class="p">,</span> <span class="n">_v</span><span class="p">,</span> <span class="n">_vr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fq</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">F1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sasmodels model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has no amplitude F(q)"</span><span class="p">)</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">F1</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="mf">1.5</span>
+        <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">ndim</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">volume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dist</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Form volume (user length unit³) with parameter ``dist`` replaced by x (SASfit's '_v' convention)."""</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">pp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+                <span class="n">pp</span><span class="p">[</span><span class="n">dist</span><span class="p">]</span> <span class="o">=</span> <span class="n">xi</span>
+            <span class="n">_F1</span><span class="p">,</span> <span class="n">_F2</span><span class="p">,</span> <span class="n">_r</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">_vr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fq</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e-3</span> <span class="o">*</span> <span class="n">_c</span><span class="p">()]),</span> <span class="n">pp</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">V</span><span class="p">)</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="mi">3</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_info</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">headers</span>
+
+    <span class="n">unit</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"A"</span><span class="p">:</span> <span class="s2">"Å"</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_unit</span><span class="p">,</span> <span class="n">_unit</span><span class="p">)</span>
+    <span class="n">pinfo</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_base</span><span class="p">,</span> <span class="n">_idx</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">limits</span><span class="p">,</span> <span class="n">desc</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">params</span><span class="p">:</span>
+        <span class="n">pw</span> <span class="o">=</span> <span class="n">_length_power</span><span class="p">(</span><span class="n">units</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">default</span><span class="p">)</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="n">pw</span> <span class="k">if</span> <span class="n">pw</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">default</span><span class="p">)</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">limits</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">limits</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">if</span> <span class="n">limits</span> <span class="k">else</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pw</span><span class="p">:</span>
+            <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">lo</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="n">pw</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lo</span><span class="p">)</span> <span class="k">else</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">/</span> <span class="n">_c</span><span class="p">()</span> <span class="o">**</span> <span class="n">pw</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">hi</span><span class="p">)</span> <span class="k">else</span> <span class="n">hi</span>
+        <span class="n">shown</span> <span class="o">=</span> <span class="n">units</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Ang"</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span> <span class="k">if</span> <span class="n">pw</span> <span class="k">else</span> <span class="n">units</span>
+        <span class="n">pinfo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">shown</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">shown</span> <span class="k">else</span> <span class="n">desc</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)))</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">PREFIX_SQ</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">is_sq</span> <span class="k">else</span> <span class="n">PREFIX_FF</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">m</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">headers</span><span class="o">.</span><span class="n">PluginInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"SasView: </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="n">COLLECTION</span><span class="p">,</span>
+                              <span class="n">group</span><span class="o">=</span><span class="sa">f</span><span class="s2">"sasview:</span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">category</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'other'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">brief</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">pinfo</span><span class="p">)</span>  <span class="c1"># fmt: skip</span>
+
+
+<div class="viewcode-block" id="model_names">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.model_names">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">model_names</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""The model names of the installed sasmodels package ([] if it is not installed)."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">available</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span>
+
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">list_models</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="register_all">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.register_all">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_all</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Register every sasmodels model as a studio function (again after a change of the length unit, so the</span>
+<span class="sd">    defaults and bounds are shown in it). Returns the names registered; [] without sasmodels."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">functions</span>
+
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">set_length_unit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">available</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">register_distributions</span><span class="p">()</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mname</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">list_models</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">load_model_info</span><span class="p">(</span><span class="n">mname</span><span class="p">)</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">_Model</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- a model that cannot be loaded is left out</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">params</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">pi</span> <span class="o">=</span> <span class="n">_make_info</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"vectorized"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">or</span> <span class="n">f</span>  <span class="c1"># noqa: E731</span>
+        <span class="n">amp</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">is_sq</span> <span class="k">else</span> <span class="n">vec</span><span class="p">(</span><span class="k">lambda</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">amplitude</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+        <span class="n">volf</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">is_sq</span> <span class="k">else</span> <span class="n">vec</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">volume</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dist</span><span class="p">))</span>
+        <span class="n">functions</span><span class="o">.</span><span class="n">_PYTHON_FUNCTIONS</span><span class="p">[</span><span class="n">pi</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pi</span><span class="p">,</span> <span class="n">vec</span><span class="p">(</span><span class="k">lambda</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">intensity</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">)),</span> <span class="n">amp</span><span class="p">,</span> <span class="n">volf</span><span class="p">)</span>
+        <span class="n">_registered</span><span class="p">[</span><span class="n">pi</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pi</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">names</span> <span class="o">+</span> <span class="n">register_distributions</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_sasview_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="n">PREFIX_FF</span><span class="p">,</span> <span class="n">PREFIX_SQ</span><span class="p">,</span> <span class="n">PREFIX_SD</span><span class="p">))</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- size distributions (sasmodels.weights)</span>
+<span class="c1"># SasView's polydispersity distributions as studio size distributions sd_sv_&lt;name&gt;. Parameters as in SasView:</span>
+<span class="c1"># center (the value of the distributed parameter), width = σ / center (the relative "PD" of SasView), nsigmas (where</span>
+<span class="c1"># SasView cuts the distribution: its defaults), plus the amplitude N (number density, as SASfit's distributions).</span>
+<span class="c1"># The formulas are those of sasmodels.weights; like SasView, the distribution is cut at center ± nsigmas·σ and at</span>
+<span class="c1"># x &gt; 0, and normalised on what is left (∫ N(x) dx = N). The studio integrates over it with its own integration</span>
+<span class="c1"># settings (SasView sums over npts points instead). "array" (an empirical table) is not offered.</span>
+<span class="n">DISTRIBUTIONS</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># name: (label, default nsigmas, description)</span>
+    <span class="s2">"gaussian"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: gaussian"</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">"Gaussian, σ = width · center, cut at ± nsigmas σ"</span><span class="p">),</span>
+    <span class="s2">"lognormal"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: lognormal"</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="s2">"log-normal with median center and σ_ln = width (σ/center), cut at ± nsigmas σ"</span><span class="p">),</span>
+    <span class="s2">"schulz"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: schulz"</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="s2">"Schulz (gamma) with mean center and z = 1/width², cut at ± nsigmas σ"</span><span class="p">),</span>
+    <span class="s2">"rectangle"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: rectangle"</span><span class="p">,</span> <span class="mi">3</span><span class="o">**</span><span class="mf">0.5</span><span class="p">,</span> <span class="s2">"uniform over center ± √3 σ (σ = width · center)"</span><span class="p">),</span>
+    <span class="s2">"uniform"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: uniform"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"uniform over center ± σ (σ = width · center)"</span><span class="p">),</span>
+    <span class="s2">"boltzmann"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SasView: boltzmann"</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">"exp(-|x - center|/σ), cut at ± nsigmas σ"</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sd_shape</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">sig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The unnormalised density of sasmodels.weights (same formulas)."""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"gaussian"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">sig</span> <span class="o">*</span> <span class="n">sig</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"lognormal"</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"schulz"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gammaln</span>
+
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">sig</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x</span> <span class="o">/</span> <span class="n">c</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="o">-</span> <span class="n">R</span> <span class="o">*</span> <span class="n">z</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">arg</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"boltzmann"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"rectangle"</span><span class="p">,</span> <span class="s2">"uniform"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sd_support</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">nsig</span><span class="p">):</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"rectangle"</span><span class="p">:</span> <span class="mi">3</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span><span class="p">),</span> <span class="s2">"uniform"</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span><span class="p">)}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nsig</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span><span class="p">))</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">c</span> <span class="o">-</span> <span class="n">half</span><span class="p">,</span> <span class="n">c</span> <span class="o">+</span> <span class="n">half</span>
+    <span class="n">floor</span> <span class="o">=</span> <span class="mf">1e-8</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"lognormal"</span><span class="p">,</span> <span class="s2">"schulz"</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">floor</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">floor</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sd_norm</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""∫_lo^hi of the shape (closed forms)."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span>
+
+    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;=</span> <span class="n">lo</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"gaussian"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sig</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">special</span><span class="o">.</span><span class="n">ndtr</span><span class="p">((</span><span class="n">hi</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">sig</span><span class="p">)</span> <span class="o">-</span> <span class="n">special</span><span class="o">.</span><span class="n">ndtr</span><span class="p">((</span><span class="n">lo</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">sig</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"lognormal"</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">special</span><span class="o">.</span><span class="n">ndtr</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">hi</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="n">special</span><span class="o">.</span><span class="n">ndtr</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">lo</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"schulz"</span><span class="p">:</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span> <span class="o">/</span> <span class="n">sig</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z</span> <span class="o">*</span> <span class="n">hi</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="n">special</span><span class="o">.</span><span class="n">gammainc</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">z</span> <span class="o">*</span> <span class="n">lo</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"boltzmann"</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sig</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">cdf</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>  <span class="c1"># ∫_-inf^t exp(-|x-c|/s) dx</span>
+            <span class="k">return</span> <span class="n">s</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">c</span> <span class="k">else</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span> <span class="o">-</span> <span class="n">s</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cdf</span><span class="p">(</span><span class="n">hi</span><span class="p">)</span> <span class="o">-</span> <span class="n">cdf</span><span class="p">(</span><span class="n">lo</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span>  <span class="c1"># rectangle, uniform</span>
+
+
+<div class="viewcode-block" id="sasview_distribution">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.sasview_distribution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sasview_distribution</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">nsigmas</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""N(x) of SasView distribution ``name``: N times the density cut at center ± nsigmas σ (x &gt; 0), normalised."""</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DISTRIBUTIONS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown SasView distribution '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DISTRIBUTIONS</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">nsig</span> <span class="o">=</span> <span class="n">DISTRIBUTIONS</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">nsigmas</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">nsigmas</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">nsigmas</span><span class="p">)</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">width</span><span class="p">)</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">center</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sig</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">center</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># a delta distribution: give the size directly instead (no distribution)</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_sd_support</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">nsig</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">_sd_norm</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Z</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">inside</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inside</span><span class="p">,</span> <span class="n">N</span> <span class="o">*</span> <span class="n">_sd_shape</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">center</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span> <span class="o">/</span> <span class="n">Z</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="register_distributions">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.sasmodels_bridge.register_distributions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_distributions</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Register the SasView size distributions as ``sd_sv_&lt;name&gt;`` (no sasmodels package needed: the formulas are</span>
+<span class="sd">    here). Returns the names."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">functions</span><span class="p">,</span> <span class="n">headers</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dname</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">nsig</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">DISTRIBUTIONS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">pinfo</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="s2">"N"</span><span class="p">,</span> <span class="s2">"number density (amplitude: ∫ N(x) dx = N)"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="s2">"center"</span><span class="p">,</span> <span class="s2">"center of the distribution (SasView: the parameter value)"</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="s2">"relative width σ/center (SasView: PD)"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">ParameterInfo</span><span class="p">(</span><span class="s2">"nsigmas"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"cut at ± nsigmas σ (SasView default </span><span class="si">{</span><span class="n">nsig</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">; 0 = default)"</span><span class="p">,</span> <span class="n">nsig</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)),</span>
+        <span class="p">]</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">PluginInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">PREFIX_SD</span> <span class="o">+</span> <span class="n">dname</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="n">COLLECTION</span><span class="p">,</span>
+                                  <span class="n">group</span><span class="o">=</span><span class="s2">"sasview:polydispersity"</span><span class="p">,</span> <span class="n">brief</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">pinfo</span><span class="p">)</span>  <span class="c1"># fmt: skip</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">dens</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dname</span><span class="o">=</span><span class="n">dname</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">sasview_distribution</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">support</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dname</span><span class="o">=</span><span class="n">dname</span><span class="p">):</span>  <span class="c1"># the exact cut: no integration panel straddles it</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">nsig</span> <span class="o">=</span> <span class="n">DISTRIBUTIONS</span><span class="p">[</span><span class="n">dname</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">_sd_support</span><span class="p">(</span><span class="n">dname</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">sig</span><span class="p">,</span> <span class="n">nsig</span><span class="p">)</span>
+
+        <span class="n">dens</span><span class="o">.</span><span class="n">vectorized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">dens</span><span class="o">.</span><span class="n">support</span> <span class="o">=</span> <span class="n">support</span>
+        <span class="n">functions</span><span class="o">.</span><span class="n">_PYTHON_FUNCTIONS</span><span class="p">[</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">dens</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">names</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

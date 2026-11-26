@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyATsas: the ATSAS programs in pySASfit &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyDENsity: electron-density maps with DENSS" href="../density/index.html" />
+    <link rel="prev" title="pySEBpolymers: structures of linked sub-units" href="../seb/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pyATsas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#finding-atsas">Finding ATSAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#panels">Panels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flat-background-incoherent-scattering">Flat background (incoherent scattering)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shapes-bead-models-and-spherical-harmonics-envelopes">Shapes: bead models and spherical-harmonics envelopes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#when-a-program-returns-no-result">When a program returns no result</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scripts">Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#limits">Limits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pyATsas: the ATSAS programs in pySASfit</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/atsas/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pyatsas-the-atsas-programs-in-pysasfit">
+<h1>pyATsas: the ATSAS programs in pySASfit<a class="headerlink" href="#pyatsas-the-atsas-programs-in-pysasfit" title="Link to this heading"></a></h1>
+<img alt="pyATsas" class="only-light" src="../_images/pyATsas-light.svg" style="height: 70px;" />
+<img alt="pyATsas" class="only-dark" src="../_images/pyATsas-dark.svg" style="height: 70px;" />
+<p>pyATsas runs the programs of <strong>ATSAS</strong> (EMBL Hamburg / BIOSAXS GmbH) on the curves of pySASfit and shows their
+results next to the other tools: Guinier analysis (AUTORG), distance distributions (DATGNOM, GNOM), model curves of
+atomic structures (CRYSOL, CRYSON) and ab-initio bead models (DAMMIF). It also starts the interactive ATSAS programs
+(PRIMUS, CHROMIXS, PEAK, …) with the curve or p(r) selected in pySASfit.</p>
+<p>ATSAS is <strong>not</strong> part of pySASfit. It has to be installed separately, with its own licence
+(<a class="reference external" href="https://www.embl-hamburg.de/biosaxs/software.html">https://www.embl-hamburg.de/biosaxs/software.html</a>). pyATsas only calls its programs and reads the files they
+write. pyATsas has its own logo and icon (a p(r) curve with a small bead model, in the logo style of pySASfit). The
+buttons of the ATSAS programs on its panel show the original icons of that installation
+(<code class="docutils literal notranslate"><span class="pre">share/icons/hicolor/&lt;n&gt;×&lt;n&gt;/apps/*.png</span></code>); pySASfit does not ship copies of them. Without ATSAS the run buttons
+are disabled.</p>
+<ul class="simple">
+<li><p>launcher tab <strong>pyATsas</strong>, or stand-alone: <code class="docutils literal notranslate"><span class="pre">pysasfit-atsas</span> <span class="pre">[data</span> <span class="pre">files]</span></code></p></li>
+<li><p>scripts: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pysasfit</span> <span class="pre">import</span> <span class="pre">atsas</span></code> (no Qt needed)</p></li>
+<li><p>check the installation: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pysasfit.atsas</span> <span class="pre">--selftest</span></code></p></li>
+</ul>
+<section id="finding-atsas">
+<h2>Finding ATSAS<a class="headerlink" href="#finding-atsas" title="Link to this heading"></a></h2>
+<p>pyATsas works on Windows (native or MSYS2 Python), Linux and macOS. The installation is looked for in this order:</p>
+<ol class="arabic simple">
+<li><p><strong>Settings → Preferences → pyATsas → ATSAS installation folder</strong> (or <code class="docutils literal notranslate"><span class="pre">atsas_dir=</span></code> in scripts), the root folder
+or its <code class="docutils literal notranslate"><span class="pre">bin/</span></code>;</p></li>
+<li><p>the environment variables <code class="docutils literal notranslate"><span class="pre">PYATSAS_DIR</span></code> and <code class="docutils literal notranslate"><span class="pre">ATSAS</span></code>; on Windows also the <code class="docutils literal notranslate"><span class="pre">ATSAS</span></code> value the installer writes to
+the registry, which a Python started from MSYS2 or an IDE may not have in its environment;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">autorg</span></code> on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code> (Linux packages);</p></li>
+<li><p>the newest <code class="docutils literal notranslate"><span class="pre">ATSAS-x.y.z</span></code> folder (compared as version numbers, 4.10 after 4.9) in the default locations:
+<code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files</span></code> and <code class="docutils literal notranslate"><span class="pre">%LOCALAPPDATA%\Programs</span></code> (Windows), the home folder (default of ATSAS 4 on Linux and
+macOS), <code class="docutils literal notranslate"><span class="pre">/opt</span></code>, <code class="docutils literal notranslate"><span class="pre">/usr/local</span></code>, <code class="docutils literal notranslate"><span class="pre">/Applications</span></code>. A Python started from the macOS desktop does not read
+<code class="docutils literal notranslate"><span class="pre">~/.zprofile</span></code>, so this step matters there even when the installer set up the shell.</p></li>
+</ol>
+<p>The <strong>ATSAS</strong> panel shows the folder found and whether the licence file <code class="docutils literal notranslate"><span class="pre">atsas.lic</span></code> is in it. <em>Search again</em> looks
+again after an installation or a change of the preferences; <em>Self test</em> runs AUTORG, DATGNOM and GNOM on a synthetic
+sphere (R = 5 nm: Rg = 3.873 nm, Dmax = 10 nm) and reports the deviations in the Log panel.</p>
+<p>Every program gets <code class="docutils literal notranslate"><span class="pre">ATSAS</span></code> (the installation root; ATSAS 4 finds its licence through it) and its <code class="docutils literal notranslate"><span class="pre">bin/</span></code> first on the
+<code class="docutils literal notranslate"><span class="pre">PATH</span></code>. Input files are copied into the run folder under short ASCII names, because some ATSAS programs fail on
+spaces, umlauts or long paths (OneDrive folders, for example).</p>
+</section>
+<section id="panels">
+<h2>Panels<a class="headerlink" href="#panels" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>panel</p></th>
+<th class="head"><p>content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Data</p></td>
+<td><p>curves: text (q I dI [dq]), pySASred ASCII, NXcanSAS (every entry), as in pyTOOLbox; q in 1/nm. <em>points</em>: the range given to every program (1-based, as in ATSAS)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Analysis</p></td>
+<td><p>AUTORG (min. interval, q_max·Rg, minimum Rg); flat background of the high-q tail (see below); DATGNOM (Rg from AUTORG, which is run first if missing; fit up to s·Rg ≈ 8 or over all points of the range); GNOM (Dmax, systems 0–6, zero conditions, r points, α); CRYSOL / CRYSON (model curve, or fit to the selected curve, further options as text); DAMMIF (runs in parallel, mode, symmetry, unit; uses the GNOM p(r), else DATGNOM). <em>Rg + p(r) of all</em>: AUTORG and DATGNOM for every loaded curve</p></td>
+</tr>
+<tr class="row-even"><td><p>I(q)</p></td>
+<td><p>data, points outside the range (grey ×), Guinier range and line, DATGNOM / GNOM fits and where the DATGNOM fit ends (red dotted line), the two background fits of the tail and the background to subtract (dashed), model curve; log–log, log–lin, Guinier (ln I vs q², low-q part), Kratky (q² I), linear</p></td>
+</tr>
+<tr class="row-odd"><td><p>p(r)</p></td>
+<td><p>DATGNOM and GNOM distributions with their errors, optionally normalised</p></td>
+</tr>
+<tr class="row-even"><td><p>Results</p></td>
+<td><p>one row per curve: Rg ± error and I(0) (Guinier), its points and quality, flat background (or the one subtracted), Dmax, real-space Rg and total estimate (DATGNOM, GNOM), χ² of the model fit, number of bead models; <em>File → Export results table</em> writes it as CSV</p></td>
+</tr>
+<tr class="row-odd"><td><p>Log</p></td>
+<td><p>every command line, its folder and the last lines of the programs’ output</p></td>
+</tr>
+<tr class="row-even"><td><p>3D model</p></td>
+<td><p>bead models and spherical-harmonics envelopes, several at once (tick to show), bead size, envelope opacity, optional scale bar and size box; <em>Load…</em> reads <code class="docutils literal notranslate"><span class="pre">.pdb</span></code>, <code class="docutils literal notranslate"><span class="pre">.cif</span></code> and <code class="docutils literal notranslate"><span class="pre">.flm</span></code> files (see below)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ATSAS</p></td>
+<td><p>installation, licence, self test, and buttons with the original icons for the interactive programs: ATSAS launcher, PRIMUS, CHROMIXS, PEAK, SASPLOT, GNOMPLOT, SVDPLOT, SASDOC, MASSHA (legacy). With <em>open with the selected curve / p(r)</em>, PRIMUS and SASPLOT get the selected curve (its point range), GNOMPLOT its last <code class="docutils literal notranslate"><span class="pre">.out</span></code> file</p></td>
+</tr>
+</tbody>
+</table>
+<p>Programs run in the background; the window stays usable. Every run gets its own folder
+(<code class="docutils literal notranslate"><span class="pre">&lt;date&gt;-&lt;time&gt;_&lt;program&gt;_&lt;curve&gt;</span></code> in <strong>Preferences → folder for the ATSAS runs</strong>, by default <code class="docutils literal notranslate"><span class="pre">atsas_runs</span></code> next to the
+preferences file) with the input file and everything the program writes, so <code class="docutils literal notranslate"><span class="pre">.out</span></code>, <code class="docutils literal notranslate"><span class="pre">.fit</span></code> and bead-model files can be
+opened later (<em>File → Open the run folder</em>).</p>
+<p>Units: the ATSAS programs work in the reciprocal unit of the data. pySASfit curves are in 1/nm, so Rg, Dmax and r
+are in nm. CRYSOL’s <em>q max</em> is in the unit CRYSOL assumes for the model curve (1/Å unless changed with <code class="docutils literal notranslate"><span class="pre">--units</span></code>).</p>
+<p><em>Copy Python</em> (Ctrl+Shift+C) puts a script on the clipboard that repeats AUTORG, DATGNOM and GNOM of the selected
+curve with the panel’s settings.</p>
+</section>
+<section id="flat-background-incoherent-scattering">
+<h2>Flat background (incoherent scattering)<a class="headerlink" href="#flat-background-incoherent-scattering" title="Link to this heading"></a></h2>
+<p>GNOM has no option to fit a constant, and DATGNOM stops at s·Rg ≈ 8 unless <code class="docutils literal notranslate"><span class="pre">--last</span></code> is given. Over a wider range a
+flat background (incoherent scattering of hydrogen in SANS, an imperfect buffer subtraction) is fitted as if it were
+particle scattering: p(r) gets a spike or oscillations at small r. The page <strong>Flat background (DATPOROD)</strong> estimates the
+constant from the high-q tail, so that it can be subtracted before GNOM:</p>
+<ul class="simple">
+<li><p><strong>DATPOROD <code class="docutils literal notranslate"><span class="pre">--exponent</span> <span class="pre">--constant</span></code></strong> (ATSAS) fits I(s) = A s⁻ᴮ − C to the points of the tail q range. The manual
+does not say on which side C is subtracted; pyATsas evaluates both readings at the fitted points and takes the one
+that describes the data (the result line says which). <code class="docutils literal notranslate"><span class="pre">bg</span></code> is always the value to subtract from I.</p></li>
+<li><p><strong>Independent fit</strong> (pySASfit, no ATSAS needed) of I = A q⁻ᴮ + bg with weighted least squares, with B free or
+fixed (4 = Porod for sharp interfaces, 2 for Gaussian chains). A difference of more than 3σ between the two
+estimates is flagged: then the tail does not follow one power law plus a constant (choose another q range, fix the
+exponent, or the data end before the Porod region).</p></li>
+<li><p>B and bg are strongly correlated when the tail is short or the power law is still far above the background; the
+errors show it. Use the widest tail that is clearly beyond the last form-factor features.</p></li>
+<li><p><strong>Subtract → new curve</strong> adds the curve I − bg (errors unchanged) to the data list, named <code class="docutils literal notranslate"><span class="pre">…</span> <span class="pre">minus</span> <span class="pre">bg</span> <span class="pre">&lt;value&gt;</span></code>; the
+original stays. The value can be edited before subtracting. Subtracted curves are restored with the session.</p></li>
+</ul>
+<p>Then run DATGNOM with <em>all points of the range</em> (or GNOM) on the new curve. <em>Copy Python</em> includes the background
+fits and the subtraction.</p>
+</section>
+<section id="shapes-bead-models-and-spherical-harmonics-envelopes">
+<h2>Shapes: bead models and spherical-harmonics envelopes<a class="headerlink" href="#shapes-bead-models-and-spherical-harmonics-envelopes" title="Link to this heading"></a></h2>
+<p>ATSAS has two kinds of ab-initio shape:</p>
+<ul class="simple">
+<li><p><strong>Bead models</strong> (dummy atoms on a grid): DAMMIF and DAMMIN, MONSA (several phases, e.g. SAXS with SANS contrast
+variation), DAMMIX (mixtures), GASBOR (dummy residues), then DAMAVER / DAMCLUST over repeated runs. The panel runs
+DAMMIF; models of the others can be loaded in the 3D panel.</p></li>
+<li><p><strong>Envelopes</strong> r(ω) = Σ F_lm Y_lm(ω) from spherical harmonics: <strong>SASHA</strong>. It exists only in the <code class="docutils literal notranslate"><span class="pre">Legacy</span></code> folder of the
+Windows installation (<code class="docutils literal notranslate"><span class="pre">sasha20.exe</span></code>; <code class="docutils literal notranslate"><span class="pre">sashaqw.exe</span></code> is the same with its own window), not in the main ATSAS 4
+programs. DAMMIN/DAMMIF, GASBOR and CRYSOL also expand amplitudes in spherical harmonics, but only to compute the
+scattering; their result is beads or atoms.</p></li>
+</ul>
+<p>Viewing: ATSAS 4 has no 3D viewer of its own; the legacy <strong>MASSHA</strong> (<code class="docutils literal notranslate"><span class="pre">Legacy\massha.exe</span></code>) shows envelopes, bead
+models and atomic models (from PDB files it shows only CA and P atoms, which is how bead models are written).
+Otherwise PyMOL, ChimeraX or VMD open the model files (beads as atoms; show them as spheres of the bead radius).</p>
+<p><strong>Bead models (DAMMIF page).</strong> <em>model file</em> PDB (default here, MASSHA reads it) or mmCIF (ATSAS 4 default; converted
+to PDB for MASSHA). After the run the models are listed; <em>Show in 3D</em> draws the selected one (Shift: all), <em>Open in
+MASSHA</em> starts MASSHA with it. The I(q) plot shows the fit of model 1 (<code class="docutils literal notranslate"><span class="pre">.fir</span></code>). Bead models are read from PDB
+(<code class="docutils literal notranslate"><span class="pre">ATOM</span></code>/<code class="docutils literal notranslate"><span class="pre">HETATM</span></code>) or mmCIF (<code class="docutils literal notranslate"><span class="pre">_atom_site</span></code>), coordinates in Å; the bead radius from the header (“DAM packing radius”
+…), else half the median nearest-neighbour distance. Checked against the DAMMIN example of ATSAS 4.1.4 (608 beads,
+radius 1.8 Å, Rg 15.40 Å and Dmax 49.1 Å as in its header).</p>
+<p><strong>Envelopes (page “Envelope (SASHA, spherical harmonics)”).</strong> SASHA is an interactive dialog program from the ATSAS 2
+era. <em>Run SASHA</em> writes the selected curve (point range, up to <em>q max</em>) as <code class="docutils literal notranslate"><span class="pre">mon.dat</span></code> and answers the documented
+dialog through stdin: working mode User, data <code class="docutils literal notranslate"><span class="pre">mon.dat</span></code>, units 2 (4π sinθ/λ in 1/nm), no dimer data, output <code class="docutils literal notranslate"><span class="pre">sas</span></code>,
+s_max, default start shape, symmetry (P1, P2, P222, Pmmm, P3), harmonic order L, start anisometry, molecular weight
+(kDa) and Rg (Å) — <em>estimate</em> derives both from the Guinier Rg for a compact protein. The transcript is kept in
+<code class="docutils literal notranslate"><span class="pre">sasha_dialog.log</span></code> in the run folder and checked: if the prompts did not appear in the documented order, a warning
+says so. If SASHA writes no <code class="docutils literal notranslate"><span class="pre">sas.flm</span></code>, the run fails with its output. <em>SASHA interactively…</em> prepares the run folder
+and opens SASHA there in a console to answer the dialog yourself; <em>Load .flm…</em> then reads the result.</p>
+<p>The layout of the <code class="docutils literal notranslate"><span class="pre">.flm</span></code> file is not documented. pyATsas reconstructs the envelope from the coefficients in several
+possible readings (indexed rows or sequences, complex or real harmonics) and accepts one only if its volume and Rg
+agree within 3 % with the values SASHA writes into the same file. Only then is the envelope drawn in the 3D panel
+(translucent, over a bead model if one is shown); otherwise the reason is shown and MASSHA is the way to look at it.
+This check has been tested with synthetic files only: the first real SASHA file will show whether one of the readings
+fits — if not, please send it.</p>
+<p>The 3D panel needs <code class="docutils literal notranslate"><span class="pre">pyqtgraph</span></code> and <code class="docutils literal notranslate"><span class="pre">PyOpenGL</span></code> (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[atsas]&quot;</span></code>, the same packages as the pySASmorph 3D
+panel). It also works when detached into its own window (the OpenGL context is rebuilt).</p>
+<p><strong>Size guides.</strong> <em>scale bar</em> draws a bar of a round length (1, 2 or 5 × 10ⁿ, about a fifth of the view width) in the
+lower left corner, like on a micrograph. Its length is measured across the line of sight at the depth of the centre
+of the objects and is recomputed while you rotate or zoom (parts nearer the camera look a little larger, farther
+parts smaller: perspective). <em>box</em> draws the bounding box of the shown objects with its three edge lengths, either
+along the x, y, z axes or along the <strong>principal axes</strong> of the objects (length, width, thickness of the particle,
+independent of its orientation); the lengths are written at the edges of the lower corner nearest the camera and
+move with the camera after each rotation. The unit is nm or Å (<em>auto</em>: nm from 10 nm on); the lengths are also listed
+below the object list, and <em>Image…</em> saves the view with the guides. The settings are kept in the session.</p>
+</section>
+<section id="when-a-program-returns-no-result">
+<h2>When a program returns no result<a class="headerlink" href="#when-a-program-returns-no-result" title="Link to this heading"></a></h2>
+<p>Every call checks what the program left behind, not only its exit code (ATSAS programs sometimes exit with 0 and
+write nothing). The call raises <code class="docutils literal notranslate"><span class="pre">AtsasError</span></code>, with the last lines of the program’s output, when:</p>
+<ul class="simple">
+<li><p>the program cannot be started (not executable, blocked) or exceeds the time limit;</p></li>
+<li><p>it exits with an error (no Guinier region, missing licence, …);</p></li>
+<li><p>the expected output file is missing or empty (DATGNOM/GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code>, CRYSOL <code class="docutils literal notranslate"><span class="pre">.fit</span></code> when a fit was asked for,
+<code class="docutils literal notranslate"><span class="pre">.int</span></code>/<code class="docutils literal notranslate"><span class="pre">.abs</span></code> otherwise);</p></li>
+<li><p>the output has no usable numbers: no p(r) table or NaN in it, no valid Rg from AUTORG, no valid DATPOROD fit, NaN
+in a model curve;</p></li>
+<li><p>DAMMIF produced no bead model in any run. If only some runs fail, the models of the others are kept and the failed
+runs are listed in <code class="docutils literal notranslate"><span class="pre">errors</span></code> and in a warning.</p></li>
+</ul>
+<p>Results that exist but are doubtful carry <code class="docutils literal notranslate"><span class="pre">warnings</span></code> (a list of texts): AUTORG quality below 0.5 or aggregation
+flagged; GNOM total estimate below 0.5, p(r) negative by more than 5 % of its maximum, no real-space Rg or fitted
+I(q) found; no χ² in the CRYSOL output; fewer DAMMIF models than runs.</p>
+<p>In the panel a failure turns the status bar red, marks the curve with ✖ in the Results table (the tooltip gives
+the message) and brings the Log panel forward; warnings mark it with ⚠ (orange). <em>Rg + p(r) of all</em> goes on with
+the other curves when one fails, and keeps the AUTORG result when only DATGNOM fails.</p>
+</section>
+<section id="scripts">
+<h2>Scripts<a class="headerlink" href="#scripts" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit</span><span class="w"> </span><span class="kn">import</span> <span class="n">atsas</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.toolbox.merge</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_curves</span>
+
+<span class="n">c</span> <span class="o">=</span> <span class="n">read_curves</span><span class="p">(</span><span class="s2">"lysozyme.dat"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">autorg</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">))</span>                 <span class="c1"># GuinierResult: rg, rg_err, i0, first, last, quality</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">datgnom</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">),</span> <span class="n">rg</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">rg</span><span class="p">)</span>       <span class="c1"># GnomResult: r, pr, pr_err, q, i_reg, dmax, rg_real, ...</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">gnom</span><span class="p">(</span><span class="s2">"lysozyme.dat"</span><span class="p">,</span> <span class="n">dmax</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">datporod_exponent</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">),</span> <span class="n">first</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>   <span class="c1"># PorodResult: a, b, bg, dbg, chi2</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">fit_power_background</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="mi">299</span><span class="p">:],</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="mi">299</span><span class="p">:],</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">[</span><span class="mi">299</span><span class="p">:],</span> <span class="n">exponent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="c1"># the same without ATSAS</span>
+<span class="n">p3</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">datgnom</span><span class="p">((</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">I</span> <span class="o">-</span> <span class="n">b</span><span class="o">.</span><span class="n">bg</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dI</span><span class="p">),</span> <span class="n">rg</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">rg</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>       <span class="c1"># all points, background subtracted</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">crysol</span><span class="p">(</span><span class="s2">"6lyz.pdb"</span><span class="p">,</span> <span class="s2">"lysozyme.dat"</span><span class="p">)</span>       <span class="c1"># CrysolResult: q, i_model, chi2 (cryson: program="cryson")</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">atsas</span><span class="o">.</span><span class="n">dammif</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">out_file</span><span class="p">,</span> <span class="n">nruns</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>             <span class="c1"># DammifResult: models, fits, workdir</span>
+<span class="n">atsas</span><span class="o">.</span><span class="n">launch</span><span class="p">(</span><span class="s2">"primusqt"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"lysozyme.dat"</span><span class="p">])</span>         <span class="c1"># interactive programs</span>
+</pre></div>
+</div>
+<p>Data are a file name or a <code class="docutils literal notranslate"><span class="pre">(q,</span> <span class="pre">I,</span> <span class="pre">dI)</span></code> tuple. Each result keeps the command, its folder and the output of the run
+(<code class="docutils literal notranslate"><span class="pre">.run</span></code>). Errors of ATSAS (no Guinier region, missing licence, …) raise <code class="docutils literal notranslate"><span class="pre">AtsasError</span></code> with the program’s message.</p>
+</section>
+<section id="limits">
+<h2>Limits<a class="headerlink" href="#limits" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>GNOM output is parsed by its header lines; the format changed between ATSAS versions. Tested against the formats
+of ATSAS 3 and 4 as documented; please report a <code class="docutils literal notranslate"><span class="pre">.out</span></code> file that is not read.</p></li>
+<li><p>GNOM system 2 and slit smearing need GNOM’s interactive input and are not offered.</p></li>
+<li><p>DAMAVER / DAMCLUST of the bead models are not yet called from the panel (the models are in the run folder).</p></li>
+</ul>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<p>Functions and result classes: <a class="reference internal" href="api.html"><span class="doc">pyATsas: API reference</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../seb/index.html" class="btn btn-neutral float-left" title="pySEBpolymers: structures of linked sub-units" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../density/index.html" class="btn btn-neutral float-right" title="pyDENsity: electron-density maps with DENSS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage (library) &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using the GUI" href="gui.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Usage (library)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solvers-and-options">Solvers and options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-and-solver-compatibility">Kernel and solver compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-spline-representation">B-spline representation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#non-uniform-grids-and-interpolation">Non-uniform grids and interpolation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uncertainty">Uncertainty</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-without-error-bars">Data without error bars</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size-distributions">Size distributions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html">Theory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+      <li class="breadcrumb-item active">Usage (library)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage-library">
+<h1>Usage (library)<a class="headerlink" href="#usage-library" title="Link to this heading"></a></h1>
+<section id="minimal-example">
+<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.io_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sas_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.background</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_background</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernel_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">KERNEL_REGISTRY</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_size_distribution_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.solver_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_solver</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">load_sas_data</span><span class="p">(</span><span class="s2">"tests/inversion/data/test.dat"</span><span class="p">)</span>
+
+<span class="c1"># flat background from a fit of backgr + c*q^-alpha (only backgr is</span>
+<span class="c1"># subtracted, see the theory chapter)</span>
+<span class="n">bg</span> <span class="o">=</span> <span class="n">fit_background</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">q_min</span><span class="o">=</span><span class="mf">0.094</span><span class="p">,</span> <span class="n">q_max</span><span class="o">=</span><span class="mf">0.385</span><span class="p">,</span> <span class="n">dI</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">I</span> <span class="o">-</span> <span class="n">bg</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+
+<span class="c1"># grid: Dmax = pi/q_min, N = Shannon number</span>
+<span class="n">dmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="n">dmax</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dmax</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="n">KERNEL_REGISTRY</span><span class="p">[</span><span class="s2">"sinc_4pi"</span><span class="p">]</span><span class="o">.</span><span class="n">func</span>            <span class="c1"># 4*pi*j0(qr), PDDF</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">build_size_distribution_kernel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"bayesian_evidence"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">chi2_r_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">res</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">[</span><span class="s2">"lambda_selection"</span><span class="p">])</span>
+<span class="n">p_r</span><span class="p">,</span> <span class="n">p_sigma</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">[</span><span class="s2">"x_sigma"</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">run_solver(key,</span> <span class="pre">A,</span> <span class="pre">b,</span> <span class="pre">dI,</span> <span class="pre">spline=None,</span> <span class="pre">**options)</span></code> is the single entry
+point for all solvers. It returns a
+<a class="reference internal" href="api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.base.SolverResult" title="pysasfit.inversion.solvers.base.SolverResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverResult</span></code></a> with <code class="docutils literal notranslate"><span class="pre">x</span></code> (the
+distribution on the grid), <code class="docutils literal notranslate"><span class="pre">fitted_b</span></code> (<span class="math notranslate nohighlight">\(\mathbf A\mathbf x\)</span>),
+<code class="docutils literal notranslate"><span class="pre">chi2_r_history</span></code>, <code class="docutils literal notranslate"><span class="pre">converged</span></code>, <code class="docutils literal notranslate"><span class="pre">n_iterations</span></code> and <code class="docutils literal notranslate"><span class="pre">diagnostics</span></code>
+(<code class="docutils literal notranslate"><span class="pre">lambda_selection</span></code> text, and depending on the solver <code class="docutils literal notranslate"><span class="pre">x_sigma</span></code>,
+<code class="docutils literal notranslate"><span class="pre">x_cov</span></code>, <code class="docutils literal notranslate"><span class="pre">lambda</span></code>, <code class="docutils literal notranslate"><span class="pre">log_evidence_normalized</span></code>, …).</p>
+</section>
+<section id="solvers-and-options">
+<h2>Solvers and options<a class="headerlink" href="#solvers-and-options" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 26.0%" />
+<col style="width: 30.0%" />
+<col style="width: 44.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>key</p></th>
+<th class="head"><p>options (first = default)</p></th>
+<th class="head"><p>notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">em_discrepancy</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">selection</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;discrepancy&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;lcurve&quot;</span></code></p></td>
+<td><p>EM + smoothing; non-negative kernel</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">maxent_em</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prior</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;adaptive&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;constant&quot;</span></code></p></td>
+<td><p>SASfit EM + MaxEnt; non-negative kernel</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hansen_maxent</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">target_chi2_r</span></code> (1.0)</p></td>
+<td><p>Hansen functional, <span class="math notranslate nohighlight">\(x&gt;0\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bayesian_evidence</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">penalty</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;hansen_eq19&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;hansen_printed&quot;</span></code> |
+<code class="docutils literal notranslate"><span class="pre">&quot;second_derivative&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;hansen_eq19_even&quot;</span></code> (p(0) free, lamella);
+<code class="docutils literal notranslate"><span class="pre">noise_scale</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;given&quot;</span></code> |
+<code class="docutils literal notranslate"><span class="pre">&quot;estimate&quot;</span></code>; <code class="docutils literal notranslate"><span class="pre">target_chi2_r</span></code> (None)</p></td>
+<td><p>recommended for the PDDF; Laplace error band, <span class="math notranslate nohighlight">\(\ln Z\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">general_tikhonov_gcv</span></code></p></td>
+<td></td>
+<td><p>2nd difference, GCV</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tikhonov_standard_gcv</span></code></p></td>
+<td></td>
+<td><p><span class="math notranslate nohighlight">\(\mathbf L=\mathbf I\)</span>, GCV</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tsvd_gcv</span></code></p></td>
+<td></td>
+<td><p>truncated SVD, GCV</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">arlsnn</span></code></p></td>
+<td></td>
+<td><p>ARLS with <span class="math notranslate nohighlight">\(x\ge0\)</span>, no parameter</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">em_general_signed_kernel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">regularization</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;smoothing&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;maxent_adaptive&quot;</span></code> |
+<code class="docutils literal notranslate"><span class="pre">&quot;maxent_constant&quot;</span></code></p></td>
+<td><p>EM for signed kernels (PDDF)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">run_solver(&quot;bayesian_evidence&quot;,</span> <span class="pre">A,</span> <span class="pre">b,</span> <span class="pre">dI,</span> <span class="pre">penalty=&quot;hansen_printed&quot;,</span>
+<span class="pre">target_chi2_r=1.0)</span></code>.</p>
+<p>Old keys still work: <code class="docutils literal notranslate"><span class="pre">SOLVER_ALIASES</span></code> maps e.g. <code class="docutils literal notranslate"><span class="pre">em_lcurve</span></code> to
+<code class="docutils literal notranslate"><span class="pre">(&quot;em_discrepancy&quot;,</span> <span class="pre">{&quot;selection&quot;:</span> <span class="pre">&quot;lcurve&quot;})</span></code> and
+<code class="docutils literal notranslate"><span class="pre">bayesian_evidence_hansen</span></code> to
+<code class="docutils literal notranslate"><span class="pre">(&quot;bayesian_evidence&quot;,</span> <span class="pre">{&quot;penalty&quot;:</span> <span class="pre">&quot;hansen_printed&quot;})</span></code>; the retired
+solvers (<code class="docutils literal notranslate"><span class="pre">bayesian_evidence_spline</span></code>, <code class="docutils literal notranslate"><span class="pre">em_discrepancy_spline</span></code>,
+<code class="docutils literal notranslate"><span class="pre">bayesian_evidence_two_segment</span></code>, <code class="docutils literal notranslate"><span class="pre">bayesian_evidence_hann_tapered</span></code>) are
+kept in <code class="docutils literal notranslate"><span class="pre">RETIRED_SOLVERS</span></code>. <code class="docutils literal notranslate"><span class="pre">get_solver(key)</span></code> resolves any key.</p>
+</section>
+<section id="kernel-and-solver-compatibility">
+<h2>Kernel and solver compatibility<a class="headerlink" href="#kernel-and-solver-compatibility" title="Link to this heading"></a></h2>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">sinc_4pi</span></code> (signed): <code class="docutils literal notranslate"><span class="pre">bayesian_evidence</span></code>, the Tikhonov/TSVD solvers,
+<code class="docutils literal notranslate"><span class="pre">arlsnn</span></code> (only if <span class="math notranslate nohighlight">\(p\ge0\)</span> is acceptable) and
+<code class="docutils literal notranslate"><span class="pre">em_general_signed_kernel</span></code>. <code class="docutils literal notranslate"><span class="pre">em_discrepancy</span></code> and <code class="docutils literal notranslate"><span class="pre">maxent_em</span></code>
+diverge with a signed kernel.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cylinder_pddf</span></code> and <code class="docutils literal notranslate"><span class="pre">lamella_pddf</span></code> (signed): as <code class="docutils literal notranslate"><span class="pre">sinc_4pi</span></code>. For
+the lamella use <code class="docutils literal notranslate"><span class="pre">bayesian_evidence</span></code> with <code class="docutils literal notranslate"><span class="pre">penalty=&quot;hansen_eq19_even&quot;</span></code>
+(<span class="math notranslate nohighlight">\(p_t(0)&gt;0\)</span>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_kernel_on_nodes</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">KERNEL_REGISTRY</span><span class="p">[</span><span class="s2">"lamella_pddf"</span><span class="p">]</span><span class="o">.</span><span class="n">func</span>     <span class="c1"># 4*pi*cos(qr)/q^2</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">build_kernel_on_nodes</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"cubic"</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"bayesian_evidence"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="s2">"hansen_eq19_even"</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sphere_rg</span></code> (non-negative): every solver; <code class="docutils literal notranslate"><span class="pre">em_discrepancy</span></code> is the
+best validated. Use <span class="math notranslate nohighlight">\(\alpha=6\)</span>.</p></li>
+</ul>
+</section>
+<section id="b-spline-representation">
+<h2>B-spline representation<a class="headerlink" href="#b-spline-representation" title="Link to this heading"></a></h2>
+<p>Any solver can solve for B-spline coefficients instead of point values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">quadrature_points</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.solver_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">SplineOptions</span>
+
+<span class="n">nq</span> <span class="o">=</span> <span class="n">quadrature_points</span><span class="p">(</span><span class="n">dmax</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">n</span><span class="p">)</span>          <span class="c1"># fine grid</span>
+<span class="n">A_quad</span> <span class="o">=</span> <span class="n">build_size_distribution_kernel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dmax</span><span class="p">,</span> <span class="n">nq</span><span class="p">),</span> <span class="n">f</span><span class="p">)</span>
+<span class="n">opt</span> <span class="o">=</span> <span class="n">SplineOptions</span><span class="p">(</span><span class="n">n_coeffs</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="s2">"log"</span><span class="p">,</span> <span class="n">A_quad</span><span class="o">=</span><span class="n">A_quad</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"em_general_signed_kernel"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">,</span> <span class="n">spline</span><span class="o">=</span><span class="n">opt</span><span class="p">,</span>
+                 <span class="n">regularization</span><span class="o">=</span><span class="s2">"maxent_adaptive"</span><span class="p">)</span>
+<span class="c1"># res.x is p(r) on the grid r; coefficients in res.diagnostics["spline_coefficients"]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">A</span></code> (the kernel on the display grid <code class="docutils literal notranslate"><span class="pre">r</span></code>) only defines the display
+grid; the solver works on <code class="docutils literal notranslate"><span class="pre">A_quad</span> <span class="pre">&#64;</span> <span class="pre">B</span></code>.</p>
+</section>
+<section id="non-uniform-grids-and-interpolation">
+<h2>Non-uniform grids and interpolation<a class="headerlink" href="#non-uniform-grids-and-interpolation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_r_grid</span><span class="p">,</span> <span class="n">build_kernel_on_nodes</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">make_r_grid</span><span class="p">(</span><span class="n">dmax</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="s2">"log"</span><span class="p">)</span>                       <span class="c1"># uniform | quadratic | log</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">build_kernel_on_nodes</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s2">"cubic"</span><span class="p">)</span>   <span class="c1"># or "linear"</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"bayesian_evidence"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The unknowns are the values at <code class="docutils literal notranslate"><span class="pre">r</span></code>; between the nodes <span class="math notranslate nohighlight">\(p(r)\)</span> is
+linear or a not-a-knot cubic spline and the kernel is integrated on a fine
+grid. Use <code class="docutils literal notranslate"><span class="pre">&quot;linear&quot;</span></code> with solvers that need <span class="math notranslate nohighlight">\(x\ge0\)</span>.</p>
+</section>
+<section id="uncertainty">
+<h2>Uncertainty<a class="headerlink" href="#uncertainty" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.uncertainty</span><span class="w"> </span><span class="kn">import</span> <span class="n">bootstrap_uncertainty</span>
+
+<span class="n">solve</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">b_rep</span><span class="p">:</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"bayesian_evidence"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b_rep</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span>
+<span class="n">boot</span> <span class="o">=</span> <span class="n">bootstrap_uncertainty</span><span class="p">(</span><span class="n">solve</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">,</span> <span class="n">n_boot</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="n">res</span><span class="o">.</span><span class="n">fitted_b</span><span class="p">)</span>
+<span class="n">boot</span><span class="o">.</span><span class="n">x_mean</span><span class="p">,</span> <span class="n">boot</span><span class="o">.</span><span class="n">x_std</span><span class="p">,</span> <span class="n">boot</span><span class="o">.</span><span class="n">n_failed</span>
+</pre></div>
+</div>
+<p>Always pass <code class="docutils literal notranslate"><span class="pre">center=res.fitted_b</span></code> (see <a class="reference internal" href="theory_uncertainty.html"><span class="doc">Uncertainty of the recovered distribution</span></a>).</p>
+</section>
+<section id="data-without-error-bars">
+<h2>Data without error bars<a class="headerlink" href="#data-without-error-bars" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.goodness_of_fit</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_errors</span><span class="p">,</span> <span class="n">fit_statistics</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="n">load_sas_data</span><span class="p">(</span><span class="s2">"tests/data/test_2col.dat"</span><span class="p">)</span>          <span class="c1"># q, I only: d.dI is None</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">estimate_errors</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="s2">"poly"</span><span class="p">)</span>             <span class="c1"># 5-point cubic fits;</span>
+                                                       <span class="c1"># or "scatter", "poisson", "relative"</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"bayesian_evidence"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">I</span> <span class="o">-</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span>
+                 <span class="n">noise_scale</span><span class="o">=</span><span class="s2">"estimate"</span><span class="p">)</span>               <span class="c1"># overall level by the evidence</span>
+<span class="n">res</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">[</span><span class="s2">"noise_scale"</span><span class="p">]</span>                         <span class="c1"># s, errors used = s*sigma</span>
+<span class="n">fit_statistics</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">I</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">fitted_b</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>         <span class="c1"># chi2_r, Pearson, deviance, KL</span>
+</pre></div>
+</div>
+</section>
+<section id="size-distributions">
+<h2>Size distributions<a class="headerlink" href="#size-distributions" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.inversion.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">recover_N_from_x</span>
+
+<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dmax</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">build_size_distribution_kernel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">KERNEL_REGISTRY</span><span class="p">[</span><span class="s2">"sphere_rg"</span><span class="p">]</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">6.0</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">run_solver</span><span class="p">(</span><span class="s2">"em_discrepancy"</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dI</span><span class="p">)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">recover_N_from_x</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">6.0</span><span class="p">)</span>      <span class="c1"># number distribution</span>
+<span class="n">V</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">R</span><span class="o">**-</span><span class="mf">3.0</span>                             <span class="c1"># volume-weighted (x = N R^6)</span>
+</pre></div>
+</div>
+</section>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading"></a></h2>
+<p>The tests are plain scripts (run from the project directory):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>tests/test_em_general_basic.py
+<span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>tests/test_*.py<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>python<span class="w"> </span><span class="s2">"</span><span class="nv">$f</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+<span class="nv">QT_QPA_PLATFORM</span><span class="o">=</span>offscreen<span class="w"> </span>python<span class="w"> </span>tests/test_gui_smoke.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gui.html" class="btn btn-neutral float-right" title="Using the GUI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

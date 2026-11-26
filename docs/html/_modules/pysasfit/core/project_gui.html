@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.project_gui &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.project_gui</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.project_gui</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">"""Project / last-session support shared by the Qt main windows.</span>
+
+<span class="sd">A window that mixes in :class:`ProjectMixin` implements five small hooks:</span>
+
+<span class="sd">``_project_columns()``      data as read: dict q, I, sigma[, dq] (or None)</span>
+<span class="sd">``_project_data_path()``    path of the loaded data file (or None)</span>
+<span class="sd">``_project_load_data(p)``   load a data file (the normal "Load" action)</span>
+<span class="sd">``_project_result()``       picklable result state (or None)</span>
+<span class="sd">``_project_set_result(r)``  show a restored result state</span>
+
+<span class="sd">and calls :meth:`_init_project` at the end of ``__init__`` (after all</span>
+<span class="sd">controls exist) and :meth:`_autosave` after loading data and after a fit.</span>
+<span class="sd">See :mod:`pysasfit.core.project` for the file format.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">PySide6</span><span class="w"> </span><span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">project</span> <span class="k">as</span> <span class="n">prj</span>
+
+
+<div class="viewcode-block" id="ProjectMixin">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProjectMixin</span><span class="p">:</span>
+    <span class="n">_project_tool</span> <span class="o">=</span> <span class="kc">None</span>          <span class="c1"># "sldprofile" | "inversion"</span>
+    <span class="n">_project_exclude</span> <span class="o">=</span> <span class="p">()</span>         <span class="c1"># control names not stored</span>
+
+    <span class="c1"># ---------------------------------------------------------------- set-up</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_extra_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Controls that are not plain attributes (e.g. widgets kept in a dict)."""</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Forget the current result before a project is opened (tool hook)."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_note</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">menubar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restoring</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_controls</span> <span class="o">=</span> <span class="n">prj</span><span class="o">.</span><span class="n">control_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_extra_widgets</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_exclude</span><span class="p">)</span>
+        <span class="n">mb</span> <span class="o">=</span> <span class="n">menubar</span> <span class="k">if</span> <span class="n">menubar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span>
+        <span class="n">file_menu</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mb</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&amp;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"File"</span><span class="p">:</span>
+                <span class="n">file_menu</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">file_menu</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">file_menu</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMenu</span><span class="p">(</span><span class="s2">"&amp;File"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">mb</span><span class="o">.</span><span class="n">actions</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">mb</span><span class="o">.</span><span class="n">actions</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">mb</span><span class="o">.</span><span class="n">insertMenu</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">file_menu</span><span class="p">)</span> <span class="k">if</span> <span class="n">first</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">mb</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="n">file_menu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_project_action</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="s2">"&amp;Open project…"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_project_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Open</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">open_project_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_open_project</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_project_action</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="s2">"&amp;Save project…"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_project_action</span><span class="o">.</span><span class="n">setShortcut</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QKeySequence</span><span class="o">.</span><span class="n">StandardKey</span><span class="o">.</span><span class="n">Save</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_project_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_save_project</span><span class="p">)</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_project_action</span><span class="p">)</span>
+        <span class="n">file_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_project_action</span><span class="p">)</span>
+        <span class="n">settings_menu</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mb</span><span class="o">.</span><span class="n">actions</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&amp;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"Settings"</span><span class="p">:</span>
+                <span class="n">settings_menu</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">menu</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">settings_menu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">forget_session_action</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QAction</span><span class="p">(</span><span class="s2">"Forget last session"</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">forget_session_action</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="s2">"Delete the automatically saved last session of this tool; "</span>
+                                                  <span class="s2">"the next start begins with default panels and no data"</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">forget_session_action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forget_session</span><span class="p">)</span>
+            <span class="n">settings_menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">forget_session_action</span><span class="p">)</span>
+
+    <span class="c1"># ---------------------------------------------------------------- state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_columns</span><span class="p">()</span>
+        <span class="n">prj</span><span class="o">.</span><span class="n">save_project</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_data_path</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span>
+                         <span class="n">controls</span><span class="o">=</span><span class="n">prj</span><span class="o">.</span><span class="n">control_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_extra_widgets</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_exclude</span><span class="p">),</span>
+                         <span class="n">extra</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_extra</span><span class="p">(),</span> <span class="n">result</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_result</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_extra</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Plain values stored with the project: the window layout (detached panels)."""</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"dock_state"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"dock_state"</span><span class="p">:</span> <span class="n">ds</span><span class="p">()}</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_project_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Restore a project file; returns the list of notes."""</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">prj</span><span class="o">.</span><span class="n">load_project</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">)</span>
+        <span class="n">notes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"notes"</span><span class="p">])</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_extra_widgets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restoring</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_clear</span><span class="p">()</span>
+            <span class="c1"># 1. factory state: controls the file does not mention keep their defaults</span>
+            <span class="n">prj</span><span class="o">.</span><span class="n">restore_controls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">"kind"</span><span class="p">:</span> <span class="n">kd</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">v</span><span class="p">}</span>
+                                        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">kd</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_controls</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span> <span class="n">extra</span><span class="p">)</span>
+            <span class="c1"># 2. data: the original file if unchanged, else the embedded copy</span>
+            <span class="n">dp</span><span class="p">,</span> <span class="n">sig</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"path"</span><span class="p">),</span> <span class="n">m</span><span class="p">[</span><span class="s2">"data"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"signature"</span><span class="p">),</span> <span class="n">m</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]</span>
+            <span class="n">use</span><span class="p">,</span> <span class="n">keep_result</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">dp</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">sig</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">prj</span><span class="o">.</span><span class="n">file_signature</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span> <span class="o">==</span> <span class="n">sig</span><span class="p">):</span>
+                <span class="n">use</span> <span class="o">=</span> <span class="n">dp</span>
+            <span class="k">elif</span> <span class="n">cols</span><span class="p">:</span>
+                <span class="n">base</span> <span class="o">=</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">prj</span><span class="o">.</span><span class="n">session_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">session</span>
+                        <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">dp</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">dp</span> <span class="k">else</span> <span class="s2">"data"</span>
+                <span class="n">use</span> <span class="o">=</span> <span class="n">prj</span><span class="o">.</span><span class="n">write_data_file</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.dat"</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">"data file changed since the project was saved"</span> <span class="k">if</span> <span class="n">dp</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span>
+                              <span class="k">else</span> <span class="s2">"data file not found"</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"; using the copy stored in the project: </span><span class="si">{</span><span class="n">use</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dp</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dp</span><span class="p">):</span>
+                <span class="n">use</span><span class="p">,</span> <span class="n">keep_result</span> <span class="o">=</span> <span class="n">dp</span><span class="p">,</span> <span class="kc">False</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"data file changed since the project was saved; the stored result is not shown"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dp</span><span class="p">:</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"data file </span><span class="si">{</span><span class="n">dp</span><span class="si">}</span><span class="s2"> not found"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_project_load_data</span><span class="p">(</span><span class="n">use</span><span class="p">)</span>
+            <span class="c1"># 3. panel controls</span>
+            <span class="n">skipped</span> <span class="o">=</span> <span class="n">prj</span><span class="o">.</span><span class="n">restore_controls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">[</span><span class="s2">"controls"</span><span class="p">],</span> <span class="n">extra</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">skipped</span><span class="p">:</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">skipped</span><span class="p">)</span><span class="si">}</span><span class="s2"> stored settings not used: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">skipped</span><span class="p">))[:</span><span class="mi">8</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="c1"># window layout (detached / moved panels): only for the last session --</span>
+            <span class="c1"># a project opened on another screen keeps the current arrangement</span>
+            <span class="k">if</span> <span class="n">session</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"restore_dock_state"</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">restore_dock_state</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"extra"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dock_state"</span><span class="p">))</span>
+            <span class="c1"># 4. result</span>
+            <span class="k">if</span> <span class="n">use</span> <span class="ow">and</span> <span class="n">keep_result</span> <span class="ow">and</span> <span class="n">m</span><span class="p">[</span><span class="s2">"result"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_project_set_result</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">"result"</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+                    <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the stored result could not be shown (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restoring</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">session</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">project_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">return</span> <span class="n">notes</span>
+
+    <span class="c1"># ---------------------------------------------------------------- actions</span>
+<div class="viewcode-block" id="ProjectMixin.on_save_project">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.on_save_project">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_save_project</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_path</span> <span class="ow">or</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_data_path</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"project"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">prj</span><span class="o">.</span><span class="n">EXTENSION</span><span class="p">)</span>
+        <span class="n">fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Save project"</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span>
+                                                      <span class="sa">f</span><span class="s2">"pySASfit project (*</span><span class="si">{</span><span class="n">prj</span><span class="o">.</span><span class="n">EXTENSION</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fn</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">prj</span><span class="o">.</span><span class="n">EXTENSION</span><span class="p">):</span>
+            <span class="n">fn</span> <span class="o">+=</span> <span class="n">prj</span><span class="o">.</span><span class="n">EXTENSION</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_project_to</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.save_project_to">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.save_project_to">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_project_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_save</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Save project"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_path</span> <span class="o">=</span> <span class="n">fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="sa">f</span><span class="s2">"project saved: </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.on_open_project">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.on_open_project">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_open_project</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fn</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Open project"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_path</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span>
+                                                      <span class="sa">f</span><span class="s2">"pySASfit project (*</span><span class="si">{</span><span class="n">prj</span><span class="o">.</span><span class="n">EXTENSION</span><span class="si">}</span><span class="s2">);;All files (*)"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fn</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open_project</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.open_project">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.open_project">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_open</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">prj</span><span class="o">.</span><span class="n">ProjectError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"Open project"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="sa">f</span><span class="s2">"project opened: </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">notes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_autosave</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+    <span class="c1"># ---------------------------------------------------------------- last session</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_autosave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on_close</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_restoring"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">on_close</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_session_forgotten"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">return</span>                       <span class="c1"># "Forget last session" holds until the next load or fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_forgotten</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_save</span><span class="p">(</span><span class="n">prj</span><span class="o">.</span><span class="n">session_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- never disturb the GUI</span>
+            <span class="k">pass</span>
+
+<div class="viewcode-block" id="ProjectMixin.restore_session">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.restore_session">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">restore_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Reopen the last session (no-op when there is none). Returns True if restored."""</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">prj</span><span class="o">.</span><span class="n">session_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">notes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_open</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="sa">f</span><span class="s2">"last session not restored (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="s2">"last session restored (Settings → Forget last session to start empty)"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">notes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.forget_session">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.forget_session">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forget_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">prj</span><span class="o">.</span><span class="n">forget_session</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_tool</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_forgotten</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_project_note</span><span class="p">(</span><span class="s2">"last session deleted; a new one is saved only after the next data load or fit"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.shutdown">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.shutdown">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Called by the launcher when it closes."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_autosave</span><span class="p">(</span><span class="n">on_close</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectMixin.closeEvent">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.project_gui.ProjectMixin.closeEvent">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_autosave</span><span class="p">(</span><span class="n">on_close</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">closeEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.core.settings &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.core.settings</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.core.settings</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">"""User preferences: numerical settings that are not on the tools' main panels.</span>
+
+<span class="sd">Every entry is declared once in :mod:`pysasfit.core.settings_schema` with its</span>
+<span class="sd">factory default and a label; the explanation of each entry is in</span>
+<span class="sd">:mod:`pysasfit.core.settings_help`. The user's values live in one JSON</span>
+<span class="sd">file::</span>
+
+<span class="sd">    Windows:  %APPDATA%\\pySASfit\\settings.json</span>
+<span class="sd">    Linux/macOS:  $XDG_CONFIG_HOME/pysasfit/settings.json  (default ~/.config/...)</span>
+<span class="sd">    override: environment variable PYSASFIT_SETTINGS=&lt;path&gt;</span>
+
+<span class="sd">Only values that differ from the factory default are written, so a later</span>
+<span class="sd">change of a factory default reaches every user who has not set that entry.</span>
+
+<span class="sd">The GUIs read the values when a calculation starts (``get``/``values``) and</span>
+<span class="sd">pass them explicitly to the library; library functions keep their own</span>
+<span class="sd">documented defaults, so scripts are not affected by the preferences file.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Setting"</span><span class="p">,</span> <span class="s2">"Section"</span><span class="p">,</span> <span class="s2">"register"</span><span class="p">,</span> <span class="s2">"tools"</span><span class="p">,</span> <span class="s2">"sections"</span><span class="p">,</span> <span class="s2">"find"</span><span class="p">,</span> <span class="s2">"get"</span><span class="p">,</span> <span class="s2">"effective"</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">,</span> <span class="s2">"set_value"</span><span class="p">,</span>
+           <span class="s2">"reset"</span><span class="p">,</span> <span class="s2">"save"</span><span class="p">,</span> <span class="s2">"load"</span><span class="p">,</span> <span class="s2">"settings_path"</span><span class="p">,</span> <span class="s2">"is_default"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Setting">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.Setting">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Setting</span><span class="p">:</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>                    <span class="c1"># unique, "tool.name"</span>
+    <span class="n">default</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">help</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"float"</span>         <span class="c1"># float | int | bool | choice | str | file | colour (#RRGGBB)</span>
+    <span class="n">lo</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">hi</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">choices</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>   <span class="c1"># [(value, label), ...] for kind="choice"</span>
+    <span class="n">log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>           <span class="c1"># float shown in scientific notation</span>
+    <span class="n">placeholder</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># str/file: text (or function returning it) used when the value is empty</span>
+
+<div class="viewcode-block" id="Setting.effective_placeholder">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.Setting.effective_placeholder">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">effective_placeholder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">placeholder</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">()</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Setting.coerce">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.Setting.coerce">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Validate and convert ``v``; raises ValueError."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"bool"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"choice"</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">vals</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"colour"</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"#[0-9a-fA-F]</span><span class="si">{6}</span><span class="s2">"</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> is not a colour of the form #RRGGBB"</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"int"</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lo</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lo</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">hi</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hi</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Section">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.Section">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Section</span><span class="p">:</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># e.g. "sldprofile"</span>
+    <span class="n">tool_title</span><span class="p">:</span> <span class="nb">str</span>             <span class="c1"># e.g. "SLD profile"</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">settings</span><span class="p">:</span> <span class="nb">list</span></div>
+
+
+
+<span class="n">_SECTIONS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Section</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_BY_KEY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Setting</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_LOADED</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1">#: key prefixes that were renamed; values stored under the old prefix are read under the new one</span>
+<span class="n">_RENAMED</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"sasbox."</span><span class="p">:</span> <span class="s2">"toolbox."</span><span class="p">}</span>         <span class="c1"># pySASbox became pyTOOLbox</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_current_key</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="n">_RENAMED</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">old</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">new</span> <span class="o">+</span> <span class="n">k</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">old</span><span class="p">):]</span>
+    <span class="k">return</span> <span class="n">k</span>
+
+
+<div class="viewcode-block" id="register">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.register">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">tool_title</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">settings</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.settings_help</span><span class="w"> </span><span class="kn">import</span> <span class="n">HELP</span>     <span class="c1"># the explanation of every setting</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">help</span> <span class="o">=</span> <span class="n">HELP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">help</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">_BY_KEY</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"duplicate setting </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">tool</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"setting </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> must start with '</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">.'"</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+        <span class="n">_BY_KEY</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="n">_SECTIONS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">tool_title</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">settings</span><span class="p">)))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">_LOADED</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_BY_KEY</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings_schema</span>  <span class="c1"># noqa: F401  (registers everything)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_LOADED</span><span class="p">:</span>
+        <span class="n">_LOADED</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">load</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="tools">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.tools">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tools</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""[(tool, title)] in registration order."""</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="n">seen</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">_SECTIONS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">tool</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">tool</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="o">.</span><span class="n">tool</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">tool_title</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="sections">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.sections">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sections</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">_SECTIONS</span> <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">tool</span> <span class="o">==</span> <span class="n">tool</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="find">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.find">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Setting</span><span class="p">:</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_BY_KEY</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="get">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.get">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Current value (user value, else factory default)."""</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">_BY_KEY</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_VALUES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="effective">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.effective">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">effective</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The value, or for an empty text/file setting its placeholder (e.g. the default location of a</span>
+<span class="sd">    file next to the preferences file)."""</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">_BY_KEY</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"str"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">effective_placeholder</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="values">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""{name: value} for every key 'prefix.name...' (name = rest of the key)."""</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"."</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">):]:</span> <span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_BY_KEY</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">p</span><span class="p">)}</span></div>
+
+
+
+<div class="viewcode-block" id="is_default">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.is_default">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_default</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_VALUES</span></div>
+
+
+
+<div class="viewcode-block" id="set_value">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.set_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_value</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Set (validated) for this session; call :func:`save` to keep it."""</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">_BY_KEY</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
+        <span class="n">_VALUES</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_VALUES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="reset">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.reset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="n">tool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Back to factory defaults (one tool or all); call :func:`save` to keep it."""</span>
+    <span class="n">_ensure</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">_VALUES</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">tool</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">_VALUES</span><span class="p">[</span><span class="n">k</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="settings_path">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.settings_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">settings_path</span><span class="p">():</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"PYSASFIT_SETTINGS"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">p</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"nt"</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"APPDATA"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">"pySASfit"</span><span class="p">,</span> <span class="s2">"settings.json"</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"XDG_CONFIG_HOME"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".config"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">"pysasfit"</span><span class="p">,</span> <span class="s2">"settings.json"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.load">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Read the preferences file. Unknown keys are kept (a newer version may know</span>
+<span class="sd">    them); invalid values are dropped with a warning."""</span>
+    <span class="k">global</span> <span class="n">_LOADED</span>
+    <span class="n">_LOADED</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_BY_KEY</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings_schema</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">_VALUES</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="n">settings_path</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pySASfit settings file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> unreadable (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">); using factory defaults"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"values"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">_current_key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">_BY_KEY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_VALUES</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">set_value</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"pySASfit setting </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> invalid; factory default used"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="save">
+<a class="viewcode-back" href="../../../core_api.html#pysasfit.core.settings.save">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="n">settings_path</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s2">".tmp"</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">({</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"pysasfit_settings_v1"</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALUES</span><span class="o">.</span><span class="n">items</span><span class="p">()))},</span> <span class="n">fh</span><span class="p">,</span>
+                  <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

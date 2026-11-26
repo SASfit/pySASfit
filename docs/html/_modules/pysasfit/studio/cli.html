@@ -1,0 +1,412 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.studio.cli &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.studio.cli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.studio.cli</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""``pysasfit-studio`` command line (port of SASstudio_utilities_cli.py).</span>
+
+<span class="sd">pysasfit-studio list [--type ff|sq|sd|peak]</span>
+<span class="sd">pysasfit-studio search sphere shell</span>
+<span class="sd">pysasfit-studio info ff_sphere</span>
+<span class="sd">pysasfit-studio eval ff_sphere --q 0.01 0.1 0.5 --set R=50 eta=1</span>
+<span class="sd">pysasfit-studio explore [ff_sphere] [--sq SQ] [--sd SD] [--add FF[,SD[,SQ]]] [--project FILE]   # needs PySide6</span>
+<span class="sd">pysasfit-studio tree [ff|sq|sd]          # menu tree of the functions (groups from the .def files)</span>
+<span class="sd">pysasfit-studio new-plugin my_gauss [--dir DIR]</span>
+<span class="sd">pysasfit-studio sasview-adapter ff_sphere [--dir DIR]</span>
+<span class="sd">pysasfit-studio profiles OUTDIR [--source SASfitGit/src/plugins]</span>
+<span class="sd">pysasfit-studio install-binaries SOURCE [--dest DIR] [--frolov]</span>
+<span class="sd">pysasfit-studio status</span>
+<span class="sd">pysasfit-studio menu            # the interactive menu of the original tool</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">headers</span><span class="p">,</span> <span class="n">paths</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"main"</span><span class="p">,</span> <span class="s2">"new_plugin"</span><span class="p">,</span> <span class="s2">"sasview_adapter"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_template</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">paths</span><span class="o">.</span><span class="n">TEMPLATES</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="new_plugin">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.cli.new_plugin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">new_plugin</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Create ``sasstudio_&lt;name&gt;.py`` and a test file from the templates; returns both paths."""</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">directory</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".pysasfit"</span><span class="p">,</span> <span class="s2">"studio_plugins"</span>
+    <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">"tests"</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plugin</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sasstudio_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.py"</span><span class="p">)</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">"tests"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sasstudio_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_test.py"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">fn</span><span class="p">,</span> <span class="n">tpl</span> <span class="ow">in</span> <span class="p">((</span><span class="n">plugin</span><span class="p">,</span> <span class="s2">"python_plugin.py"</span><span class="p">),</span> <span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="s2">"plugin_test.py"</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_template</span><span class="p">(</span><span class="n">tpl</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"PLUGIN_NAME"</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">plugin</span><span class="p">,</span> <span class="n">test</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_py</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Python source of a number; infinities become ``float("inf")`` (and only those: texts stay untouched)."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">'float("inf")'</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">'-float("inf")'</span>
+    <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="sasview_adapter">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.cli.sasview_adapter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sasview_adapter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s2">"."</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Write a SasView plugin model file wrapping SASfit function ``name``."""</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="s2">",</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'    ["</span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">", "", </span><span class="si">{</span><span class="n">_py</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">default</span><span class="p">)</span><span class="si">}</span><span class="s1">, [</span><span class="si">{</span><span class="n">_py</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">_py</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s1">], "", </span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">description</span><span class="si">!r}</span><span class="s1">]'</span>
+        <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">parameters</span>
+    <span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_template</span><span class="p">(</span><span class="s2">"sasview_adapter.py"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"NAME_STR"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"TITLE_STR"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"DESCRIPTION_STR"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">brief</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="s2">"CATEGORY_STR"</span><span class="p">,</span> <span class="s2">"structure-factor"</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"sq"</span> <span class="k">else</span> <span class="s2">"shape:sasfit"</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"STRUCTURE_FACTOR_BOOL"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">"sq"</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"    PARAMS"</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sasview_adapter_</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.py"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2"> exists; delete it to recreate"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fn</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_list</span><span class="p">(</span><span class="n">type_</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">catalogue</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">type_</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">type_</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">45s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">type_name</span><span class="si">:</span><span class="s2">18s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_menu</span><span class="p">():</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">SASstudio utilities (pysasfit.studio):</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"1. Create new Python plugin [and its test]"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"2. Create SasView adapter for an existing plugin"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"3. Explore a model interactively (sliders + plot)"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"6. Search all plugin names for key word(s)"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"7. List names of all available plugins"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"8. Get parameter info for a plugin"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"0. Quit"</span><span class="p">)</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Option: "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"0"</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"1"</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">"created"</span><span class="p">,</span>
+                    <span class="o">*</span><span class="n">new_plugin</span><span class="p">(</span>
+                        <span class="nb">input</span><span class="p">(</span><span class="s2">"name (underscores instead of spaces): "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"2"</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">"created"</span><span class="p">,</span> <span class="n">sasview_adapter</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">"SASfit function name: "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"3"</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.explorer</span><span class="w"> </span><span class="kn">import</span> <span class="n">explore</span>
+
+                <span class="n">explore</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">"form factor [ff_sphere]: "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"ff_sphere"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"6"</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="o">*</span><span class="nb">input</span><span class="p">(</span><span class="s2">"key word(s): "</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">45s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"7"</span><span class="p">:</span>
+                <span class="n">_list</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"8"</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="nb">input</span><span class="p">(</span><span class="s2">"function name: "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- keep the menu running</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"error:"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../studio_api.html#pysasfit.studio.cli.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">argv</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"explore"</span><span class="p">]:</span>  <span class="c1"># own argument parser, see explorer.main</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.explorer</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">explore_main</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"the explorer needs PySide6 and matplotlib (pip install pysasfit[gui]): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">explore_main</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">ap</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"pysasfit-studio"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Access to the SASfit plugin functions."</span>
+    <span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"cmd"</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"list"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--type"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">,</span> <span class="s2">"sq"</span><span class="p">,</span> <span class="s2">"sd"</span><span class="p">,</span> <span class="s2">"peak"</span><span class="p">])</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"search"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"words"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"+"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--type"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">,</span> <span class="s2">"sq"</span><span class="p">,</span> <span class="s2">"sd"</span><span class="p">,</span> <span class="s2">"peak"</span><span class="p">])</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"info"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"eval"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--q"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"+"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--set"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">help</span><span class="o">=</span><span class="s2">"NAME=VALUE"</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"new-plugin"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--dir"</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"sasview-adapter"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--dir"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"."</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"profiles"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"outdir"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--source"</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"install-binaries"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"source"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--dest"</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--frolov"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"also copy the FrolovPoints tables (~100 MB)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"explore"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"interactive model plot with sliders (pysasfit-studio explore -h)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"tree"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"menu tree of the functions, from the headers and the .def group files"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">"ff"</span><span class="p">,</span> <span class="s2">"sq"</span><span class="p">,</span> <span class="s2">"sd"</span><span class="p">])</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"plugin-build-dir"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"use the plugin libraries of a SASfit source tree, e.g. SASfitGit/src/plugins (saved)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"path"</span><span class="p">,</span>
+        <span class="n">nargs</span><span class="o">=</span><span class="s2">"?"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"the plugins folder of the source tree; omit to show the current one"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--clear"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"forget the folder"</span><span class="p">)</span>
+    <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
+    <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"menu"</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"list"</span><span class="p">:</span>
+        <span class="n">_list</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"search"</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="o">.</span><span class="n">words</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">45s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">type_name</span><span class="si">:</span><span class="s2">18s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"info"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"eval"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">function</span>
+
+        <span class="n">named</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">set</span><span class="p">)}</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">function</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">q</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">named</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">q</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="n">y</span><span class="si">:</span><span class="s2">.8g</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"new-plugin"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"created"</span><span class="p">,</span> <span class="o">*</span><span class="n">new_plugin</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dir</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"sasview-adapter"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"created"</span><span class="p">,</span> <span class="n">sasview_adapter</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dir</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"profiles"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">write_profiles</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="n">source_dir</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">source</span><span class="p">)),</span>
+            <span class="s2">"profiles written to"</span><span class="p">,</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"install-binaries"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.install</span><span class="w"> </span><span class="kn">import</span> <span class="n">install_binaries</span>
+
+        <span class="n">install_binaries</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">frolov</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">frolov</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"tree"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">groups</span>
+
+        <span class="n">defs</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">load_groups</span><span class="p">()</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">catalogue</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">types</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">"ff"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"ff"</span><span class="p">,</span> <span class="s2">"peak"</span><span class="p">,</span> <span class="s2">"peaks"</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">"sq"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"sq"</span><span class="p">,)),</span>
+            <span class="p">(</span><span class="s2">"sd"</span><span class="p">,</span> <span class="p">(</span><span class="s2">"sd"</span><span class="p">,)),</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">headers</span><span class="o">.</span><span class="n">PLUGIN_TYPES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">s:"</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="s2">"  "</span> <span class="o">+</span> <span class="n">s</span>
+                        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">tree_lines</span><span class="p">(</span>
+                            <span class="n">groups</span><span class="o">.</span><span class="n">build_menu</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">defs</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">defs</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">(no *.def files found in: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">paths</span><span class="o">.</span><span class="n">def_dirs</span><span class="p">())</span> <span class="o">+</span> <span class="s2">")"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"plugin-build-dir"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">clear</span><span class="p">:</span>
+            <span class="n">paths</span><span class="o">.</span><span class="n">set_plugin_build_dir</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+            <span class="n">paths</span><span class="o">.</span><span class="n">set_plugin_build_dir</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">paths</span><span class="o">.</span><span class="n">plugin_build_dir</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"warning: </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> is not a folder"</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">plugin_build_dir</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"plugin build tree: </span><span class="si">{</span><span class="n">d</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">libs</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">plugin_build_lib_dirs</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">libs</span><span class="p">)</span><span class="si">}</span><span class="s2"> built plugin libraries, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="o">.</span><span class="n">plugin_build_include_dirs</span><span class="p">())</span><span class="si">}</span><span class="s2"> header folders"</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"status"</span><span class="p">:</span>
+        <span class="n">cat</span> <span class="o">=</span> <span class="n">headers</span><span class="o">.</span><span class="n">catalogue</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"header folders: </span><span class="si">{</span><span class="n">paths</span><span class="o">.</span><span class="n">header_dirs</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"functions documented: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cat</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"SASfit libraries: </span><span class="si">{</span><span class="n">paths</span><span class="o">.</span><span class="n">lib_dir</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'not installed (pysasfit-studio install-binaries SOURCE)'</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"plugin build tree: </span><span class="si">{</span><span class="n">paths</span><span class="o">.</span><span class="n">plugin_build_dir</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Python plugin folders: </span><span class="si">{</span><span class="n">paths</span><span class="o">.</span><span class="n">python_plugin_dirs</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">groups</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"group files (*.def): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">load_groups</span><span class="p">()</span><span class="o">.</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2">  (searched: </span><span class="si">{</span><span class="n">paths</span><span class="o">.</span><span class="n">def_dirs</span><span class="p">()</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"menu"</span><span class="p">:</span>
+        <span class="n">_menu</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ap</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

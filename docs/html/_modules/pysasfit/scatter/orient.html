@@ -1,0 +1,321 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.scatter.orient &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.scatter.orient</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.scatter.orient</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Uniaxially oriented axisymmetric particles: 2D patterns for orientation distribution h(delta).</span>
+
+<span class="sd">h(delta) is the (unnormalised) density of particle-axis directions at polar angle delta from the</span>
+<span class="sd">director.  The detector plane is taken perpendicular to the beam (q_z of the beam direction ~ 0),</span>
+<span class="sd">director in the detector plane along +y... (angle phi_q measured from the director).</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shapes</span><span class="w"> </span><span class="kn">import</span> <span class="n">_gl</span>
+
+
+<div class="viewcode-block" id="h_gauss">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.h_gauss">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">h_gauss</span><span class="p">(</span><span class="n">sigma_delta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Gaussian h(delta) ~ exp(-delta^2 / (2 sigma^2)) (axis distribution, delta in rad)."""</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">sigma_delta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="h_cone">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.h_cone">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">h_cone</span><span class="p">(</span><span class="n">chi</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Uniform within a cone of half angle chi (smoothed edge-free box)."""</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="p">(</span><span class="n">d</span> <span class="o">&lt;=</span> <span class="n">chi</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="h_maier_saupe">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.h_maier_saupe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">h_maier_saupe</span><span class="p">(</span><span class="n">kappa</span><span class="p">):</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">kappa</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="pattern">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.pattern">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pattern</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">n_delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_psi</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">delta_max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""I(qx,qy) by quadrature for axisymmetric particles whose axes follow h(delta) around the</span>
+<span class="sd">    director (director = +x of the pattern, in the detector plane, q_z ~ 0).  Normalised: I(0)=1.</span>
+
+<span class="sd">    Axis direction n = (cos d, sin d cos psi, sin d sin psi); mu = cos(angle q,n)</span>
+<span class="sd">    = (qx cos d + qy sin d cos psi)/|q|  (Eq. 13 of the paper with chi = psi).</span>
+<span class="sd">    """</span>
+    <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qy</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">)</span>
+    <span class="n">n_delta</span> <span class="o">=</span> <span class="n">n_delta</span> <span class="ow">or</span> <span class="mi">120</span>
+    <span class="n">d</span><span class="p">,</span> <span class="n">wd</span> <span class="o">=</span> <span class="n">_gl</span><span class="p">(</span><span class="n">n_delta</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">delta_max</span><span class="p">)</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="n">wd</span> <span class="o">*</span> <span class="n">h</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="n">wd</span> <span class="o">/</span> <span class="n">wd</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">psi</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_psi</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">n_psi</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="p">(</span><span class="n">qx</span> <span class="o">/</span> <span class="n">qs</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="p">(</span><span class="n">qy</span> <span class="o">/</span> <span class="n">qs</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">ux</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">uy</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">psi</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">shape</span><span class="o">.</span><span class="n">P_fixed</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">P</span> <span class="o">*</span> <span class="n">wd</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------------------</span>
+<span class="c1"># Moment-series route (paper Eqs. 13-15, SI Sect. 7)</span>
+<span class="c1"># ---------------------------------------------------------------------------------------</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fractions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">comb</span><span class="p">,</span> <span class="n">factorial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gammaln</span>
+<span class="n">_W_CACHE</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_series_coeffs</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">Nmax</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""W[N][b]: coefficient of (R^2)^N q^{2(N-b)} u^{2b} in the (power-th power of the) cylinder</span>
+<span class="sd">    amplitude 0F1(2;-qr^2R^2/4) 0F1(3/2;-u^2 H^2/4), qr^2 = q^2-u^2, u = q.axis, H = nu R."""</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nu</span><span class="p">),</span> <span class="n">power</span><span class="p">,</span> <span class="n">Nmax</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_W_CACHE</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_W_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">nuf</span> <span class="o">=</span> <span class="n">Fraction</span><span class="p">(</span><span class="n">nu</span><span class="p">)</span><span class="o">.</span><span class="n">limit_denominator</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">9</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">base</span><span class="p">(</span><span class="n">bb</span><span class="p">):</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">poch</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">Fraction</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">n</span><span class="p">:</span>
+                <span class="n">poch</span> <span class="o">*=</span> <span class="p">(</span><span class="n">bb</span> <span class="o">+</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fraction</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">**</span> <span class="n">n</span> <span class="o">/</span> <span class="p">(</span><span class="n">factorial</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">poch</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">base</span><span class="p">(</span><span class="n">Fraction</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="n">base</span><span class="p">(</span><span class="n">Fraction</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="o">*</span> <span class="n">nuf</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">b1</span><span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">[</span><span class="n">Fraction</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">xi</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">):</span>
+                    <span class="n">z</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">xi</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">z</span>
+    <span class="n">al</span><span class="p">,</span> <span class="n">be</span> <span class="o">=</span> <span class="n">a1</span><span class="p">,</span> <span class="n">b1</span>
+    <span class="k">if</span> <span class="n">power</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">al</span><span class="p">,</span> <span class="n">be</span> <span class="o">=</span> <span class="n">mul</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a1</span><span class="p">),</span> <span class="n">mul</span><span class="p">(</span><span class="n">b1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">N</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">Fraction</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">N</span> <span class="o">-</span> <span class="n">a</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">al</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">be</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">row</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">comb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="n">j</span>
+        <span class="n">W</span><span class="p">[</span><span class="n">N</span><span class="p">,</span> <span class="p">:</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+    <span class="n">_W_CACHE</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">W</span>
+    <span class="k">return</span> <span class="n">W</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_h_moments</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">Nmax</span><span class="p">,</span> <span class="n">delta_max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+    <span class="n">d</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">_gl</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">delta_max</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">h</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">c2</span><span class="p">,</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span><span class="p">):</span>
+        <span class="n">cp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">c2</span><span class="p">)</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">s2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">cp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">sp</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">H</span>
+
+
+<div class="viewcode-block" id="pattern_series">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.pattern_series">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pattern_series</span><span class="p">(</span><span class="n">cyl</span><span class="p">,</span> <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">Nmax</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">'P'</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Oriented-cylinder pattern from the *moment series* of the paper (Eqs. 13-15).</span>
+
+<span class="sd">    The q-independent coefficients (series coefficients W and orientation moments H_{2l,2n-2l} of h)</span>
+<span class="sd">    are pre-computed; each pixel then needs only polynomial sums.  The series is accepted pixelwise</span>
+<span class="sd">    if an a-posteriori floating-point error estimate is below `tol`; other pixels are evaluated by</span>
+<span class="sd">    quadrature (`fallback=True`) or returned as NaN.  Director along +x.  Returns I (or (I, ok)).</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.blocks</span><span class="w"> </span><span class="kn">import</span> <span class="n">z_from_sigma</span>
+    <span class="n">power</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s1">'P'</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">sw</span> <span class="o">=</span> <span class="n">cyl</span><span class="o">.</span><span class="n">sP</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"P"</span> <span class="k">else</span> <span class="n">cyl</span><span class="o">.</span><span class="n">sF</span>
+    <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qx</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qy</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="n">shp</span> <span class="o">=</span> <span class="n">qx</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">qx</span><span class="p">,</span> <span class="n">qy</span> <span class="o">=</span> <span class="n">qx</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">qy</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">_series_coeffs</span><span class="p">(</span><span class="n">cyl</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">Nmax</span><span class="p">)</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">_h_moments</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">Nmax</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">qx</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">qx2</span><span class="p">,</span> <span class="n">qy2</span> <span class="o">=</span> <span class="n">qx</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">qy</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">qx2</span> <span class="o">+</span> <span class="n">qy2</span>
+    <span class="c1"># powers</span>
+    <span class="n">Pxy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span> <span class="n">Pyy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span> <span class="n">Pq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">Pxy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pyy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pq</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">Pxy</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pxy</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">qx2</span>
+        <span class="n">Pyy</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pyy</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">qy2</span>
+        <span class="n">Pq</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pq</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">q2</span>
+    <span class="c1"># chi average of sin^{2j}</span>
+    <span class="n">Sj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">factorial</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">j</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">**</span> <span class="n">j</span> <span class="o">*</span> <span class="n">factorial</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span> <span class="n">Uabs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">coef</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">comb</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jj</span><span class="p">)</span> <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">j</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="n">H</span><span class="p">[</span><span class="n">b</span> <span class="o">-</span> <span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Sj</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">U</span><span class="p">[:,</span> <span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pxy</span><span class="p">[:,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">Pyy</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span> <span class="o">@</span> <span class="n">coef</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">cyl</span><span class="o">.</span><span class="n">z</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">gammaln</span><span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="n">sw</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">gammaln</span><span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="n">sw</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">N</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">cyl</span><span class="o">.</span><span class="n">R</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">N</span><span class="p">)</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">);</span> <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">);</span> <span class="n">last</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">Nn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nmax</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">Nn</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">Nn</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">Pq</span><span class="p">[:,</span> <span class="n">Nn</span> <span class="o">-</span> <span class="n">b</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">W</span><span class="p">[</span><span class="n">Nn</span><span class="p">,</span> <span class="p">:</span><span class="n">Nn</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">g</span><span class="p">[</span><span class="n">Nn</span><span class="p">])[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">term</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">+=</span> <span class="n">term</span>
+        <span class="n">A</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">last</span> <span class="o">&lt;</span> <span class="mf">1e-12</span> <span class="o">*</span> <span class="n">A</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mf">4e-16</span> <span class="o">*</span> <span class="n">A</span> <span class="o">&lt;</span> <span class="n">tol</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="mf">1e-12</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">S</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fallback</span> <span class="ow">and</span> <span class="p">(</span><span class="o">~</span><span class="n">ok</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="o">~</span><span class="n">ok</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">bad</span><span class="p">]</span> <span class="o">=</span> <span class="n">pattern</span><span class="p">(</span><span class="n">cyl_fixed_wrap</span><span class="p">(</span><span class="n">cyl</span><span class="p">,</span> <span class="n">kind</span><span class="p">),</span> <span class="n">qx</span><span class="p">[</span><span class="n">bad</span><span class="p">],</span> <span class="n">qy</span><span class="p">[</span><span class="n">bad</span><span class="p">],</span> <span class="n">h</span><span class="p">,</span> <span class="n">delta_max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                           <span class="n">n_delta</span><span class="o">=</span><span class="mi">160</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span> <span class="k">if</span> <span class="n">fallback</span> <span class="k">else</span> <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">ok</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="cyl_fixed_wrap">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.cyl_fixed_wrap">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">cyl_fixed_wrap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""adapter so that pattern() can evaluate F or P of a cylinder."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cyl</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">cyl</span><span class="p">,</span> <span class="n">kind</span>
+
+<div class="viewcode-block" id="cyl_fixed_wrap.P_fixed">
+<a class="viewcode-back" href="../../../scatter/api.html#pysasfit.scatter.orient.cyl_fixed_wrap.P_fixed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">P_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">mu</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">P_fixed</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">'P'</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">F_fixed</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

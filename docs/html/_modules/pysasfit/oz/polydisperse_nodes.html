@@ -1,0 +1,628 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.oz.polydisperse_nodes &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.oz.polydisperse_nodes</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.oz.polydisperse_nodes</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">"""</span>
+<span class="sd">Moment-matched size classes for polydisperse models.</span>
+
+<span class="sd">Given a distribution of diameters with mean &lt;sigma&gt; and relative width s,</span>
+<span class="sd">return p classes (sigma_i, x_i) whose first 2p-1 moments reproduce the</span>
+<span class="sd">continuum exactly. That is what lets p = 3 classes stand in for a continuous</span>
+<span class="sd">distribution where an equally spaced histogram needs 7-9 (D'Aguanno &amp; Klein,</span>
+<span class="sd">Phys. Rev. A 46, 7652).</span>
+
+<span class="sd">WHY THE RULE DIFFERS PER DISTRIBUTION</span>
+<span class="sd">-------------------------------------</span>
+<span class="sd">Every distribution here has ANALYTIC moments, so computing &lt;sigma^n&gt; is never</span>
+<span class="sd">the problem. The problem is the map from moments to quadrature nodes: solving</span>
+<span class="sd">the Hankel eigenproblem (Golub-Welsch) is classically ill-conditioned even</span>
+<span class="sd">with exact input. Measured condition numbers for the log-normal Hankel matrix,</span>
+<span class="sd">built from exact moments::</span>
+
+<span class="sd">        s = 0.3      s = 0.4      s = 0.5</span>
+<span class="sd">  N=6   1.6e7        1.7e7        1.2e8</span>
+<span class="sd">  N=8   2.1e10       1.9e11       4.7e13</span>
+<span class="sd">  N=10  7.0e13       1.7e16       5.4e19</span>
+<span class="sd">  N=12  6.4e17       1.2e21       2.3e27</span>
+
+<span class="sd">float64 carries about 1e16, so beyond roughly N=8-10 for a broad weight the</span>
+<span class="sd">node positions are numerically meaningless -- and Cholesky does NOT raise,</span>
+<span class="sd">because the matrix stays formally positive definite; it silently returns</span>
+<span class="sd">nonsense, which is worse than failing.</span>
+
+<span class="sd">So a closed-form classical rule is used wherever one exists, bypassing the</span>
+<span class="sd">Hankel step entirely:</span>
+
+<span class="sd">    Schulz / gamma  -&gt; generalised Gauss-Laguerre   exact, stable, float64</span>
+<span class="sd">    Gaussian        -&gt; Gauss-Hermite                exact, stable, float64</span>
+<span class="sd">    log-normal      -&gt; Golub-Welsch + mpmath        no classical rule</span>
+<span class="sd">    Weibull         -&gt; Golub-Welsch + mpmath        no classical rule</span>
+
+<span class="sd">An ALTERNATIVE rule, quantileClasses(), is provided at the foot of this</span>
+<span class="sd">module: the probability integral transform turns the integral over</span>
+<span class="sd">(0, infinity) into one over [0, 1] needing only a quantile function. It is</span>
+<span class="sd">not the default -- moment matching wins outright at the three to seven</span>
+<span class="sd">classes an OZ solve uses -- but it is an independent cross-check on the</span>
+<span class="sd">rules above and a cheap route for any new distribution. See the comment</span>
+<span class="sd">block there for the measurements.</span>
+
+<span class="sd">All four are moment-exact to ~1e-16 (verified with momentError() below).</span>
+
+<span class="sd">A PHYSICAL CAVEAT ON THE GAUSSIAN</span>
+<span class="sd">---------------------------------</span>
+<span class="sd">Gauss-Hermite is exact but places its outermost node at u ~ +/-2.86 for p=5,</span>
+<span class="sd">so sigma = &lt;sigma&gt;(1 + s*u) becomes zero at s ~ 0.35 and negative beyond. For</span>
+<span class="sd">a FORM factor a stray tiny bin is just a vanishing weight; for a STRUCTURE</span>
+<span class="sd">factor it is fatal, because a hard core has to be placed at every</span>
+<span class="sd">sigma_ij = (sigma_i+sigma_j)/2 and a non-positive diameter poisons the whole</span>
+<span class="sd">pair matrix. Such nodes are therefore dropped and the caller falls back to a</span>
+<span class="sd">truncated rule, which sacrifices exactness rather than physicality.</span>
+
+<span class="sd">NOTE the test is RELATIVE (sigma &lt;= 1e-3*&lt;sigma&gt;), not sigma &lt;= 0: at s = 0.35</span>
+<span class="sd">the outermost node sits at 1e-4, positive but still a zero-diameter particle.</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">roots_genlaguerre</span><span class="p">,</span> <span class="n">roots_hermitenorm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gamma</span> <span class="k">as</span> <span class="n">gammafn</span>
+
+
+<span class="n">DISTRIBUTIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"Schulz"</span><span class="p">,</span> <span class="s2">"Gaussian"</span><span class="p">,</span> <span class="s2">"LogNormal"</span><span class="p">,</span> <span class="s2">"Weibull"</span><span class="p">,</span> <span class="s2">"Gamma"</span><span class="p">)</span>
+<span class="c1">#BETA IS DELIBERATELY ABSENT, though _quantileFunction can produce it.</span>
+<span class="c1">#</span>
+<span class="c1">#Everything here is parametrised by (mean, srel) alone, which is what makes</span>
+<span class="c1">#the six mutually comparable and what the moment-matched quadrature rests</span>
+<span class="c1">#on. A Beta has alpha, beta AND a support: pinning it to two parameters</span>
+<span class="c1">#forces alpha = beta on (0, 2*mean), which is the SYMMETRIC special case --</span>
+<span class="c1">#and the reason to want a bounded distribution is precisely to place the</span>
+<span class="c1">#bounds somewhere meaningful, say (0.6R, 1.4R) for a sieved sample. Offering</span>
+<span class="c1">#the one Beta that cannot do that would be offering the name without the</span>
+<span class="c1">#capability.</span>
+<span class="c1">#</span>
+<span class="c1">#The RY Polydisperse Yukawa tab has per-distribution parameter fields and</span>
+<span class="c1">#can express a general Beta. Generalising THIS route means changing</span>
+<span class="c1">#quantileClasses, analyticMoments and the fit's parameter list, since srel</span>
+<span class="c1">#stops being an input and becomes a derived quantity -- a real piece of work</span>
+<span class="c1">#touching the manuscript's accuracy claims, not a GUI change.</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_weibull_shape_from_cv</span><span class="p">(</span><span class="n">srel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Shape k with coefficient of variation equal to srel (bisection)."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cv</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">gammafn</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">/</span><span class="n">k</span><span class="p">)</span><span class="o">/</span><span class="n">gammafn</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">k</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">200.0</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">200</span><span class="p">):</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cv</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">srel</span><span class="p">:</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="n">mid</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hi</span> <span class="o">=</span> <span class="n">mid</span>
+    <span class="k">return</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="analyticMoments">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.analyticMoments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyticMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">nMoments</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""&lt;sigma^n&gt; for n = 0 .. nMoments-1. Closed form for every distribution."""</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nMoments</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Schulz"</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">srel</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">nMoments</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nMoments</span><span class="p">):</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"LogNormal"</span><span class="p">:</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">srel</span><span class="o">*</span><span class="n">srel</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">s2</span>                       <span class="c1"># so that &lt;sigma&gt; = 1 before scaling</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">mu</span> <span class="o">+</span> <span class="n">n</span><span class="o">*</span><span class="n">n</span><span class="o">*</span><span class="n">s2</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Weibull"</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">_weibull_shape_from_cv</span><span class="p">(</span><span class="n">srel</span><span class="p">)</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">gammafn</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lam</span><span class="o">**</span><span class="n">j</span><span class="o">*</span><span class="n">gammafn</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">j</span><span class="o">/</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">n</span><span class="p">])</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Gaussian"</span><span class="p">:</span>
+        <span class="c1"># central moments of N(0,1): 0 for odd, (j-1)!! for even</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nMoments</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nMoments</span><span class="p">):</span>
+            <span class="n">tot</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">dbl</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">):</span>
+                    <span class="n">dbl</span> <span class="o">*=</span> <span class="n">q</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">comb</span>
+                <span class="n">tot</span> <span class="o">+=</span> <span class="n">comb</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">srel</span><span class="o">**</span><span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="n">dbl</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">tot</span>
+        <span class="k">return</span> <span class="n">out</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">**</span><span class="n">n</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"unknown distribution </span><span class="si">%r</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">distribution</span><span class="p">,))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_golubWelsch</span><span class="p">(</span><span class="n">moments</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">dps</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""p-point Gaussian rule exact for moments[0..2p-1], in high precision.</span>
+
+<span class="sd">    High precision is not optional here: see the condition-number table in the</span>
+<span class="sd">    module docstring.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">mpmath</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">"log-normal and Weibull need the moment-based rule, which requires "</span>
+            <span class="s2">"mpmath (pip install mpmath) because the moments-to-nodes map is "</span>
+            <span class="s2">"ill-conditioned in float64. Use Schulz or Gaussian, which have "</span>
+            <span class="s2">"closed-form rules, or reduce the number of classes."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="n">mp</span><span class="o">.</span><span class="n">mp</span><span class="o">.</span><span class="n">dps</span> <span class="o">=</span> <span class="n">dps</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="p">[</span><span class="n">mp</span><span class="o">.</span><span class="n">mpf</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">moments</span><span class="p">]</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">Hs</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="n">H</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span>
+            <span class="n">Hs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">H</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="c1">#mpmath raises a bare "matrix is not positive-definite", which tells</span>
+        <span class="c1">#the caller nothing about the cause or the remedy. The Hankel matrix</span>
+        <span class="c1">#of moments is ill-conditioned by construction -- its condition</span>
+        <span class="c1">#number exceeds double precision by p ~ 10 for a broad distribution</span>
+        <span class="c1">#-- so this is the expected outcome at large p, not a bug. Measured:</span>
+        <span class="c1">#LogNormal fails at p &gt;= 32, Weibull at p &gt;= 16, both at srel = 0.3.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Golub-Welsch failed at p = </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> with dps = </span><span class="si">{</span><span class="n">dps</span><span class="si">}</span><span class="s2">: the Hankel "</span>
+            <span class="sa">f</span><span class="s2">"moment matrix is not positive-definite (</span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">). This is the "</span>
+            <span class="sa">f</span><span class="s2">"expected behaviour at large p, not a defect -- the moments "</span>
+            <span class="sa">f</span><span class="s2">"span too many decades for the factorisation to survive, and "</span>
+            <span class="sa">f</span><span class="s2">"the spread here is </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">moments</span><span class="p">))</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">moments</span><span class="p">)),</span><span class="w"> </span><span class="mf">1e-300</span><span class="p">)</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">. "</span>
+            <span class="sa">f</span><span class="s2">"Either use fewer classes (the OZ solve needs only 3-7, where "</span>
+            <span class="sa">f</span><span class="s2">"this rule is exact to 1e-16), raise dps, or use "</span>
+            <span class="sa">f</span><span class="s2">"quantileClasses(), which needs no moments and is stable at any "</span>
+            <span class="sa">f</span><span class="s2">"node count."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="n">Rinv</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+    <span class="n">J</span> <span class="o">=</span> <span class="n">Rinv</span><span class="o">*</span><span class="n">Hs</span><span class="o">*</span><span class="n">Rinv</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">nodes</span><span class="p">,</span> <span class="n">vecs</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">eigsy</span><span class="p">(</span><span class="n">J</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">)])</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">vecs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">)])</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">order</span><span class="p">]</span><span class="o">/</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="sizeClasses">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.sizeClasses">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sizeClasses</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">allowTruncated</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(sigma, x) for p moment-matched classes.</span>
+
+<span class="sd">    Returns diameters and normalised number fractions. Raises ValueError if a</span>
+<span class="sd">    physically valid set cannot be produced.</span>
+
+<span class="sd">    THE MOMENT MATCHING IS THE POINT, and it is what lets three classes do</span>
+<span class="sd">    the work of dozens: a p-point rule reproduces the first 2p-1 moments of</span>
+<span class="sd">    the distribution exactly. Verified at p = 3 and p = 5 for a Schulz</span>
+<span class="sd">    distribution of width 0.25, where it returns &lt;sigma&gt; = 1.0000000000 and</span>
+<span class="sd">    &lt;sigma^2&gt; = 1.0625000000, exactly 1 + s^2.</span>
+
+<span class="sd">    NOT THE SAME AS ``quantileClasses``, which is quantile-based and</span>
+<span class="sd">    reproduces the moments only approximately (0.9794 and 0.9596 for the</span>
+<span class="sd">    same case). Both are legitimate discretisations and the solver uses the</span>
+<span class="sd">    quantile route, but anything claiming exact moments -- Fig. 1 of the</span>
+<span class="sd">    manuscript, for instance -- must come from here. Drawing that figure</span>
+<span class="sd">    from the wrong one put a caption beside it asserting something the</span>
+<span class="sd">    figure did not show.</span>
+
+<span class="sd">    Available distributions are in ``DISTRIBUTIONS``: Schulz, Gaussian,</span>
+<span class="sd">    LogNormal, Weibull and Gamma. Beta is implemented in</span>
+<span class="sd">    ``_quantileFunction`` but deliberately not offered -- see the note</span>
+<span class="sd">    there.</span>
+<span class="sd">    """</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">srel</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">srel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"need at least one class"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">srel</span> <span class="o">&lt;=</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">meanSigma</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Schulz"</span><span class="p">:</span>
+        <span class="c1"># Closed-form generalised Gauss-Laguerre for the gamma weight.</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">srel</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">nodes</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">roots_genlaguerre</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">/</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="c1">#The RAW Laguerre weights carry a factor Gamma(alpha+p+1) and overflow</span>
+        <span class="c1">#for a narrow distribution: 9e155 at alpha = 99 (s = 0.10), 1.7e274 at</span>
+        <span class="c1">#alpha = 155 (s = 0.08), and +inf at alpha = 203 (s = 0.07). The NODES</span>
+        <span class="c1">#stay finite throughout, so the failure is invisible until w.sum()</span>
+        <span class="c1">#turns the normalised weights into NaN -- whereupon the solver reports</span>
+        <span class="c1">#"Percus-Yevick solve diverged" and the real cause is hidden.</span>
+        <span class="c1">#</span>
+        <span class="c1">#s &lt; 0.08 is not exotic: monodisperse-looking colloids sit there. Fall</span>
+        <span class="c1">#back to the high-precision Golub-Welsch path already used for the</span>
+        <span class="c1">#log-normal and Weibull weights, which has no such overflow because</span>
+        <span class="c1">#mpmath carries the large factor symbolically.</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="ow">or</span> <span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">sigma</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">_golubWelsch</span><span class="p">(</span>
+                <span class="n">analyticMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">),</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">w</span><span class="o">/</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Gaussian"</span><span class="p">:</span>
+        <span class="c1"># Closed-form Gauss-Hermite; exact, but can place non-positive nodes.</span>
+        <span class="n">u</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">roots_hermitenorm</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">meanSigma</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">srel</span><span class="o">*</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">w</span><span class="o">/</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="c1">#A relative floor, not just &gt; 0: at s = 0.35 the outermost</span>
+        <span class="c1">#Gauss-Hermite node lands at sigma = 1e-4, which is positive but</span>
+        <span class="c1">#physically still a zero-diameter particle. It contributes a hard core</span>
+        <span class="c1">#at sigma_ij ~ sigma_j/2 for every partner j, distorting the whole</span>
+        <span class="c1">#pair matrix while carrying almost no weight.</span>
+        <span class="n">tooSmall</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span><span class="o">*</span><span class="n">meanSigma</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">tooSmall</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">allowTruncated</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Gaussian with s = </span><span class="si">{</span><span class="n">srel</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> classes puts a node "</span>
+                    <span class="sa">f</span><span class="s2">"at sigma = </span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">, below 1e-3 of the mean. "</span>
+                    <span class="s2">"A structure factor needs a hard core at every sigma_ij, "</span>
+                    <span class="s2">"so a vanishing diameter is not usable. Reduce s or the "</span>
+                    <span class="s2">"number of classes, or allow the truncated rule."</span><span class="p">)</span>
+            <span class="c1"># Truncated fallback: keep only usable nodes and renormalise.</span>
+            <span class="c1"># This sacrifices moment-exactness, which is the right trade --</span>
+            <span class="c1"># an exact rule over unphysical diameters is worthless here.</span>
+            <span class="n">keep</span> <span class="o">=</span> <span class="o">~</span><span class="n">tooSmall</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">keep</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no positive diameters remain"</span><span class="p">)</span>
+            <span class="n">sigma</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">/</span><span class="n">w</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="n">distribution</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"LogNormal"</span><span class="p">,</span> <span class="s2">"Weibull"</span><span class="p">):</span>
+        <span class="n">sigma</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">_golubWelsch</span><span class="p">(</span><span class="n">analyticMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                                                <span class="n">meanSigma</span><span class="p">),</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">distribution</span><span class="si">}</span><span class="s2"> with s = </span><span class="si">{</span><span class="n">srel</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> classes produced a "</span>
+                <span class="sa">f</span><span class="s2">"non-positive node (</span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">); reduce the number of "</span>
+                <span class="s2">"classes."</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"unknown distribution </span><span class="si">%r</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">distribution</span><span class="p">,))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="momentError">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.momentError">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">momentError</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""max relative error of the discrete moments 0..2p-1. Diagnostic."""</span>
+    <span class="n">sigma</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">sizeClasses</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">exact</span> <span class="o">=</span> <span class="n">analyticMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">got</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">p</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">got</span> <span class="o">-</span> <span class="n">exact</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">exact</span><span class="p">)))</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------</span>
+<span class="c1"># Quantile-transform quadrature: an ALTERNATIVE rule and a cross-check.</span>
+<span class="c1">#</span>
+<span class="c1"># The probability integral transform turns an integral over (0, infinity)</span>
+<span class="c1"># with a weight into an unweighted integral over the unit interval:</span>
+<span class="c1">#</span>
+<span class="c1">#     int_0^inf f(sigma) p(sigma) dsigma  =  int_0^1 f(Q(u)) du,</span>
+<span class="c1">#</span>
+<span class="c1"># with u = F(sigma) and Q = F^-1 the quantile function. The weight vanishes,</span>
+<span class="c1"># the interval becomes finite, and the tail of a heavy-tailed distribution is</span>
+<span class="c1"># compressed into u -&gt; 1 automatically. It needs only a quantile function --</span>
+<span class="c1"># no moments, no orthogonal polynomials, no high-precision arithmetic.</span>
+<span class="c1">#</span>
+<span class="c1"># WHY THIS IS AN ALTERNATIVE AND NOT THE DEFAULT. Measured against the exact</span>
+<span class="c1"># log-normal moments at the class counts the Ornstein-Zernike solve actually</span>
+<span class="c1"># uses:</span>
+<span class="c1">#</span>
+<span class="c1">#     s = 0.6, p = 3    Golub-Welsch &lt;R^6&gt; err 2e-16   quantile/log rules 8e-1</span>
+<span class="c1">#     s = 0.6, p = 7    Golub-Welsch &lt;R^6&gt; err 0e+00   quantile/log rules 7e-2</span>
+<span class="c1">#</span>
+<span class="c1"># Moment matching wins outright for p = 3..7, which is the whole point of</span>
+<span class="c1"># using it: the thermodynamics depends on the low-order moments and a p-point</span>
+<span class="c1"># Gaussian rule reproduces 2p-1 of them exactly. The quantile rules only</span>
+<span class="c1"># overtake at N &gt;~ 16, where Golub-Welsch has begun to suffer from its</span>
+<span class="c1"># ill-conditioning (it returned NaN at N &gt;= 32 in testing) but where nobody</span>
+<span class="c1"># runs an OZ solve.</span>
+<span class="c1">#</span>
+<span class="c1"># Nor does it help the FORM-FACTOR average, the other place a size quadrature</span>
+<span class="c1"># appears. There the integrand oscillates in sigma and no moment-based or</span>
+<span class="c1"># spectral rule converges quickly: log-space Gauss-Hermite was still 34 %</span>
+<span class="c1"># wrong on &lt;|F|^2&gt;(Q) at N = 128. That average needs dense sampling, which is</span>
+<span class="c1"># what nFF already does.</span>
+<span class="c1">#</span>
+<span class="c1"># So the quantile rule earns its place in two other ways:</span>
+<span class="c1">#</span>
+<span class="c1">#   1. as an INDEPENDENT CHECK on sizeClasses(), which is the kind of</span>
+<span class="c1">#      cross-validation that has found every serious defect in this project;</span>
+<span class="c1">#   2. as a cheap route for a NEW distribution -- anything with a ppf gets a</span>
+<span class="c1">#      working rule with no moment derivation and no mpmath.</span>
+
+
+<div class="viewcode-block" id="quantileFunction">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.quantileFunction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantileFunction</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Q(u) = F^-1(u) for each supported distribution, as a callable.</span>
+
+<span class="sd">    Conventions match analyticMoments(): mean diameter meanSigma, relative</span>
+<span class="sd">    standard deviation srel. Verified against the closed-form moments to</span>
+<span class="sd">    between 1e-16 and 1e-8 for Schulz, LogNormal and Weibull.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span><span class="p">,</span> <span class="n">gamma</span> <span class="k">as</span> <span class="n">gammadist</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"LogNormal"</span><span class="p">:</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">srel</span><span class="o">*</span><span class="n">srel</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">meanSigma</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">s2</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span><span class="o">*</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Gaussian"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">meanSigma</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">srel</span><span class="o">*</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Schulz"</span><span class="p">:</span>
+        <span class="c1">#Schulz/gamma with shape t+1 and unit mean before scaling.</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">srel</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">meanSigma</span><span class="o">*</span><span class="n">gammadist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Weibull"</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">_weibull_shape_from_cv</span><span class="p">(</span><span class="n">srel</span><span class="p">)</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="n">meanSigma</span><span class="o">/</span><span class="n">gammafn</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">lam</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">u</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">k</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Gamma"</span><span class="p">:</span>
+        <span class="c1">#A two-parameter gamma with mean meanSigma and relative width srel:</span>
+        <span class="c1">#shape a = 1/srel^2, scale = meanSigma*srel^2.</span>
+        <span class="c1">#</span>
+        <span class="c1">#NOT redundant with Schulz, despite Schulz being a gamma. The Schulz</span>
+        <span class="c1">#convention here fixes the shape as t+1 = 1/srel^2 and then divides</span>
+        <span class="c1">#by t+1, which pins the mean to meanSigma with the SAME parameter</span>
+        <span class="c1">#controlling both width and shape. Written directly, a and the scale</span>
+        <span class="c1">#are independent, and the tails differ from Schulz once srel is</span>
+        <span class="c1">#large -- which matters, since &lt;sigma^6&gt; governs I(Q -&gt; 0).</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">srel</span><span class="o">*</span><span class="n">srel</span><span class="p">)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">meanSigma</span><span class="o">*</span><span class="n">srel</span><span class="o">*</span><span class="n">srel</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="n">gammadist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s2">"Beta"</span><span class="p">:</span>
+        <span class="c1">#REACHABLE BUT NOT OFFERED: absent from DISTRIBUTIONS, and see the</span>
+        <span class="c1">#note there. Symmetric on (0, 2*meanSigma), so alpha = beta and</span>
+        <span class="c1">#    srel = 1/sqrt(2*alpha + 1),</span>
+        <span class="c1">#hence alpha = (1/srel^2 - 1)/2. Kept because it is correct as far</span>
+        <span class="c1">#as it goes and because a general Beta, when the quadrature can take</span>
+        <span class="c1">#per-distribution parameters, will start from here.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">beta</span> <span class="k">as</span> <span class="n">betadist</span>
+        <span class="k">if</span> <span class="n">srel</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">3.0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a symmetric Beta distribution on (0, 2*mean) cannot have "</span>
+                <span class="sa">f</span><span class="s2">"srel = </span><span class="si">{</span><span class="n">srel</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">; the limit is 1/sqrt(3) = 0.5774. Use "</span>
+                <span class="sa">f</span><span class="s2">"Schulz, Gamma or LogNormal for wider distributions."</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">srel</span><span class="o">*</span><span class="n">srel</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">u</span><span class="p">:</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">meanSigma</span><span class="o">*</span><span class="n">betadist</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown distribution </span><span class="si">{</span><span class="n">distribution</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="quantileClasses">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.quantileClasses">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">quantileClasses</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(sigma, x) from the quantile transform with a tanh-sinh rule.</span>
+
+<span class="sd">    Five distributions, listed in ``DISTRIBUTIONS``: Schulz, Gaussian,</span>
+<span class="sd">    LogNormal, Weibull and Gamma. All are parametrised by (mean, srel)</span>
+<span class="sd">    ALONE, which is what makes them mutually comparable -- at the same mean</span>
+<span class="sd">    and relative width they differ by up to 78 per cent in I(Q), because the</span>
+<span class="sd">    quadrature matches the moments of each but the TAILS differ and</span>
+<span class="sd">    &lt;sigma^6&gt; governs I(Q -&gt; 0). The distribution is therefore a real</span>
+<span class="sd">    fitting choice rather than a convention.</span>
+
+<span class="sd">    Gamma is not redundant with Schulz despite Schulz being a gamma: the</span>
+<span class="sd">    Schulz convention ties shape and width to one parameter, whereas here</span>
+<span class="sd">    the shape and scale are independent, and the tails part company once</span>
+<span class="sd">    srel is large.</span>
+
+<span class="sd">    Beta is implemented in ``_quantileFunction`` but deliberately absent</span>
+<span class="sd">    from ``DISTRIBUTIONS``. Pinned to (mean, srel) it can only be the</span>
+<span class="sd">    symmetric case on a fixed support (0, 2*mean), and the reason to want a</span>
+<span class="sd">    bounded distribution is precisely to place the bounds somewhere</span>
+<span class="sd">    meaningful -- (0.6R, 1.4R) for a sieved sample, say. Offering the one</span>
+<span class="sd">    Beta that cannot do that would be offering the name without the</span>
+<span class="sd">    capability. See ``sizeClasses`` for the moment-matched alternative.</span>
+
+<span class="sd">    Gaussian is the least trustworthy at large srel and is tested at a</span>
+<span class="sd">    looser tolerance for a stated reason: at 30 per cent width it puts real</span>
+<span class="sd">    weight below zero, and truncating shifts both moments. That is a</span>
+<span class="sd">    property of the distribution rather than a defect.</span>
+
+<span class="sd">    tanh-sinh (double exponential) rather than Gauss-Legendre, because the</span>
+<span class="sd">    transform moves the difficulty rather than removing it: Q(u)^k diverges</span>
+<span class="sd">    as u -&gt; 1 for a heavy tail, so the integrand has an ENDPOINT SINGULARITY</span>
+<span class="sd">    on [0, 1]. Gauss-Legendre converges only like 1/N there -- measured 8.8 %</span>
+<span class="sd">    error on the log-normal &lt;R^6&gt; at N = 128, s = 0.5 -- while tanh-sinh,</span>
+<span class="sd">    which is designed for exactly this, reached 1e-7 at N = 16.</span>
+
+<span class="sd">    `p` here is the half-count: the rule returns up to 2p+1 nodes, minus any</span>
+<span class="sd">    that underflow to u = 0 or 1. Unlike sizeClasses() this is NOT</span>
+<span class="sd">    moment-exact; it converges instead, so ask for more nodes than you would</span>
+<span class="sd">    classes.</span>
+
+<span class="sd">    Scale-adaptive by construction: a very narrow distribution needs no</span>
+<span class="sd">    special handling, because Q maps [0, 1] onto whatever range the</span>
+<span class="sd">    distribution occupies. There is no narrow/wide crossover to tune.</span>
+
+<span class="sd">    THE GAUSSIAN IS TRUNCATED, deliberately. A Gaussian has support below</span>
+<span class="sd">    sigma = 0, which is unphysical for a diameter, so those nodes are dropped</span>
+<span class="sd">    and the weights renormalised. The resulting moments therefore differ from</span>
+<span class="sd">    the UNtruncated closed-form values of analyticMoments() by roughly the</span>
+<span class="sd">    mass below zero -- measured 4.0e-4 at s = 0.3 and 2.7e-2 at s = 0.5,</span>
+<span class="sd">    against P(sigma &lt; 0) = 4.3e-4 and 2.3e-2. That is agreement, not error:</span>
+<span class="sd">    the same physical truncation the Gauss-Hermite small-node guard applies</span>
+<span class="sd">    in sizeClasses(). For the other three distributions, which have support</span>
+<span class="sd">    only on sigma &gt; 0, this rule agrees with the closed-form moments to</span>
+<span class="sd">    between 1e-16 and 1e-8.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">srel</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">meanSigma</span><span class="p">)]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">])</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">quantileFunction</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">level</span><span class="p">)</span><span class="o">/</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">h</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sinh</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cosh</span><span class="p">(</span><span class="n">g</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">h</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">u</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">Q</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="n">ok</span><span class="p">]),</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">sigma</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[</span><span class="n">good</span><span class="p">],</span> <span class="n">w</span><span class="p">[</span><span class="n">good</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">sigma</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"quantileClasses produced no usable nodes for "</span>
+                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">distribution</span><span class="si">}</span><span class="s2"> at srel=</span><span class="si">{</span><span class="n">srel</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">())[</span><span class="n">order</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="crossCheckMoments">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.polydisperse_nodes.crossCheckMoments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">crossCheckMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">nQuantile</span><span class="o">=</span><span class="mi">64</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Relative moment error of sizeClasses() against the quantile rule.</span>
+
+<span class="sd">    An INDEPENDENT check: the two routes share no machinery -- one builds</span>
+<span class="sd">    nodes from moments via a Hankel eigenproblem, the other evaluates a</span>
+<span class="sd">    quantile function on a tanh-sinh grid -- so agreement is meaningful.</span>
+
+<span class="sd">    Returns, for &lt;sigma^3&gt; and &lt;sigma^6&gt; (the moments governing I(Q -&gt; 0))::</span>
+
+<span class="sd">        analytic            sizeClasses vs the closed-form moments</span>
+<span class="sd">        quantile            sizeClasses vs the quantile rule</span>
+<span class="sd">        quantileVsAnalytic  the quantile rule vs the closed form, i.e. how</span>
+<span class="sd">                            much the reference itself can be trusted</span>
+
+<span class="sd">    Behaves as intended in testing: at p = 5 it confirms sizeClasses to</span>
+<span class="sd">    1e-16, and at p = 3 it reports the genuine truncation error (5.6e-3 for</span>
+<span class="sd">    Schulz, 1.3e-2 for LogNormal at s = 0.4) with the quantile and analytic</span>
+<span class="sd">    columns agreeing.</span>
+<span class="sd">    """</span>
+    <span class="n">sig</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">sizeClasses</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">sq</span><span class="p">,</span> <span class="n">wq</span> <span class="o">=</span> <span class="n">quantileClasses</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="n">nQuantile</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">exact</span> <span class="o">=</span> <span class="n">analyticMoments</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">srel</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="n">meanSigma</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
+        <span class="n">got</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">sig</span><span class="o">**</span><span class="n">k</span><span class="p">))</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wq</span><span class="o">*</span><span class="n">sq</span><span class="o">**</span><span class="n">k</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">[</span><span class="sa">f</span><span class="s2">"m</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">analytic</span><span class="o">=</span><span class="nb">abs</span><span class="p">(</span><span class="n">got</span><span class="o">/</span><span class="n">exact</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="n">exact</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span>
+            <span class="n">quantile</span><span class="o">=</span><span class="nb">abs</span><span class="p">(</span><span class="n">got</span><span class="o">/</span><span class="n">ref</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="n">ref</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">),</span>
+            <span class="n">quantileVsAnalytic</span><span class="o">=</span><span class="nb">abs</span><span class="p">(</span><span class="n">ref</span><span class="o">/</span><span class="n">exact</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="n">exact</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

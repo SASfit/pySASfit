@@ -1,0 +1,657 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyDENsity: API reference &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyDENSSmulti: API reference" href="../densitymulti/api.html" />
+    <link rel="prev" title="pyATsas: API reference" href="../atsas/api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api/index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core_api.html">Shared infrastructure (core)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sldprofile/api.html">SLD profile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../inversion/api/index.html">Size distribution / p(r)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../oz/api.html">Ornstein–Zernike</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../studio_api.html">studio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sasred/api.html">pySASred</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../toolbox/api.html">pyTOOLbox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scatter/api.html">pySCAtter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../seb/api.html">pySEBpolymers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../atsas/api.html">pyATsas</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">pyDENsity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.DenssError"><code class="docutils literal notranslate"><span class="pre">DenssError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.DenssInfo"><code class="docutils literal notranslate"><span class="pre">DenssInfo</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssInfo.python"><code class="docutils literal notranslate"><span class="pre">DenssInfo.python</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssInfo.version"><code class="docutils literal notranslate"><span class="pre">DenssInfo.version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssInfo.location"><code class="docutils literal notranslate"><span class="pre">DenssInfo.location</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.find_denss"><code class="docutils literal notranslate"><span class="pre">find_denss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.DenssResult"><code class="docutils literal notranslate"><span class="pre">DenssResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.rho"><code class="docutils literal notranslate"><span class="pre">DenssResult.rho</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.voxel"><code class="docutils literal notranslate"><span class="pre">DenssResult.voxel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.support"><code class="docutils literal notranslate"><span class="pre">DenssResult.support</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.fit_q"><code class="docutils literal notranslate"><span class="pre">DenssResult.fit_q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.fit_I"><code class="docutils literal notranslate"><span class="pre">DenssResult.fit_I</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.fit_err"><code class="docutils literal notranslate"><span class="pre">DenssResult.fit_err</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.fit_map"><code class="docutils literal notranslate"><span class="pre">DenssResult.fit_map</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.chi2"><code class="docutils literal notranslate"><span class="pre">DenssResult.chi2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.rg"><code class="docutils literal notranslate"><span class="pre">DenssResult.rg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.support_volume"><code class="docutils literal notranslate"><span class="pre">DenssResult.support_volume</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.steps"><code class="docutils literal notranslate"><span class="pre">DenssResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.stats"><code class="docutils literal notranslate"><span class="pre">DenssResult.stats</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.map_file"><code class="docutils literal notranslate"><span class="pre">DenssResult.map_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.workdir"><code class="docutils literal notranslate"><span class="pre">DenssResult.workdir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.log"><code class="docutils literal notranslate"><span class="pre">DenssResult.log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.run"><code class="docutils literal notranslate"><span class="pre">DenssResult.run</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.warnings"><code class="docutils literal notranslate"><span class="pre">DenssResult.warnings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssResult.dmax_nm"><code class="docutils literal notranslate"><span class="pre">DenssResult.dmax_nm</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult"><code class="docutils literal notranslate"><span class="pre">DenssAllResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.rho"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.rho</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.voxel"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.voxel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.map_file"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.map_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.maps"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.maps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.resolution"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.resolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.resolution_err"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.resolution_err</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.fsc"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.fsc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.rg_mean"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.rg_mean</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.rg_sd"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.rg_sd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.fit_q"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.fit_q</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.fit_I"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.fit_I</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.fit_err"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.fit_err</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.fit_map"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.fit_map</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.chi2"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.chi2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.workdir"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.workdir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.run"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.run</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.warnings"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.warnings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pysasfit.density.core.DenssAllResult.dmax_nm"><code class="docutils literal notranslate"><span class="pre">DenssAllResult.dmax_nm</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.run_denss"><code class="docutils literal notranslate"><span class="pre">run_denss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.run_denss_all"><code class="docutils literal notranslate"><span class="pre">run_denss_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.read_mrc"><code class="docutils literal notranslate"><span class="pre">read_mrc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.write_mrc"><code class="docutils literal notranslate"><span class="pre">write_mrc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.read_fit"><code class="docutils literal notranslate"><span class="pre">read_fit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.read_stats"><code class="docutils literal notranslate"><span class="pre">read_stats()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.isosurface"><code class="docutils literal notranslate"><span class="pre">isosurface()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.level_for_volume"><code class="docutils literal notranslate"><span class="pre">level_for_volume()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.SHIM"><code class="docutils literal notranslate"><span class="pre">SHIM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.sphere_curve"><code class="docutils literal notranslate"><span class="pre">sphere_curve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit.density.core.selftest"><code class="docutils literal notranslate"><span class="pre">selftest()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../densitymulti/api.html">pyDENSSmulti</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api/index.html">API reference</a></li>
+      <li class="breadcrumb-item active">pyDENsity: API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/density/api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pydensity-api-reference">
+<h1>pyDENsity: API reference<a class="headerlink" href="#pydensity-api-reference" title="Link to this heading"></a></h1>
+<p>Generated from the docstrings.</p>
+<p id="module-pysasfit.density.core">pyDENsity core: DENSS (DENsity from Solution Scattering, T. D. Grant, Nature Methods 15 (2018) 191) from pySASfit.</p>
+<p>DENSS reconstructs a low-resolution electron-density map on a grid directly from a SAXS/SANS curve (iterative
+structure factor retrieval with shrink-wrap support).  Unlike bead models it allows internal contrast and holes, and
+unlike spherical-harmonics envelopes it is not limited to star-shaped bodies.</p>
+<p>DENSS is <strong>not</strong> part of pySASfit: it is a separate GPL-3.0 package (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">denss</span></code>, pure Python, needs numpy
+and scipy).  pyDENsity runs it as a separate process (<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">denss.scripts...</span></code>) and reads the files it writes;
+no DENSS code is imported into pySASfit.</p>
+<blockquote>
+<div><p>from pysasfit.density import run_denss, run_denss_all
+r = run_denss((q_nm, I, dI), dmax_nm=10, mode=”FAST”)     # one map; r.rho, r.voxel, r.rg, r.chi2, r.fit_*
+a = run_denss_all((q_nm, I, dI), dmax_nm=10, nmaps=20, cores=4)   # 20 maps, aligned and averaged, FSC resolution</p>
+</div></blockquote>
+<p>Units: pySASfit curves have q in 1/nm; DENSS works in 1/Å and Å.  The data are written in 1/Å; results are given in
+Å (maps, Rg, volumes) as DENSS reports them, the fitted curve in 1/nm again.</p>
+<p>Compatibility: DENSS 1.8.7 (the current release) uses <code class="docutils literal notranslate"><span class="pre">np.in1d</span></code> and <code class="docutils literal notranslate"><span class="pre">np.trapz</span></code>, which NumPy 2.4 removed, and
+passes a one-element array to <code class="docutils literal notranslate"><span class="pre">struct.pack</span></code> when writing MRC maps (<code class="docutils literal notranslate"><span class="pre">denss.core.write_mrc</span></code>, re-exported as
+<code class="docutils literal notranslate"><span class="pre">denss.write_mrc</span></code>), which NumPy 2.x rejects.  The process is
+therefore started through a small shim (<a class="reference internal" href="#pysasfit.density.core.SHIM" title="pysasfit.density.core.SHIM"><code class="xref py py-data docutils literal notranslate"><span class="pre">SHIM</span></code></a>) that adds the two names (<code class="docutils literal notranslate"><span class="pre">np.isin</span></code>, <code class="docutils literal notranslate"><span class="pre">np.trapezoid</span></code>) and
+writes maps with a plain float box size, without changing the DENSS installation.  The same patches are the
+<code class="docutils literal notranslate"><span class="pre">sitecustomize</span></code> of every run (a <code class="docutils literal notranslate"><span class="pre">.pydensity</span></code> folder in the run folder, first on PYTHONPATH), so that the worker
+processes of <code class="docutils literal notranslate"><span class="pre">denss-all</span></code> get them too: multiprocessing starts them as fresh interpreters on Windows and macOS.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">DenssError</span></span><a class="reference internal" href="../_modules/pysasfit/density/core.html#DenssError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.DenssError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">DenssInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'str'</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#DenssInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.DenssInfo" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>python</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>location</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssInfo.python">
+<span class="sig-name descname"><span class="pre">python</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssInfo.python" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssInfo.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssInfo.version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssInfo.location">
+<span class="sig-name descname"><span class="pre">location</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssInfo.location" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.find_denss">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">find_denss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#find_denss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.find_denss" title="Link to this definition"></a></dt>
+<dd><p>The Python interpreter that can import <code class="docutils literal notranslate"><span class="pre">denss</span></code> (default: the one running pySASfit; else <code class="docutils literal notranslate"><span class="pre">python</span></code> /
+<code class="docutils literal notranslate"><span class="pre">python3</span></code> on the PATH, else the interpreter of a <code class="docutils literal notranslate"><span class="pre">denss</span></code> script on the PATH).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>python</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>refresh</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pysasfit.density.core.DenssInfo" title="pysasfit.density.core.DenssInfo"><em>DenssInfo</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">DenssResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[np.ndarray]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_I</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support_volume</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'int'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'tuple'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Path'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Path'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'dict'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'dict'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warnings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dmax_nm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#DenssResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.DenssResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rho</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>voxel</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>fit_q</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_I</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_err</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_map</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>chi2</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>rg</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>support_volume</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>stats</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a>)</p></li>
+<li><p><strong>map_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>workdir</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>log</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>run</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>warnings</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>dmax_nm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.rho">
+<span class="sig-name descname"><span class="pre">rho</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.rho" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.voxel">
+<span class="sig-name descname"><span class="pre">voxel</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.voxel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.support">
+<span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.support" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.fit_q">
+<span class="sig-name descname"><span class="pre">fit_q</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.fit_q" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.fit_I">
+<span class="sig-name descname"><span class="pre">fit_I</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.fit_I" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.fit_err">
+<span class="sig-name descname"><span class="pre">fit_err</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.fit_err" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.fit_map">
+<span class="sig-name descname"><span class="pre">fit_map</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.fit_map" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.chi2">
+<span class="sig-name descname"><span class="pre">chi2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.chi2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.rg">
+<span class="sig-name descname"><span class="pre">rg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.rg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.support_volume">
+<span class="sig-name descname"><span class="pre">support_volume</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.support_volume" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.steps">
+<span class="sig-name descname"><span class="pre">steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.steps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.stats">
+<span class="sig-name descname"><span class="pre">stats</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.stats" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.map_file">
+<span class="sig-name descname"><span class="pre">map_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.map_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.workdir">
+<span class="sig-name descname"><span class="pre">workdir</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.workdir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.log">
+<span class="sig-name descname"><span class="pre">log</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.log" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.warnings">
+<span class="sig-name descname"><span class="pre">warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.warnings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssResult.dmax_nm">
+<span class="sig-name descname"><span class="pre">dmax_nm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.density.core.DenssResult.dmax_nm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">DenssAllResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Path'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fsc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[np.ndarray]'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rg_mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rg_sd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_I</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_err</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'np.ndarray'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chi2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'float'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Path'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'dict'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warnings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'list'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dmax_nm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[float]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#DenssAllResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.DenssAllResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rho</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>voxel</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>map_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>maps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>resolution</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>resolution_err</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>fsc</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>rg_mean</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>rg_sd</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>fit_q</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_I</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_err</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>fit_map</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a>)</p></li>
+<li><p><strong>chi2</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>workdir</strong> (<a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><em>Path</em></a>)</p></li>
+<li><p><strong>run</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><em>dict</em></a>)</p></li>
+<li><p><strong>warnings</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a>)</p></li>
+<li><p><strong>dmax_nm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.rho">
+<span class="sig-name descname"><span class="pre">rho</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.rho" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.voxel">
+<span class="sig-name descname"><span class="pre">voxel</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.voxel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.map_file">
+<span class="sig-name descname"><span class="pre">map_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.map_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.maps">
+<span class="sig-name descname"><span class="pre">maps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.maps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.resolution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.resolution_err">
+<span class="sig-name descname"><span class="pre">resolution_err</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.resolution_err" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.fsc">
+<span class="sig-name descname"><span class="pre">fsc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.fsc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.rg_mean">
+<span class="sig-name descname"><span class="pre">rg_mean</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.rg_mean" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.rg_sd">
+<span class="sig-name descname"><span class="pre">rg_sd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.rg_sd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.fit_q">
+<span class="sig-name descname"><span class="pre">fit_q</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.fit_q" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.fit_I">
+<span class="sig-name descname"><span class="pre">fit_I</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.fit_I" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.fit_err">
+<span class="sig-name descname"><span class="pre">fit_err</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.fit_err" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.fit_map">
+<span class="sig-name descname"><span class="pre">fit_map</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><span class="pre">ndarray</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.fit_map" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.chi2">
+<span class="sig-name descname"><span class="pre">chi2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.chi2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.workdir">
+<span class="sig-name descname"><span class="pre">workdir</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><span class="pre">Path</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.workdir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.warnings">
+<span class="sig-name descname"><span class="pre">warnings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.warnings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pysasfit.density.core.DenssAllResult.dmax_nm">
+<span class="sig-name descname"><span class="pre">dmax_nm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pysasfit.density.core.DenssAllResult.dmax_nm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.run_denss">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">run_denss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dmax_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FAST'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'C'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ne</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cwd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">7200</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#run_denss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.run_denss" title="Link to this definition"></a></dt>
+<dd><p>One DENSS reconstruction (<code class="docutils literal notranslate"><span class="pre">denss</span></code>).  <code class="docutils literal notranslate"><span class="pre">data</span></code>: (q [1/nm], I, dI), or a file (GNOM <code class="docutils literal notranslate"><span class="pre">.out</span></code> or <code class="docutils literal notranslate"><span class="pre">.dat</span></code>, q
+in <code class="docutils literal notranslate"><span class="pre">units_in</span></code>).  <code class="docutils literal notranslate"><span class="pre">dmax_nm</span></code> None: taken from a GNOM file or estimated by DENSS (if DENSS’s estimate fails: 3.5 Guinier Rg, with a
+warning).  <code class="docutils literal notranslate"><span class="pre">voxel</span></code> in Å.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dmax_nm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>nsamples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>voxel</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>oversampling</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ncs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>ncs_axis</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>ncs_type</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ne</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>gpu</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+<li><p><strong>extra</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a>)</p></li>
+<li><p><strong>units_in</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>python</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pysasfit.density.core.DenssResult" title="pysasfit.density.core.DenssResult"><em>DenssResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.run_denss_all">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">run_denss_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dmax_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FAST'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enantiomers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oversampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncs_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'C'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ne</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cwd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">14400</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#run_denss_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.run_denss_all" title="Link to this definition"></a></dt>
+<dd><p>The full DENSS pipeline (<code class="docutils literal notranslate"><span class="pre">denss-all</span></code>): <code class="docutils literal notranslate"><span class="pre">nmaps</span></code> reconstructions, enantiomer selection, alignment,
+averaging and the resolution from the Fourier shell correlation between the maps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dmax_nm</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>nmaps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>cores</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>enantiomers</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+<li><p><strong>nsamples</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>voxel</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>oversampling</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ncs</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>ncs_axis</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>ncs_type</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>ne</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>gpu</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+<li><p><strong>extra</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><em>Sequence</em></a>)</p></li>
+<li><p><strong>units_in</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>python</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#pysasfit.density.core.DenssAllResult" title="pysasfit.density.core.DenssAllResult"><em>DenssAllResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.read_mrc">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">read_mrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#read_mrc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.read_mrc" title="Link to this definition"></a></dt>
+<dd><p>(rho with shape (nx, ny, nz), voxel size (Å, per axis), header dict) of an MRC/CCP4 map (mode 2, float32).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.write_mrc">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">write_mrc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#write_mrc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.write_mrc" title="Link to this definition"></a></dt>
+<dd><p>Minimal MRC writer (mode 2), compatible with <a class="reference internal" href="#pysasfit.density.core.read_mrc" title="pysasfit.density.core.read_mrc"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_mrc()</span></code></a> and DENSS / ChimeraX / PyMOL.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.read_fit">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">read_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#read_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.read_fit" title="Link to this definition"></a></dt>
+<dd><p>DENSS <code class="docutils literal notranslate"><span class="pre">*_map.fit</span></code>: q (1/Å), I_data, error, I_map and χ² from the header.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.read_stats">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">read_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#read_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.read_stats" title="Link to this definition"></a></dt>
+<dd><p>DENSS <code class="docutils literal notranslate"><span class="pre">*_stats_by_step.dat</span></code>: χ², Rg (Å; imaginary values early on → NaN), support volume (Å³) per step.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.isosurface">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">isosurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#isosurface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.isosurface" title="Link to this definition"></a></dt>
+<dd><p>(vertices in Å, faces) of the isosurface rho = level (scikit-image marching cubes if installed, else
+pyqtgraph’s).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.level_for_volume">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">level_for_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rho</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#level_for_volume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.level_for_volume" title="Link to this definition"></a></dt>
+<dd><p>Density level whose isosurface encloses about <code class="docutils literal notranslate"><span class="pre">volume</span></code> (Å³): between the n-th largest voxel value and the
+next lower distinct value, so that a surface exists also for maps with flat plateaus (supports, thresholded
+maps).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pysasfit.density.core.SHIM">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">SHIM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\nimport</span> <span class="pre">numpy</span> <span class="pre">as</span> <span class="pre">np\nif</span> <span class="pre">not</span> <span class="pre">hasattr(np,</span> <span class="pre">&quot;in1d&quot;):\n</span>&#160;&#160;&#160; <span class="pre">np.in1d</span> <span class="pre">=</span> <span class="pre">lambda</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">assume_unique=False,</span> <span class="pre">invert=False:</span> <span class="pre">np.isin(np.ravel(a),</span> <span class="pre">b,</span> <span class="pre">assume_unique=assume_unique,\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">invert=invert)\nif</span> <span class="pre">not</span> <span class="pre">hasattr(np,</span> <span class="pre">&quot;trapz&quot;):\n</span>&#160;&#160;&#160; <span class="pre">np.trapz</span> <span class="pre">=</span> <span class="pre">np.trapezoid\ntry:\n</span>&#160;&#160;&#160; <span class="pre">import</span> <span class="pre">denss</span> <span class="pre">as</span> <span class="pre">_d\n</span>&#160;&#160;&#160; <span class="pre">import</span> <span class="pre">denss.core</span> <span class="pre">as</span> <span class="pre">_dc\n</span>&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">not</span> <span class="pre">getattr(_dc.write_mrc,</span> <span class="pre">&quot;_pydensity&quot;,</span> <span class="pre">False):\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">_orig_write_mrc</span> <span class="pre">=</span> <span class="pre">_dc.write_mrc\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">def</span> <span class="pre">_write_mrc(rho,</span> <span class="pre">side,</span> <span class="pre">filename=&quot;map.mrc&quot;):\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">s</span> <span class="pre">=</span> <span class="pre">np.atleast_1d(np.asarray(side,</span> <span class="pre">float)).ravel()\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">s</span> <span class="pre">=</span> <span class="pre">(float(s[0]),)</span> <span class="pre">*</span> <span class="pre">3</span> <span class="pre">if</span> <span class="pre">len(s)</span> <span class="pre">==</span> <span class="pre">1</span> <span class="pre">else</span> <span class="pre">tuple(float(x)</span> <span class="pre">for</span> <span class="pre">x</span> <span class="pre">in</span> <span class="pre">s)\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">return</span> <span class="pre">_orig_write_mrc(rho,</span> <span class="pre">s,</span> <span class="pre">filename)\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">_write_mrc._pydensity</span> <span class="pre">=</span> <span class="pre">True\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">_dc.write_mrc</span> <span class="pre">=</span> <span class="pre">_write_mrc\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">getattr(_d,</span> <span class="pre">&quot;write_mrc&quot;,</span> <span class="pre">None)</span> <span class="pre">is</span> <span class="pre">_orig_write_mrc:</span>&#160;&#160;&#160;&#160; <span class="pre">#</span> <span class="pre">the</span> <span class="pre">package</span> <span class="pre">re-exports</span> <span class="pre">it</span> <span class="pre">(denss-all</span> <span class="pre">uses</span> <span class="pre">it)\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">_d.write_mrc</span> <span class="pre">=</span> <span class="pre">_write_mrc\nexcept</span> <span class="pre">Exception:\n</span>&#160;&#160;&#160; <span class="pre">pass\n\nimport</span> <span class="pre">runpy,</span> <span class="pre">sys\nmod</span> <span class="pre">=</span> <span class="pre">sys.argv[1]\nsys.argv</span> <span class="pre">=</span> <span class="pre">[mod]</span> <span class="pre">+</span> <span class="pre">sys.argv[2:]\nrunpy.run_module(mod,</span> <span class="pre">run_name=&quot;__main__&quot;,</span> <span class="pre">alter_sys=True)\n'</span></span><a class="headerlink" href="#pysasfit.density.core.SHIM" title="Link to this definition"></a></dt>
+<dd><p>the patches, then the DENSS script as __main__</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>started as <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">SHIM</span> <span class="pre">&lt;module&gt;</span> <span class="pre">&lt;args&gt;</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.sphere_curve">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">sphere_curve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#sphere_curve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.sphere_curve" title="Link to this definition"></a></dt>
+<dd><p>Homogeneous sphere, q in 1/nm from 0.3/R to 15/R (Rg = √(3/5) R).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pysasfit.density.core.selftest">
+<span class="sig-prename descclassname"><span class="pre">pysasfit.density.core.</span></span><span class="sig-name descname"><span class="pre">selftest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">python</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cwd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">print&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pysasfit/density/core.html#selftest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pysasfit.density.core.selftest" title="Link to this definition"></a></dt>
+<dd><p>One FAST map of a sphere R = 2 nm (Rg 15.49 Å); passes within 10 % (a single DENSS map is ~4 % large).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../atsas/api.html" class="btn btn-neutral float-left" title="pyATsas: API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../densitymulti/api.html" class="btn btn-neutral float-right" title="pyDENSSmulti: API reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

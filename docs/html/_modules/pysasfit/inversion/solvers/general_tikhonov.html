@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.general_tikhonov &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.general_tikhonov</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.general_tikhonov</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">General-form Tikhonov regularization: min ||A x - b||^2 + lambda^2 ||L x||^2</span>
+<span class="sd">for a non-square, rank-deficient L (e.g. our 2nd-derivative operator, which</span>
+<span class="sd">has a 2-dimensional null space -- constants and linear ramps -- since it's</span>
+<span class="sd">(n-2) x n).</span>
+
+<span class="sd">This is the gap flagged in svd_methods.py: standard-form Tikhonov (L=I) has</span>
+<span class="sd">no smoothness penalty and underperforms EM+smoothing on the synthetic</span>
+<span class="sd">sphere test (~0.89 vs ~0.996 correlation). This module closes that gap.</span>
+
+<span class="sd">Implemented via Hansen's std_form.m "method 1" (QR-based, not the full</span>
+<span class="sd">GSVD) -- read directly from regu.zip (the genuine Regularization Tools</span>
+<span class="sd">package, found 2026-09-23 in .../PerChristianHansen/regu.zip). Reference</span>
+<span class="sd">cited there: P. C. Hansen, "Rank-Deficient and Discrete Ill-Posed</span>
+<span class="sd">Problems", SIAM, 1997.</span>
+
+<span class="sd">The transform (for L with p &lt; n rows, i.e. a nontrivial null space of</span>
+<span class="sd">dimension n-p):</span>
+
+<span class="sd">  1. QR-factorize L^T = K R  (K is n x n orthogonal, R is n x p triangular).</span>
+<span class="sd">     K(:,1:p) spans the row space of L; K(:,p+1:n) spans the null space.</span>
+<span class="sd">  2. QR-factorize A @ K(:,p+1:n) = H T  (the action of A on L's null space).</span>
+<span class="sd">  3. L_p = K(:,1:p) @ inv(R)^T           -- maps the standard-form solution</span>
+<span class="sd">                                              back into the constrained part of x</span>
+<span class="sd">  4. A_s = H(:,n-p+1:m)^T @ A @ L_p      -- transformed, standard-form kernel</span>
+<span class="sd">     b_s = H(:,n-p+1:m)^T @ b</span>
+<span class="sd">  5. Solve standard-form Tikhonov on (A_s, b_s) for x_s (ordinary SVD filter</span>
+<span class="sd">     factors, reusing svd_methods.tikhonov).</span>
+<span class="sd">  6. Recover x = L_p @ x_s + d, where</span>
+<span class="sd">     d = K_null @ (T^-1 @ H(:,1:n-p)^T) @ (b - A @ L_p @ x_s)</span>
+
+<span class="sd">NOT yet cross-checked numerically against Hansen's actual tikhonov.m output</span>
+<span class="sd">on a shared test problem (I don't have a running MATLAB to generate a</span>
+<span class="sd">reference numerically) -- validated here only via the synthetic sphere</span>
+<span class="sd">sanity test and via each individual formula being copied directly from the</span>
+<span class="sd">source rather than reconstructed from memory.</span>
+
+<span class="sd">IMPLEMENTATION VERIFIED (2026-09-23): general_tikhonov's output matches a</span>
+<span class="sd">direct normal-equations solve (A^T A + lambda^2 L^T L) x = A^T b to 1e-11,</span>
+<span class="sd">and the penalized objective matches to machine precision -- the transform</span>
+<span class="sd">itself is exact.</span>
+
+<span class="sd">PERFORMANCE FINDING, not a bug: even at the best possible lambda (found by</span>
+<span class="sd">exhaustive scan), this 2nd-derivative-penalized Tikhonov tops out at ~0.86</span>
+<span class="sd">correlation on the single-Gaussian synthetic test and ~0.68 on the bimodal</span>
+<span class="sd">one -- both well below EM+smoothing's ~0.996. This is consistent with</span>
+<span class="sd">Fig. 5 of the JAC 2022 paper itself, where the Tikhonov-regularized volume</span>
+<span class="sd">distributions visibly oscillate more than the EM ones: plain L2 Tikhonov</span>
+<span class="sd">has no positivity constraint, so for a sharply-peaked or multi-modal</span>
+<span class="sd">non-negative distribution it can (and does) fit noise with unphysical</span>
+<span class="sd">negative excursions that EM's multiplicative, inherently-non-negative</span>
+<span class="sd">update structurally cannot produce. Don't read this as "general_tikhonov</span>
+<span class="sd">is broken" -- read it as "unconstrained L2 Tikhonov is a genuinely weaker</span>
+<span class="sd">method than EM for this class of problem," which is also what your own</span>
+<span class="sd">paper shows.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sla</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.svd_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_svd</span><span class="p">,</span> <span class="n">tikhonov</span> <span class="k">as</span> <span class="n">_standard_tikhonov</span><span class="p">,</span> <span class="n">tikhonov_filter_factors</span>
+
+
+<div class="viewcode-block" id="StandardFormTransform">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.general_tikhonov.StandardFormTransform">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StandardFormTransform</span><span class="p">:</span>
+    <span class="n">A_s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">b_s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">L_p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">K_null</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">M</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span></div>
+
+
+
+<div class="viewcode-block" id="std_form">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.general_tikhonov.std_form">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">std_form</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StandardFormTransform</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""QR-based general-to-standard-form transform (std_form.m, method 1)."""</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">np_</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">assert</span> <span class="n">np_</span> <span class="o">==</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"A and L must have the same number of columns"</span>
+    <span class="k">assert</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"This implementation assumes L has a nontrivial null space (p &lt; n); "</span> \
+                  <span class="s2">"use svd_methods.tikhonov directly if L is square/invertible"</span>
+
+    <span class="c1"># QR of L^T</span>
+    <span class="n">K</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="p">[:</span><span class="n">p</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">K_row</span> <span class="o">=</span> <span class="n">K</span><span class="p">[:,</span> <span class="p">:</span><span class="n">p</span><span class="p">]</span>     <span class="c1"># spans row space of L</span>
+    <span class="n">K_null</span> <span class="o">=</span> <span class="n">K</span><span class="p">[:,</span> <span class="n">p</span><span class="p">:]</span>    <span class="c1"># spans null space of L (n-p columns)</span>
+
+    <span class="c1"># QR of A @ K_null</span>
+    <span class="n">H</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">sla</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">K_null</span><span class="p">)</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">T</span><span class="p">[:</span> <span class="n">n</span> <span class="o">-</span> <span class="n">p</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">L_p</span> <span class="o">=</span> <span class="n">K_row</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">H</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">n</span> <span class="o">-</span> <span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="n">H_res</span> <span class="o">=</span> <span class="n">H</span><span class="p">[:,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">p</span> <span class="p">:]</span>  <span class="c1"># last (m-(n-p)) columns</span>
+    <span class="n">A_s</span> <span class="o">=</span> <span class="n">H_res</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span> <span class="o">@</span> <span class="n">L_p</span>
+    <span class="n">b_s</span> <span class="o">=</span> <span class="n">H_res</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">b</span>
+
+    <span class="k">return</span> <span class="n">StandardFormTransform</span><span class="p">(</span><span class="n">A_s</span><span class="o">=</span><span class="n">A_s</span><span class="p">,</span> <span class="n">b_s</span><span class="o">=</span><span class="n">b_s</span><span class="p">,</span> <span class="n">L_p</span><span class="o">=</span><span class="n">L_p</span><span class="p">,</span> <span class="n">K_null</span><span class="o">=</span><span class="n">K_null</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="recover_x">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.general_tikhonov.recover_x">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">recover_x</span><span class="p">(</span><span class="n">transform</span><span class="p">:</span> <span class="n">StandardFormTransform</span><span class="p">,</span> <span class="n">x_s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""x = L_p @ x_s + d, d = K_null @ M @ (b - A @ L_p @ x_s)."""</span>
+    <span class="n">residual</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">b</span> <span class="o">-</span> <span class="n">transform</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">L_p</span> <span class="o">@</span> <span class="n">x_s</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">K_null</span> <span class="o">@</span> <span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">M</span> <span class="o">@</span> <span class="n">residual</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">transform</span><span class="o">.</span><span class="n">L_p</span> <span class="o">@</span> <span class="n">x_s</span> <span class="o">+</span> <span class="n">d</span></div>
+
+
+
+<div class="viewcode-block" id="general_tikhonov">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.general_tikhonov.general_tikhonov">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">general_tikhonov</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Solve general-form Tikhonov min ||Ax-b||^2 + lambda^2||Lx||^2 via the</span>
+<span class="sd">    QR standard-form transform + ordinary SVD filter factors.</span>
+<span class="sd">    """</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">std_form</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">svd_s</span> <span class="o">=</span> <span class="n">compute_svd</span><span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">A_s</span><span class="p">)</span>
+    <span class="n">x_s</span> <span class="o">=</span> <span class="n">_standard_tikhonov</span><span class="p">(</span><span class="n">svd_s</span><span class="p">,</span> <span class="n">transform</span><span class="o">.</span><span class="n">b_s</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">recover_x</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="n">x_s</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="general_tikhonov_gcv">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.general_tikhonov.general_tikhonov_gcv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">general_tikhonov_gcv</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">L</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    GCV-select lambda for the general-form problem, using the same GCV</span>
+<span class="sd">    formula (eq. 2.62-2.63) applied in the transformed standard-form space</span>
+<span class="sd">    -- valid because the transform is exact and A_s/b_s are the genuine</span>
+<span class="sd">    standard-form representation of the same problem.</span>
+<span class="sd">    """</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">std_form</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">svd_s</span> <span class="o">=</span> <span class="n">compute_svd</span><span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">A_s</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">gcv</span><span class="p">(</span><span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">tikhonov_filter_factors</span><span class="p">(</span><span class="n">svd_s</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+        <span class="n">x_s</span> <span class="o">=</span> <span class="n">_standard_tikhonov</span><span class="p">(</span><span class="n">svd_s</span><span class="p">,</span> <span class="n">transform</span><span class="o">.</span><span class="n">b_s</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+        <span class="n">Ax_s</span> <span class="o">=</span> <span class="n">svd_s</span><span class="o">.</span><span class="n">U</span> <span class="o">@</span> <span class="p">(</span><span class="n">svd_s</span><span class="o">.</span><span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="n">svd_s</span><span class="o">.</span><span class="n">Vt</span> <span class="o">@</span> <span class="n">x_s</span><span class="p">))</span>
+        <span class="n">residual_norm2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">Ax_s</span> <span class="o">-</span> <span class="n">transform</span><span class="o">.</span><span class="n">b_s</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span><span class="n">svd_s</span><span class="o">.</span><span class="n">m</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">residual_norm2</span> <span class="o">/</span> <span class="n">denom</span> <span class="k">if</span> <span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+    <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gcv</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span> <span class="k">for</span> <span class="n">lam</span> <span class="ow">in</span> <span class="n">lam_grid</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">lam_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">g</span><span class="p">)]),</span> <span class="n">g</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

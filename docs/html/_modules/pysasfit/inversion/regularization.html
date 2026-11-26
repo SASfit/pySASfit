@@ -1,0 +1,398 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.regularization &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.regularization</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.regularization</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Regularization operators L for the penalty term ||L x||^2 in</span>
+
+<span class="sd">    chi^2 = ||b - A x||_w^2 + lambda^2 ||L x||^2</span>
+
+<span class="sd">These are standard finite-difference operators (Donatelli &amp; Reichel, 2014,</span>
+<span class="sd">as cited in the SASfit JAC 2022 paper). The C code (sasfit_extrapol.c)</span>
+<span class="sd">implements 9 boundary-condition variants; this starts with the three most</span>
+<span class="sd">common ones (identity, 1st derivative, 2nd derivative with free/natural</span>
+<span class="sd">boundaries). The remaining Dirichlet/Neumann boundary combinations from the</span>
+<span class="sd">C code can be added once we've confirmed exactly which ones the existing</span>
+<span class="sd">SASfit fits actually rely on -- no point guessing boundary conventions that</span>
+<span class="sd">won't be exercised.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sp</span>
+
+
+<div class="viewcode-block" id="identity_operator">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.identity_operator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">identity_operator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sp</span><span class="o">.</span><span class="n">spmatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""L = I. Penalizes the magnitude of the solution itself."""</span>
+    <span class="k">return</span> <span class="n">sp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"csr"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="first_derivative_operator">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.first_derivative_operator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">first_derivative_operator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sp</span><span class="o">.</span><span class="n">spmatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Discrete first-derivative operator, (n-1) x n, free boundary</span>
+<span class="sd">    (no assumption about the derivative at the endpoints).</span>
+
+<span class="sd">        (Lx)_i = x_{i+1} - x_i</span>
+<span class="sd">    """</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">([</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">offsets</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">L</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="second_derivative_operator">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.second_derivative_operator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">second_derivative_operator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sp</span><span class="o">.</span><span class="n">spmatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Discrete second-derivative operator, (n-2) x n, free boundary.</span>
+
+<span class="sd">        (Lx)_i = x_{i+1} - 2 x_i + x_{i-1}</span>
+<span class="sd">    """</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)],</span>
+        <span class="n">offsets</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">L</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="hansen_smoothness_cholesky">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.hansen_smoothness_cholesky">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hansen_smoothness_cholesky</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Cholesky factor L (n x n, dense) such that L^T L = A_hansen, where</span>
+<span class="sd">    A_hansen is the smoothness-regularization Hessian of Hansen (2000),</span>
+<span class="sd">    J. Appl. Cryst. 33, 1415-1421, eq. 19::</span>
+
+<span class="sd">        S = sum_{j=2}^{N-1} [f_j - (f_{j-1}+f_{j+1})/2]^2 + (1/2) f_1^2 + (1/2) f_N^2</span>
+
+<span class="sd">    which Hansen states (text following eq. 19) works out to the matrix::</span>
+
+<span class="sd">        a_ij = 1        for i == j</span>
+<span class="sd">        a_ij = -1/2      for |i - j| == 1</span>
+<span class="sd">        a_ij = 0         otherwise</span>
+
+<span class="sd">    with det(A_hansen) = (1/2)^N (N+1) -- i.e. NONZERO, so A_hansen is</span>
+<span class="sd">    full rank, unlike `second_derivative_operator` above (which has a</span>
+<span class="sd">    2-dimensional null space: constants and linear ramps).</span>
+
+<span class="sd">    WHY THIS MATTERS (found 2026-10-05 debugging the signed j0-kernel PDDF</span>
+<span class="sd">    inversion on real data, chi2_r stuck at ~500-600 for any smoothing</span>
+<span class="sd">    strength no matter how tuned): `second_derivative_operator`'s penalty</span>
+<span class="sd">    is a pure curvature/roughness penalty with NO constraint at all on the</span>
+<span class="sd">    endpoints' absolute values, so the regularized problem inherits two</span>
+<span class="sd">    completely free directions (any constant offset, any linear ramp</span>
+<span class="sd">    added to the solution leaves the penalty unchanged). Combined with a</span>
+<span class="sd">    kernel matrix that is itself extremely ill-conditioned (~1e16 for the</span>
+<span class="sd">    j0/PDDF kernel on a 91-point/150-r-point real-data grid), those two</span>
+<span class="sd">    free directions are enough to make GCV- or L-curve-selected lambda</span>
+<span class="sd">    choose a wildly undersmoothed, highly oscillatory solution no matter</span>
+<span class="sd">    what the target chi2_r is.</span>
+
+<span class="sd">    Hansen's regularizer fixes this NOT by introducing basis functions</span>
+<span class="sd">    (the number-of-basis-functions restriction of Glatter's original 1977</span>
+<span class="sd">    method is exactly what Hansen's introduction calls obsolete once</span>
+<span class="sd">    Steenstrup's (1985) algorithm allows ~1000 direct point values) but by</span>
+<span class="sd">    adding the explicit boundary assumption p(0) = p(Dmax) = 0 directly</span>
+<span class="sd">    into the regularization functional (the added (1/2)f_1^2 + (1/2)f_N^2</span>
+<span class="sd">    terms, which is exactly the assumption that p(r) vanishes just outside</span>
+<span class="sd">    the endpoints). This removes the 2-dimensional null space and</span>
+<span class="sd">    dramatically improves conditioning -- a real physical assumption (the</span>
+<span class="sd">    pair-distance/size distribution genuinely must vanish at r=0 and at</span>
+<span class="sd">    the true maximum dimension), not an arbitrary numerical trick.</span>
+
+<span class="sd">    Usage: pass this L straight into bayesian_evidence.log_evidence /</span>
+<span class="sd">    evidence_search in place of second_derivative_operator(n) -- that</span>
+<span class="sd">    module already treats L generically (S = p^T L^T L p), so no changes</span>
+<span class="sd">    are needed there, only which L is supplied.</span>
+<span class="sd">    """</span>
+    <span class="n">A_hansen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">A_hansen</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">A_hansen</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+    <span class="n">A_hansen</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span>
+
+    <span class="c1"># Sanity check against Hansen's own stated closed-form determinant --</span>
+    <span class="c1"># if this ever fails, the matrix above no longer matches eq. 19.</span>
+    <span class="n">expected_log_det</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">sign</span><span class="p">,</span> <span class="n">actual_log_det</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">A_hansen</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">sign</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"A_hansen should be positive definite (Hansen's own result)"</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">actual_log_det</span> <span class="o">-</span> <span class="n">expected_log_det</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">expected_log_det</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"A_hansen determinant mismatch vs Hansen (2000) eq. 19: "</span>
+        <span class="sa">f</span><span class="s2">"got log|det|=</span><span class="si">{</span><span class="n">actual_log_det</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected_log_det</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">A_hansen</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># upper-triangular L with L^T L = A_hansen</span></div>
+
+
+
+<div class="viewcode-block" id="hann_taper">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.hann_taper">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hann_taper</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">r_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">taper_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Weight w(r) in [0,1]: 1 in the interior, smoothly (raised-cosine /</span>
+<span class="sd">    Hann-style) tapering to 0 over the last taper_frac of [0, r_max].</span>
+<span class="sd">    Reparametrizing p(r) = w(r) * p_free(r) and solving for p_free (plain,</span>
+<span class="sd">    unconstrained smoothness, no special boundary knot) replaces Hansen</span>
+<span class="sd">    (2000)'s HARD p(Dmax)=0 boundary condition with a soft, gradual decay.</span>
+
+<span class="sd">    Motivation: Hansen's hard boundary is mathematically a sharp edge in</span>
+<span class="sd">    r-space. p(r) and I(q) are related by (essentially) a Fourier sine</span>
+<span class="sd">    transform, and a sharp edge/discontinuity in one domain convolves the</span>
+<span class="sd">    conjugate domain's transform with a sinc function -- i.e. a hard</span>
+<span class="sd">    r=Dmax cutoff is expected to leak oscillatory "ringing" into I(q)</span>
+<span class="sd">    with slowly-decaying (~1/q) sidelobes that persist out to high q,</span>
+<span class="sd">    wherever the edge sits (confirmed empirically: diagnose_hansen_dmax_scan.py</span>
+<span class="sd">    and diagnose_hansen_nr_scan.py both found the real-data high-q</span>
+<span class="sd">    noise-tracking essentially unchanged across Dmax/n_r/r_min). A</span>
+<span class="sd">    gradual (Hann) rolloff instead of a sharp edge is the standard</span>
+<span class="sd">    apodization/windowing fix for this kind of truncation ringing in</span>
+<span class="sd">    signal processing.</span>
+
+<span class="sd">    Validated on a synthetic sphere test (known ground truth, 5 independent</span>
+<span class="sd">    noise draws, 2026-10-07): the Hann-tapered reconstruction had LOWER</span>
+<span class="sd">    RMSE against the true p(r) than Hansen's hard boundary in every single</span>
+<span class="sd">    trial (e.g. 0.023-0.041 vs 0.036-0.057), and matched the true</span>
+<span class="sd">    solution's smoothness (sum-of-squared-second-differences roughness)</span>
+<span class="sd">    far more closely (closer to the true curve's own roughness by a factor</span>
+<span class="sd">    of ~5, vs the hard boundary's solution being ~7x rougher than truth).</span>
+<span class="sd">    High-q chi2 contribution was also consistently, if modestly, closer to</span>
+<span class="sd">    1 (less overfit) under tapering in every trial. Caveat: that synthetic</span>
+<span class="sd">    test (a smooth, textbook homogeneous-sphere PDDF) did not reproduce</span>
+<span class="sd">    the SEVERITY of the real test.dat high-q pathology (chi2 contribution</span>
+<span class="sd">    ~0.02 there vs ~0.5-1.2 in the synthetic test), so this validates the</span>
+<span class="sd">    mechanism and direction, not a guarantee of fully closing that gap on</span>
+<span class="sd">    real data -- see tests/diagnose_hansen_tapered.py for the real-data</span>
+<span class="sd">    comparison.</span>
+
+<span class="sd">    taper_frac=0.25 (the last quarter of the r-range) is a reasonable</span>
+<span class="sd">    default, not independently tuned; a shorter/longer taper trades off</span>
+<span class="sd">    how much of the resolved r-range is affected vs how gradual the edge</span>
+<span class="sd">    is.</span>
+<span class="sd">    """</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">edge_start</span> <span class="o">=</span> <span class="n">r_max</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">taper_frac</span><span class="p">)</span>
+    <span class="n">in_taper</span> <span class="o">=</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">edge_start</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">r_max</span> <span class="o">-</span> <span class="n">edge_start</span>
+    <span class="k">if</span> <span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">in_taper</span><span class="p">]</span> <span class="o">-</span> <span class="n">edge_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">w</span><span class="p">[</span><span class="n">in_taper</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">w</span><span class="p">[</span><span class="n">r</span> <span class="o">&gt;</span> <span class="n">r_max</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">w</span></div>
+
+
+
+<div class="viewcode-block" id="hansen_smoothness_two_segment">
+<a class="viewcode-back" href="../../../inversion/api/pysasfit.inversion.html#pysasfit.inversion.regularization.hansen_smoothness_two_segment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hansen_smoothness_two_segment</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">split_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Split Hansen (2000)'s boundary-constrained smoothness penalty into two</span>
+<span class="sd">    additive pieces by r-index, enabling a two-hyperparameter extension</span>
+<span class="sd">    (lambda_lo for r-indices below split_idx, lambda_hi above) of his</span>
+<span class="sd">    single-global-lambda method -- implemented here because an empirical</span>
+<span class="sd">    investigation (tests/diagnose_hansen_lambda_balance.py,</span>
+<span class="sd">    diagnose_hansen_dmax_scan.py, diagnose_hansen_nr_scan.py, all run on</span>
+<span class="sd">    real data, 2026-10-06) showed that no single global lambda, at any</span>
+<span class="sd">    Dmax, n_r, or r_min, can simultaneously give a well-sized fit (chi2</span>
+<span class="sd">    contribution ~1) in both the low/mid-q region and the high-q region:</span>
+<span class="sd">    the high-q Debye/sinc kernel lets small, cheap wiggles in p(r) fit</span>
+<span class="sd">    noise there almost for free under any uniform smoothing strength.</span>
+
+<span class="sd">    Derivation: Hansen's penalty (his eq. 19) is::</span>
+
+<span class="sd">        S(p) = (1/2) sum_{i=0}^{n-2} (p_i - p_{i+1})^2</span>
+<span class="sd">               + (1/2) p_0^2 + (1/2) p_{n-1}^2</span>
+
+<span class="sd">    which expands to the p^T A p form implemented in</span>
+<span class="sd">    hansen_smoothness_cholesky (diag=1, off-diag=-1/2). Crucially, S(p) is</span>
+<span class="sd">    a SUM of independent local terms -- one per consecutive pair, plus the</span>
+<span class="sd">    two boundary terms -- so it can be partitioned by index with no</span>
+<span class="sd">    approximation::</span>
+
+<span class="sd">        A_lo = sum_{i=0}^{split_idx-1} (1/2) C_i  +  (1/2) e_0 e_0^T</span>
+<span class="sd">        A_hi = sum_{i=split_idx}^{n-2} (1/2) C_i  +  (1/2) e_{n-1} e_{n-1}^T</span>
+
+<span class="sd">    where C_i is the rank-2 matrix representing (p_i - p_{i+1})^2. By</span>
+<span class="sd">    construction A_lo + A_hi == hansen_smoothness_cholesky(n)'s full</span>
+<span class="sd">    A_hansen exactly (verified below), so a two-lambda penalty</span>
+<span class="sd">    lam_lo * p^T A_lo p + lam_hi * p^T A_hi p reduces exactly to Hansen's</span>
+<span class="sd">    original single-lambda penalty when lam_lo == lam_hi.</span>
+
+<span class="sd">    Returns (A_lo, A_hi, n_lo_terms, n_hi_terms) where n_lo_terms =</span>
+<span class="sd">    split_idx and n_hi_terms = n-1-split_idx are the counts of</span>
+<span class="sd">    consecutive-difference terms assigned to each segment (n_lo_terms +</span>
+<span class="sd">    n_hi_terms == n-1 always) -- used as the log(lambda) prefactor</span>
+<span class="sd">    exponents in the generalized evidence formula (see</span>
+<span class="sd">    solvers/bayesian_evidence.py's log_evidence_blocks), chosen</span>
+<span class="sd">    specifically so that the two-term prefactor</span>
+<span class="sd">    0.5*n_lo_terms*log(lam_lo) + 0.5*n_hi_terms*log(lam_hi) collapses</span>
+<span class="sd">    exactly to Vestergaard &amp; Hansen (2006) eq. 6's 0.5*(N-1)*log(lam) term</span>
+<span class="sd">    when lam_lo == lam_hi == lam.</span>
+
+<span class="sd">    split_idx must be in [1, n-2] (each segment needs at least one</span>
+<span class="sd">    difference term).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">split_idx</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"split_idx must be in [1, </span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2">], got </span><span class="si">{</span><span class="n">split_idx</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">A_lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">A_hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">A_lo</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">split_idx</span> <span class="k">else</span> <span class="n">A_hi</span>
+        <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+        <span class="n">target</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+        <span class="n">target</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="o">-</span><span class="mf">0.5</span>
+        <span class="n">target</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="o">-</span><span class="mf">0.5</span>
+
+    <span class="n">A_lo</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+    <span class="n">A_hi</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span>
+
+    <span class="n">n_lo_terms</span> <span class="o">=</span> <span class="n">split_idx</span>
+    <span class="n">n_hi_terms</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">split_idx</span>
+
+    <span class="c1"># Sanity check: the split must reconstruct the original operator</span>
+    <span class="c1"># exactly (not approximately) -- this is an algebraic identity, not a</span>
+    <span class="c1"># numerical approximation, so use a tight tolerance.</span>
+    <span class="n">L_full_check</span> <span class="o">=</span> <span class="n">hansen_smoothness_cholesky</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">A_full_check</span> <span class="o">=</span> <span class="n">L_full_check</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">L_full_check</span>
+    <span class="n">recombined</span> <span class="o">=</span> <span class="n">A_lo</span> <span class="o">+</span> <span class="n">A_hi</span>
+    <span class="n">max_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">recombined</span> <span class="o">-</span> <span class="n">A_full_check</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">max_err</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"hansen_smoothness_two_segment: A_lo+A_hi should exactly equal the "</span>
+        <span class="sa">f</span><span class="s2">"full Hansen operator, max diff=</span><span class="si">{</span><span class="n">max_err</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">A_lo</span><span class="p">,</span> <span class="n">A_hi</span><span class="p">,</span> <span class="n">n_lo_terms</span><span class="p">,</span> <span class="n">n_hi_terms</span></div>
+
+
+
+<span class="n">OPERATORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"identity"</span><span class="p">:</span> <span class="n">identity_operator</span><span class="p">,</span>
+    <span class="s2">"first_derivative"</span><span class="p">:</span> <span class="n">first_derivative_operator</span><span class="p">,</span>
+    <span class="s2">"second_derivative"</span><span class="p">:</span> <span class="n">second_derivative_operator</span><span class="p">,</span>
+    <span class="s2">"hansen_smoothness"</span><span class="p">:</span> <span class="n">hansen_smoothness_cholesky</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

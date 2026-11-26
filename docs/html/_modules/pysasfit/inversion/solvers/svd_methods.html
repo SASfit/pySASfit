@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.inversion.solvers.svd_methods &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/pySASfit.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.inversion.solvers.svd_methods</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.inversion.solvers.svd_methods</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">SVD-based regularization methods: Truncated SVD (TSVD) and Tikhonov</span>
+<span class="sd">regularization via filter factors, plus Generalized Cross-Validation (GCV)</span>
+<span class="sd">for automatic parameter selection.</span>
+
+<span class="sd">Source: P. C. Hansen, "Regularization Tools: A Matlab package for analysis</span>
+<span class="sd">and solution of discrete ill-posed problems", Numerical Algorithms 6</span>
+<span class="sd">(1994) and the Version 4.1 manual (RTv4manual.pdf), fetched directly from</span>
+<span class="sd">https://people.compute.dtu.dk/pcha/Regutools/ on 2026-09-23. I could not</span>
+<span class="sd">get the actual .m source (MathWorks File Exchange requires a login to</span>
+<span class="sd">download), so these are implemented directly from the manual's equations,</span>
+<span class="sd">not transliterated from Hansen's code -- cited equation numbers refer to</span>
+<span class="sd">that manual.</span>
+
+<span class="sd">For L = I (standard form, which is what's implemented here -- general-form</span>
+<span class="sd">L needs the GSVD, eq. 2.11 in the manual, not yet implemented)::</span>
+
+<span class="sd">  SVD:            A = U diag(s) V^T                          (manual notation)</span>
+<span class="sd">  TSVD (eq 2.45): x_k = sum_{i=1}^k (u_i^T b / s_i) v_i</span>
+<span class="sd">  Tikhonov (eq 2.18, filter factors eq 2.49):</span>
+<span class="sd">                  x_lambda = sum_i f_i (u_i^T b / s_i) v_i,   f_i = s_i^2/(s_i^2+lambda^2)</span>
+<span class="sd">  GCV (eq 2.62-2.63):</span>
+<span class="sd">                  G(param) = ||A x_reg - b||^2 / (m - sum_i f_i)^2</span>
+<span class="sd">                  minimize over param (k for TSVD, lambda for Tikhonov)</span>
+
+<span class="sd">CROSS-CHECKED 2026-09-23 against actual source: found Hansen's real IRtools</span>
+<span class="sd">package (via .../PerChristianHansen/IRtools-master.zip) and its</span>
+<span class="sd">Extra/TikGCV.m (J. Chung &amp; J. Nagy 2007, updated S. Gazzola 2017). Its</span>
+<span class="sd">denominator (m1 - m2 + sum(1 - f_i))^2 reduces, for our M&gt;=N standard-form</span>
+<span class="sd">case, to exactly (M - sum f_i)^2 -- matching gcv_function_tikhonov below</span>
+<span class="sd">independently derived from the manual. Good agreement between the two</span>
+<span class="sd">sources. (Note: tikhonov.zip in the same folder turned out NOT to be</span>
+<span class="sd">Hansen's actual tikhonov.m -- it's an unrelated small demo script using a</span>
+<span class="sd">different lambda convention (s^2/(s^2+lambda) rather than</span>
+<span class="sd">s^2/(s^2+lambda^2)) -- flagging so it isn't mistaken for validated source.)</span>
+
+<span class="sd">These give an independent, literature-grounded alternative to the</span>
+<span class="sd">DR_linReg-reverse-engineered path, and are the natural place to plug in</span>
+<span class="sd">GCV as a fourth lambda-selection criterion alongside the L-curve and</span>
+<span class="sd">discrepancy-principle searches already in lambda_search.py.</span>
+
+<span class="sd">STATUS: only standard-form (L = identity) is implemented here, so there's</span>
+<span class="sd">no smoothness penalty -- eq. 2.45/2.49 as written use L=I. On the</span>
+<span class="sd">synthetic sphere test this gets ~0.85-0.89 correlation to the truth,</span>
+<span class="sd">noticeably worse than EM+smoothing's 0.996, precisely because it lacks a</span>
+<span class="sd">derivative-based penalty. Hansen's general-form treatment (L = 2nd-</span>
+<span class="sd">derivative operator, manual section 2.6, via the GSVD of the pair (A,L),</span>
+<span class="sd">eq. 2.11) is what would close that gap and is the fairer comparison to</span>
+<span class="sd">SASfit's own lin_Reg -- not implemented here yet; the GSVD is a real</span>
+<span class="sd">additional piece of numerical machinery, not a small extension of this</span>
+<span class="sd">module.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="SVDSystem">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.SVDSystem">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SVDSystem</span><span class="p">:</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (M, r)</span>
+    <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (r,) singular values, descending</span>
+    <span class="n">Vt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># (r, N)</span>
+    <span class="n">m</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="compute_svd">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.compute_svd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_svd</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SVDSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hansen's csvd: compact SVD, A = U diag(s) V^T."""</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SVDSystem</span><span class="p">(</span><span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">Vt</span><span class="o">=</span><span class="n">Vt</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="tsvd">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.tsvd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tsvd</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Truncated SVD solution, eq. 2.45: x_k = sum_{i=1}^k (u_i^T b / s_i) v_i."""</span>
+    <span class="n">coeffs</span> <span class="o">=</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">svd</span><span class="o">.</span><span class="n">s</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">svd</span><span class="o">.</span><span class="n">Vt</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">coeffs</span></div>
+
+
+
+<div class="viewcode-block" id="tikhonov_filter_factors">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.tikhonov_filter_factors">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tikhonov_filter_factors</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Tikhonov filter factors, eq. 2.49: f_i = s_i^2 / (s_i^2 + lambda^2)."""</span>
+    <span class="k">return</span> <span class="n">s</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">lam</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="tikhonov">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.tikhonov">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tikhonov</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Tikhonov solution via filter factors, eq. 2.18."""</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">tikhonov_filter_factors</span><span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="n">coeffs</span> <span class="o">=</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">svd</span><span class="o">.</span><span class="n">s</span>
+    <span class="k">return</span> <span class="n">svd</span><span class="o">.</span><span class="n">Vt</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">coeffs</span></div>
+
+
+
+<div class="viewcode-block" id="gcv_function_tikhonov">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.gcv_function_tikhonov">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gcv_function_tikhonov</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    GCV function for Tikhonov, eq. 2.62 evaluated via the filter-factor</span>
+<span class="sd">    shortcut eq. 2.63: trace(I - A A_I) = m - (n-p) - sum_i f_i, with p=0</span>
+<span class="sd">    (L=I, no null-space component) so it simplifies to m - sum_i f_i.</span>
+<span class="sd">    """</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">tikhonov_filter_factors</span><span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tikhonov</span><span class="p">(</span><span class="n">svd</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+    <span class="n">Ax</span> <span class="o">=</span> <span class="n">svd</span><span class="o">.</span><span class="n">U</span> <span class="o">@</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">Vt</span> <span class="o">@</span> <span class="n">x</span><span class="p">))</span>
+    <span class="n">residual_norm2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">Ax</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">m</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">residual_norm2</span> <span class="o">/</span> <span class="n">denom</span> <span class="k">if</span> <span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span></div>
+
+
+
+<div class="viewcode-block" id="gcv_function_tsvd">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.gcv_function_tsvd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gcv_function_tsvd</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""GCV function for TSVD: same eq. 2.62, with f_i = 1 for i&lt;=k, 0 otherwise."""</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tsvd</span><span class="p">(</span><span class="n">svd</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">Ax</span> <span class="o">=</span> <span class="n">svd</span><span class="o">.</span><span class="n">U</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">@</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">Vt</span> <span class="o">@</span> <span class="n">x</span><span class="p">))</span>
+    <span class="n">residual_norm2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">Ax</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span><span class="n">svd</span><span class="o">.</span><span class="n">m</span> <span class="o">-</span> <span class="n">k</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">residual_norm2</span> <span class="o">/</span> <span class="n">denom</span> <span class="k">if</span> <span class="n">denom</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span></div>
+
+
+
+<div class="viewcode-block" id="gcv_select_tikhonov">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.gcv_select_tikhonov">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gcv_select_tikhonov</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">lam_grid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Pick the lambda in lam_grid minimizing the GCV function."""</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gcv_function_tikhonov</span><span class="p">(</span><span class="n">svd</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span> <span class="k">for</span> <span class="n">lam</span> <span class="ow">in</span> <span class="n">lam_grid</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">lam_grid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">g</span><span class="p">)]),</span> <span class="n">g</span></div>
+
+
+
+<div class="viewcode-block" id="gcv_select_tsvd">
+<a class="viewcode-back" href="../../../../inversion/api/pysasfit.inversion.solvers.html#pysasfit.inversion.solvers.svd_methods.gcv_select_tsvd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gcv_select_tsvd</span><span class="p">(</span><span class="n">svd</span><span class="p">:</span> <span class="n">SVDSystem</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">k_max</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Pick the truncation k in [1, k_max] minimizing the GCV function."""</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">k_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">gcv_function_tsvd</span><span class="p">(</span><span class="n">svd</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">ks</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">g</span><span class="p">)]),</span> <span class="n">g</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

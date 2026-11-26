@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pySLDcalculator &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pyTOOLbox: small helpful tools" href="../toolbox/index.html" />
+    <link rel="prev" title="pyDENSSmulti: 3D maps from several contrasts" href="../densitymulti/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pySLDcalculator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input">Input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#searching-a-material">Searching a material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quantities">Quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hydrogen-exchange">Hydrogen exchange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python">Python</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pySLDcalculator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/sld/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="pysldcalculator">
+<h1>pySLDcalculator<a class="headerlink" href="#pysldcalculator" title="Link to this heading"></a></h1>
+<p>Scattering length densities of materials and biomolecules for neutrons and X-rays, with the quantities
+one needs around them: molecular volume, electron density, cross sections and transmissions, the
+contrast to a matrix, the <strong>excess scattering length</strong>, and the D₂O match point.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pysasfit-sld<span class="w">                                   </span><span class="c1"># the window (also a tab of pysasfit-gui)</span>
+pysasfit-sld<span class="w"> </span>SiO2<span class="w"> </span>-d<span class="w"> </span><span class="m">2</span>.2<span class="w">                       </span><span class="c1"># values on the command line</span>
+pysasfit-sld<span class="w"> </span><span class="s2">"C8H8@1.05"</span><span class="w"> </span>--matrix<span class="w"> </span><span class="s2">"C7D8@0.943"</span>
+pysasfit-sld<span class="w"> </span>--aa<span class="w"> </span>KVFGRCELAAAMKR...<span class="w"> </span>--d2o<span class="w"> </span><span class="m">0</span>.4
+pip<span class="w"> </span>install<span class="w"> </span>pysasfit<span class="o">[</span>sld<span class="o">]</span><span class="w">                      </span><span class="c1"># periodictable and xraydb</span>
+</pre></div>
+</div>
+<section id="input">
+<h2>Input<a class="headerlink" href="#input" title="Link to this heading"></a></h2>
+<p><strong>Formula</strong> in the grammar of <code class="docutils literal notranslate"><span class="pre">periodictable</span></code> (the NIST calculator): <code class="docutils literal notranslate"><span class="pre">SiO2</span></code>, <code class="docutils literal notranslate"><span class="pre">C6H5CH3</span></code>, <code class="docutils literal notranslate"><span class="pre">Pd1.3Si</span></code>,
+<code class="docutils literal notranslate"><span class="pre">CaCO3</span> <span class="pre">+</span> <span class="pre">6H2O</span></code>; isotopes <code class="docutils literal notranslate"><span class="pre">D2O</span></code>, <code class="docutils literal notranslate"><span class="pre">C7D8</span></code>, <code class="docutils literal notranslate"><span class="pre">Ca[44]CO3</span></code>; mixtures <code class="docutils literal notranslate"><span class="pre">3%wt</span> <span class="pre">NaCl</span> <span class="pre">//</span> <span class="pre">H2O</span></code>. Exchangeable
+(labile) hydrogen is written <code class="docutils literal notranslate"><span class="pre">H[1]</span></code>: <code class="docutils literal notranslate"><span class="pre">C2H5OH[1]</span></code>.</p>
+<p><strong>Size</strong>: the mass density (g/cm³) of the formula as written, or the volume of one formula unit (Å³).
+They are related by V = M / (ρ N_A). The volume is kept for all isotopic variants (deuteration, H/D
+exchange); the density then follows from the mass.</p>
+<p>Densities are usually known for the protonated material. For a deuterated one either</p>
+<ul class="simple">
+<li><p>write the protonated formula with its density and set the <em>deuteration</em> (0 … 1), or</p></li>
+<li><p>write the deuterated formula and tick <em>density is that of the protonated material</em> (Python:
+<code class="docutils literal notranslate"><span class="pre">natural_density=True</span></code>, command line <code class="docutils literal notranslate"><span class="pre">-n</span></code>, in a formula <code class="docutils literal notranslate"><span class="pre">C7D8&#64;0.867n</span></code>), or</p></li>
+<li><p>give the measured density of the deuterated material.</p></li>
+</ul>
+<p>A deuterated formula with the protonated density and without the tick gets a volume that is too large:
+for toluene-d8 with 0.867 g/cm³ the SLD would be 5.21 instead of 5.66 · 10⁻⁶ Å⁻².</p>
+<p><strong>Sequences</strong>: protein, DNA or RNA in one-letter codes, chains separated by <code class="docutils literal notranslate"><span class="pre">/</span></code> or new lines, FASTA
+headers ignored. The volume is the sum of the residue volumes, or is set by a density (use 1/v̄ for a
+known partial specific volume) or a volume.</p>
+<p><strong>Radiation</strong>: neutron wavelength; X-ray energy, wavelength or the Kα line of an anode (Cu, Mo, Ag, Ga,
+Cr, Co, Fe, In); X-ray table.</p>
+<p><strong>Matrix</strong>: an H₂O/D₂O mixture, vacuum, or one of the materials.</p>
+</section>
+<section id="searching-a-material">
+<h2>Searching a material<a class="headerlink" href="#searching-a-material" title="Link to this heading"></a></h2>
+<p><em>Search…</em> (Ctrl+F, or <code class="docutils literal notranslate"><span class="pre">pysasfit-sld</span> <span class="pre">--search</span> <span class="pre">toluene</span></code>) looks a name up and lists formula, density, source
+and a note; a double click adds the hit to the materials.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>source</p></th>
+<th class="head"><p></p></th>
+<th class="head"><p>content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>built-in library</p></td>
+<td><p>offline</p></td>
+<td><p>common solvents (also deuterated), polymers, inorganic materials</p></td>
+</tr>
+<tr class="row-odd"><td><p>xraydb materials</p></td>
+<td><p>offline</p></td>
+<td><p>about 90 entries: elements, solvents, minerals, window materials</p></td>
+</tr>
+<tr class="row-even"><td><p>ORSO SLD database</p></td>
+<td><p>online</p></td>
+<td><p>slddb.reflectometry.org: materials collected for reflectometry and SAS, with reference and validation flag; name or formula</p></td>
+</tr>
+<tr class="row-odd"><td><p>Wikipedia</p></td>
+<td><p>online</p></td>
+<td><p>formula and density of the infobox of the English articles found for the name</p></td>
+</tr>
+<tr class="row-even"><td><p>PubChem</p></td>
+<td><p>online</p></td>
+<td><p>formula of a named compound and its experimental densities (handbook values with temperature and source); exact compound names work best</p></td>
+</tr>
+</tbody>
+</table>
+<p>The densities of Wikipedia and PubChem are read from free text, which is shown in the note: look at it
+(temperature, phase, a range) before using the value. A hit without density is added with density 0.
+A source that cannot be reached is named below the table and does not stop the others.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sld.lookup</span><span class="w"> </span><span class="kn">import</span> <span class="n">search</span><span class="p">,</span> <span class="n">hit_entry</span>
+<span class="n">hits</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">search</span><span class="p">(</span><span class="s2">"toluene"</span><span class="p">,</span> <span class="n">sources</span><span class="o">=</span><span class="p">(</span><span class="s2">"builtin"</span><span class="p">,</span> <span class="s2">"xraydb"</span><span class="p">,</span> <span class="s2">"orso"</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="data">
+<h2>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p>source</p></th>
+<th class="head"><p>remarks</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>neutron scattering lengths, cross sections</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">periodictable</span></code>: Rauch &amp; Waschkowski (2003), Sears (1992)</p></td>
+<td><p>per isotope; absorption ∝ wavelength; energy-dependent b of rare-earth isotopes (Lynn &amp; Seeger 1990)</p></td>
+</tr>
+<tr class="row-odd"><td><p>X-ray f′, f″ (default)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">xraydb</span></code>: Chantler</p></td>
+<td><p>fine energy grid at the absorption edges, Z ≤ 98</p></td>
+</tr>
+<tr class="row-even"><td><p>X-ray f₁, f₂ (alternative)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">periodictable</span></code>: Henke, Gullikson &amp; Davis (CXRO)</p></td>
+<td><p>30 eV – 30 keV, Z ≤ 92</p></td>
+</tr>
+<tr class="row-odd"><td><p>residue formulas and volumes</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">periodictable.fasta</span></code>: Perkins (1988), volumes as in Jacrot (1976); nucleotides Buckin (1989), Durchschlag &amp; Zipper (1997)</p></td>
+<td><p>Asp, Glu ionised; Lys, Arg protonated</p></td>
+</tr>
+<tr class="row-even"><td><p>water</p></td>
+<td><p>0.99821 (H₂O) and 1.10536 g/cm³ (D₂O) at 20 °C, ideal mixing</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p>Both X-ray tables are for free atoms. Within some 10 eV of an edge the real f′, f″ depend on the
+chemical state (XANES) and should be measured. The X-ray SLD is the forward value (q = 0, f₀ = Z).
+The tabulated bound-atom incoherent cross sections underestimate the scattering of hydrogen for cold
+neutrons (H₂O: 5.6 cm⁻¹ calculated, about 7 cm⁻¹ measured), so real transmissions are lower.</p>
+</section>
+<section id="quantities">
+<h2>Quantities<a class="headerlink" href="#quantities" title="Link to this heading"></a></h2>
+<p>With V the volume of the formula unit, b = Σ nᵢ b_c,ᵢ (neutrons) or b = r_e Σ nᵢ (Z + f′ + i f″)ᵢ
+(X-rays, r_e = 2.818 fm):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p></p></th>
+<th class="head"><p></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SLD</p></td>
+<td><p>ρ = b / V</p></td>
+</tr>
+<tr class="row-odd"><td><p>contrast</p></td>
+<td><p>Δρ = ρ − ρ₀ (ρ₀: matrix)</p></td>
+</tr>
+<tr class="row-even"><td><p>excess scattering length</p></td>
+<td><p>Δb = b − ρ₀ V = Δρ V</p></td>
+</tr>
+<tr class="row-odd"><td><p>forward scattering</p></td>
+<td><p>I(0)/c = N_A (Δb)² / M (dilute particles of one formula unit, c in g/cm³)</p></td>
+</tr>
+<tr class="row-even"><td><p>X-rays</p></td>
+<td><p>δ = λ² Re ρ / 2π, β = λ² Im ρ / 2π, μ = 4πβ/λ (photoabsorption)</p></td>
+</tr>
+<tr class="row-odd"><td><p>critical q</p></td>
+<td><p>q_c = 4 √(π ρ)</p></td>
+</tr>
+<tr class="row-even"><td><p>magnetic SLD</p></td>
+<td><p>2.695 fm × (moment in μ_B) / V</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="hydrogen-exchange">
+<h2>Hydrogen exchange<a class="headerlink" href="#hydrogen-exchange" title="Link to this heading"></a></h2>
+<p>In a solvent with the D₂O fraction x a labile hydrogen of class c is deuterium with the probability
+x·p_c:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>class</p></th>
+<th class="head"><p>default p</p></th>
+<th class="head"><p></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>backbone amide N-H of proteins</p></td>
+<td><p>0.9</p></td>
+<td><p>one per residue, except proline and the first residue (Perkins 1986; <code class="docutils literal notranslate"><span class="pre">DNEXCH</span></code> = 0.1 of CRYSON)</p></td>
+</tr>
+<tr class="row-odd"><td><p>all other labile H</p></td>
+<td><p>1.0</p></td>
+<td><p>side-chain and terminal N-H, O-H, S-H; nucleic acids; <code class="docutils literal notranslate"><span class="pre">H[1]</span></code> of formulas</p></td>
+</tr>
+<tr class="row-even"><td><p>H bound to carbon (written <code class="docutils literal notranslate"><span class="pre">H</span></code>)</p></td>
+<td><p>—</p></td>
+<td><p>does not exchange; the <em>deuteration</em> of the material replaces that fraction by D</p></td>
+</tr>
+</tbody>
+</table>
+<p>For lysozyme this gives an exchanging fraction of 0.952 of its 264 labile hydrogens, the usual 0.95 of
+sequence-based calculators (MULCh, SCOMAP-XD), and a match point of 44.7 % D₂O. SLD of material and
+solvent are linear in x, so the match point is exact.</p>
+</section>
+<section id="python">
+<h2>Python<a class="headerlink" href="#python" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pysasfit.sld</span><span class="w"> </span><span class="kn">import</span> <span class="n">Material</span><span class="p">,</span> <span class="n">Probe</span><span class="p">,</span> <span class="n">Exchange</span><span class="p">,</span> <span class="n">water</span><span class="p">,</span> <span class="n">contrast</span><span class="p">,</span> <span class="n">match_point</span><span class="p">,</span> <span class="n">energy_scan</span>
+
+<span class="n">probe</span> <span class="o">=</span> <span class="n">Probe</span><span class="p">(</span><span class="n">neutron_wavelength</span><span class="o">=</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">xray_energy</span><span class="o">=</span><span class="mf">8.048</span><span class="p">,</span> <span class="n">xray_table</span><span class="o">=</span><span class="s2">"chantler"</span><span class="p">)</span>
+<span class="n">silica</span> <span class="o">=</span> <span class="n">Material</span><span class="o">.</span><span class="n">from_formula</span><span class="p">(</span><span class="s2">"SiO2"</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mf">2.2</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">silica</span><span class="o">.</span><span class="n">properties</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">n_sld</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">x_sld</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">x_mu</span>                 <span class="c1"># Å³, 1e-6 Å^-2, 1e-6 Å^-2, 1/cm</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">contrast</span><span class="p">(</span><span class="n">silica</span><span class="p">,</span> <span class="n">water</span><span class="p">(</span><span class="mf">0.4</span><span class="p">),</span> <span class="n">probe</span><span class="p">)</span>
+<span class="n">c</span><span class="p">[</span><span class="s2">"n_drho"</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s2">"n_excess"</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s2">"x_excess_electrons"</span><span class="p">]</span>
+
+<span class="n">lys</span> <span class="o">=</span> <span class="n">Material</span><span class="o">.</span><span class="n">from_sequence</span><span class="p">(</span><span class="s2">"KVFGRCELAAAMKRHG..."</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"aa"</span><span class="p">,</span> <span class="n">deuteration</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">match_point</span><span class="p">(</span><span class="n">lys</span><span class="p">,</span> <span class="n">probe</span><span class="p">,</span> <span class="n">Exchange</span><span class="p">(</span><span class="n">backbone</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="n">scan</span> <span class="o">=</span> <span class="n">energy_scan</span><span class="p">(</span><span class="n">Material</span><span class="o">.</span><span class="n">from_formula</span><span class="p">(</span><span class="s2">"Fe3O4"</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mf">5.17</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">6.9</span><span class="p">,</span> <span class="mf">7.3</span><span class="p">,</span> <span class="mi">800</span><span class="p">))</span>
+<span class="n">scan</span><span class="p">[</span><span class="s2">"sld"</span><span class="p">],</span> <span class="n">scan</span><span class="p">[</span><span class="s2">"sld_imag"</span><span class="p">],</span> <span class="n">scan</span><span class="p">[</span><span class="s2">"edges"</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><em>Copy Python code</em> (File menu, Ctrl+Shift+C) writes the script of the current table.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../densitymulti/index.html" class="btn btn-neutral float-left" title="pyDENSSmulti: 3D maps from several contrasts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../toolbox/index.html" class="btn btn-neutral float-right" title="pyTOOLbox: small helpful tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

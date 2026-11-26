@@ -1,0 +1,585 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.sasred.catalogue &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.sasred.catalogue</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.sasred.catalogue</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="sd">"""Header table of a folder of SANS-I or SANS-LLB raw files (``sans&lt;year&gt;n&lt;run&gt;.hdf``,</span>
+<span class="sd">``sans-llb&lt;year&gt;n&lt;run&gt;.hdf``)."""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.io.raw</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_raw</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.io.sinq</span><span class="w"> </span><span class="kn">import</span> <span class="n">RawRun</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"CatalogueEntry"</span><span class="p">,</span> <span class="s2">"scan_folder"</span><span class="p">,</span> <span class="s2">"raw_files"</span><span class="p">,</span> <span class="s2">"is_transmission"</span><span class="p">,</span> <span class="s2">"beamstop_limit"</span><span class="p">,</span>
+           <span class="s2">"BeamstopGeometry"</span><span class="p">,</span> <span class="s2">"beamstop_geometry"</span><span class="p">,</span> <span class="s2">"GeometryCentre"</span><span class="p">,</span> <span class="s2">"beam_centres"</span><span class="p">,</span> <span class="s2">"config_key"</span><span class="p">,</span> <span class="s2">"beamstop_distance"</span><span class="p">,</span> <span class="s2">"classify"</span><span class="p">,</span> <span class="s2">"direct_beam_fraction"</span><span class="p">,</span>
+           <span class="s2">"looks_like_direct_beam"</span><span class="p">]</span>
+
+<span class="n">_RUN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"n0*(\d+)\.hdf$"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="beamstop_limit">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.beamstop_limit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beamstop_limit</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Distance [mm] of the beam stop from the beam centre (on the detector) above which it is out</span>
+<span class="sd">    of the direct beam (preference ``sasred.transmission.beamstop_out_mm``, factory 100 mm)."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">prefs</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">prefs</span><span class="o">.</span><span class="n">effective</span><span class="p">(</span><span class="s2">"sasred.transmission.beamstop_out_mm"</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- settings not available (scripts, tests)</span>
+        <span class="k">return</span> <span class="mf">100.0</span></div>
+
+
+
+<div class="viewcode-block" id="direct_beam_fraction">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.direct_beam_fraction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">direct_beam_fraction</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">radius_px</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Share of all counts within ``radius_px`` of the brightest spot (3 x 3 smoothed): close to 1</span>
+<span class="sd">    for a direct-beam image, small when the beam stop shadows the beam."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">uniform_filter</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">tot</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">tot</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="n">j</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">uniform_filter</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">:</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">xx</span> <span class="o">-</span> <span class="n">i</span><span class="p">,</span> <span class="n">yy</span> <span class="o">-</span> <span class="n">j</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">radius_px</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">tot</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="looks_like_direct_beam">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.looks_like_direct_beam">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">looks_like_direct_beam</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The image itself shows the unshadowed direct beam (Vifor: ≥ 0.97 with the beam stop out,</span>
+<span class="sd">    ≤ 0.38 with it in)."""</span>
+    <span class="k">return</span> <span class="n">direct_beam_fraction</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">fraction</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_config_key</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(SD to 0.1 m, λ to 0.1 Å, coll to 0.1 m): the beam centre moves with all three (gravity</span>
+<span class="sd">    with SD, λ and the collimation)."""</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">SD_m</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">coll_m</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_key_text</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"coll </span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> m, SD </span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> m, λ </span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> Å"</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"SD </span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> m, λ </span><span class="si">{</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> Å"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_nearest</span><span class="p">(</span><span class="n">cands</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Donor configuration for ``k``: same λ required; same collimation coll preferred; then the</span>
+<span class="sd">    nearest SD (``weight(kk)``: further preference, e.g. more direct-beam runs)."""</span>
+    <span class="n">same</span> <span class="o">=</span> <span class="p">[</span><span class="n">kk</span> <span class="k">for</span> <span class="n">kk</span> <span class="ow">in</span> <span class="n">cands</span> <span class="k">if</span> <span class="n">kk</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">same</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">same</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kk</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kk</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">kk</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">k</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                     <span class="n">weight</span><span class="p">(</span><span class="n">kk</span><span class="p">)</span> <span class="k">if</span> <span class="n">weight</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">kk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_key</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Instrument configuration a mask belongs to: collimation coll and distance SD (0.1 m),</span>
+<span class="sd">    wavelength (0.1 Å), beam stop type and beam stop position (x, y to 1 mm)."""</span>
+    <span class="n">bx</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"beamstop_xy_mm"</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+    <span class="n">bst</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"beamstop_type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"bank"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>                     <span class="c1"># SANS-LLB wide-angle panel: a mask of its own</span>
+        <span class="n">bst</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bst</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">raw</span><span class="o">.</span><span class="n">bank</span><span class="si">}</span><span class="s2"> panel"</span>
+    <span class="n">pd</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"panel_SD_m"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>                               <span class="c1"># SANS-LLB: the panels' distance belongs to the configuration</span>
+        <span class="n">bst</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">bst</span><span class="si">}</span><span class="s2"> | panels </span><span class="si">{</span><span class="n">pd</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> m"</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">coll_m</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">SD_m</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">bst</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">bx</span><span class="p">))</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">bx</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">by</span><span class="p">))</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">by</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">legacy_mask_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The mask key as written before the panel distance was part of it (masks saved then are still</span>
+<span class="sd">    found for their configuration)."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_re</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"| panels"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">key</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">key</span>
+    <span class="k">return</span> <span class="n">key</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">_re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">" \| panels [-0-9.]+ m$"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="mi">3</span><span class="p">]),)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_key_label</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">coll</span><span class="p">,</span> <span class="n">SD</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">bst</span><span class="p">,</span> <span class="n">bx</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="n">key</span>
+    <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"coll </span><span class="si">{</span><span class="n">coll</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> m, SD </span><span class="si">{</span><span class="n">SD</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> m, λ </span><span class="si">{</span><span class="n">lam</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> Å, beam stop </span><span class="si">{</span><span class="n">bst</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'?'</span><span class="si">}</span><span class="s2"> at (</span><span class="si">{</span><span class="n">bx</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">by</span><span class="si">}</span><span class="s2">) mm"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BeamstopGeometry">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.BeamstopGeometry">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BeamstopGeometry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where the beam stop is relative to the beam centre, per configuration (SD, λ).</span>
+
+<span class="sd">    The beam stop motors (bsx, bsy) [mm] are tied to detector pixels by the shadow of the beam stop</span>
+<span class="sd">    in the scattering runs (``ref_mm`` &lt;-&gt; ``shadow_px``, signs ``sign`` from the instrument file);</span>
+<span class="sd">    the beam centre comes from the direct-beam runs of the configuration (or of the same wavelength</span>
+<span class="sd">    at another distance, or the shadow itself as the last resort). The distance of the beam stop</span>
+<span class="sd">    from the beam centre on the detector then decides whether it is out of the beam."""</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">beam_centre_px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span>
+    <span class="n">centre_source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">ref_mm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span>          <span class="c1"># most frequent in-beam motor position</span>
+    <span class="n">shadow_px</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span>       <span class="c1"># centroid of its shadow</span>
+    <span class="n">pixel_mm</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">sign</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BeamstopGeometry.beamstop_px">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.BeamstopGeometry.beamstop_px">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">beamstop_px</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bs_mm</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">shadow_px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shadow_px</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">bs_mm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_mm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="BeamstopGeometry.distance_mm">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.BeamstopGeometry.distance_mm">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">distance_mm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bs_mm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Beam stop centre to beam centre on the detector [mm]."""</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beamstop_px</span><span class="p">(</span><span class="n">bs_mm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">((</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_mm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                              <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixel_mm</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">off_centre_mm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""In-beam position: how far the beam stop sits from the beam centre (alignment, gravity)."""</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_mm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BeamstopGeometry.describe">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.BeamstopGeometry.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">shadow_px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"no beam stop shadow found"</span> <span class="o">+</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span>
+                                                  <span class="sa">f</span><span class="s2">" (beam stop at bsx, bsy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> mm)"</span><span class="p">)</span>
+        <span class="n">bc</span> <span class="o">=</span> <span class="s2">"?"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">beam_centre_px</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">off_centre_mm</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"beam stop in the beam at bsx, bsy = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> mm, shadow centre "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shadow_px</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">shadow_px</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">) px; beam centre </span><span class="si">{</span><span class="n">bc</span><span class="si">}</span><span class="s2"> px "</span>
+                <span class="sa">f</span><span class="s2">"from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">centre_source</span><span class="si">}</span><span class="s2">"</span> <span class="o">+</span> <span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="n">off</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"; beam stop </span><span class="si">{</span><span class="n">off</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> mm off the beam centre"</span><span class="p">))</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_signs</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">load_instrument</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beamstop"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"x_sign"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"y_sign"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="beamstop_geometry">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.beamstop_geometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beamstop_geometry</span><span class="p">(</span><span class="n">raws</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":class:`BeamstopGeometry` per configuration key (SD, λ, coll) of a set of runs."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.core.beamcentre</span><span class="w"> </span><span class="kn">import</span> <span class="n">masked_centre_of_gravity</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.core.mask</span><span class="w"> </span><span class="kn">import</span> <span class="n">suggest_beamstop</span>
+    <span class="n">raws</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">blocked</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">direct</span> <span class="k">if</span> <span class="n">looks_like_direct_beam</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">else</span> <span class="n">blocked</span><span class="p">)</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_config_key</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">centres</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">rs</span> <span class="ow">in</span> <span class="n">direct</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="p">[</span><span class="n">masked_centre_of_gravity</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">[:</span><span class="mi">20</span><span class="p">]]</span>
+        <span class="n">centres</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cs</span><span class="p">])),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cs</span><span class="p">])))</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">_signs</span><span class="p">(</span><span class="n">raws</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">raws</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">direct</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">blocked</span><span class="p">):</span>
+        <span class="n">bc</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="n">centres</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="s2">"the direct-beam runs"</span>
+        <span class="k">if</span> <span class="n">bc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kk</span> <span class="o">=</span> <span class="n">_nearest</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">centres</span><span class="p">),</span> <span class="n">k</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">kk</span><span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">direct</span><span class="p">[</span><span class="n">kk</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">kk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bc</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="n">centres</span><span class="p">[</span><span class="n">kk</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"the direct beam at </span><span class="si">{</span><span class="n">_key_text</span><span class="p">(</span><span class="n">kk</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">blocked</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">shadow</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">rs</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">((</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">)</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">guess</span> <span class="o">=</span> <span class="n">bc</span> <span class="k">if</span> <span class="n">bc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">rs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">rs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">cents</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span> <span class="k">if</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">),</span>
+                                         <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="n">ref</span><span class="p">][:</span><span class="mi">15</span><span class="p">]:</span>
+                <span class="n">m</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">suggest_beamstop</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s2">"shadow"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">yy</span><span class="p">,</span> <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                    <span class="n">cents</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">xx</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">yy</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="n">cents</span><span class="p">:</span>
+                <span class="n">shadow</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cents</span><span class="p">])),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cents</span><span class="p">])))</span>
+        <span class="k">if</span> <span class="n">bc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">shadow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bc</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="n">shadow</span><span class="p">,</span> <span class="s2">"the beam stop shadow (no direct-beam run)"</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="p">(</span><span class="n">direct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="ow">or</span> <span class="n">blocked</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pix</span> <span class="o">=</span> <span class="p">(</span><span class="n">r0</span><span class="o">.</span><span class="n">pixel_size_m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">,</span> <span class="n">r0</span><span class="o">.</span><span class="n">pixel_size_m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e3</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">BeamstopGeometry</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">src</span> <span class="k">if</span> <span class="n">bc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"nowhere"</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">shadow</span><span class="p">,</span> <span class="n">pix</span><span class="p">,</span> <span class="n">sign</span><span class="p">)</span>
+    <span class="c1"># configurations without a shadow borrow the motor &lt;-&gt; pixel relation of another one</span>
+    <span class="n">donors</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">shadow_px</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">shadow_px</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">donors</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">donors</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">g</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">g</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                                           <span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">g</span><span class="o">.</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">shadow_px</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">ref_mm</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">shadow_px</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="GeometryCentre">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.GeometryCentre">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeometryCentre</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Beam centre of one geometry (SD, λ, coll)."""</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">sigma_x</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">sigma_y</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">runs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>                      <span class="c1"># "direct beam" | "borrowed from SD = … m" | "by hand"</span>
+
+<div class="viewcode-block" id="GeometryCentre.describe">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.GeometryCentre.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_key_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s2">: x = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_x</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"y = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_y</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", runs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">runs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">…</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">runs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runs</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runs</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="config_key">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.config_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">config_key</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Geometry key (SD to 0.1 m, λ to 0.1 Å, coll to 0.1 m) under which beam centres are kept."""</span>
+    <span class="k">return</span> <span class="n">_config_key</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="beam_centres">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.beam_centres">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beam_centres</span><span class="p">(</span><span class="n">raws</span><span class="p">,</span> <span class="n">borrow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">GeometryCentre</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Beam centre per geometry (SD, λ, coll) from its direct-beam runs (beam stop out): median of the</span>
+<span class="sd">    masked centres of gravity, σ from their spread (or the statistical σ for one run). The solid</span>
+<span class="sd">    angle and q of every pixel depend on it, so each geometry needs its own centre (gravity shifts</span>
+<span class="sd">    it with SD and λ, the collimation coll changes the beam). With ``borrow`` a geometry without</span>
+<span class="sd">    direct-beam run gets the centre of the same wavelength, preferably the same collimation, at the</span>
+<span class="sd">    nearest distance, marked as borrowed."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.core.beamcentre</span><span class="w"> </span><span class="kn">import</span> <span class="n">masked_centre_of_gravity</span>
+    <span class="n">groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_config_key</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">looks_like_direct_beam</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_config_key</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">GeometryCentre</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">rs</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="p">[</span><span class="n">masked_centre_of_gravity</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">[:</span><span class="mi">50</span><span class="p">]]</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cs</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">y</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cs</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span> <span class="o">=</span> <span class="n">cs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sigma_x</span><span class="p">,</span> <span class="n">cs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sigma_y</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">GeometryCentre</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">xs</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">ys</span><span class="p">)),</span> <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span><span class="p">,</span>
+                                <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">run</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">),</span> <span class="s2">"direct beam"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">borrow</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+            <span class="n">kk</span> <span class="o">=</span> <span class="n">_nearest</span><span class="p">([</span><span class="n">kk</span> <span class="k">for</span> <span class="n">kk</span> <span class="ow">in</span> <span class="n">out</span> <span class="k">if</span> <span class="n">kk</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">],</span> <span class="n">k</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">kk</span><span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">groups</span><span class="p">[</span><span class="n">kk</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">kk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">GeometryCentre</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_x</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sigma_y</span><span class="p">,</span> <span class="p">[],</span>
+                                        <span class="sa">f</span><span class="s2">"borrowed from </span><span class="si">{</span><span class="n">_key_text</span><span class="p">(</span><span class="n">kk</span><span class="p">)</span><span class="si">}</span><span class="s2">: no direct-beam run here"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="beamstop_distance">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.beamstop_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beamstop_distance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">geometry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Distance [mm] of the beam stop from the beam centre on the detector for this run."""</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_config_key</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">g</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">raw</span><span class="o">.</span><span class="n">beamstop_xy_mm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">distance_mm</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">beamstop_xy_mm</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="is_transmission">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.is_transmission">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_transmission</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">geometry</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Transmission (direct-beam) run: the beam stop is moved out of the beam, in x or y (SANS-I</span>
+<span class="sd">    typically bsy = -200 mm or lower) or out of the detection area, i.e. its distance from the beam</span>
+<span class="sd">    centre (:func:`beamstop_geometry`) exceeds ``limit`` (preference, 100 mm). The attenuator does</span>
+<span class="sd">    not decide: it is usually in against saturation, but not with very long wavelengths and</span>
+<span class="sd">    collimations. Without a geometry the image decides (:func:`looks_like_direct_beam`)."""</span>
+    <span class="k">if</span> <span class="n">geometry</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">beamstop_distance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">geometry</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">limit</span> <span class="o">=</span> <span class="n">beamstop_limit</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">from</span><span class="w"> </span><span class="nn">.reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_instrument</span>
+                    <span class="n">own</span> <span class="o">=</span> <span class="n">load_instrument</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beamstop"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"out_mm"</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">own</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"instrument"</span><span class="p">,</span> <span class="s2">"sans_i"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"sans_i"</span><span class="p">:</span>
+                        <span class="n">limit</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">own</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+                    <span class="k">pass</span>
+            <span class="k">return</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">limit</span>
+    <span class="k">return</span> <span class="n">looks_like_direct_beam</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="classify">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.classify">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="n">raws</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Kind of every run ("transmission" / "scattering") from the beam stop distance to the beam</span>
+<span class="sd">    centre, and the runs where position and image disagree (beam stop out but no direct beam in</span>
+<span class="sd">    the image, or beam stop in but the image shows the direct beam).</span>
+<span class="sd">    Returns (kinds, disagreements, geometry)."""</span>
+    <span class="n">raws</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">geo</span> <span class="o">=</span> <span class="n">beamstop_geometry</span><span class="p">(</span><span class="n">raws</span><span class="p">)</span>
+    <span class="n">kinds</span><span class="p">,</span> <span class="n">odd</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raws</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">is_transmission</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">geo</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+        <span class="n">kinds</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"transmission"</span> <span class="k">if</span> <span class="n">t</span> <span class="k">else</span> <span class="s2">"scattering"</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">!=</span> <span class="n">looks_like_direct_beam</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">beamstop_distance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">geo</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="s2">"?"</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> mm"</span>
+            <span class="n">odd</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"beam stop </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2"> from the beam centre, but the image "</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="s2">"shows no direct beam"</span> <span class="k">if</span> <span class="n">t</span> <span class="k">else</span> <span class="s2">"shows the direct beam"</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">kinds</span><span class="p">,</span> <span class="n">odd</span><span class="p">,</span> <span class="n">geo</span></div>
+
+
+
+<div class="viewcode-block" id="CatalogueEntry">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.CatalogueEntry">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CatalogueEntry</span><span class="p">:</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">run</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">raw</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RawRun</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># header and counts, without checksum</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>         <span class="c1"># file that could not be read</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                      <span class="c1"># transmission | scattering (set by scan_folder)</span>
+    <span class="n">remark</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                    <span class="c1"># e.g. beam stop position and image disagree</span>
+    <span class="n">skip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>                      <span class="c1"># why the run is skipped (time 0, 0 counts, monitor 0), else ""</span>
+
+<div class="viewcode-block" id="CatalogueEntry.row">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.CatalogueEntry.row">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">"nm"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Values for the run table (wavelength in nm or Å)."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">units</span> <span class="k">as</span> <span class="n">_units</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"(unreadable: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">)"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">COLUMNS</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"skipped: unreadable"</span><span class="p">]</span>
+        <span class="n">tot</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_units</span><span class="p">(</span><span class="n">units</span><span class="p">)</span><span class="o">.</span><span class="n">lam</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">wavelength_A</span><span class="p">)</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="mi">3</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">units</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">'nm'</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="mi">2</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"transmission"</span><span class="p">:</span> <span class="s2">"trans."</span><span class="p">,</span> <span class="s2">"scattering"</span><span class="p">:</span> <span class="s2">"scatt."</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kind</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"trans."</span> <span class="k">if</span> <span class="n">is_transmission</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"scatt."</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">remark</span><span class="p">:</span>
+            <span class="n">kind</span> <span class="o">+=</span> <span class="s2">" ?"</span>
+        <span class="n">SD</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">SD_m</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">pd</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"panel_SD_m"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>                           <span class="c1"># SANS-LLB: central (wide-angle panels)</span>
+            <span class="n">SD</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">pd</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"panel_SD_spread_m"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.001</span><span class="p">:</span>
+                <span class="n">SD</span> <span class="o">+=</span> <span class="s2">" !"</span>
+        <span class="n">bx</span><span class="p">,</span> <span class="n">by</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">beamstop_xy_mm</span>
+        <span class="n">bs</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">beamstop_type</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'?'</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">bx</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">by</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="n">dl</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">dlam_over_lam_fwhm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">dlam_over_lam_fwhm</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">tilt</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"selector_tilt_deg"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tilt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dl</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">tilt</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.0</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">°)"</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">sample_name</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">dl</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">coll_m</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">SD</span><span class="p">,</span> <span class="n">bs</span><span class="p">,</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">attenuator</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'monitor1'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">r</span><span class="o">.</span><span class="n">instrument</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">'sans_i'</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">r</span><span class="o">.</span><span class="n">preset_monitor</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">counting_time_s</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tot</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s2">"yes"</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">aborted</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comment</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="CatalogueEntry.comment">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.CatalogueEntry.comment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The comment column: why the run is skipped, and remarks (beam stop / image)."""</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"skipped: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">skip</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">remark</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">remark</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">"panel_SD_spread_m"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.001</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">distance_m</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> m"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">panels</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wide-angle panels at different distances (</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"run"</span><span class="p">,</span> <span class="s2">"sample"</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"λ [nm]"</span><span class="p">,</span> <span class="s2">"dλ/λ (tilt)"</span><span class="p">,</span> <span class="s2">"coll [m]"</span><span class="p">,</span> <span class="s2">"SD [m] (panels)"</span><span class="p">,</span> <span class="s2">"beam stop (x, y mm)"</span><span class="p">,</span> <span class="s2">"att."</span><span class="p">,</span> <span class="s2">"monitor1"</span><span class="p">,</span>
+           <span class="s2">"time [s]"</span><span class="p">,</span> <span class="s2">"counts"</span><span class="p">,</span> <span class="s2">"aborted"</span><span class="p">,</span> <span class="s2">"comment"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="raw_files">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.raw_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raw_files</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s2">"*.hdf"</span><span class="p">))</span> <span class="k">if</span> <span class="n">_RUN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">_RUN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="scan_folder">
+<a class="viewcode-back" href="../../../sasred/api.html#pysasfit.sasred.catalogue.scan_folder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scan_folder</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CatalogueEntry</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Read the header of every raw file in ``folder`` (sorted by run number).</span>
+<span class="sd">    ``progress(i, n)`` is called after each file. Unreadable files are kept with</span>
+<span class="sd">    their error message instead of stopping the scan."""</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">raw_files</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+        <span class="n">run</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_RUN</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CatalogueEntry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">read_raw</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">checksum</span><span class="o">=</span><span class="kc">False</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- listed, not fatal</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CatalogueEntry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">progress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">progress</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">skip</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">empty_reason</span>
+    <span class="n">kinds</span><span class="p">,</span> <span class="n">odd</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">classify</span><span class="p">([</span><span class="n">e</span><span class="o">.</span><span class="n">raw</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">out</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">skip</span><span class="p">])</span>
+    <span class="n">odd</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">odd</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">skip</span><span class="p">:</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kinds</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">run</span><span class="p">]</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">remark</span> <span class="o">=</span> <span class="n">odd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

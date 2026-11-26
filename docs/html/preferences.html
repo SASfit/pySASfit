@@ -1,0 +1,963 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preferences (Settings → Preferences…) &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="_static/pySASfit.ico"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Copy Python code" href="python_code.html" />
+    <link rel="prev" title="1D data" href="toolbox/data1d.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pySASfit
+              <img src="_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Preferences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#adjustable-settings">Adjustable settings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sld-profile">SLD profile</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#regularisation-parameter-direct-fit-and-deconvolution">Regularisation parameter α (direct fit and deconvolution)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#minimiser-levenbergmarquardt">Minimiser (Levenberg–Marquardt)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#result-and-error-bands">Result and error bands</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grids-and-scans">Grids and scans</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#two-step-method-ift-step-1-and-deconvolution-step-2">Two-step method: IFT (step 1) and deconvolution (step 2)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#quadrature">Quadrature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#instrumental-resolution">Instrumental resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#size-distribution-p-r">Size distribution / p(r)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bayesian-evidence-regularisation-parameter">Bayesian evidence: regularisation parameter λ</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#em-maxent-gcv">EM, MaxEnt, GCV</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#instrumental-resolution-4th-data-column-q">Instrumental resolution (4th data column σ_Q)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#grid-errors-bootstrap">Grid, errors, bootstrap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ornsteinzernike">Ornstein–Zernike</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#oz-solvers-all-tabs">OZ solvers (all tabs)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#oz-solver-tab">OZ solver tab</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#polydisperse-any-potential-tab">Polydisperse (any potential) tab</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ry-polydisperse-yukawa-tab">RY Polydisperse Yukawa tab</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mixture-validation-tab">Mixture validation tab</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#sans-reduction">SANS reduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#beam-centre-masked-centre-of-gravity-of-the-direct-beam-run">Beam centre (masked centre of gravity of the direct-beam run)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#default-reduction-parameters-starting-values-on-the-reduction-panel">Default reduction parameters (starting values on the Reduction panel)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mask-suggestion-suggest-in-the-detector-panel">Mask suggestion (Suggest in the detector panel)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reduction-table">Reduction table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#detector-distance">Detector distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transmission-runs">Transmission runs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#detector-efficiency">Detector efficiency</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sans-llb-detector-geometry">SANS-LLB detector geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#resolution">Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pytoolbox">pyTOOLbox</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hdf5-viewer">HDF5 viewer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#metadata-lister">Metadata lister</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyscatter">pySCAtter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#calculation-and-fit-pyscatter">Calculation and fit (pySCAtter)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysebpolymers">pySEBpolymers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#calculation-and-fit-pysebpolymers">Calculation and fit (pySEBpolymers)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyatsas">pyATsas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#atsas-installation-and-runs">ATSAS installation and runs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydensity">pyDENsity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#denss-installation-and-runs">DENSS installation and runs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pydenssmulti">pyDENSSmulti</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#runs">Runs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasscout">pySASscout</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#results-store">Results store</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#appearance">Appearance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#title-bars-of-the-panels-label-hide-cross">Title bars of the panels (label … hide cross)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pysasfit-window">pySASfit window</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#side-bar-the-column-of-tool-icons">Side bar (the column of tool icons)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#shared-numerics">Shared numerics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deflation-of-unphysical-oz-roots-oz-solver-polydisperse-ry-and-mixture-tabs">Deflation of unphysical OZ roots (OZ solver, polydisperse, RY and mixture tabs)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analytic-msa-rmsa-of-polydisperse-yukawa-msa-tab-ry-tab-approximations">Analytic MSA / RMSA of polydisperse Yukawa (MSA tab, RY tab, approximations)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-optimisers-for-fits-nlopt-and-bumps">Global optimisers for fits: NLopt and bumps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#background-models-start-values-of-fitted-terms-sld-profile">Background models: start values of fitted terms (SLD profile)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-values-that-remain-fixed">Built-in values that remain fixed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#problems-found-during-the-audit">Problems found during the audit</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Preferences (Settings → Preferences…)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/preferences.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="preferences-settings-preferences">
+<h1>Preferences (Settings → Preferences…)<a class="headerlink" href="#preferences-settings-preferences" title="Link to this heading"></a></h1>
+<p>All tools share one preferences dialog: <strong>Settings → Preferences…</strong> in the launcher (<code class="docutils literal notranslate"><span class="pre">pysasfit-gui</span></code>, it opens on
+the page of the tool in front) and in each stand-alone window (<code class="docutils literal notranslate"><span class="pre">pysasfit-sldprofile</span></code>, <code class="docutils literal notranslate"><span class="pre">pysasfit-inversion</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pysasfit-oz</span></code>, <code class="docutils literal notranslate"><span class="pre">pysasfit-sasred</span></code>, <code class="docutils literal notranslate"><span class="pre">pysasfit-toolbox</span></code>, <code class="docutils literal notranslate"><span class="pre">pysasfit-atsas</span></code>, <code class="docutils literal notranslate"><span class="pre">pysasfit-density</span></code>). It holds the numerical settings that are not on the tools’ main panels.</p>
+<ul class="simple">
+<li><p><strong>Save</strong> writes them to the preferences file, and they are the defaults at every later start:
+<code class="docutils literal notranslate"><span class="pre">%APPDATA%\pySASfit\settings.json</span></code> (Windows), <code class="docutils literal notranslate"><span class="pre">~/.config/pysasfit/settings.json</span></code> (Linux/macOS), or the file named by the
+environment variable <code class="docutils literal notranslate"><span class="pre">PYSASFIT_SETTINGS</span></code>. Only values that differ from the factory value are written.</p></li>
+<li><p>Values are read when a calculation starts (Run / Solve / Compute / Fit), so a change applies to the next one.</p></li>
+<li><p><strong>Bold</strong> labels mark changed values; hovering shows the explanation; <em>Factory values</em> restores one tab or all.</p></li>
+<li><p>Library functions keep their documented defaults; scripts are not affected by the preferences file.</p></li>
+<li><p>Session files still take precedence where they store a value (e.g. the numerical settings of the polydisperse
+OZ tab).</p></li>
+</ul>
+<p>Factory values are the values the code used before the preferences existed, with <strong>one deliberate change</strong>:
+the λ grid of the Bayesian-evidence solvers of the size-distribution tool is now centred on tr(B)/tr(2LᵀL)
+instead of the squared median singular value of the kernel. With the old rule the whole grid lies many decades
+below the evidence maximum whenever most singular values are at the noise floor (any finely sampled p(r)), and an
+unregularised, oscillating p(r) was returned. On <code class="docutils literal notranslate"><span class="pre">tests/inversion/data/test.dat</span></code> both rules give the same λ; the
+old rule can be selected (“median”).</p>
+<section id="adjustable-settings">
+<h2>Adjustable settings<a class="headerlink" href="#adjustable-settings" title="Link to this heading"></a></h2>
+<p>One page per tool, and <strong>Shared numerics</strong> for methods used by several tools or tabs (deflation of
+OZ roots, the analytic MSA/RMSA solution, the global optimisers NLopt and bumps, the start values of the
+background models). Each entry gives the label shown in the dialog, the key in <code class="docutils literal notranslate"><span class="pre">settings.json</span></code>, the
+factory value, the allowed range, and what the value does and when to change it. The same explanation
+appears in the dialog: as a tooltip, and in the panel below the tabs when you point at a setting or
+click into its field. The texts are kept in <code class="docutils literal notranslate"><span class="pre">src/pysasfit/core/settings_help.py</span></code>.</p>
+<section id="sld-profile">
+<h3>SLD profile<a class="headerlink" href="#sld-profile" title="Link to this heading"></a></h3>
+<section id="regularisation-parameter-direct-fit-and-deconvolution">
+<h4>Regularisation parameter α (direct fit and deconvolution)<a class="headerlink" href="#regularisation-parameter-direct-fit-and-deconvolution" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>ln α start (above ln α₀)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.log_alpha_hi</span></code> · factory: <strong>6</strong> · range: -50 … 100<br />
+Start of the α path, as ln α − ln α₀ with α₀ = tr(B)/tr(A) at the starting profile (B: data Hessian, A: Hessian of the regulariser). The path runs from strong smoothing (this end) to weak smoothing. Raise it if the evidence curve (ln evidence vs ln α) is still rising at its left end.</p></li>
+<li><p><strong>ln α end (relative to ln α₀)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.log_alpha_lo</span></code> · factory: <strong>-16</strong> · range: -200 … 50<br />
+End of the α path, relative to ln α₀. The path normally stops earlier, once the evidence has dropped by the stop criterion. Lower it only if the evidence curve is still rising at its right end when the path ends.</p></li>
+<li><p><strong>ln α step</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.alpha_step</span></code> · factory: <strong>0.5</strong> · range: 0.01 … 5<br />
+Step in ln α along the path. Each step is one regularised fit, warm-started from the previous one. It is also the integration step of the marginalisation over α (posterior of r_max, error bands). Smaller steps: smoother evidence curve, more fits.</p></li>
+<li><p><strong>stop when ln evidence has dropped by</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.stop_drop</span></code> · factory: <strong>25</strong> · range: 1 … 1000<br />
+The α path stops once ln evidence has fallen this far below its running maximum (and the data are fitted, see the next entry). 25 means a factor e^25 below the best α – such solutions carry no weight in the averages. Larger values only cost time.</p></li>
+<li><p><strong>stop only when χ² &lt; factor · M</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.stop_chi2</span></code> · factory: <strong>1.5</strong> · range: 0.1 … 100<br />
+The early stop is allowed only when χ² &lt; factor × M (M = number of points), i.e. once the data are actually fitted. Prevents stopping on the falling side of a first, spurious evidence maximum.</p></li>
+<li><p><strong>restart from other start profiles when χ² &gt; factor · M</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.retry_chi2</span></code> · factory: <strong>2</strong> · range: 1 … 1e+06<br />
+Guard against a wrong branch: while χ² &gt; factor × M, the fit at the current α is repeated from the other starting profiles (homogeneous, truncated step, flat coefficients) and the better one is kept. Lower it if fits with a too large r_max get stuck.</p></li>
+<li><p><strong>… every n-th α step</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.retry_every</span></code> · factory: <strong>4</strong> · range: 1 … 1000<br />
+How often the restart check above is made: every n-th α step. 1 = at every step (slowest, safest).</p></li>
+<li><p><strong>precision of the best ln α</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.alpha_xatol</span></code> · factory: <strong>0.001</strong> · range: 1e-08 … 1<br />
+After the path, ln α is refined between the two neighbours of the best path point by a bounded one-dimensional maximisation of the evidence; this is its precision in ln α.</p></li>
+</ul>
+</section>
+<section id="minimiser-levenbergmarquardt">
+<h4>Minimiser (Levenberg–Marquardt)<a class="headerlink" href="#minimiser-levenbergmarquardt" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>maximum iterations</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.max_iter</span></code> · factory: <strong>300</strong> · range: 1 … 1e+06<br />
+Maximum Levenberg–Marquardt iterations per regularised fit (fixed α and r_max). Fits are warm-started along the α path, so they normally converge in a few iterations.</p></li>
+<li><p><strong>relative tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.tol</span></code> · factory: <strong>1e-10</strong> · range: 1e-16 … 0.01<br />
+Convergence test of each regularised fit: stop when the objective αS + χ²/2 decreases by less than tol × max(|objective|, 1) in one iteration.</p></li>
+<li><p><strong>initial damping</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.lm_lambda0</span></code> · factory: <strong>0.001</strong> · range: 1e-12 … 1e+06<br />
+Initial Levenberg–Marquardt damping λ (relative to the scaled Hessian). It is reduced ÷3 after a successful step and increased ×4 after a rejected one, so the start value matters little.</p></li>
+<li><p><strong>smoothness ridge (× tr/N)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.ridge</span></code> · factory: <strong>1e-06</strong> · range: 0 … 1<br />
+Small multiple of the identity (× tr(A)/N) added to the smoothness matrix A. With a free outer end A is singular (a constant has zero curvature); the ridge makes it invertible. It enters log det A and therefore the evidence – keep it small.</p></li>
+<li><p><strong>shortest step profile tried as start (fraction of N)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.truncated_min</span></code> · factory: <strong>0.25</strong> · range: 0.01 … 1<br />
+Starting profiles: besides the homogeneous one, homogeneous steps ρ = c for r &lt; R are tried with R on the shell grid, from this fraction of N shells up to N. They rescue fits with a too large r_max.</p></li>
+</ul>
+</section>
+<section id="result-and-error-bands">
+<h4>Result and error bands<a class="headerlink" href="#result-and-error-bands" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>posterior draws per solution</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.fit.n_draws</span></code> · factory: <strong>40</strong> · range: 1 … 10000<br />
+Number of random draws from the posterior covariance per kept solution, used for the error bands of ρ(r), the radial mass, Rg and the background. More draws: smoother bands, more time.</p></li>
+<li><p><strong>random seed of the draws</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.fit.seed</span></code> · factory: <strong>0</strong> · range: 0 … 2.14748e+09<br />
+Seed of the random draws above. A fixed seed makes repeated runs give identical error bands.</p></li>
+<li><p><strong>drop solutions with relative evidence weight below</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.keep_weight</span></code> · factory: <strong>1e-06</strong> · range: 0 … 0.5<br />
+Solutions whose evidence weight is below this fraction of the best one are dropped from the averages (they contribute nothing and only cost time).</p></li>
+<li><p><strong>points of the output r grid</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.n_out</span></code> · factory: <strong>300</strong> · range: 10 … 100000<br />
+Number of cells of the r grid on which ρ(r), the radial mass and their errors are reported (display and _rho.dat). Does not change the fit.</p></li>
+<li><p><strong>output r range (× largest r_max)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.r_out_factor</span></code> · factory: <strong>1.05</strong> · range: 1 … 5<br />
+The output r grid extends to factor × the largest r_max among the kept solutions, so the outer edge of the profile is visible.</p></li>
+<li><p><strong>times the r_max scan may be extended upwards</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.fit.max_extend</span></code> · factory: <strong>6</strong> · range: 0 … 100<br />
+If the evidence maximum lies at the upper end of the r_max scan, the scan is extended upwards; this is how often. Needed for coil-like profiles that reach far beyond the Guinier estimate.</p></li>
+<li><p><strong>Guinier range q·Rg &lt;</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.guinier_qrg</span></code> · factory: <strong>1.3</strong> · range: 0.3 … 3<br />
+Upper limit q·Rg of the Guinier fit that gives the start value of r_max (sphere √(5/3) Rg, cylinder √2 R_c, lamella √3 R_t). 1.3 is the usual validity limit for compact particles.</p></li>
+<li><p><strong>points added per upward extension of the r_max scan (× coarse)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.extend_fraction</span></code> · factory: <strong>0.5</strong> · range: 0.05 … 5<br />
+Number of r_max points added per upward extension of the scan, as a fraction of the coarse points (at least 3).</p></li>
+<li><p><strong>fine r_max grid half width: posterior s.d. ×</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.fine_sd</span></code> · factory: <strong>4</strong> · range: 0.5 … 20<br />
+After the coarse r_max scan a fine scan is made around the maximum; its half width is max(fine_sd × posterior s.d., fine_steps × coarse step). This is the first term.</p></li>
+<li><p><strong>fine r_max grid half width: at least coarse steps ×</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.fine_steps</span></code> · factory: <strong>1.5</strong> · range: 0.1 … 20<br />
+Second term of the fine-scan half width (see above), in coarse grid steps; it keeps the fine scan from collapsing when the coarse posterior is very narrow.</p></li>
+<li><p><strong>fine r_max grid: only where the coarse posterior &gt;</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.fine_support</span></code> · factory: <strong>1e-06</strong> · range: 0 … 0.1<br />
+The fine r_max scan is limited to the coarse r_max whose posterior exceeds this fraction of the maximum, plus one coarse step on each side (no limit on a side where the weight reaches the end of the coarse grid). Without it, a broad coarse posterior sends the fine scan to r_max values that cannot fit the data and only cost time (star example, N = 80: 58 s → 8 s). 0 switches the limit off.</p></li>
+<li><p><strong>end an α path when χ² stalls (relative change over 3 steps) &lt;</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.abandon_plateau</span></code> · factory: <strong>0.02</strong> · range: 0 … 0.5<br />
+An α path also ends when the data are not fitted (χ² above the stop value) but χ² has changed by less than this fraction over the last three α steps while ln evidence has already dropped by the stop value below its maximum on the path. Such an r_max cannot fit the data; its evidence maximum is already on the path, and the remaining small-α fits are the slowest of the scan. 0 = never.</p></li>
+<li><p><strong>no restarts at r_max with ln evidence below the best by</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.abandon_margin</span></code> · factory: <strong>50</strong> · range: 0 … 1e+06<br />
+At an r_max whose best ln evidence is this far below the best of the r_max already done, no restarts from the other starting profiles are tried (they only help near the evidence maximum). 0 = always.</p></li>
+<li><p><strong>parallel processes for the r_max scan</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.n_workers</span></code> · factory: <strong>0</strong> · range: 0 … 256</p></li>
+<li><p><strong>r_max scan: start each α path from the neighbouring r_max</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.opt.warm_start</span></code> · factory: <strong>off</strong> · range: on/off<br />
+Number of processes for the r_max scan (0 or 1: serial). The r_max nearest to the centre is done first, the others in parallel. Only worthwhile with several free cores and slow fits (large N): process start-up, copying the fitter and the loss of the running best evidence cost time; on a 2-core test machine the parallel scan was slower than the serial one. Falls back to serial when the fit cannot be copied to other processes (e.g. a max-ent prior or background given as a lambda).</p></li>
+</ul>
+</section>
+<section id="grids-and-scans">
+<h4>Grids and scans<a class="headerlink" href="#grids-and-scans" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>adaptive grid: pilot over-smoothing (e-folds in α)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.adaptive.smoothing</span></code> · factory: <strong>2</strong> · range: 0 … 20<br />
+Adaptive grid: the first pass uses the best uniform-grid solution with α raised by this many e-folds, so the grid follows the real structure of the profile and not its noise.</p></li>
+<li><p><strong>adaptive grid: max. ratio coarsest / finest shell</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.adaptive.max_ratio</span></code> · factory: <strong>8</strong> · range: 1 … 1000<br />
+Adaptive grid: the finest shell is at most this many times thinner than the coarsest one. Limits how strongly the grid concentrates at steep parts of the profile.</p></li>
+<li><p><strong>adaptive grid: min. shell width (0 = min(π/q_max, r_max/N))</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.adaptive.min_width</span></code> · factory: <strong>0</strong> · range: 0 … 1e+06<br />
+Adaptive grid: smallest allowed shell width in r units. 0 = automatic, min(π/q_max, r_max/N): structure finer than π/q_max is not determined by the data.</p></li>
+<li><p><strong>exponent scan step</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.gui.p_scan_step</span></code> · factory: <strong>0.2</strong> · range: 0.01 … 1<br />
+Step of the exponent scan (‘Scan p’), which compares representations r^p·ρ(r) for p = 0 … d−0.2 by their evidence (4/3 is always included for spheres).</p></li>
+<li><p><strong>max-ent ‘previous result’ prior floor (× max)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.gui.prior_floor</span></code> · factory: <strong>0.001</strong> · range: 1e-12 … 0.5<br />
+Max-ent with the ‘previous result’ prior: the prior is the last profile, clipped below at this fraction of its maximum (max-ent needs a strictly positive prior).</p></li>
+<li><p><strong>max-ent ‘hollow shell’ prior inner level</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.gui.hollow_level</span></code> · factory: <strong>0.05</strong> · range: 1e-06 … 1<br />
+Max-ent with the ‘hollow shell’ prior: prior level inside r_in, relative to 1 in the shell.</p></li>
+</ul>
+</section>
+<section id="two-step-method-ift-step-1-and-deconvolution-step-2">
+<h4>Two-step method: IFT (step 1) and deconvolution (step 2)<a class="headerlink" href="#two-step-method-ift-step-1-and-deconvolution-step-2" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>IFT: ln α from (relative to ln tr B/tr C)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.log_alpha_lo</span></code> · factory: <strong>-40</strong> · range: -200 … 0<br />
+Two-step method, step 1 (IFT): lower end of the α grid, ln α relative to ln(tr B / tr C) (B: data Hessian, C: smoothness matrix). The evidence maximum is searched on this grid, then refined.</p></li>
+<li><p><strong>IFT: ln α to</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.log_alpha_hi</span></code> · factory: <strong>10</strong> · range: -50 … 100<br />
+Two-step method, step 1 (IFT): upper end of the α grid, ln α relative to ln(tr B / tr C). This end is the strongly smoothed side. Raise it if the IFT evidence still rises at the upper end of the grid (very noisy or very few data).</p></li>
+<li><p><strong>IFT: α grid points</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.n_alpha</span></code> · factory: <strong>101</strong> · range: 5 … 10000<br />
+Two-step method, step 1 (IFT): number of points of the α grid between the lower and upper end. The grid only brackets the evidence maximum, which is then refined, so more points rarely change the result; use more if the evidence curve has several maxima.</p></li>
+<li><p><strong>IFT: precision of ln α</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.alpha_xatol</span></code> · factory: <strong>0.0001</strong> · range: 1e-10 … 1<br />
+Two-step method, step 1 (IFT): the evidence maximum found on the α grid is refined by a bounded 1-D search until ln α is known to this precision. The default is far below the width of the evidence peak; there is no reason to change it.</p></li>
+<li><p><strong>IFT background search: below I_min (× scale)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.bg_below</span></code> · factory: <strong>1</strong> · range: 0 … 100<br />
+IFT with ‘fit’ background: the flat background is chosen by maximum evidence within [I_min − below·s, I_min + above·s], s = max(|I_min|, median σ). This is ‘below’.</p></li>
+<li><p><strong>IFT background search: above I_min (× scale)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.bg_above</span></code> · factory: <strong>0.5</strong> · range: 0 … 100<br />
+Two-step method, IFT with ‘fit’ background: the flat background is chosen by maximum evidence within [I_min − below·s, I_min + above·s], s = max(|I_min|, median σ). This is ‘above’, in units of s. Increase it if the chosen background sits at the upper end of the interval.</p></li>
+<li><p><strong>IFT background precision (× scale)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.ift.bg_xatol</span></code> · factory: <strong>0.0001</strong> · range: 1e-12 … 0.1<br />
+Two-step method, IFT with ‘fit’ background: precision of the evidence search for the flat background, in units of s = max(|I_min|, median σ). Far below the statistical uncertainty of the background; no reason to change.</p></li>
+<li><p><strong>IFT smoothness penalty</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.twostep.penalty</span></code> · factory: <strong>Hansen (2000) eq. 19, curvature</strong> · range: “hansen_eq19” (Hansen (2000) eq. 19, curvature), “hansen_printed” (Hansen (2000) as printed, 1st difference)<br />
+Smoothness prior of the IFT. Hansen (2000) eq. 19: curvature, Σ[p_j − (p_{j−1}+p_{j+1})/2]² with p(0) = p(D_max) = 0. ‘As printed’: the matrix given in the text of that paper, which is a first-difference penalty. The normalised evidence prefers eq. 19 on our test data.</p></li>
+<li><p><strong>deconvolution: sub-shells per shell in V(r)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.twostep.n_sub</span></code> · factory: <strong>6</strong> · range: 1 … 64<br />
+Deconvolution (step 2): each shell is split into this many thin sub-shells to build the matrices V(r) of p(r) = ρᵀV(r)ρ. 6 reproduces the direct I(q) to ~1e-4.</p></li>
+</ul>
+</section>
+<section id="quadrature">
+<h4>Quadrature<a class="headerlink" href="#quadrature" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>Gauss nodes per shell (custom exponent p)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.geo.n_gl</span></code> · factory: <strong>16</strong> · range: 2 … 256<br />
+For a custom exponent p (r^p·ρ represented, p ≠ 0, d−1) the shell amplitudes are integrated numerically: Gauss–Jacobi in the first shell (weight r^(d−1−p)), Gauss–Legendre in the others, with this many nodes each.</p></li>
+<li><p><strong>output p(r): sub-shells per shell</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.geo.pddf_n_sub</span></code> · factory: <strong>8</strong> · range: 1 … 128<br />
+Sub-shells per shell for the p(r) shown as overlay and written to _pr.dat (not used in the fit).</p></li>
+<li><p><strong>output p(r) of cylinders: FFT raster</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.geo.pddf_raster</span></code> · factory: <strong>256</strong> · range: 32 … 4096<br />
+Cylinders: the p(r) of the cross-section is computed by a 2-D FFT autocorrelation on a square raster of this size (display and _pr.dat only).</p></li>
+</ul>
+</section>
+<section id="instrumental-resolution">
+<h4>Instrumental resolution<a class="headerlink" href="#instrumental-resolution" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>pinhole: kernel width (± n·σ_q)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.res.n_sigma</span></code> · factory: <strong>3</strong> · range: 1 … 10<br />
+Pinhole resolution: the model is evaluated on an extended q grid reaching ± n·σ_q beyond the measured range, and the kernel is truncated there. 3 covers 99.7 % of a Gaussian.</p></li>
+<li><p><strong>pinhole: extended q grid oversampling</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.res.oversample</span></code> · factory: <strong>3</strong> · range: 1 … 50<br />
+Pinhole resolution: density of the extended q grid, as a multiple of the number of data points.</p></li>
+<li><p><strong>slit: Gauss–Hermite nodes (half range)</strong> — <code class="docutils literal notranslate"><span class="pre">sldprofile.res.slit_nodes</span></code> · factory: <strong>16</strong> · range: 2 … 200<br />
+Slit smearing: number of Gauss–Hermite nodes on the positive half of the slit profile. The default integrates a Gaussian slit to better than 1e-6; increase it only for very long slits combined with sharp features in the model.</p></li>
+</ul>
+</section>
+</section>
+<section id="size-distribution-p-r">
+<h3>Size distribution / p(r)<a class="headerlink" href="#size-distribution-p-r" title="Link to this heading"></a></h3>
+<section id="bayesian-evidence-regularisation-parameter">
+<h4>Bayesian evidence: regularisation parameter λ<a class="headerlink" href="#bayesian-evidence-regularisation-parameter" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>centre of the λ grid</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.evidence_lambda_scale</span></code> · factory: <strong>tr(B) / tr(2 LᵀL)  (default)</strong> · range: “trace” (tr(B) / tr(2 LᵀL)  (default)), “median” (median singular value² (old))<br />
+Centre of the λ grid of the Bayesian-evidence solvers. ‘trace’: tr(B)/tr(2LᵀL), the scale at which data and prior curvature are equal – independent of how the r grid is sampled. ‘median’: median singular value of the kernel, squared; the rule before 2026-10-11. With many r points most singular values are at the noise floor (~1e-15) and the ‘median’ grid lies far below the evidence maximum, giving an unregularised p(r).</p></li>
+<li><p><strong>λ grid: decades below the centre</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.evidence_decades_below</span></code> · factory: <strong>12</strong> · range: 0 … 60<br />
+λ grid: decades below the centre (trace rule). The evidence maximum of a well-determined p(r) usually lies a few decades below.</p></li>
+<li><p><strong>λ grid: decades above the centre</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.evidence_decades_above</span></code> · factory: <strong>4</strong> · range: 0 … 60<br />
+Bayesian evidence λ selection (trace rule): the λ grid extends this many decades above the centre tr(B)/tr(2LᵀL). Above the centre the solution is over-smoothed, so a few decades suffice; increase it if the selected λ lies at the upper grid end.</p></li>
+<li><p><strong>λ grid points</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.evidence_points</span></code> · factory: <strong>97</strong> · range: 5 … 10000<br />
+Bayesian evidence λ selection (trace rule): number of λ grid points over the whole range (below + above). The maximum is refined after the grid search, so the default is ample; more points cost time linearly.</p></li>
+<li><p><strong>refine λ between grid points</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.evidence_refine</span></code> · factory: <strong>on</strong> · range: on/off<br />
+Refine λ between the two neighbours of the best grid point by a bounded 1-D maximisation of the evidence (otherwise the grid point itself is used).</p></li>
+<li><p><strong>χ² target may lower λ at most by factor</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.max_lambda_reduction</span></code> · factory: <strong>0.001</strong> · range: 1e-12 … 1<br />
+With ‘χ²ᵣ = 1’ ticked, λ is adjusted from the evidence value to reach the target. It may be raised freely but lowered at most by this factor: reaching χ²ᵣ = 1 only by (almost) removing the regularisation means the target is wrong for the data.</p></li>
+<li><p><strong>estimated error scale s: lower limit</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.noise_scale_lo</span></code> · factory: <strong>0.01</strong> · range: 1e-06 … 1<br />
+Error bars ‘overall scale estimated’: σ_i = s·ΔI_i with s chosen by maximum evidence within [lower, upper]. Lower limit.</p></li>
+<li><p><strong>estimated error scale s: upper limit</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.noise_scale_hi</span></code> · factory: <strong>100</strong> · range: 1 … 1e+06<br />
+Error bars ‘overall scale estimated’: σ_i = s·ΔI_i with s chosen by maximum evidence within [lower, upper]. This is the upper limit of s. Raise it if s ends at this limit (the given errors are much too small).</p></li>
+<li><p><strong>χ²ᵣ target (when ticked)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.target_chi2</span></code> · factory: <strong>1</strong> · range: 0.01 … 100<br />
+Target of the ‘χ²ᵣ = 1’ option of the Bayesian-evidence solver (discrepancy principle).</p></li>
+</ul>
+</section>
+<section id="em-maxent-gcv">
+<h4>EM, MaxEnt, GCV<a class="headerlink" href="#em-maxent-gcv" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>EM: maximum iterations per trial</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_max_iterations</span></code> · factory: <strong>10000</strong> · range: 10 … 1e+07<br />
+EM + smoothing and signed-kernel EM: maximum iterations for one trial smoothing value h (each is Biggs–Andrews accelerated).</p></li>
+<li><p><strong>EM / MaxEnt: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_tol</span></code> · factory: <strong>1e-08</strong> · range: 1e-16 … 0.01<br />
+EM and EM + MaxEnt: one solve stops when the relative change of the distribution between iterations falls below this value. Smaller values give a converged result at more iterations; larger values speed up the h or λ search at the price of a slightly less converged distribution.</p></li>
+<li><p><strong>EM: start of the smoothing search h</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_h_start</span></code> · factory: <strong>0.3</strong> · range: 1e-06 … 1<br />
+EM + smoothing: the smoothing parameter h (0 … 1) is searched by the discrepancy principle, starting here and decreasing.</p></li>
+<li><p><strong>EM: smallest h</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_h_floor</span></code> · factory: <strong>1e-09</strong> · range: 0 … 0.1<br />
+EM + smoothing: smallest h tried. Below it the fit is treated as unable to reach χ²ᵣ = 1 and the fallback (L-curve or least smoothing) is used.</p></li>
+<li><p><strong>signed EM: smallest h</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_general_h_floor</span></code> · factory: <strong>1e-07</strong> · range: 0 … 0.1<br />
+Signed-kernel EM: smallest smoothing value h tried. Below it the fit is treated as unable to reach χ²ᵣ = 1 and the fallback (L-curve or least smoothing) is used. Lower it only if the data are very precise and the fallback is triggered too early.</p></li>
+<li><p><strong>L-curve: points</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.lcurve_points</span></code> · factory: <strong>25</strong> · range: 3 … 1000<br />
+L-curve fallback of the EM methods (used when χ²ᵣ = 1 cannot be reached): number of smoothing values h sampled to locate the corner of the L-curve. More points locate the corner more precisely but cost one EM solve each.</p></li>
+<li><p><strong>L-curve: h reduction per point</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.lcurve_reduction</span></code> · factory: <strong>1.2</strong> · range: 1.01 … 100<br />
+L-curve: factor between successive h values (h, h/f, h/f², …). With 25 points and 1.2 the curve spans about two decades.</p></li>
+<li><p><strong>EM+MaxEnt: smallest λ</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_lambda_min</span></code> · factory: <strong>1e-09</strong> · range: 1e-30 … 1<br />
+EM + MaxEnt: smallest entropy weight λ of the grid; the λ giving χ²ᵣ closest to 1 is chosen.</p></li>
+<li><p><strong>EM+MaxEnt: largest λ</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_lambda_max</span></code> · factory: <strong>1</strong> · range: 1e-12 … 1e+06<br />
+EM + MaxEnt: largest entropy weight λ of the λ grid; the λ giving χ²ᵣ closest to 1 is chosen. Raise it if the chosen λ lies at this end (the data are fitted with χ²ᵣ &lt; 1 even at the strongest entropy weight).</p></li>
+<li><p><strong>EM+MaxEnt: λ grid points</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_points</span></code> · factory: <strong>24</strong> · range: 2 … 1000<br />
+EM + MaxEnt: number of λ values on the geometric grid between smallest and largest λ. Each point is one complete MaxEnt solve; more points select λ more finely but cost proportionally more time.</p></li>
+<li><p><strong>EM+MaxEnt: maximum iterations</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_max_iterations</span></code> · factory: <strong>50000</strong> · range: 10 … 1e+07<br />
+EM + MaxEnt: maximum iterations of one solve at fixed λ. If solves end at this limit (see the log) the selected λ may be off; increase it, or relax the EM / MaxEnt tolerance.</p></li>
+<li><p><strong>EM+MaxEnt adaptive prior: smoothing width σ²</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_sigma2</span></code> · factory: <strong>1</strong> · range: 1e-06 … 1e+06<br />
+EM + MaxEnt, adaptive prior: the prior is the current solution smoothed with a Gaussian of this variance (in grid points²).</p></li>
+<li><p><strong>signed EM MaxEnt: λ start</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.signed_maxent_lambda_start</span></code> · factory: <strong>1e-05</strong> · range: 1e-30 … 1<br />
+Signed-kernel EM with MaxEnt: start of the bidirectional discrepancy search of the entropy weight.</p></li>
+<li><p><strong>signed EM MaxEnt: smallest λ</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.signed_maxent_lambda_floor</span></code> · factory: <strong>1e-12</strong> · range: 0 … 1<br />
+Signed-kernel EM with MaxEnt: smallest entropy weight the bidirectional discrepancy search may reach. If the search ends here, even almost no entropy cannot fit the data to χ²ᵣ = 1 (errors too small or model inadequate).</p></li>
+<li><p><strong>signed EM MaxEnt: largest λ</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.signed_maxent_lambda_ceil</span></code> · factory: <strong>1</strong> · range: 1e-12 … 1e+06<br />
+Signed-kernel EM with MaxEnt: largest entropy weight the bidirectional discrepancy search may reach. If the search ends here, the data are over-fitted even at the strongest entropy weight (errors probably too large).</p></li>
+<li><p><strong>Hansen MaxEnt: χ²ᵣ target</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.hansen_maxent_target_chi2</span></code> · factory: <strong>1</strong> · range: 0.01 … 100<br />
+Hansen’s MaxEnt: λ² is chosen by the discrepancy principle so that the reduced χ² equals this target. 1 trusts the error bars; values &gt; 1 give smoother distributions when the errors are known to be underestimated.</p></li>
+<li><p><strong>Hansen MaxEnt: λ² search start</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.hansen_maxent_start</span></code> · factory: <strong>1</strong> · range: 1e-12 … 1e+12<br />
+Hansen’s MaxEnt: start value of the search for λ². The search first brackets the discrepancy root by multiplying or dividing by the step factor, then refines it, so the start affects speed, not the result.</p></li>
+<li><p><strong>Hansen MaxEnt: λ² search step factor</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.hansen_maxent_factor</span></code> · factory: <strong>4</strong> · range: 1.01 … 1000<br />
+Hansen’s MaxEnt: factor between successive λ² values while bracketing the discrepancy root. Larger factors bracket faster; smaller ones are safer when χ²ᵣ(λ²) is not monotonic.</p></li>
+<li><p><strong>Hansen MaxEnt L-BFGS-B: ftol</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.lbfgs_ftol</span></code> · factory: <strong>1e-16</strong> · range: 0 … 0.01<br />
+Hansen’s MaxEnt is minimised with bound-constrained L-BFGS-B: relative function tolerance.</p></li>
+<li><p><strong>Hansen MaxEnt L-BFGS-B: gtol</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.lbfgs_gtol</span></code> · factory: <strong>1e-12</strong> · range: 0 … 0.01<br />
+Hansen’s MaxEnt is minimised with bound-constrained L-BFGS-B: the minimisation stops when the largest projected-gradient component is below this value. Smaller values give a better-converged distribution at more iterations.</p></li>
+<li><p><strong>Hansen MaxEnt L-BFGS-B: history (maxcor)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.lbfgs_maxcor</span></code> · factory: <strong>30</strong> · range: 3 … 1000<br />
+Hansen’s MaxEnt, L-BFGS-B: number of stored correction pairs, i.e. the memory of the Hessian estimate. More pairs usually mean fewer iterations for many bins, at a small extra cost per iteration.</p></li>
+<li><p><strong>EM / MaxEnt: start vector level</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.em_x0</span></code> · factory: <strong>1e-06</strong> · range: 1e-30 … 1e+06<br />
+EM and MaxEnt start from a flat vector at this level. EM converges to the same fixed point from any positive start; the level matters for the iteration count only.</p></li>
+<li><p><strong>EM+MaxEnt constant prior: floor</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.maxent_prior_floor</span></code> · factory: <strong>1e-06</strong> · range: 1e-30 … 1<br />
+EM + MaxEnt with constant prior: the prior level is max(mean(I)/n, floor), n = number of bins. The floor only matters for data with very small or negative mean intensity, where it keeps the entropy defined.</p></li>
+<li><p><strong>discrepancy root search: absolute tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.root_xtol</span></code> · factory: <strong>1e-06</strong> · range: 0 … 1<br />
+Discrepancy-principle searches (EM h, MaxEnt λ) end with a Brent root search, stopping when |x − x*| ≤ xtol + rtol·|x*|. The absolute 1e-6 is the historical value; for parameters far below 1e-6 it resolves the root only loosely – set xtol = 0 and rtol = 1e-6.</p></li>
+<li><p><strong>discrepancy root search: relative tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.root_rtol</span></code> · factory: <strong>8.88e-16</strong> · range: 8.88178e-16 … 0.1<br />
+Discrepancy-principle searches (EM h, MaxEnt λ) end with a Brent root search, stopping when |x − x*| ≤ xtol + rtol·|x*|. This is rtol; the default is the machine-precision limit of Brent’s method. Set rtol = 1e-6 together with xtol = 0 for parameters far below 1e-6.</p></li>
+<li><p><strong>background fit: max. evaluations</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.background_maxfev</span></code> · factory: <strong>10000</strong> · range: 10 … 1e+07<br />
+Maximum function evaluations of the least-squares fit of the background backgr + c·q^(−α) (scipy curve_fit). Increase it if the background fit reports that it did not converge.</p></li>
+<li><p><strong>GCV: decades below s_min</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.gcv_decades_below</span></code> · factory: <strong>3</strong> · range: 0 … 30<br />
+Tikhonov / general Tikhonov with GCV: the λ grid runs from s_min·10^(−below) to s_max·10^(above) (s: singular values of the weighted kernel).</p></li>
+<li><p><strong>GCV: decades above s_max</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.gcv_decades_above</span></code> · factory: <strong>1</strong> · range: 0 … 30<br />
+Tikhonov / general Tikhonov with GCV: the λ grid runs from s_min·10^(−below) to s_max·10^(above) (s: singular values of the weighted kernel). This is ‘above’; raise it if GCV selects the largest λ.</p></li>
+<li><p><strong>GCV: grid points</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.gcv_points</span></code> · factory: <strong>100</strong> · range: 5 … 10000<br />
+Tikhonov / general Tikhonov with GCV: number of λ values on the grid between its lower and upper end. GCV is evaluated cheaply from the SVD, so more points cost little.</p></li>
+<li><p><strong>TSVD: largest truncation rank</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.opt.tsvd_k_max</span></code> · factory: <strong>40</strong> · range: 2 … 100000<br />
+Truncated SVD: largest truncation rank k tried by GCV (capped by the number of bins and data). Raise it if GCV selects this largest k, i.e. the data support more singular components.</p></li>
+</ul>
+</section>
+<section id="instrumental-resolution-4th-data-column-q">
+<h4>Instrumental resolution (4th data column σ_Q)<a class="headerlink" href="#instrumental-resolution-4th-data-column-q" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>kernel width (± n·σ_Q)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.res.n_sigma</span></code> · factory: <strong>3</strong> · range: 1 … 10<br />
+Resolution from the 4th column σ_Q: the kernel is evaluated on an extended q grid ± n·σ_Q beyond the data and the smearing kernel is truncated there.</p></li>
+<li><p><strong>extended q grid oversampling</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.res.oversample</span></code> · factory: <strong>3</strong> · range: 1 … 50<br />
+Resolution from the 4th column σ_Q: density of the extended q grid on which the kernel is evaluated before smearing, as a multiple of the number of data points. Increase it for sharp features (narrow distributions, large particles) where the default grid under-samples the kernel.</p></li>
+<li><p><strong>4th column is a FWHM (not σ_Q)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.res.fwhm</span></code> · factory: <strong>off</strong> · range: on/off<br />
+Tick if the 4th column of your files is the full width at half maximum instead of σ_Q (FWHM = 2.3548 σ).</p></li>
+</ul>
+</section>
+<section id="grid-errors-bootstrap">
+<h4>Grid, errors, bootstrap<a class="headerlink" href="#grid-errors-bootstrap" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>integrate the kernel on a fine grid when Δr &gt; factor · π/q_max</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.fine_grid_factor</span></code> · factory: <strong>1.1</strong> · range: 0.1 … 100<br />
+The kernel is integrated on a fine grid (p linear or cubic between the r points) when the r spacing exceeds factor × π/q_max, the period of the fastest kernel oscillation; otherwise it is evaluated at the points.</p></li>
+<li><p><strong>suggested r points = factor × Shannon number</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.r_points_factor</span></code> · factory: <strong>1</strong> · range: 0.1 … 20<br />
+After loading, the number of r points is suggested as factor × the Shannon number (q_max − q_min)·r_max/π. 1 = the number of independent parameters the data contain.</p></li>
+<li><p><strong>error model ‘poly’: polynomial degree</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.poly_degree</span></code> · factory: <strong>3</strong> · range: 1 … 6<br />
+Error model ‘local cubic fits’: degree of the polynomial in ln I vs ln q fitted through each point and its neighbours.</p></li>
+<li><p><strong>error model ‘poly’: half width (points)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.poly_half_width</span></code> · factory: <strong>2</strong> · range: 1 … 50<br />
+Error model ‘local cubic fits’: number of neighbours on each side of a point used in the polynomial fit of ln I vs ln q. The scatter about the fit gives the error estimate; wider windows give smoother but possibly biased estimates where I(q) bends sharply.</p></li>
+<li><p><strong>bootstrap random seed (−1 = different every run)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.bootstrap_seed</span></code> · factory: <strong>-1</strong> · range: -1 … 2.14748e+09</p></li>
+<li><p><strong>bootstrap: parallel worker processes (1 = serial, 0 = automatic)</strong> — <code class="docutils literal notranslate"><span class="pre">inversion.gui.bootstrap_workers</span></code> · factory: <strong>1</strong> · range: 0 … 64<br />
+Seed of the Monte-Carlo (bootstrap) error estimate. −1 = different every run; a fixed value makes the error bands reproducible.</p></li>
+</ul>
+</section>
+</section>
+<section id="ornsteinzernike">
+<h3>Ornstein–Zernike<a class="headerlink" href="#ornsteinzernike" title="Link to this heading"></a></h3>
+<section id="oz-solvers-all-tabs">
+<h4>OZ solvers (all tabs)<a class="headerlink" href="#oz-solvers-all-tabs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>default max. iterations (accelerated solvers)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations</span></code> · factory: <strong>600</strong> · range: 10 … 1e+07<br />
+Default iteration limit of the accelerated OZ solvers (Anderson, MDIIS, KINSOL, Biggs–Andrews), used wherever a tab does not set its own limit.</p></li>
+<li><p><strong>default max. iterations (Picard; Mann: ÷ a)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.max_iterations_picard</span></code> · factory: <strong>5000</strong> · range: 10 … 1e+07</p></li>
+<li><p><strong>Picard / Mann: stop unphysical or stalled runs early</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.picard_early_stop</span></code> · factory: <strong>on</strong> · range: on/off</p></li>
+<li><p><strong>Picard / Mann: unphysical when min g(r) &lt;</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.picard_gmin</span></code> · factory: <strong>-0.5</strong> · range: -1e+06 … 0<br />
+Iteration limit N of the Picard / Mann solver for a = 1 (plain Picard), used wherever a tab does not set its own limit, in particular always in the OZ solver tab. With damping a &lt; 1 the solver runs up to ceil(N/a) iterations, because each damped step covers only a fraction a of the way (5000 at a = 0.2 gives 25000). Picard converges linearly and slowly near the spinodal, hence the higher limit than for the accelerated solvers. Example: hard spheres PY at φ = 0.53 need about 4200/a iterations (a ≤ 0.6), so N ≈ 4500 or more is needed there; the factory value 5000 (raised from 3000) covers this, also for the damped Picard / Mann verifier.</p></li>
+<li><p><strong>convergence criterion (relative progress)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.convergence</span></code> · factory: <strong>1e-12</strong> · range: 1e-16 … 0.001<br />
+Convergence criterion of the fixed-point solvers: relative change of Γ(r) between iterations.</p></li>
+<li><p><strong>SUNDIALS KIN_FP: Anderson depth</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.kinsol_maa</span></code> · factory: <strong>5</strong> · range: 0 … 100<br />
+SUNDIALS KIN_FP: depth of the Anderson acceleration (number of previous iterates combined). SASfit’s C solver uses 5.</p></li>
+<li><p><strong>Biggs-Andrews: extrapolation order (sign = step formula)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.biggs_maa</span></code> · factory: <strong>2</strong> · range: -10 … 10<br />
+Biggs–Andrews vector extrapolation: order |n|; the sign selects the step-size formula.</p></li>
+<li><p><strong>MDIIS: history length</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solvers.mdiis_history</span></code> · factory: <strong>5</strong> · range: 1 … 100<br />
+MDIIS: number of previous residuals used in the DIIS extrapolation. Longer histories accelerate more but can become ill-conditioned; reduce it if MDIIS oscillates, increase it for slow convergence of dense states.</p></li>
+</ul>
+</section>
+<section id="oz-solver-tab">
+<h4>OZ solver tab<a class="headerlink" href="#oz-solver-tab" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>verification: max. relative |ΔS|</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solve.verify_tolerance</span></code> · factory: <strong>0.001</strong> · range: 1e-08 … 1<br />
+OZ solver tab, ‘verify’: the result is cross-checked by an independent solver from a cold start; they must agree on S(q) to this relative accuracy, otherwise multiple roots are reported.</p></li>
+<li><p><strong>Hankel transform type</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solve.transform_type</span></code> · factory: <strong>auto (4 for one component)</strong> · range: “auto” (auto (4 for one component)), “1” (1 (DST-I)), “4” (4 (DST-IV))<br />
+Discrete sine transform of the Hankel transform. Type 4 (DST-IV) puts the grid at half-integer points and is second order for one component; type 1 is first order but works for mixtures. auto = 4 for one component, 1 for mixtures. Force one for comparisons.</p></li>
+<li><p><strong>independent residual check: max. ||T(x)-x||/||x||</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solve.residual_tolerance</span></code> · factory: <strong>1e-06</strong> · range: 1e-15 … 1<br />
+After every OZ solve the closure’s fixed-point map T is applied once more to the returned solution x, and the result counts as converged only if ||T(x) - x|| / ||x|| is at most this value – whatever the solver itself reported. This catches solvers that claim success on a non-solution (e.g. KIN_FP returning NaN for polydisperse hard-core Yukawa under HNC, or a stopping test fooled by a stalled iteration). Converged solves give 1e-16 to 1e-11, so 1e-6 rejects only real failures. Lower it for stricter checking; raise it only if well-converged results are being rejected. A failed check marks the run [NOT CONVERGED].</p></li>
+<li><p><strong>verification: damping a of the Picard / Mann verifier</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solve.verify_mann_alpha</span></code> · factory: <strong>0.5</strong> · range: 1e-06 … 1<br />
+Damping a of Picard / Mann when it serves as the second verifier (after Biggs–Andrews). Undamped Picard diverges above φ ≈ 0.42 for hard spheres, which is also where Biggs–Andrews stops converging, so dense states had no verifier at all. Damped, Picard / Mann converges there (hard spheres PY, φ = 0.53: a ≤ 0.6). Its iteration limit is the Picard limit / a, so a smaller a costs time. Must satisfy 0 &lt; a ≤ 1. The verifier is skipped when the primary solver is Picard / Mann itself (same algorithm family).</p></li>
+<li><p><strong>Picard / Mann: start value of the damping a</strong> — <code class="docutils literal notranslate"><span class="pre">oz.solve.mann_alpha</span></code> · factory: <strong>1</strong> · range: 1e-06 … 1<br />
+Value that the ‘damping a’ field of the OZ solver tab shows at start. The Picard / Mann solver iterates x &lt;- (1 - a) x + a T(x): a = 1 is plain Picard, a &lt; 1 is Mann’s damped iteration, slower (roughly 1/a times more iterations) but convergent where undamped Picard oscillates or diverges, e.g. dense hard spheres above φ ≈ 0.42 or strongly attractive states. Must satisfy 0 &lt; a ≤ 1. Typical values 0.2 to 0.8; at a fixed state there is an upper bound above which the iteration oscillates (hard spheres PY at φ = 0.53: a ≤ 0.6). The iteration limit is the Picard limit divided by a. Ignored by all other solvers.</p></li>
+<li><p><strong>consistent closure parameter: scan steps</strong> — <code class="docutils literal notranslate"><span class="pre">oz.consistency.scan_steps</span></code> · factory: <strong>28</strong> · range: 4 … 10000<br />
+‘Find consistent parameter’ (RY, HMSA, MHNC, BPGG, CJVM, BB): number of scan points of the closure parameter before the root of the compressibility mismatch is refined.</p></li>
+<li><p><strong>consistent closure parameter: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">oz.consistency.tolerance</span></code> · factory: <strong>1e-05</strong> · range: 1e-12 … 0.1<br />
+‘Find consistent parameter’ (RY, HMSA, MHNC, BPGG, CJVM, BB): tolerance of the root refinement of the compressibility mismatch in the closure parameter. Smaller values pin the parameter more precisely at more OZ solves.</p></li>
+</ul>
+</section>
+<section id="polydisperse-any-potential-tab">
+<h4>Polydisperse (any potential) tab<a class="headerlink" href="#polydisperse-any-potential-tab" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>grid exponent k (N = 2^k − 1, or 2^k for type 4)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.grid_exponent</span></code> · factory: <strong>12</strong> · range: 4 … 20<br />
+Polydisperse tab: radial grid N = 2^k − 1 points (type 1) or 2^k (type 4). Start value of the tab’s Numerical settings; a session file overrides it.</p></li>
+<li><p><strong>points per mean diameter</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.points_per_sigma</span></code> · factory: <strong>100</strong> · range: 4 … 100000<br />
+Polydisperse tab: grid points per mean diameter. With the grid size it fixes the radial range (N / points per σ diameters) and so the lowest q.</p></li>
+<li><p><strong>max. iterations</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.max_iterations</span></code> · factory: <strong>8000</strong> · range: 10 … 1e+07<br />
+Polydisperse tab: iteration limit of each OZ solve (including the solves during a fit and the α search). Raise it for dense or strongly attractive states that converge slowly.</p></li>
+<li><p><strong>transform type</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.transform_type</span></code> · factory: <strong>1 (DST-I)</strong> · range: “1” (1 (DST-I)), “4” (4 (DST-IV))<br />
+Polydisperse tab: transform type of the OZ solver. 1 is required for most mixtures (the components are transformed as a matrix); 4 is a single-component variant and is only valid for one component.</p></li>
+<li><p><strong>fit: max. model evaluations (per start)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.fit_max_nfev</span></code> · factory: <strong>200</strong> · range: 5 … 1e+06<br />
+Polydisperse tab, Fit: maximum model evaluations of least_squares (each start of the multi-start fit gets this budget). Every evaluation is a full OZ solve.</p></li>
+<li><p><strong>fit: starts of ‘least_squares (n starts)’</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.n_starts</span></code> · factory: <strong>10</strong> · range: 2 … 1000<br />
+Polydisperse tab, ‘least_squares (n starts)’: number of local fits from scattered start points, to find out whether the minimum is unique.</p></li>
+<li><p><strong>fit: relative finite-difference step</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.diff_step</span></code> · factory: <strong>0.001</strong> · range: 1e-08 … 0.1<br />
+Polydisperse tab, Fit: relative finite-difference step of the Jacobian. Too small and the OZ solver’s own convergence noise dominates the derivative.</p></li>
+<li><p><strong>consistent α search: lower bracket</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.alpha_lo</span></code> · factory: <strong>1e-06</strong> · range: 1e-12 … 10<br />
+Polydisperse tab, ‘find consistent α’: lower end of the bracket of the closure parameter.</p></li>
+<li><p><strong>consistent α search: upper bracket</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.alpha_hi</span></code> · factory: <strong>100</strong> · range: 1e-06 … 1e+06<br />
+Polydisperse tab, ‘find consistent α’: upper end of the bracket of the closure parameter. If the search ends at this end the closure cannot reach thermodynamic consistency inside the bracket.</p></li>
+<li><p><strong>consistent α search: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.alpha_tol</span></code> · factory: <strong>0.0002</strong> · range: 1e-10 … 0.1<br />
+Polydisperse tab, ‘find consistent α’: tolerance of the root search of the compressibility mismatch in α. Smaller values cost more OZ solves.</p></li>
+<li><p><strong>α accepted as consistent when |residual| &lt; value · χ⁻¹</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.alpha_accept</span></code> · factory: <strong>0.001</strong> · range: 1e-10 … 1<br />
+α is reported as consistent when |compressibility mismatch| &lt; value × χ⁻¹ (relative test; χ⁻¹ is of order 10 for a dense fluid). Otherwise the closest bracket end is used and flagged.</p></li>
+<li><p><strong>resolution: kernel width (± n·σ_Q)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.res_n_sigma</span></code> · factory: <strong>3</strong> · range: 1 … 10<br />
+Polydisperse tab, resolution from σ_Q: the smearing kernel is evaluated on an extended Q grid ± n·σ_Q beyond the data and truncated there. 3 covers 99.7 % of a Gaussian; raise it for very wide resolution near steep features.</p></li>
+<li><p><strong>resolution: extended Q grid oversampling</strong> — <code class="docutils literal notranslate"><span class="pre">oz.generic.res_oversample</span></code> · factory: <strong>3</strong> · range: 1 … 50<br />
+Polydisperse tab, resolution from σ_Q: density of the extended Q grid on which the model is evaluated before smearing, as a multiple of the number of data points. Increase it for sharp structure-factor peaks.</p></li>
+</ul>
+</section>
+<section id="ry-polydisperse-yukawa-tab">
+<h4>RY Polydisperse Yukawa tab<a class="headerlink" href="#ry-polydisperse-yukawa-tab" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>α search: lower bracket</strong> — <code class="docutils literal notranslate"><span class="pre">oz.ry.alpha_lo</span></code> · factory: <strong>0.02</strong> · range: 1e-08 … 10<br />
+RY Polydisperse Yukawa tab: lower end of the bracket of the Rogers–Young mixing parameter α searched for thermodynamic consistency.</p></li>
+<li><p><strong>α search: upper bracket</strong> — <code class="docutils literal notranslate"><span class="pre">oz.ry.alpha_hi</span></code> · factory: <strong>3</strong> · range: 0.001 … 10000<br />
+RY Polydisperse Yukawa tab: upper end of the bracket of the Rogers–Young mixing parameter α searched for thermodynamic consistency. If the search ends here, consistency is not reached in the bracket.</p></li>
+<li><p><strong>α search: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">oz.ry.alpha_tol</span></code> · factory: <strong>0.002</strong> · range: 1e-10 … 0.1<br />
+RY Polydisperse Yukawa tab: tolerance of the root search for the consistent α. Smaller values cost more OZ solves.</p></li>
+<li><p><strong>α accepted as consistent when |residual| &lt;</strong> — <code class="docutils literal notranslate"><span class="pre">oz.ry.alpha_accept</span></code> · factory: <strong>0.001</strong> · range: 1e-10 … 1<br />
+α is reported as consistent when the absolute pressure-route mismatch is below this value.</p></li>
+<li><p><strong>size classes: range ± n s.d. (log-normal, Schulz-Zimm)</strong> — <code class="docutils literal notranslate"><span class="pre">oz.ry.nsig</span></code> · factory: <strong>5</strong> · range: 1 … 12<br />
+RY tab: the size classes of a log-normal distribution span ± n standard deviations (in ln R). Schulz-Zimm/Gamma and Beta use their exact Gauss rules and ignore it.</p></li>
+</ul>
+</section>
+<section id="mixture-validation-tab">
+<h4>Mixture validation tab<a class="headerlink" href="#mixture-validation-tab" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>reject solves with residual &gt;</strong> — <code class="docutils literal notranslate"><span class="pre">oz.mixture.accept_residual</span></code> · factory: <strong>0.001</strong> · range: 1e-12 … 1<br />
+Mixture validation tab: a numerical OZ solve is rejected when max|G(Γ) − Γ| exceeds this value.</p></li>
+</ul>
+</section>
+</section>
+<section id="sans-reduction">
+<h3>SANS reduction<a class="headerlink" href="#sans-reduction" title="Link to this heading"></a></h3>
+<section id="beam-centre-masked-centre-of-gravity-of-the-direct-beam-run">
+<h4>Beam centre (masked centre of gravity of the direct-beam run)<a class="headerlink" href="#beam-centre-masked-centre-of-gravity-of-the-direct-beam-run" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>disc radius [px]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.beamcentre.radius_px</span></code> · factory: <strong>8</strong> · range: 1 … 64<br />
+Radius of the disc around the current estimate whose counts enter the centre of gravity of the direct-beam run. The disc is re-centred until the shift is below the tolerance. Larger than the beam spot (about 2-3 FWHM), smaller than the distance to other bright features.</p></li>
+<li><p><strong>tolerance [px]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.beamcentre.tol_px</span></code> · factory: <strong>0.1</strong> · range: 0.0001 … 5<br />
+The iteration of the masked centre of gravity stops when the disc moves by less than this. The statistical uncertainty of the centre is usually far smaller (0.004 px on the Vifor runs).</p></li>
+<li><p><strong>iterations</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.beamcentre.max_iter</span></code> · factory: <strong>50</strong> · range: 1 … 10000<br />
+Largest number of re-centring steps of the beam-centre search; reached only if the beam spot is at the edge of the disc or of the detector.</p></li>
+</ul>
+</section>
+<section id="default-reduction-parameters-starting-values-on-the-reduction-panel">
+<h4>Default reduction parameters (starting values on the Reduction panel)<a class="headerlink" href="#default-reduction-parameters-starting-values-on-the-reduction-panel" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>beamstop first guess: half width (square) or radius [px]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.beamstop_radius_px</span></code> · factory: <strong>6</strong> · range: 0 … 64<br />
+First guess of the beamstop shadow: a new detector image starts with the standard border plus a square of this half width (or a disc of this radius, see the shape) around the beam centre, as beamstop pixels of the mask. It is only a start: adjust it with the mask tools or replace it by Suggest. Until the mask is edited, the guess follows the beam centre and the size.</p></li>
+<li><p><strong>beamstop first guess: shape</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.beamstop_shape</span></code> · factory: <strong>square</strong> · square, disc<br />
+Shape of the first-guess beamstop: square (the SANS-I beamstops are square) or disc.</p></li>
+<li><p><strong>number of q bins</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.qbins.n</span></code> · factory: <strong>60</strong> · range: 2 … 2000<br />
+Start value of the number of q bins of the radial / sector average. Empty bins are dropped, so the curve can have fewer points.</p></li>
+<li><p><strong>q-bin spacing</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.qbins.spacing</span></code> · factory: <strong>logarithmic</strong> · range: “log” (logarithmic), “lin” (linear)<br />
+Start value of the q-bin spacing: logarithmic (constant Δq/q, the usual choice for SANS) or linear (constant Δq, e.g. for peaks at large q).</p></li>
+<li><p><strong>normalise by</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.normalise_by</span></code> · factory: <strong>monitor 1 (Poisson error propagated)</strong> · range: “monitor” (monitor 1 (Poisson error propagated)), “time” (counting time)<br />
+Start value of the normalisation: monitor 1 (its Poisson error is propagated as a systematic scale shared by all points) or counting time (no monitor error).</p></li>
+<li><p><strong>units of wavelength and q</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.units</span></code> · factory: <strong>nm and 1/nm</strong> · range: “nm” (nm and 1/nm), “A” (Å and 1/Å)<br />
+Units of wavelength and q on the panels, in the plots and in the saved files (NXcanSAS Q units attribute, ASCII header). The reduction itself works in Å and 1/Å, so results do not depend on this choice. Also switchable on the Reduction panel.</p></li>
+<li><p><strong>colour scale of the detector image</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.detector.scale</span></code> · factory: <strong>log(1+I)</strong> · range: “linear” (linear), “log1p” (log(1+I)), “symlog” (symlog (linear below 1 count)), “asinh” (asinh)<br />
+Start value of the colour scale of the detector image: linear; log(1+I) (zero counts stay finite); symlog (linear below 1 count, logarithmic above); asinh (smooth version of symlog).</p></li>
+</ul>
+</section>
+<section id="mask-suggestion-suggest-in-the-detector-panel">
+<h4>Mask suggestion (Suggest in the detector panel)<a class="headerlink" href="#mask-suggestion-suggest-in-the-detector-panel" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>standard mask: outer rows and columns</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.border_px</span></code> · factory: <strong>2</strong> · range: 0 … 20<br />
+The standard mask: this many outer rows and columns on every side of the detector (bit ‘border’). It is the mask of a new detector image and the base of Suggest and Reset.</p></li>
+<li><p><strong>beamstop: drop below this fraction of the rim level</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.drop</span></code> · factory: <strong>0.3</strong> · range: 0.01 … 0.95<br />
+Beamstop suggestion: the shadow is the connected region below drop x rim level that reaches the beam centre; the rim level is the 90th percentile of the median-filtered counts within the search radius. Lower it if the suggestion covers too much, raise it for a beamstop that transmits.</p></li>
+<li><p><strong>beamstop: search radius around the beam centre [px]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.search_radius_px</span></code> · factory: <strong>20</strong> · range: 3 … 200<br />
+Beamstop suggestion: radius around the beam centre in which the rim level is determined; it should include the bright scattering around the beamstop.</p></li>
+<li><p><strong>beamstop: grow the shadow by [px] (penumbra)</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.grow_px</span></code> · factory: <strong>1</strong> · range: 0 … 10<br />
+Beamstop suggestion: the shadow is grown by this many pixels to cover the penumbra at its edge, where the counts are already up but not yet trustworthy.</p></li>
+<li><p><strong>beamstop: suggested shape</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.suggest_shape</span></code> · factory: <strong>rectangle around the shadow</strong> · rectangle, shadow<br />
+Beamstop suggestion: rectangle masks the whole bounding rectangle of the shadow found in the data (square beamstops, no ragged edge); shadow masks only the pixels below the threshold.</p></li>
+<li><p><strong>masked pixels on the detector image</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.display</span></code> · factory: <strong>mask colours</strong> · mask colours, own grey scale, hidden<br />
+How the masked pixels are drawn on the detector image: in the mask colours (with the opacity below), on their own grey scale with its own colour bar (to see what is behind the mask), or hidden (only the outline). The colour scale of the image always uses the unmasked pixels only.</p></li>
+<li><p><strong>opacity of the mask colours [%]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.opacity</span></code> · factory: <strong>80</strong> · range: 10 … 100<br />
+Opacity of the mask colours over the detector image. The black-and-white outline of the masked area is always drawn, so the mask stays visible at low opacity.</p></li>
+<li><p><strong>also suggest hot pixels</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.mask.hot</span></code> · factory: <strong>on</strong> · range: on/off<br />
+Suggest also isolated hot pixels: more than 5 x the median of their 5 x 5 neighbourhood and 10 Poisson standard deviations above it. Next to the beamstop they usually mean beam leaking past its edge.</p></li>
+</ul>
+</section>
+<section id="reduction-table">
+<h4>Reduction table<a class="headerlink" href="#reduction-table" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>fill the reduction table when a folder is opened</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.table.autofill</span></code> · factory: <strong>on</strong> · range: on/off<br />
+When a raw-data folder is opened, the reduction table is filled automatically: one tab per geometry (detector distance, wavelength, collimation), the runs grouped by sample, the roles taken from the sample names and, with ‘check repeated runs’, the repeated runs compared and outliers switched off. Geometries with few runs or without water / empty cell are marked with ‘?’ (measured for tests?) and can be removed with the × of their tab. Off: the table stays as it is until ‘Fill from runs’.</p></li>
+</ul>
+</section>
+<section id="detector-distance">
+<h4>Detector distance<a class="headerlink" href="#detector-distance" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>offset added to the recorded distance [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.detector.distance_offset_mm</span></code> · factory: <strong>53</strong> · range: -500 … 500<br />
+Effective sample-detector distance (to the detection layer) = recorded distance + this offset, used for q and the solid angle; the recorded distance stays in the run table, the grouping and the selection. Factory value 53 mm: water measured at 8 m and 2 m with the same collimation (Vifor, Sept. 2026) was 4 % apart per steradian, which a common offset of +53 mm explains (the mean conversion depth in the 3He is only about 0.75 cm at 6 Å, so most of it is where the distance is measured). To be measured again, by hand or with water at several distances and the same collimation (pysasfit.sasred.core.water.fit_distance_offset). Once the instrument configuration writes the corrected distance, limit the offset with the date below or set it to 0. The offset is noted in every reduction; its uncertainty is not propagated.</p></li>
+<li><p><strong>apply the offset to runs started before</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.detector.distance_offset_before</span></code> · factory: <strong>(empty)</strong> · text<br />
+Date (YYYY-MM-DD) from which the files already contain the corrected distance: the offset above is applied only to runs started before it. Empty: the offset is applied to all runs.</p></li>
+</ul>
+</section>
+<section id="transmission-runs">
+<h4>Transmission runs<a class="headerlink" href="#transmission-runs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>beam stop out of the beam beyond [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.transmission.beamstop_out_mm</span></code> · factory: <strong>100</strong> · range: 1 … 2000<br />
+Transmission runs are measured with the beam stop moved out of the direct beam, in y (on SANS-I typically bsy = -200 mm or lower) or in x, or taken out of the detection area. A run whose beam stop is farther than this distance from the beam centre (on the detector) counts as a transmission run, whatever the attenuator: usually an attenuator is needed against saturation, but with very long wavelengths and collimations the direct beam can be measured without one. The beam stop motors are tied to detector pixels by its shadow in the scattering runs, the beam centre comes from the direct-beam runs, per detector distance and wavelength (gravity may need a realignment at long distances and wavelengths). Runs where the position and the image disagree are marked with ‘?’ in the run table.</p></li>
+<li><p><strong>warn above this dead-time factor</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.transmission.deadtime_warn</span></code> · factory: <strong>1.05</strong> · range: 1 … 2<br />
+The direct beam concentrates the count rate: above this non-paralysable dead-time factor (1 / (1 - rate τ), τ = 0.66 µs on SANS-I) a transmission run is reported as close to saturation and a (stronger) attenuator is recommended. The factor is corrected in any case.</p></li>
+</ul>
+</section>
+<section id="detector-efficiency">
+<h4>Detector efficiency<a class="headerlink" href="#detector-efficiency" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>efficiency archive file</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.efficiency.archive</span></code> · factory: <strong>efficiency_archive.h5 next to the preferences file</strong> (the dialog shows the full path) · file, with a browse button<br />
+HDF5 file in which the detector-efficiency maps are archived, one entry per map named after the date of its water measurement, to follow the detector over time. Empty: efficiency_archive.h5 next to the pySASfit preferences file.</p></li>
+</ul>
+</section>
+<section id="sans-llb-detector-geometry">
+<h4>SANS-LLB detector geometry<a class="headerlink" href="#sans-llb-detector-geometry" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>central detector: offset of the detection layer [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.central_dz_mm</span></code> · factory: <strong>0</strong> · range: -500 … 500<br />
+SANS-LLB: offset of the detection layer of the central detector from the recorded distance (central_detector/distance), used for q and the solid angle. The SANS-I offset (Detector distance) does not apply to SANS-LLB.</p></li>
+<li><p><strong>left panel: offset dx along posx [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.left.dx_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB left wide-angle panel: correction of the pixel positions written by NICOS (left_data/posx, posy; the same nominal geometry as GRASP’s SINQ_SANS_LLB.ini). Pixel position = (posx + dx, posy + dy) at the distance left_detector/distance + dz; the beam position in that frame comes from the beam centre on the central detector. posx runs across the 16 tubes (away from the beam), posy along the tubes. Determine dx, dy, dz with a standard that puts rings on the panels (AgBe in the 4 m setting: 2.15, 3.23, 4.30 1/nm). Maren’s data 2026-08 suggest that along the tubes the beam lies near posy ≈ +84 mm (dy ≈ -85 mm), to confirm.</p></li>
+<li><p><strong>left panel: offset dy along posy (along the tubes) [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.left.dy_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB left panel: offset along posy (along the tubes) [mm]; see dx.</p></li>
+<li><p><strong>left panel: offset dz along the beam [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.left.dz_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB left panel: offset of the detection plane along the beam from left_detector/distance [mm]; see dx.</p></li>
+<li><p><strong>bottom panel: offset dx along posx (along the tubes) [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.bottom.dx_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB bottom wide-angle panel: offset along posx (along the tubes) [mm]; pixel position = (posx + dx, posy + dy) at bottom_detector/distance + dz. See the left panel.</p></li>
+<li><p><strong>bottom panel: offset dy along posy [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.bottom.dy_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB bottom panel: offset along posy (across the tubes, away from the beam) [mm].</p></li>
+<li><p><strong>bottom panel: offset dz along the beam [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.bottom.dz_mm</span></code> · factory: <strong>0</strong> · range: -1000 … 1000<br />
+SANS-LLB bottom panel: offset of the detection plane along the beam [mm].</p></li>
+<li><p><strong>pixels masked at both ends of every tube</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.llb.end_px</span></code> · factory: <strong>10</strong> · range: 0 … 60<br />
+SANS-LLB wide-angle panels: pixels masked at both ends of every tube (the position response of the tubes falls off there); tubes without counts are masked as well.</p></li>
+</ul>
+</section>
+<section id="resolution">
+<h4>Resolution<a class="headerlink" href="#resolution" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>dλ/λ (FWHM) when the raw file has none</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.resolution.dlam_default</span></code> · factory: <strong>0.1</strong> · range: 0 … 1<br />
+Relative wavelength spread (FWHM) used for the resolution Qdev when the raw file gives none: on SANS-I dλ/λ comes from the selector tilt and its calibration table, else from the header (monochromator/wavelength_spread); only when both are missing is this value used, and the notes say so. 0 switches the resolution off for such runs.</p></li>
+<li><p><strong>source aperture (guide cross-section) x [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.resolution.source_aperture_x_mm</span></code> · factory: <strong>50</strong> · range: 0.1 … 500<br />
+When a geometry has no direct-beam run, the beam divergence is estimated from the collimation: the source aperture (on SANS-I the neutron-guide cross-section, 50 × 50 mm²) at the collimation length coll before the sample aperture, detector SD behind it: σ_spot² = (a₁ SD/coll)²/12 + (a₂ (coll+SD)/coll)²/12 per axis. These preferences override the instrument file.</p></li>
+<li><p><strong>source aperture (guide cross-section) y [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.resolution.source_aperture_y_mm</span></code> · factory: <strong>50</strong> · range: 0.1 … 500<br />
+Vertical size of the source aperture (neutron-guide cross-section, 50 mm on SANS-I) for the divergence estimate from the collimation when a geometry has no direct-beam run.</p></li>
+<li><p><strong>sample aperture x [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.resolution.sample_aperture_x_mm</span></code> · factory: <strong>8</strong> · range: 0.1 … 200<br />
+Sample aperture used for the divergence estimate (typical SANS-I value 8 × 14 mm², x × y); the aperture actually used is not recorded in the raw file.</p></li>
+<li><p><strong>sample aperture y [mm]</strong> — <code class="docutils literal notranslate"><span class="pre">sasred.resolution.sample_aperture_y_mm</span></code> · factory: <strong>14</strong> · range: 0.1 … 200<br />
+Vertical size of the sample aperture (typically 14 mm on SANS-I) for the divergence estimate from the collimation when a geometry has no direct-beam run.</p></li>
+</ul>
+</section>
+</section>
+<section id="pytoolbox">
+<h3>pyTOOLbox<a class="headerlink" href="#pytoolbox" title="Link to this heading"></a></h3>
+<p>Formerly pySASbox: values saved under <code class="docutils literal notranslate"><span class="pre">sasbox.…</span></code> are read as <code class="docutils literal notranslate"><span class="pre">toolbox.…</span></code>.</p>
+<section id="hdf5-viewer">
+<h4>HDF5 viewer<a class="headerlink" href="#hdf5-viewer" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>largest number of elements read for a plot</strong> — <code class="docutils literal notranslate"><span class="pre">toolbox.viewer.max_points</span></code> · factory: <strong>4000000</strong> · range: 10000 … 5e+08<br />
+Largest number of elements the HDF5 viewer reads for a plot or matrix view. Larger slices are read with a stride (every n-th element along each shown dimension); the axis labels say so.</p></li>
+</ul>
+</section>
+<section id="metadata-lister">
+<h4>Metadata lister<a class="headerlink" href="#metadata-lister" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>largest dataset listed as metadata (elements)</strong> — <code class="docutils literal notranslate"><span class="pre">toolbox.lister.max_elements</span></code> · factory: <strong>16</strong> · range: 1 … 100000<br />
+Datasets with at most this many elements count as metadata and are offered as entries of the metadata lister; larger ones (images, histograms) are not.</p></li>
+<li><p><strong>digits after the decimal point of floating-point values</strong> — <code class="docutils literal notranslate"><span class="pre">toolbox.lister.float_digits</span></code> · factory: <strong>3</strong> · range: 0 … 15<br />
+Floating-point values in the metadata listing are rounded to this many digits after the decimal point (as shown, copied and exported).</p></li>
+</ul>
+</section>
+</section>
+<section id="pyscatter">
+<h3>pySCAtter<a class="headerlink" href="#pyscatter" title="Link to this heading"></a></h3>
+<section id="calculation-and-fit-pyscatter">
+<h4>Calculation and fit (pySCAtter)<a class="headerlink" href="#calculation-and-fit-pyscatter" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>I(q) follows every parameter change</strong> — <code class="docutils literal notranslate"><span class="pre">scatter.calc.auto_1d</span></code> · factory: <strong>on</strong> · on/off<br />
+Start value of the ‘I(q) follows’ box of pySCAtter: the 1D curve (and the model at the loaded data) is recalculated 0.35 s after every parameter change. The 2D pattern follows only when ‘2D follows’ is ticked, because oriented anisometric particles take seconds.</p></li>
+<li><p><strong>fit: largest number of model evaluations</strong> — <code class="docutils literal notranslate"><span class="pre">scatter.fit.max_nfev</span></code> · factory: <strong>200</strong> · range: 5 … 100000<br />
+Largest number of model evaluations of a pySCAtter fit (Trust Region Reflective least squares; each fitted parameter costs one evaluation per iteration for the Jacobian).</p></li>
+<li><p><strong>2D fit: use every n-th pixel (start value)</strong> — <code class="docutils literal notranslate"><span class="pre">scatter.fit.every_px</span></code> · factory: <strong>2</strong> · range: 1 … 32<br />
+2D fits use every n-th pixel in both directions: n² times fewer model evaluations. 1 uses all pixels; the χ² and the errors refer to the pixels used.</p></li>
+</ul>
+</section>
+</section>
+<section id="pysebpolymers">
+<h3>pySEBpolymers<a class="headerlink" href="#pysebpolymers" title="Link to this heading"></a></h3>
+<section id="calculation-and-fit-pysebpolymers">
+<h4>Calculation and fit (pySEBpolymers)<a class="headerlink" href="#calculation-and-fit-pysebpolymers" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>I(q) follows every parameter change</strong> — <code class="docutils literal notranslate"><span class="pre">seb.auto</span></code> · factory: <strong>on</strong> · on/off<br />
+The I(q) panel of pySEBpolymers is recalculated 0.15 s after every change of a parameter, the model or the q grid. Off: only with Calculate, Build or after a fit (for very large structures).</p></li>
+<li><p><strong>orientational average: Gauss-Legendre points</strong> — <code class="docutils literal notranslate"><span class="pre">seb.n_mu</span></code> · factory: <strong>128</strong> · range: 8 … 4096<br />
+Number of Gauss-Legendre points in cos(alpha) for the orientational average of the oriented sub-units (SolidCylinder, Spheroid, ThinDisk rim). 128 is accurate to about 1e-10 up to qL of a few hundred; long cylinders at large q need more. The other sub-units have closed forms.</p></li>
+<li><p><strong>fit: largest number of model evaluations</strong> — <code class="docutils literal notranslate"><span class="pre">seb.fit.max_nfev</span></code> · factory: <strong>200</strong> · range: 5 … 100000<br />
+Largest number of model evaluations of a pySEBpolymers fit (Trust Region Reflective least squares; each fitted parameter costs one evaluation per iteration for the Jacobian).</p></li>
+</ul>
+</section>
+</section>
+<section id="pyatsas">
+<h3>pyATsas<a class="headerlink" href="#pyatsas" title="Link to this heading"></a></h3>
+<section id="atsas-installation-and-runs">
+<h4>ATSAS installation and runs<a class="headerlink" href="#atsas-installation-and-runs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>ATSAS installation folder</strong> — <code class="docutils literal notranslate"><span class="pre">atsas.dir</span></code> · factory: <strong>found automatically</strong> (the dialog shows the folder found) · text<br />
+Folder of the ATSAS installation (the one with bin/ and atsas.lic), e.g. C:\Program Files\ATSAS-4.1.4 or ~/ATSAS-4.1.4. Empty: pyATsas looks for it itself – environment variables PYATSAS_DIR and ATSAS (on Windows also the ATSAS value the installer writes to the registry), autorg on the PATH, then the newest ATSAS-x.y.z folder in the usual places (Program Files, the home folder, /opt, /Applications). Set it to use another of several installed versions.</p></li>
+<li><p><strong>folder for the ATSAS runs</strong> — <code class="docutils literal notranslate"><span class="pre">atsas.workdir</span></code> · factory: <strong>atsas_runs next to the preferences file</strong> (the dialog shows the full path) · text<br />
+Every ATSAS run of the pyATsas panel gets its own sub-folder here (date, time, program, curve), with the input file and everything the program writes (.out, .fit, bead models, logs), so results can be opened later in PRIMUS or a molecular viewer. Empty: atsas_runs next to the pySASfit preferences file.</p></li>
+<li><p><strong>time limit of one program run (s)</strong> — <code class="docutils literal notranslate"><span class="pre">atsas.timeout</span></code> · factory: <strong>600</strong> · range: 10 … 86400<br />
+A program run that takes longer is stopped and reported as failed. DAMMIF in slow mode and large CRYSOL fits may need more than the factory value.</p></li>
+<li><p><strong>DAMMIF: independent runs (start value)</strong> — <code class="docutils literal notranslate"><span class="pre">atsas.dammif.nruns</span></code> · factory: <strong>10</strong> · range: 1 … 200<br />
+Start value of the number of independent DAMMIF runs. Several runs (10 or more) are needed to judge the uniqueness of a bead model (DAMAVER / DAMCLUST); they run in parallel on all but one core.</p></li>
+</ul>
+</section>
+</section>
+<section id="pydensity">
+<h3>pyDENsity<a class="headerlink" href="#pydensity" title="Link to this heading"></a></h3>
+<section id="denss-installation-and-runs">
+<h4>DENSS installation and runs<a class="headerlink" href="#denss-installation-and-runs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>Python with DENSS</strong> — <code class="docutils literal notranslate"><span class="pre">density.python</span></code> · factory: <strong>found automatically</strong> (the dialog shows the interpreter found) · text<br />
+Python interpreter in which DENSS is installed (pip install denss). Empty: the Python running pySASfit, then python / python3 on the PATH, then the interpreter of a ‘denss’ script on the PATH. Set it when DENSS lives in another environment (e.g. a python.org Python next to the MSYS2 one).</p></li>
+<li><p><strong>folder for the DENSS runs</strong> — <code class="docutils literal notranslate"><span class="pre">density.workdir</span></code> · factory: <strong>denss_runs next to the preferences file</strong> (the dialog shows the full path) · text<br />
+Every DENSS run of the pyDENsity panel gets its own sub-folder here (date, time, kind, curve) with the input file and everything DENSS writes (maps .mrc, fits, log; denss-all: the aligned maps, the average and the FSC curve), so maps can be opened later in ChimeraX or PyMOL. Empty: denss_runs next to the pySASfit preferences file.</p></li>
+<li><p><strong>time limit of one map (s)</strong> — <code class="docutils literal notranslate"><span class="pre">density.timeout</span></code> · factory: <strong>7200</strong> · range: 10 … 604800<br />
+A single DENSS map that takes longer is stopped and reported as failed; denss-all gets four times this limit. SLOW mode with fine grids can take more than an hour per map.</p></li>
+<li><p><strong>denss-all: cores (start value)</strong> — <code class="docutils literal notranslate"><span class="pre">density.cores</span></code> · factory: <strong>4</strong> · range: 1 … 256<br />
+Start value of the number of maps that denss-all computes in parallel (its -j option). Each map needs one core and its own memory (grids of 64³ and more need several hundred MB).</p></li>
+</ul>
+</section>
+</section>
+<section id="pydenssmulti">
+<h3>pyDENSSmulti<a class="headerlink" href="#pydenssmulti" title="Link to this heading"></a></h3>
+<section id="runs">
+<h4>Runs<a class="headerlink" href="#runs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>folder for the runs</strong> — <code class="docutils literal notranslate"><span class="pre">densitymulti.workdir</span></code> · factory: <strong>denssmulti_runs next to the preferences file</strong> (the dialog shows the full path) · text<br />
+Every run of the pyDENSSmulti panel gets its own sub-folder here (date, time, scheme, number of contrasts) with the maps (one MRC file per component, per contrast, the support; the SLD map of the averaging scheme), the fits of every curve and a summary (multi_summary.json); several maps: the average and every single map in map_xx. File → Open a result folder reads them back. Empty: denssmulti_runs next to the pySASfit preferences file.</p></li>
+<li><p><strong>maps computed at the same time (start value)</strong> — <code class="docutils literal notranslate"><span class="pre">densitymulti.threads</span></code> · factory: <strong>4</strong> · range: 1 … 256<br />
+Start value of the number of maps computed at the same time when several maps are averaged. Each map needs its own memory (a 64³ grid with four contrasts: about 100 MB).</p></li>
+</ul>
+</section>
+</section>
+<section id="pysasscout">
+<h3>pySASscout<a class="headerlink" href="#pysasscout" title="Link to this heading"></a></h3>
+<section id="results-store">
+<h4>Results store<a class="headerlink" href="#results-store" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>folder of the results store</strong> — <code class="docutils literal notranslate"><span class="pre">scout.store</span></code> · factory: <strong>scout_store next to the preferences file</strong> (the dialog shows the full path) · text<br />
+Folder of the results store of pySASscout. Every fitted candidate and every search is written there (one small file per fit, grouped by curve), and fits found there are reused: repeating a search, continuing one that was stopped, or adding models only fits what is new. The folder has relative paths only, so it can be copied or moved (also to a network drive or a cluster) and then named here; two stores are merged by copying one into the other. Empty: scout_store next to the pySASfit preferences file.</p></li>
+<li><p><strong>reuse stored fits (start value)</strong> — <code class="docutils literal notranslate"><span class="pre">scout.reuse</span></code> · factory: <strong>on</strong> · switch<br />
+Take a candidate from the results store instead of fitting it again when the curve, the candidate, the fit options (starts, seed, background, error scale) and the SASfit build are the same. Off: every candidate is fitted again and the stored fit is replaced. Start value of the check box on the pySASscout panel.</p></li>
+<li><p><strong>searches kept per curve</strong> — <code class="docutils literal notranslate"><span class="pre">scout.keep_runs</span></code> · factory: <strong>20</strong> · range: 1 … 10000<br />
+Number of searches kept per curve in the results store (the newest ones; the fits themselves are kept independently of this). A stored search is the complete ranking with all curves, a few 10 kB.</p></li>
+</ul>
+</section>
+</section>
+<section id="appearance">
+<h3>Appearance<a class="headerlink" href="#appearance" title="Link to this heading"></a></h3>
+<section id="title-bars-of-the-panels-label-hide-cross">
+<h4>Title bars of the panels (label … hide cross)<a class="headerlink" href="#title-bars-of-the-panels-label-hide-cross" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>coloured title bars</strong> — <code class="docutils literal notranslate"><span class="pre">appearance.panel_title.mode</span></code> · factory: <strong>pale</strong> · pale, all, active, off<br />
+Title bars of the docked panels coloured like window title bars under Windows. ‘active panel in the colour, others pale’: the panel last clicked has the full colour and white text, the others a light tint of it. Takes effect when the preferences are saved.</p></li>
+<li><p><strong>colour (#rrggbb or name)</strong> — <code class="docutils literal notranslate"><span class="pre">appearance.panel_title.colour</span></code> · factory: <strong>#0078d7</strong> · text<br />
+Colour of the panel title bars: #rrggbb (e.g. #0078d7 Windows 10/11 blue, #2b579a Word blue, #1e3a5f dark blue) or a colour name (steelblue). The text turns white on dark colours, dark on light ones. An invalid value falls back to #0078d7.</p></li>
+</ul>
+</section>
+</section>
+<section id="pysasfit-window">
+<h3>pySASfit window<a class="headerlink" href="#pysasfit-window" title="Link to this heading"></a></h3>
+<section id="side-bar-the-column-of-tool-icons">
+<h4>Side bar (the column of tool icons)<a class="headerlink" href="#side-bar-the-column-of-tool-icons" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>background of the tool in front</strong> — <code class="docutils literal notranslate"><span class="pre">launcher.sidebar.selected</span></code> · factory: <strong>#FFF8C5</strong> · colour #RRGGBB<br />
+Background of the entry of the tool in front in the side bar (light system theme), as #RRGGBB; the button next to the field opens the colour chooser. The tool names are written in the colours of the logos (grey py and ending, the core in the tool’s colour), so the background has to be light: the factory value, a pale yellow, keeps every name at a contrast of at least 3 : 1 (the grey parts 4.5 : 1), within a few per cent of what white gives. Pale green (#EAF7EA) and pale orange are slightly lower (orange pyTOOLbox about 2.9 : 1); medium and saturated colours such as the blue selection colour of Windows make the names unreadable. Applied when the preferences are saved.</p></li>
+<li><p><strong>… on a dark system theme</strong> — <code class="docutils literal notranslate"><span class="pre">launcher.sidebar.selected_dark</span></code> · factory: <strong>#2B2B2B</strong> · colour #RRGGBB<br />
+The same for a dark system theme, where the names use the lighter colour set: the background has to be dark. With the factory value every name has a contrast of at least 4.5 : 1. Applied when the preferences are saved.</p></li>
+</ul>
+</section>
+</section>
+<section id="shared-numerics">
+<h3>Shared numerics<a class="headerlink" href="#shared-numerics" title="Link to this heading"></a></h3>
+<section id="deflation-of-unphysical-oz-roots-oz-solver-polydisperse-ry-and-mixture-tabs">
+<h4>Deflation of unphysical OZ roots (OZ solver, polydisperse, RY and mixture tabs)<a class="headerlink" href="#deflation-of-unphysical-oz-roots-oz-solver-polydisperse-ry-and-mixture-tabs" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>power p in 1/‖x − r‖^p</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.deflation.p</span></code> · factory: <strong>2</strong> · range: 0.5 … 8<br />
+Deflation (Farrell, Birkisson &amp; Funke 2015): after an unphysical root r is found, the solver’s step is multiplied by η = Π(1/‖x − r‖^p + α), which repels it from r. p sets how sharply.</p></li>
+<li><p><strong>shift α</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.deflation.shift</span></code> · factory: <strong>1</strong> · range: 0 … 1e+06<br />
+Shift α of the deflation factor. It keeps η finite far from the known roots, so the solver cannot ‘converge’ by running away. Results are sensitive to it (the paper sweeps it); at our LJ test state 0.1 finds a second root, 1 does not.</p></li>
+<li><p><strong>largest deflation factor</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.deflation.cap</span></code> · factory: <strong>1e+06</strong> · range: 1 … 1e+300<br />
+Upper bound of η. Without it the deflated residual overflows close to a known root.</p></li>
+</ul>
+</section>
+<section id="analytic-msa-rmsa-of-polydisperse-yukawa-msa-tab-ry-tab-approximations">
+<h4>Analytic MSA / RMSA of polydisperse Yukawa (MSA tab, RY tab, approximations)<a class="headerlink" href="#analytic-msa-rmsa-of-polydisperse-yukawa-msa-tab-ry-tab-approximations" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>MSA amplitude iteration: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.tol</span></code> · factory: <strong>1e-13</strong> · range: 1e-16 … 0.0001<br />
+Analytic MSA of polydisperse hard-core Yukawa: convergence tolerance of the self-consistent amplitude iteration.</p></li>
+<li><p><strong>MSA amplitude iteration: iterations</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.maxiter</span></code> · factory: <strong>300</strong> · range: 10 … 100000<br />
+Analytic MSA of polydisperse hard-core Yukawa: maximum iterations of the self-consistent amplitude iteration. If it ends at this limit the MSA is reported as not converged; raise it for strong coupling.</p></li>
+<li><p><strong>MSA amplitude iteration: fsolve tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.fsolve_xtol</span></code> · factory: <strong>1e-13</strong> · range: 1e-16 … 0.0001<br />
+Analytic MSA: tolerance of the inner nonlinear solve (scipy fsolve) in each amplitude iteration. Keep it at or below the outer tolerance, otherwise the outer iteration cannot converge.</p></li>
+<li><p><strong>Γ root scan: ± span × z</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.gamma_span</span></code> · factory: <strong>6</strong> · range: 1 … 1000<br />
+Γ route of the MSA: the roots of the Γ equation are bracketed on a grid over ± span × z (z: inverse screening length), geometric in |Γ| so that roots many decades below z are found.</p></li>
+<li><p><strong>Γ root scan: decades below the span</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.gamma_decades</span></code> · factory: <strong>10</strong> · range: 1 … 40<br />
+Γ route of the MSA: number of decades of |Γ| below span × z covered by the root-bracketing grid. More decades find roots at very weak screening; the grid size is decades × points per decade.</p></li>
+<li><p><strong>Γ root scan: points per decade</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.gamma_per_decade</span></code> · factory: <strong>400</strong> · range: 10 … 100000<br />
+Γ route of the MSA: grid points per decade of |Γ| for bracketing the roots. Increase it if two close roots are missed (they then lie in one grid interval).</p></li>
+<li><p><strong>Γ root refinement: tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.msa.gamma_xtol</span></code> · factory: <strong>1e-15</strong> · range: 1e-18 … 1e-06<br />
+Γ route of the MSA: tolerance of the Brent refinement of each bracketed Γ root. The default is near machine precision; no reason to change.</p></li>
+<li><p><strong>RMSA: largest rescaling factor λ</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.rmsa.lam_max</span></code> · factory: <strong>6</strong> · range: 1.01 … 100<br />
+Rescaled MSA (Hansen–Hayter): the common rescaling factor λ ≥ 1 that makes all contact values g_ij(σ_ij) ≥ 0 is searched up to this value.</p></li>
+<li><p><strong>RMSA: λ scan points</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.rmsa.nscan</span></code> · factory: <strong>120</strong> · range: 10 … 100000<br />
+Rescaled MSA: number of λ values between 1 and the largest λ scanned for the smallest λ that makes all contact values non-negative, before that λ is refined. More points avoid missing a narrow λ window.</p></li>
+<li><p><strong>RMSA: λ tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.rmsa.tol</span></code> · factory: <strong>1e-12</strong> · range: 1e-16 … 0.001<br />
+Rescaled MSA: tolerance of the refinement of the rescaling factor λ. The default is near machine precision; no reason to change.</p></li>
+</ul>
+</section>
+<section id="global-optimisers-for-fits-nlopt-and-bumps">
+<h4>Global optimisers for fits: NLopt and bumps<a class="headerlink" href="#global-optimisers-for-fits-nlopt-and-bumps" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>NLopt: max. evaluations</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.nlopt.max_nfev</span></code> · factory: <strong>400</strong> · range: 10 … 1e+07<br />
+Constrained fits with NLopt (e.g. ‘shell inside the smallest core’): maximum evaluations.</p></li>
+<li><p><strong>NLopt: relative tolerance</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.nlopt.ftol</span></code> · factory: <strong>1e-10</strong> · range: 1e-16 … 0.01<br />
+Constrained fits with NLopt: the fit stops when the relative change of χ² falls below this value. Larger values stop earlier; if the fit stops before reaching the minimum, raise the maximum evaluations instead.</p></li>
+<li><p><strong>bumps: steps (0 = from samples)</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.bumps.steps</span></code> · factory: <strong>0</strong> · range: 0 … 1e+07<br />
+bumps optimisers: number of generations. 0 = derived from ‘samples’ (steps = samples / population).</p></li>
+<li><p><strong>bumps: population (× parameters)</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.bumps.pop</span></code> · factory: <strong>10</strong> · range: 1 … 1000<br />
+bumps optimisers (DE, DREAM, …): population size as a multiple of the number of fitted parameters. Larger populations explore the parameter space better and need more evaluations per generation.</p></li>
+<li><p><strong>bumps DREAM: burn-in steps</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.bumps.burn</span></code> · factory: <strong>100</strong> · range: 0 … 1e+07<br />
+bumps DREAM: burn-in generations discarded before the posterior is sampled. Increase it if the parameter traces still drift at the start of the sampling.</p></li>
+<li><p><strong>bumps: samples</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.bumps.samples</span></code> · factory: <strong>10000</strong> · range: 10 … 1e+08<br />
+bumps: number of samples drawn; when ‘steps’ is 0 it sets the number of generations (samples / population). For DREAM more samples give smoother posterior histograms and uncertainties.</p></li>
+</ul>
+</section>
+<section id="background-models-start-values-of-fitted-terms-sld-profile">
+<h4>Background models: start values of fitted terms (SLD profile)<a class="headerlink" href="#background-models-start-values-of-fitted-terms-sld-profile" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><strong>constant: × median of the high-q tail</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.background.constant_level</span></code> · factory: <strong>0.5</strong> · range: 0 … 10<br />
+Start value of a fitted constant background: level × median of the highest-q points. The background fit is local, so the start decides between background and particle signal when both could explain the high-q intensity.</p></li>
+<li><p><strong>constant: high-q tail (fraction of points, ≥ 3)</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.background.constant_tail</span></code> · factory: <strong>0.05</strong> · range: 0.001 … 1<br />
+Start value of a fitted constant background: fraction of the points, from the highest q, whose median is multiplied by the level (at least 3 points). Larger fractions are more robust to noise but include more particle signal.</p></li>
+<li><p><strong>power law A q^-n: A = level × I(q_min) q_min^n</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.background.powerlaw_level</span></code> · factory: <strong>0.05</strong> · range: 1e-06 … 10<br />
+Start value of a power law A·q^(−n): A = level × I(q_min)·q_min^n, i.e. the power law starts at this fraction of the intensity at the lowest q.</p></li>
+<li><p><strong>Ornstein–Zernike: I_L = level × max I</strong> — <code class="docutils literal notranslate"><span class="pre">numerics.background.oz_level</span></code> · factory: <strong>0.05</strong> · range: 1e-06 … 10<br />
+Start value of an Ornstein–Zernike term I_L/(1 + q²ξ²): I_L = level × max I; ξ starts at 1/median q unless given.</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="built-in-values-that-remain-fixed">
+<h2>Built-in values that remain fixed<a class="headerlink" href="#built-in-values-that-remain-fixed" title="Link to this heading"></a></h2>
+<p>The audit of all three tools found about 300 numerical constants. Those that are not adjustable fall into two
+groups:</p>
+<p><strong>Numerical safety guards</strong> (no effect on a converged result): positivity and log floors (1e-300, 1e-12·max),
+overflow clips (exp argument ±700), Cholesky jitters (1e-12…1e-15·tr/n), small-x series switches in the shell
+amplitudes, cache sizes, edge tolerances of grids (1e-12).</p>
+<p><strong>Fixed by the method</strong> (changing them changes the method, not a setting): the smoothness stencils
+(−½, 1, −½) and their end terms, the Guinier factors √(5/3), √2, √3, the FWHM→σ constant, the transform
+normalisations, Hansen’s evidence formula, the Levenberg–Marquardt damping schedule (×4 on reject, ÷3 on accept),
+the B-spline degree 3, the Gauss quadrature rules.</p>
+<p>All values that the audit listed as “not yet adjustable” are now in the dialog, the shared ones on the
+<strong>Shared numerics</strong> page. The remaining fixed values are the two groups above.</p>
+</section>
+<section id="problems-found-during-the-audit">
+<h2>Problems found during the audit<a class="headerlink" href="#problems-found-during-the-audit" title="Link to this heading"></a></h2>
+<p>Fixed now:</p>
+<ul class="simple">
+<li><p>Size distribution: the Bayesian-evidence λ grid (see above).</p></li>
+<li><p>Polydisperse OZ tab: <strong>Fit</strong> and the <strong>consistent-α search</strong> ignored the tab’s numerical settings (grid, points
+per diameter, iterations, transform type) and always used 4095 / 100 / type 1 / solver default, so a fitted
+curve did not reproduce exactly on Compute. Both now use the same settings as Compute.</p></li>
+<li><p>RY Yukawa tab: the “no consistent α” message named a fixed bracket [0.02, 3]; it now shows the bracket used.</p></li>
+</ul>
+<p>Fixed in the second round (2026-10-12):</p>
+<ul class="simple">
+<li><p>Polydisperse OZ tab, “Deflate if S(Q) &lt; 0”: the retry built a new solver without density, potential or closure
+and never solved it, and the result of the screen was ignored – with deflation switched on an unphysical root
+was returned <strong>silently</strong>. Every attempt is now a complete solve with the deflated solver; the attempts and the
+min S(Q) of each root are listed in the error message. At Lennard-Jones ε = 0.8, φ = 0.3 (HNC) Newton-Krylov
+lands on a branch with min S = −18.3; with shift 0.1 deflation finds a second, different unphysical root
+(−20.2), and the fixed-point solvers find the physical root (min S = +0.21) directly.</p></li>
+<li><p>RY wrapper, automatic solver choice (<code class="docutils literal notranslate"><span class="pre">solverClass=None</span></code>): the fallback to the next solver was implemented but
+unreachable – the code replaced <code class="docutils literal notranslate"><span class="pre">None</span></code> by the first solver before testing for it – and would have dropped the
+closure, its second parameter and the deflation count. Both fixed; the solvers that failed are recorded in
+<code class="docutils literal notranslate"><span class="pre">solverFallback</span></code>. The RY tab itself always passes the solver chosen in its list, so it never used this path:
+an explicit choice is never replaced by another solver.</p></li>
+<li><p>OZ solver tab: the transform type can be chosen (Preferences, <em>Hankel transform type</em>): auto (type 4 for one
+component, the default), 1 or 4, for comparisons. <code class="docutils literal notranslate"><span class="pre">ozLib.solve(transformType=...)</span></code>, applied to the verifier too.</p></li>
+<li><p>Size distribution: data files with a 4th column σ_Q are read, and the kernel can be smeared with it
+(checkbox <em>Resolution</em>, Rician or Gaussian kernel; on by default when the column is present).</p></li>
+</ul>
+<p>Reported, not changed:</p>
+<ul class="simple">
+<li><p>Size distribution: the background subtraction keeps only the constant term of a power-law fit (to do: move to
+the <code class="docutils literal notranslate"><span class="pre">pysasfit.core.background</span></code> models used by the SLD-profile tool).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">core.resolution.GaussianResolution(n_nodes=…)</span></code> accepts the argument and ignores it.</p></li>
+<li><p>SLD two-step method: the “points fine” box has no effect (step 1 uses the coarse count for D_max).</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="toolbox/data1d.html" class="btn btn-neutral float-left" title="1D data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="python_code.html" class="btn btn-neutral float-right" title="Copy Python code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

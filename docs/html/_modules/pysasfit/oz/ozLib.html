@@ -1,0 +1,1343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pysasfit.oz.ozLib &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/pySASfit.ico"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../../../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../inversion/index.html">pyINVersion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pysasfit.oz.ozLib</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pysasfit.oz.ozLib</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">'''</span>
+<span class="sd">Library API of the Ornstein-Zernike solvers: the same calculation the OZ</span>
+<span class="sd">solver tab's "calculate" button runs (the tab calls solve() from here), so a</span>
+<span class="sd">result from the GUI can be reproduced from a script::</span>
+
+<span class="sd">    from pysasfit.oz import ozLib</span>
+<span class="sd">    result = ozLib.solve("HardSphere", phi=0.3, closure="Percus-Yevick")</span>
+<span class="sd">    print(result.converged, result.physical, result.residual)</span>
+<span class="sd">    q, S = result.q, result.Sq</span>
+
+<span class="sd">SOLVER_CLASSES and CLOSURE_SETTERS below hold the valid ``solver=`` and</span>
+<span class="sd">``closure=`` names (``print(list(ozLib.SOLVER_CLASSES))``); SOLVER_ALIASES maps</span>
+<span class="sd">former names, SOLVER_FAMILIES the algorithm families used for verification.</span>
+
+<span class="sd">Every solve is checked three ways (see solve()): the residual of the returned</span>
+<span class="sd">solution (``residualTolerance``), min S(Q) &gt;= 0, and -- unless verify=False --</span>
+<span class="sd">an independent solver of another algorithm family.</span>
+
+<span class="sd">The radial grid (numberOfRadialSamplingPoints, hardSphereDiameterInPoints) is</span>
+<span class="sd">passed straight through to the solver class; see oZfixpointOperator for why</span>
+<span class="sd">long-range potentials may need a larger grid.</span>
+<span class="sd">'''</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.oZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">OZsolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.picardOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">PicardOZsolver</span>
+<span class="c1">#andersonOZsolver is no longer imported: "Anderson acceleration" was</span>
+<span class="c1">#deregistered below as a duplicate of "scipy Anderson", and the module has</span>
+<span class="c1">#been moved to _obsolete/. Restoring it means restoring the file, this</span>
+<span class="c1">#import, and the SOLVER_CLASSES entry together.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.scipyAndersonOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScipyAndersonOZsolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.scipyNewtonKrylovOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScipyNewtonKrylovOZsolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.biggsAndrewsOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">BiggsAndrewsOZsolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.mdiisOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">MDIISOZsolver</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.sundials4pyKinsolOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sundials4pyKinsolOZsolver</span><span class="p">,</span> <span class="n">AVAILABLE_LINEAR_SOLVERS</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.sundials4pyKinsolFPOZsolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sundials4pyKinsolFPOZsolver</span>
+    <span class="n">_HAVE_SUNDIALS4PY</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_HAVE_SUNDIALS4PY</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="c1"># Each value is (solverClass, linearSolverNameOrNone) -- the second</span>
+<span class="c1"># element, when not None, is assigned to solverInstance.linearSolver</span>
+<span class="c1"># right after construction (see Sundials4pyKinsolOZsolver.py's own</span>
+<span class="c1"># AVAILABLE_LINEAR_SOLVERS for why this is a post-construction</span>
+<span class="c1"># attribute, not a constructor argument).</span>
+<span class="n">_BASE_SOLVER_CLASSES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1">#PICARD / MANN: x &lt;- (1-a) x + a T(x). a = 1 (default) is plain Picard;</span>
+    <span class="c1">#a &lt; 1 is Mann's damped iteration. a is the solve(mannAlpha=...) argument.</span>
+    <span class="c1">#Called "Picard iteration" until this name was introduced; the old name</span>
+    <span class="c1">#is still accepted (SOLVER_ALIASES), so old scripts and saved runs work.</span>
+    <span class="s2">"Picard / Mann iteration"</span><span class="p">:</span> <span class="p">(</span><span class="n">PicardOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="c1">#"Anderson acceleration" (andersonOZsolver.AndersonOZsolver) is</span>
+    <span class="c1">#DELIBERATELY NOT REGISTERED. The module is still present and importable;</span>
+    <span class="c1">#it is simply not offered, because it duplicates "scipy Anderson" in</span>
+    <span class="c1">#substance -- the same algorithm, one hand-written here and one from</span>
+    <span class="c1">#scipy -- and two entries for one method cost the user a choice they</span>
+    <span class="c1">#have no basis to make.</span>
+    <span class="c1">#</span>
+    <span class="c1">#IN FAIRNESS TO THE ONE REMOVED: measured at N = 1023 it was the FASTER</span>
+    <span class="c1">#of the two at high density (0.009 s against scipy's 0.013 s at</span>
+    <span class="c1">#phi = 0.52, 0.006 against 0.008 at 0.45), so this is a maintenance</span>
+    <span class="c1">#decision rather than a performance one. Single runs, so the margin may</span>
+    <span class="c1">#be noise; re-measure before reversing it.</span>
+    <span class="s2">"scipy Anderson"</span><span class="p">:</span> <span class="p">(</span><span class="n">ScipyAndersonOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="c1">#MDIIS is offered in its place. It is not a new class of method --</span>
+    <span class="c1">#Anderson mixing and Pulay's DIIS are algebraically the same thing for</span>
+    <span class="c1">#this problem -- but it adds explicit regularisation and history-depth</span>
+    <span class="c1">#control, and is the standard accelerator in the 3D-RISM literature.</span>
+    <span class="c1">#</span>
+    <span class="c1">#NOT A SPEED RECOMMENDATION. Benchmarked on the real grid (N = 4095,</span>
+    <span class="c1">#SUNDIALS present) it is third of nine at 0.0096 s, behind KIN_FP at</span>
+    <span class="c1">#0.0049 and scipy Anderson at 0.0077, and it FAILS at phi = 0.58 where</span>
+    <span class="c1">#both of those converge. An earlier measurement in a sandbox at N = 1023</span>
+    <span class="c1">#with SUNDIALS absent put it ahead of scipy Anderson; that was wrong, and</span>
+    <span class="c1">#wrong in the flattering direction, because the small grid hid the cost</span>
+    <span class="c1">#of its Python-level (m+1)x(m+1) solve per step and the fastest solver</span>
+    <span class="c1">#was not in the comparison at all.</span>
+    <span class="c1">#</span>
+    <span class="c1">#Its place is the SUNDIALS-FREE fallback, which is the configuration this</span>
+    <span class="c1">#module drops into when _HAVE_SUNDIALS4PY is false -- anyone installing</span>
+    <span class="c1">#from PyPI without building SUNDIALS. There the choice is between this</span>
+    <span class="c1">#and scipy Anderson, whose iteration count swings erratically with</span>
+    <span class="c1">#density (28, 116, 40, 179 at phi = 0.45, 0.52, 0.55, 0.58) where MDIIS</span>
+    <span class="c1">#rises smoothly; at phi = 0.52 it is the better of the two. Offer it as</span>
+    <span class="c1">#the alternative to try when scipy Anderson stalls, and nothing more.</span>
+    <span class="s2">"MDIIS"</span><span class="p">:</span> <span class="p">(</span><span class="n">MDIISOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="s2">"scipy Newton-Krylov"</span><span class="p">:</span> <span class="p">(</span><span class="n">ScipyNewtonKrylovOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="s2">"Biggs-Andrews"</span><span class="p">:</span> <span class="p">(</span><span class="n">BiggsAndrewsOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="n">_HAVE_SUNDIALS4PY</span><span class="p">:</span>
+    <span class="n">_BASE_SOLVER_CLASSES</span><span class="p">[</span><span class="s2">"sundials4py: Newton-Krylov (GMRES)"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sundials4pyKinsolOZsolver</span><span class="p">,</span> <span class="s2">"SUNLinSol_SPGMR"</span><span class="p">)</span>
+    <span class="n">_BASE_SOLVER_CLASSES</span><span class="p">[</span><span class="s2">"sundials4py: Newton-Krylov (FGMRES)"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sundials4pyKinsolOZsolver</span><span class="p">,</span> <span class="s2">"SUNLinSol_SPFGMR"</span><span class="p">)</span>
+    <span class="n">_BASE_SOLVER_CLASSES</span><span class="p">[</span><span class="s2">"sundials4py: Newton-Krylov (TFQMR)"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sundials4pyKinsolOZsolver</span><span class="p">,</span> <span class="s2">"SUNLinSol_SPTFQMR"</span><span class="p">)</span>
+    <span class="n">_BASE_SOLVER_CLASSES</span><span class="p">[</span><span class="s2">"sundials4py: Fixed-Point (Anderson)"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sundials4pyKinsolFPOZsolver</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="n">_defaultSolverName</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sundials4py: Fixed-Point (Anderson)"</span> <span class="k">if</span> <span class="n">_HAVE_SUNDIALS4PY</span>
+                      <span class="k">else</span> <span class="s2">"scipy Anderson"</span><span class="p">)</span>
+<span class="c1"># Reordered so the FIRST key is this project's recommended DEFAULT</span>
+<span class="c1"># solver -- oZgui.py's own dropdown uses next(iter(SOLVER_CLASSES)) as</span>
+<span class="c1"># its initial pre-selected value. SUNDIALS' own Anderson-accelerated</span>
+<span class="c1"># fixed-point strategy (KIN_FP) when sundials4py is installed --</span>
+<span class="c1"># SUNDIALS' production-grade implementation of the same acceleration</span>
+<span class="c1"># idea as this project's own hand-written "Anderson acceleration"/</span>
+<span class="c1"># "scipy Anderson" entries, generally more robust and faster to</span>
+<span class="c1"># converge for the harder closures (HMSA/RY/BPGG/CJVM/BB) than plain</span>
+<span class="c1"># unaccelerated Picard iteration, which is why it replaces Picard as</span>
+<span class="c1"># the default here. Falls back to scipy's own Anderson acceleration</span>
+<span class="c1"># (scipy.optimize.anderson-based, no extra dependency) when</span>
+<span class="c1"># sundials4py isn't installed, rather than falling all the way back to</span>
+<span class="c1"># plain Picard -- Picard is still fully present in the dict, just no</span>
+<span class="c1"># longer pre-selected. Every other key keeps its original relative</span>
+<span class="c1"># order from _BASE_SOLVER_CLASSES above; only the chosen default moves</span>
+<span class="c1"># to the front. (solve()'s own solver= keyword argument default below</span>
+<span class="c1"># is set to this same _defaultSolverName, not left hardcoded to</span>
+<span class="c1"># "Picard / Mann iteration" -- so a script calling ozLib.solve() directly,</span>
+<span class="c1"># without going through the GUI at all, gets the same improved default</span>
+<span class="c1"># rather than silently falling back to unaccelerated Picard.)</span>
+<span class="n">SOLVER_CLASSES</span> <span class="o">=</span> <span class="p">{</span><span class="n">_defaultSolverName</span><span class="p">:</span> <span class="n">_BASE_SOLVER_CLASSES</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">_defaultSolverName</span><span class="p">)}</span>
+<span class="n">SOLVER_CLASSES</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_BASE_SOLVER_CLASSES</span><span class="p">)</span>
+
+<span class="c1"># Former solver names, still accepted everywhere a solver name is (solve(),</span>
+<span class="c1"># solveWithConsensus(), verifyWith, the GUI). Not in SOLVER_CLASSES itself so</span>
+<span class="c1"># that the dropdowns do not show the same solver twice.</span>
+<span class="n">SOLVER_ALIASES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Picard iteration"</span><span class="p">:</span> <span class="s2">"Picard / Mann iteration"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="resolveSolverName">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.resolveSolverName">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolveSolverName</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Current solver name for ``name`` (maps the SOLVER_ALIASES)."""</span>
+    <span class="k">return</span> <span class="n">SOLVER_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ALGORITHM FAMILIES, for the independence of verification: a solver never</span>
+<span class="c1"># verifies one of its own family. Anderson mixing (1965) and Pulay's DIIS</span>
+<span class="c1"># (1980) are algebraically equivalent, so SUNDIALS KIN_FP, scipy Anderson</span>
+<span class="c1"># and MDIIS form one family. Unlisted names are their own family.</span>
+<span class="n">SOLVER_FAMILIES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sundials4py: Fixed-Point (Anderson)"</span><span class="p">:</span> <span class="s2">"Anderson/DIIS"</span><span class="p">,</span>
+    <span class="s2">"scipy Anderson"</span><span class="p">:</span> <span class="s2">"Anderson/DIIS"</span><span class="p">,</span>
+    <span class="s2">"MDIIS"</span><span class="p">:</span> <span class="s2">"Anderson/DIIS"</span><span class="p">,</span>
+    <span class="s2">"Biggs-Andrews"</span><span class="p">:</span> <span class="s2">"vector extrapolation"</span><span class="p">,</span>
+    <span class="s2">"Picard / Mann iteration"</span><span class="p">:</span> <span class="s2">"Picard/Mann"</span><span class="p">,</span>
+    <span class="s2">"scipy Newton-Krylov"</span><span class="p">:</span> <span class="s2">"Newton-Krylov"</span><span class="p">,</span>
+    <span class="s2">"sundials4py: Newton-Krylov (GMRES)"</span><span class="p">:</span> <span class="s2">"Newton-Krylov"</span><span class="p">,</span>
+    <span class="s2">"sundials4py: Newton-Krylov (FGMRES)"</span><span class="p">:</span> <span class="s2">"Newton-Krylov"</span><span class="p">,</span>
+    <span class="s2">"sundials4py: Newton-Krylov (TFQMR)"</span><span class="p">:</span> <span class="s2">"Newton-Krylov"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="solverFamily">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.solverFamily">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solverFamily</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Algorithm family of a solver name (see SOLVER_FAMILIES)."""</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">resolveSolverName</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SOLVER_FAMILIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="VerificationUnavailable">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.VerificationUnavailable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VerificationUnavailable</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""No independent verifier converged. Not a disagreement: ``.result`` is</span>
+<span class="sd">    the (unverified) result of the primary solve, ``.attempts`` lists what</span>
+<span class="sd">    each verifier did."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attempts</span><span class="o">=</span><span class="p">()):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attempts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">attempts</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="isMannSolver">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.isMannSolver">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">isMannSolver</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""True when ``name`` is the Picard / Mann solver (the only one that uses</span>
+<span class="sd">    a damping value a)."""</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">SOLVER_CLASSES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resolveSolverName</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">PicardOZsolver</span><span class="p">)</span></div>
+
+
+<span class="c1"># Each value is (closure-setter method name, needsExtraScalarParam).</span>
+<span class="c1"># Closures that take one extra scalar parameter share self.alpha's</span>
+<span class="c1"># reused role across RY/HMSA/BPGG/CJVM/BB, and eta for MHNC -- see</span>
+<span class="c1"># oZfixpointOperator.py's doXXXclosure() setters. Three entries are</span>
+<span class="c1"># "special" (marked below): each needs its own orchestration method on</span>
+<span class="c1"># OZsolver (solveRHNC()/solveRMSA()/solveEuRah()) instead of a plain</span>
+<span class="c1"># doXXXclosure() + solve() call, since each needs a reference-system</span>
+<span class="c1"># sub-solve first -- see oZsolver.py for exactly what each does.</span>
+<span class="n">CLOSURE_SETTERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Percus-Yevick"</span><span class="p">:</span>        <span class="p">(</span><span class="s2">"doPYclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Hypernetted-Chain"</span><span class="p">:</span>    <span class="p">(</span><span class="s2">"doHNCclosure"</span><span class="p">,</span>   <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Reference HNC"</span><span class="p">:</span>        <span class="p">(</span><span class="s2">"doRHNCclosure"</span><span class="p">,</span>  <span class="kc">False</span><span class="p">),</span>   <span class="c1"># special: solveRHNC()</span>
+    <span class="s2">"Modified HNC"</span><span class="p">:</span>         <span class="p">(</span><span class="s2">"doMHNCclosure"</span><span class="p">,</span>  <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"MSA"</span><span class="p">:</span>                  <span class="p">(</span><span class="s2">"doMSAclosure"</span><span class="p">,</span>   <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Rescaled MSA"</span><span class="p">:</span>         <span class="p">(</span><span class="s2">"doRMSAclosure"</span><span class="p">,</span>  <span class="kc">False</span><span class="p">),</span>   <span class="c1"># special: solveRMSA()</span>
+    <span class="s2">"Modified MSA"</span><span class="p">:</span>         <span class="p">(</span><span class="s2">"doMMSAclosure"</span><span class="p">,</span>  <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Symmetric MSA"</span><span class="p">:</span>        <span class="p">(</span><span class="s2">"doSMSAclosure"</span><span class="p">,</span>  <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Rogers-Young"</span><span class="p">:</span>         <span class="p">(</span><span class="s2">"doRYclosure"</span><span class="p">,</span>    <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"HMSA"</span><span class="p">:</span>                 <span class="p">(</span><span class="s2">"doHMSAclosure"</span><span class="p">,</span>  <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"Verlet"</span><span class="p">:</span>                <span class="p">(</span><span class="s2">"doVerletClosure"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Martynov-Sarkisov"</span><span class="p">:</span>    <span class="p">(</span><span class="s2">"doMSclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Vompe-Martynov"</span><span class="p">:</span>       <span class="p">(</span><span class="s2">"doVMclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"BPGG"</span><span class="p">:</span>                  <span class="p">(</span><span class="s2">"doBPGGclosure"</span><span class="p">,</span>  <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"CJVM"</span><span class="p">:</span>                  <span class="p">(</span><span class="s2">"doCJVMclosure"</span><span class="p">,</span>  <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"BB"</span><span class="p">:</span>                    <span class="p">(</span><span class="s2">"doBBclosure"</span><span class="p">,</span>    <span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># Euler-Rahman ("Euler-Rahman"/EuRah, ported from sasfit_oz_solver.c's</span>
+    <span class="c1"># own CEURAH machinery) is DELIBERATELY NOT offered here. Extensive</span>
+    <span class="c1"># testing (see the conversation this decision was made in) found a</span>
+    <span class="c1"># genuine exponential positive-feedback instability intrinsic to the</span>
+    <span class="c1"># closure's own mathematical structure (c(r) inside the hard core</span>
+    <span class="c1"># feeds into an exp(Gamma) term that dominates the very next c(r)</span>
+    <span class="c1"># estimate), which defeated every numerical strategy tried --</span>
+    <span class="c1"># Newton-Krylov, damped Picard, density continuation, dense-Jacobian</span>
+    <span class="c1"># Newton, Levenberg-Marquardt, Broyden, df-sane, and SUNDIALS' own</span>
+    <span class="c1"># KINSOL with this project's best-tuned settings. The underlying</span>
+    <span class="c1"># solveEuRah()/doEuRahClosure() methods still exist on OZsolver for</span>
+    <span class="c1"># anyone who wants to experiment with it directly, but it is</span>
+    <span class="c1"># excluded from this dict (and therefore from both the GUI dropdown</span>
+    <span class="c1"># and ozLib.solve()'s own closure= validation) since it does not</span>
+    <span class="c1"># reliably converge for ordinary use.</span>
+    <span class="c1"># Three closures found missing when checking SASfit's own</span>
+    <span class="c1"># src/sasfit_oz/include/sasfit_oz.h enum against this list directly</span>
+    <span class="c1"># (rather than assuming this project's existing 17 were complete) --</span>
+    <span class="c1"># see oZfixpointOperator.py's own doKHclosure()/doDHclosure()/</span>
+    <span class="c1"># doCGclosure() and their update_c() branches for the full story on</span>
+    <span class="c1"># each, including a documented quirk (KH's own c(r) formula in</span>
+    <span class="c1"># SASfit's C code is identical to HNC's, and a known, deliberate gap</span>
+    <span class="c1"># (DH's Lennard-Jones-specific special case is not replicated).</span>
+    <span class="s2">"Kovalenko-Hirata"</span><span class="p">:</span>      <span class="p">(</span><span class="s2">"doKHclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Duh-Haymet"</span><span class="p">:</span>            <span class="p">(</span><span class="s2">"doDHclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="s2">"Choudhury-Ghosh"</span><span class="p">:</span>       <span class="p">(</span><span class="s2">"doCGclosure"</span><span class="p">,</span>    <span class="kc">False</span><span class="p">),</span>
+    <span class="c1">#Added after cross-validating against OrnsteinZernike.jl (Closures.jl).</span>
+    <span class="c1">#All three are standalone bridge functions of Gamma, so they inherit the</span>
+    <span class="c1">#multicomponent path, every solver and this dropdown automatically.</span>
+    <span class="c1">#"Khanpour" is spelled out because "KH" above is Kovalenko-Hirata --</span>
+    <span class="c1">#different closure, same natural abbreviation.</span>
+    <span class="s2">"Khanpour"</span><span class="p">:</span>              <span class="p">(</span><span class="s2">"doKhanpourClosure"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="c1">#Implicit bridge function (solved by fixed-point iteration inside</span>
+    <span class="c1">#update_c); lambda sets the amplitude and is r-dependent for lambda &lt;= 0.</span>
+    <span class="s2">"Carbajal-Tinoco"</span><span class="p">:</span>       <span class="p">(</span><span class="s2">"doCarbajalTinokoClosure"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="s2">"Modified Verlet"</span><span class="p">:</span>       <span class="p">(</span><span class="s2">"doModifiedVerletClosure"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="c1">#Extended RY takes TWO parameters (alpha and the quadratic coefficient a);</span>
+    <span class="c1">#the second is set on the solver directly, so only alpha comes through the</span>
+    <span class="c1">#single-parameter GUI field. a = 0 reduces exactly to Rogers-Young.</span>
+    <span class="s2">"Extended Rogers-Young"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"doExtendedRYclosure"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># ZSEP (Lee 1995, hard spheres only) is a "special" entry, like</span>
+    <span class="c1"># Reference HNC/Rescaled MSA above: it needs its own orchestration</span>
+    <span class="c1"># method (fitZSEPparameters()) rather than a plain doXXXclosure()+</span>
+    <span class="c1"># solve() call, since it self-fits all three of its own parameters</span>
+    <span class="c1"># (zeta, phi, alpha) against Lee's exact zero-separation-theorem</span>
+    <span class="c1"># conditions instead of taking any of them from the caller. See</span>
+    <span class="c1"># solve() below for exactly how it's dispatched, and</span>
+    <span class="c1"># oZsolver.py's own fitZSEPparameters() docstring for the physics</span>
+    <span class="c1"># and its documented ill-conditioning caveat.</span>
+    <span class="s2">"ZSEP"</span><span class="p">:</span>                  <span class="p">(</span><span class="s2">"fitZSEPparameters"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1"># Closures with a single free parameter (needsExtraScalarParam==True</span>
+<span class="c1"># above) that ALSO have a published thermodynamic-consistency</span>
+<span class="c1"># condition determining that parameter automatically -- see</span>
+<span class="c1"># OZsolver.findThermodynamicallyConsistentParameter() (already fully</span>
+<span class="c1"># generic across potentials, not limited to any specific one; ported</span>
+<span class="c1"># directly from sasfit_oz_solver.c's own root_finding(), NOT the</span>
+<span class="c1"># same as the older, abandoned, LJ/Yukawa-only optimizeRYalpha.py</span>
+<span class="c1"># prototype elsewhere in this project). Maps this module's own</span>
+<span class="c1"># closure name to that method's own closureName argument. Used by</span>
+<span class="c1"># solve()'s new findConsistentParameter= option below -- Modified HNC</span>
+<span class="c1"># is included here too (it already appears above with</span>
+<span class="c1"># needsExtraScalarParam=True for its own eta parameter, which this</span>
+<span class="c1"># same consistency condition also determines).</span>
+<span class="c1"># Closures needing a SECOND scalar beyond closureParam, as</span>
+<span class="c1">#   dropdown label -&gt; (argument name, default, short description)</span>
+<span class="c1">#</span>
+<span class="c1"># Only Extended Rogers-Young needs this so far: its bridge function is the</span>
+<span class="c1"># ordinary RY construction plus one extra quadratic term,</span>
+<span class="c1">#     phi = (exp(f*Gamma)-1)/f,  B = -Gamma + log1p(phi + a*phi^2)</span>
+<span class="c1"># so it carries the RY switching rate alpha AND the coefficient a. a = 0</span>
+<span class="c1"># reduces exactly to RY, which is why that is the default.</span>
+<span class="c1">#</span>
+<span class="c1"># Kept as its own table rather than widening CLOSURE_SETTERS to 3-tuples,</span>
+<span class="c1"># so every existing consumer of CLOSURE_SETTERS keeps working unchanged.</span>
+<span class="n">SECOND_CLOSURE_PARAM</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Extended Rogers-Young"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span>
+                              <span class="s2">"quadratic coefficient; a = 0 gives plain RY"</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="secondClosureParam">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.secondClosureParam">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secondClosureParam</span><span class="p">(</span><span class="n">closureName</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""(name, default, description) or None if the closure needs only one."""</span>
+    <span class="k">return</span> <span class="n">SECOND_CLOSURE_PARAM</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">closureName</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Which closures can be used with a MULTICOMPONENT (polydisperse) potential.</span>
+<span class="c1">#</span>
+<span class="c1"># The distinction is structural, not a matter of taste. Every closure whose</span>
+<span class="c1"># bridge function is a plain elementwise expression in Gamma (and optionally</span>
+<span class="c1"># the repulsive/attractive potential split) operates on the (p,p,N) pair</span>
+<span class="c1"># matrices unchanged, so it is multicomponent for free. The excluded ones each</span>
+<span class="c1"># need something that only exists for a single component:</span>
+<span class="c1">#</span>
+<span class="c1">#   Reference HNC   needs a one-component hard-sphere reference solve (g0/G0)</span>
+<span class="c1">#   Modified HNC    needs an analytic one-component PY hard-sphere bridge</span>
+<span class="c1">#                   function at a single packing fraction; the mixture</span>
+<span class="c1">#                   equivalent is the Lado-type variational problem, i.e. a</span>
+<span class="c1">#                   research question rather than a port</span>
+<span class="c1">#   Rescaled MSA    is a one-component diameter-rescaling procedure; the</span>
+<span class="c1">#                   polydisperse counterpart is the separate analytic module</span>
+<span class="c1">#                   polydisperse_rmsa.py</span>
+<span class="c1">#   EuRah           uses a precomputed one-component HS/PY array (CEURAH)</span>
+<span class="c1">#   ZSEP            fixes its three parameters from the Carnahan-Starling</span>
+<span class="c1">#                   zero-separation theorems, which are hard-sphere specific</span>
+<span class="c1">#                   (fitZSEPparameters() already refuses anything else)</span>
+<span class="c1">#</span>
+<span class="c1"># Martynov-Sarkisov, Vompe-Martynov and CJVM are NOT excluded here: they are</span>
+<span class="c1"># structurally fine and do run, but all three build a square-root bridge</span>
+<span class="c1"># function and exp(G + B) overflows for strongly coupled charged systems --</span>
+<span class="c1"># a closure-domain limitation that applies equally in one component, so it is</span>
+<span class="c1"># reported as a failed solve rather than hidden as an unavailable option.</span>
+<span class="n">MULTICOMPONENT_INCAPABLE_CLOSURES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Reference HNC"</span><span class="p">,</span> <span class="s2">"Modified HNC"</span><span class="p">,</span> <span class="s2">"Rescaled MSA"</span><span class="p">,</span> <span class="s2">"EuRah"</span><span class="p">,</span> <span class="s2">"ZSEP"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="multicomponentCapableClosures">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.multicomponentCapableClosures">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">multicomponentCapableClosures</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Dropdown labels usable with a polydisperse potential."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">CLOSURE_SETTERS</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MULTICOMPONENT_INCAPABLE_CLOSURES</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="isMulticomponentPotential">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.isMulticomponentPotential">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">isMulticomponentPotential</span><span class="p">(</span><span class="n">potentialName</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""True for potentials that set up more than one component.</span>
+
+<span class="sd">    A name test rather than a probe of the solver, so the GUI can filter the</span>
+<span class="sd">    closure list the moment a potential is chosen, before anything is built.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">potentialName</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"Polydisperse"</span><span class="p">)</span></div>
+
+
+
+<span class="n">CONSISTENT_PARAMETER_CLOSURES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Rogers-Young"</span><span class="p">:</span> <span class="s2">"RY"</span><span class="p">,</span> <span class="s2">"HMSA"</span><span class="p">:</span> <span class="s2">"HMSA"</span><span class="p">,</span> <span class="s2">"Modified HNC"</span><span class="p">:</span> <span class="s2">"MHNC"</span><span class="p">,</span>
+    <span class="s2">"BPGG"</span><span class="p">:</span> <span class="s2">"BPGG"</span><span class="p">,</span> <span class="s2">"CJVM"</span><span class="p">:</span> <span class="s2">"CJVM"</span><span class="p">,</span> <span class="s2">"BB"</span><span class="p">:</span> <span class="s2">"BB"</span><span class="p">,</span>
+    <span class="c1">#The three closures added from OrnsteinZernike.jl each carry a single</span>
+    <span class="c1">#free parameter, so the same compressibility-vs-virial search applies.</span>
+    <span class="s2">"Khanpour"</span><span class="p">:</span> <span class="s2">"Khanpour"</span><span class="p">,</span> <span class="s2">"Modified Verlet"</span><span class="p">:</span> <span class="s2">"ModifiedVerlet"</span><span class="p">,</span>
+    <span class="s2">"Carbajal-Tinoco"</span><span class="p">:</span> <span class="s2">"CarbajalTinoko"</span><span class="p">,</span>
+    <span class="s2">"Extended Rogers-Young"</span><span class="p">:</span> <span class="s2">"ExtendedRY"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># The 9 curves every solve derives, same set oZgui.py's own plot tabs</span>
+<span class="c1"># show (S(Q), g(r), c(r), Gamma(r), h(r), U(r)/kT, B(r), y(r), f(r)).</span>
+<span class="n">CURVE_NAMES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Sq"</span><span class="p">,</span> <span class="s2">"gr"</span><span class="p">,</span> <span class="s2">"cr"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"hr"</span><span class="p">,</span> <span class="s2">"Ur"</span><span class="p">,</span> <span class="s2">"Br"</span><span class="p">,</span> <span class="s2">"yr"</span><span class="p">,</span> <span class="s2">"fr"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="OZResult">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.OZResult">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OZResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">'''</span>
+<span class="sd">    Everything one solve() call produced: the r/q grids, every derived</span>
+<span class="sd">    curve, and the parameters that produced them. Curves are available</span>
+<span class="sd">    both via .curves['gr'] and the shorthand properties below</span>
+<span class="sd">    (.gr, .cr, .Sq, .gamma, .hr, .Ur, .Br, .yr, .fr).</span>
+<span class="sd">    '''</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">potential</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">closureParam</span><span class="p">,</span>
+                 <span class="n">phi</span><span class="p">,</span> <span class="n">solverName</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">solverInstance</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">potential</span> <span class="o">=</span> <span class="n">potential</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">potentialArgs</span> <span class="o">=</span> <span class="n">potentialArgs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closure</span> <span class="o">=</span> <span class="n">closure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">closureParam</span> <span class="o">=</span> <span class="n">closureParam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solverName</span> <span class="o">=</span> <span class="n">solverName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curves</span> <span class="o">=</span> <span class="n">curves</span>
+        <span class="c1">#kept for anyone who wants lower-level access (e.g.</span>
+        <span class="c1">#solverInstance.getHardSphereRadius(), .boltzmannOfP2Ppotential,</span>
+        <span class="c1">#or to re-solve at a nearby state using this one as a warm start)</span>
+        <span class="c1">#-- not required for normal use, everything routine is already</span>
+        <span class="c1">#on this object directly.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solverInstance</span> <span class="o">=</span> <span class="n">solverInstance</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"gr"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"cr"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Sq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gamma</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"hr"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Ur</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Ur"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">Br</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Br"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">yr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"yr"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"fr"</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"OZResult(potential=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">potential</span><span class="si">!r}</span><span class="s2">, potentialArgs=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">potentialArgs</span><span class="si">!r}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"closure=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">closure</span><span class="si">!r}</span><span class="s2">, phi=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="si">!r}</span><span class="s2">, solver=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">solverName</span><span class="si">!r}</span><span class="s2">)"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_minSq</span><span class="p">(</span><span class="n">curves</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""min S(Q) from a curve dict, or +inf when there is nothing to screen."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">],</span> <span class="nb">float</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">y</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-inf"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fixpointResidual</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">curves</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Relative residual ||T(x) - x|| / ||x|| of the returned solution, with T</span>
+<span class="sd">    the closure's fixed-point map, evaluated ONCE MORE after the solve.</span>
+
+<span class="sd">    This is independent of the solver's own stopping test and of its success</span>
+<span class="sd">    flag: it asks the equations, not the solver. x is the fixpoint variable</span>
+<span class="sd">    the solver iterated on -- Gamma = h - c (one component, from the derived</span>
+<span class="sd">    curves), the packed pair matrix (mixtures) -- and T is applied WITHOUT</span>
+<span class="sd">    any deflation factor (a deflated solver's map is scaled near known</span>
+<span class="sd">    roots; its fixed points are those of T, which is what is checked).</span>
+<span class="sd">    Returns None when the residual cannot be formed (the [h, c] variant of</span>
+<span class="sd">    the operator, or no fixpoint stored); then nothing is checked.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">inst</span><span class="o">.</span><span class="n">isMulticomponent</span><span class="p">():</span>
+            <span class="n">G</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">"gammaMatrixMulticomponent"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">G</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">packPairs</span><span class="p">(</span><span class="n">G</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="n">tx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">fixPointOperatorForGammaMulticomponent</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">"doUseGammaFixPointOperator"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">curves</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="n">tx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">fixPointOperatorForGamma</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">tx</span><span class="p">))):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">tx</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mf">1e-300</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_deflateUntilPhysical</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">buildAndSolve</span><span class="p">,</span> <span class="n">maxAttempts</span><span class="p">,</span>
+                          <span class="n">deriveCurves</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reject a root with min S(Q) &lt; 0 and re-solve with it deflated away.</span>
+
+<span class="sd">    Returns (solverInstance, curves) for the first physical root found, and</span>
+<span class="sd">    raises ValueError when there is none.</span>
+
+<span class="sd">    WHY SCREEN AT ALL. S(Q) is a variance and cannot be negative, but nothing</span>
+<span class="sd">    about the iteration can detect a negative one. tools/residual_check.py</span>
+<span class="sd">    finds every Newton-Krylov variant converging at one Lennard-Jones state</span>
+<span class="sd">    point to a residual of 1e-13, with `converged` true and the returned</span>
+<span class="sd">    point a genuine fixed point -- at min S(Q) = -38.96. It is a real</span>
+<span class="sd">    solution of the closure equations on a branch that does not describe a</span>
+<span class="sd">    fluid, and only this test separates it from the correct root at the same</span>
+<span class="sd">    state point.</span>
+
+<span class="sd">    WHY DEFLATION RATHER THAN A DIFFERENT SOLVER. Retrying with the other</span>
+<span class="sd">    family would often work, since fixed-point and Newton-Krylov methods</span>
+<span class="sd">    empirically favour different branches. Two reasons against. It silently</span>
+<span class="sd">    returns a result from a solver the caller did not choose, which is the</span>
+<span class="sd">    kind of substitution this package works to eliminate. And it leans on a</span>
+<span class="sd">    bias that happens to hold at the state points tested rather than on</span>
+<span class="sd">    anything guaranteed -- nothing stops both families landing on the same</span>
+<span class="sd">    unphysical root elsewhere.</span>
+
+<span class="sd">    Deflation divides the residual by a factor singular at each root already</span>
+<span class="sd">    found, so the SAME solver cannot return there: it must find something</span>
+<span class="sd">    else or fail honestly. The caller's choice of solver is respected, and</span>
+<span class="sd">    since makeDeflatedClass wraps any base class it does not require SUNDIALS</span>
+<span class="sd">    to be installed.</span>
+
+<span class="sd">    WHEN IT FAILS, THAT IS INFORMATION. Past a spinodal there may be no</span>
+<span class="sd">    physical solution at the state point, and deflation will go on finding</span>
+<span class="sd">    unphysical ones because that is what exists. The exception therefore</span>
+<span class="sd">    names every root found with its min S(Q) rather than reporting a bare</span>
+<span class="sd">    non-convergence: those numbers say something about the state point, and</span>
+<span class="sd">    discarding them would throw the evidence away.</span>
+<span class="sd">    """</span>
+    <span class="n">worst</span> <span class="o">=</span> <span class="n">_minSq</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">worst</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.deflation</span><span class="w"> </span><span class="kn">import</span> <span class="n">makeDeflatedClass</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"min S(Q) = </span><span class="si">{</span><span class="n">worst</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> &lt; 0: the solver converged to a root that "</span>
+            <span class="sa">f</span><span class="s2">"is not a fluid, and deflation is unavailable "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">). Pass deflateOnUnphysical=0 to "</span>
+            <span class="sa">f</span><span class="s2">"accept the unphysical root."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+    <span class="n">roots</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"initial"</span><span class="p">,</span> <span class="n">worst</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">maxAttempts</span><span class="p">))):</span>
+        <span class="c1">#The fixpoint variable is gamma; that is what the deflation factor</span>
+        <span class="c1">#measures distance from.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">roots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">curves</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">solverInstance</span> <span class="o">=</span> <span class="n">buildAndSolve</span><span class="p">(</span>
+                <span class="n">makeDeflatedClass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">)</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                                  <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
+                                      <span class="s2">"Deflated"</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">),</span>
+                                  <span class="nb">list</span><span class="p">(</span><span class="n">roots</span><span class="p">)))</span>
+            <span class="n">curves</span> <span class="o">=</span> <span class="n">deriveCurves</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="c1">#Summarise the exception rather than interpolating it: scipy's</span>
+            <span class="c1">#NoConvergence carries the whole residual vector, so str(exc) is</span>
+            <span class="c1">#a thousand numbers and the useful part -- that the deflated</span>
+            <span class="c1">#solve could not converge -- is lost in them.</span>
+            <span class="n">detail</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">120</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"min S(Q) = </span><span class="si">{</span><span class="n">worst</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> &lt; 0, and the re-solve with that root "</span>
+                <span class="sa">f</span><span class="s2">"deflated away did not converge (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). "</span>
+                <span class="sa">f</span><span class="s2">"Roots found: </span><span class="si">{</span><span class="n">_rootSummary</span><span class="p">(</span><span class="n">history</span><span class="p">)</span><span class="si">}</span><span class="s2">. That the solver "</span>
+                <span class="sa">f</span><span class="s2">"cannot reach another root once this one is excluded is "</span>
+                <span class="sa">f</span><span class="s2">"itself evidence: there may be no physical solution at this "</span>
+                <span class="sa">f</span><span class="s2">"state point. Detail: </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="n">worst</span> <span class="o">=</span> <span class="n">_minSq</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span>
+        <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">"deflation </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">worst</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">worst</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"no physical solution found after </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span><span class="si">}</span><span class="s2"> deflation(s): every "</span>
+        <span class="sa">f</span><span class="s2">"root located has min S(Q) &lt; 0. These are genuine solutions of the "</span>
+        <span class="sa">f</span><span class="s2">"closure equations on branches with negative compressibility, not "</span>
+        <span class="sa">f</span><span class="s2">"failed calculations, which is what a state point at or past a "</span>
+        <span class="sa">f</span><span class="s2">"spinodal looks like. Roots found: </span><span class="si">{</span><span class="n">_rootSummary</span><span class="p">(</span><span class="n">history</span><span class="p">)</span><span class="si">}</span><span class="s2">. Try a "</span>
+        <span class="sa">f</span><span class="s2">"different solver, a different closure, or a less extreme state; "</span>
+        <span class="sa">f</span><span class="s2">"pass deflateOnUnphysical=0 to accept the unphysical root instead."</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rootSummary</span><span class="p">(</span><span class="n">history</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: min S(Q) = </span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">history</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="solve">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.solve">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(),</span> <span class="n">closure</span><span class="o">=</span><span class="s2">"Percus-Yevick"</span><span class="p">,</span> <span class="n">closureParam</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">closureParam2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">findConsistentParameter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+          <span class="n">solver</span><span class="o">=</span><span class="n">_defaultSolverName</span><span class="p">,</span> <span class="n">maxIterations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">onSolverCreated</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+          <span class="n">verifyWith</span><span class="o">=</span><span class="p">(</span><span class="s2">"Biggs-Andrews"</span><span class="p">,</span> <span class="s2">"Picard / Mann iteration"</span><span class="p">),</span>
+          <span class="n">verifyTolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">residualTolerance</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+          <span class="n">deflateOnUnphysical</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">transformType</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mannAlpha</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">verifyMannAlpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">'''</span>
+<span class="sd">    Run one full OZ solve and return an OZResult with every derived</span>
+<span class="sd">    curve. This is the exact same workflow oZgui.py's own "calculate"</span>
+<span class="sd">    button runs (that button calls this function too) -- see</span>
+<span class="sd">    SOLVER_CLASSES/CLOSURE_SETTERS in this module for the exact list</span>
+<span class="sd">    of valid `solver=`/`closure=` names.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    potential : str</span>
+<span class="sd">        Potential name, e.g. 'HardSphere', 'StickyHardSphere', 'DLVO'.</span>
+<span class="sd">        See oZfixpointOperator.py's own setXXXPotential() methods, or call</span>
+<span class="sd">        getAvailablePotentialNames() on any solver instance, for the full</span>
+<span class="sd">        current list.</span>
+<span class="sd">    phi : float</span>
+<span class="sd">        Volume fraction.</span>
+<span class="sd">    potentialArgs : tuple</span>
+<span class="sd">        Positional arguments for that potential's own setXXXPotential(),</span>
+<span class="sd">        e.g. ``(tau, delta)`` for StickyHardSphere. There is no keyword</span>
+<span class="sd">        form, and the meaning is per-potential.</span>
+<span class="sd">    closure : str</span>
+<span class="sd">        Closure name, see CLOSURE_SETTERS.</span>
+<span class="sd">    closureParam : float, optional</span>
+<span class="sd">        The closure's own alpha/eta value, required for closures where</span>
+<span class="sd">        ``CLOSURE_SETTERS[closure][1]`` is True (Modified HNC,</span>
+<span class="sd">        Rogers-Young, HMSA, BPGG, CJVM, BB) UNLESS findConsistentParameter</span>
+<span class="sd">        is given instead. Not used for ZSEP, which always self-fits all</span>
+<span class="sd">        three of its own parameters; see fitZSEPparameters() on OZsolver</span>
+<span class="sd">        to fix one rather than fit all three.</span>
+<span class="sd">    closureParam2 : float, optional</span>
+<span class="sd">        Second parameter, used only by Extended Rogers-Young. See</span>
+<span class="sd">        SECOND_CLOSURE_PARAM.</span>
+<span class="sd">    findConsistentParameter : bool, optional</span>
+<span class="sd">        If True, search for the closureParam that makes the</span>
+<span class="sd">        compressibility-route and virial-route isothermal compressibility</span>
+<span class="sd">        agree, rather than taking one from the caller. See</span>
+<span class="sd">        OZsolver.findThermodynamicallyConsistentParameter() for the physics</span>
+<span class="sd">        and its caveats: a located root can occasionally be a numerical</span>
+<span class="sd">        artefact, and that method screens for it and falls back to a</span>
+<span class="sd">        closest-approach value with a printed warning when it cannot find a</span>
+<span class="sd">        clean one. Valid only for CONSISTENT_PARAMETER_CLOSURES; raises</span>
+<span class="sd">        ValueError otherwise. When True, closureParam is ignored.</span>
+<span class="sd">    solver : str, optional</span>
+<span class="sd">        Solver name, see SOLVER_CLASSES. Defaults to SUNDIALS'</span>
+<span class="sd">        Anderson-accelerated fixed point when sundials4py is installed,</span>
+<span class="sd">        otherwise "scipy Anderson". Picard remains available as</span>
+<span class="sd">        ``solver="Picard / Mann iteration"`` (the former name</span>
+<span class="sd">        "Picard iteration" is still accepted), but is no longer the default.</span>
+
+<span class="sd">        Prefer a FIXED-POINT method. Near a fold the Jacobian is singular</span>
+<span class="sd">        and the Newton-Krylov family is drawn onto</span>
+<span class="sd">        negative-compressibility branches precisely where the fold lies:</span>
+<span class="sd">        measured at one Lennard-Jones state, the fixed-point family found</span>
+<span class="sd">        g_max = 2.16 with min S(Q) = +0.21 while Newton-Krylov found 1.13</span>
+<span class="sd">        and 1.22 with min S(Q) near -38, all at residuals below 1e-11.</span>
+<span class="sd">        Every one is a correct answer; one is physical.</span>
+<span class="sd">    maxIterations : int, optional</span>
+<span class="sd">        Upper bound on iterations or function evaluations. None (default)</span>
+<span class="sd">        uses each solver's own limit (Preferences: oz.solvers.max_iterations</span>
+<span class="sd">        and oz.solvers.max_iterations_picard). For Picard / Mann the value</span>
+<span class="sd">        is the limit at a = 1 and is multiplied by 1/a (see mannAlpha).</span>
+<span class="sd">    numberOfRadialSamplingPoints : int, optional</span>
+<span class="sd">        Radial grid size. None keeps this project's original 4095 points.</span>
+<span class="sd">        Note the real-space range is ``N*sigma/pointsPerSigma``, so raising</span>
+<span class="sd">        the resolution at fixed N SHRINKS the box -- scale both together or</span>
+<span class="sd">        a convergence test measures nothing. Use</span>
+<span class="sd">        oZfixpointOperator.bestGridSize() rather than choosing by hand: a</span>
+<span class="sd">        DST-I wants 2^k - 1 and a DST-IV wants 2^k.</span>
+<span class="sd">    hardSphereDiameterInPoints : int, optional</span>
+<span class="sd">        Radial resolution. None keeps 100 points per hard-sphere diameter.</span>
+<span class="sd">    onSolverCreated : callable, optional</span>
+<span class="sd">        Called with the just-constructed solver instance after the</span>
+<span class="sd">        potential and closure are applied but BEFORE solve() runs. This is</span>
+<span class="sd">        how a caller reaches the live instance while a long solve is in</span>
+<span class="sd">        progress -- solve() itself returns only once the computation has</span>
+<span class="sd">        finished -- and how the GUI's Interrupt button works. It is also</span>
+<span class="sd">        Not needed for normal scripted use.</span>
+<span class="sd">    verify : bool, optional</span>
+<span class="sd">        Re-solve with other solvers and raise if they land on different</span>
+<span class="sd">        fixed points. True by default and worth leaving so: the closure</span>
+<span class="sd">        equations genuinely admit several solutions, and a solver reporting</span>
+<span class="sd">        success is not claiming to have found the physical one.</span>
+<span class="sd">    verifyWith : tuple of str, optional</span>
+<span class="sd">        Verifiers, tried in order. Skipped: the solver being verified and</span>
+<span class="sd">        any verifier of the SAME ALGORITHM FAMILY (SOLVER_FAMILIES; e.g.</span>
+<span class="sd">        MDIIS, scipy Anderson and SUNDIALS KIN_FP are all Anderson/DIIS</span>
+<span class="sd">        acceleration and never verify each other). The first verifier that</span>
+<span class="sd">        CONVERGES is used; one that stops at its iteration limit is no</span>
+<span class="sd">        reference and the next is tried. Each verifier uses its own</span>
+<span class="sd">        iteration limit from the preferences, not maxIterations. If none</span>
+<span class="sd">        converges, VerificationUnavailable is raised (it carries the</span>
+<span class="sd">        unverified result as ``.result``). Newton-Krylov methods are</span>
+<span class="sd">        deliberately absent (see below).</span>
+<span class="sd">    verifyMannAlpha : float in (0, 1], optional</span>
+<span class="sd">        Damping a of the Picard / Mann iteration when it serves as a</span>
+<span class="sd">        verifier (default 0.5; GUI: preference oz.solve.verify_mann_alpha).</span>
+<span class="sd">        Undamped Picard diverges above phi ~ 0.42, where Biggs-Andrews also</span>
+<span class="sd">        stops converging; damped it remains a verifier for dense states.</span>
+<span class="sd">        Its limit is the Picard limit / a.</span>
+<span class="sd">    verifyTolerance : float, optional</span>
+<span class="sd">        How far the verifying solutions may differ before raising.</span>
+<span class="sd">    residualTolerance : float or None, optional</span>
+<span class="sd">        Independent convergence check (default 1e-6; GUI: preference</span>
+<span class="sd">        oz.solve.residual_tolerance). After the solve the closure's</span>
+<span class="sd">        fixed-point map T is applied once more to the returned solution x;</span>
+<span class="sd">        if ||T(x) - x|| / ||x|| exceeds this, the result is marked NOT</span>
+<span class="sd">        converged (RuntimeWarning, ``OZResult.converged = False``) whatever</span>
+<span class="sd">        the solver reported. ``OZResult.residual`` holds the value. None</span>
+<span class="sd">        switches the check off. Converged solves give 1e-16 to 1e-11.</span>
+<span class="sd">    mannAlpha : float in (0, 1], optional</span>
+<span class="sd">        Damping a of the Picard / Mann iteration,</span>
+<span class="sd">        x_{n+1} = (1 - a) x_n + a T(x_n). None or 1 is plain Picard; a &lt; 1 is</span>
+<span class="sd">        Mann's iteration (Mann 1953): slower, but it converges where undamped</span>
+<span class="sd">        Picard oscillates or diverges (dense or strongly attractive states).</span>
+<span class="sd">        Each damped step moves only a fraction a of the way, so the</span>
+<span class="sd">        iteration limit is ceil(N/a), N being the limit for a = 1</span>
+<span class="sd">        (maxIterations, or the Picard default from the preferences,</span>
+<span class="sd">        oz.solvers.max_iterations_picard). It applies to every Picard / Mann solve of this call -- the primary</span>
+<span class="sd">        solve, a deflation retry and the Picard fallback verifier -- and is</span>
+<span class="sd">        ignored by the other solvers, which control their own step. The value</span>
+<span class="sd">        used is stored as ``OZResult.mannAlpha``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    OZResult</span>
+<span class="sd">        Every derived curve as a plain array: ``Sq`` against ``q``, and</span>
+<span class="sd">        ``gr``, ``cr``, ``hr``, ``gamma``, ``Ur``, ``Br``, ``yr``, ``fr``</span>
+<span class="sd">        against ``r``. Also carries the inputs and ``solverInstance``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        For an unrecognised closure or solver name; a closure needing</span>
+<span class="sd">        closureParam when none was given and findConsistentParameter was</span>
+<span class="sd">        not requested; ZSEP for any potential other than HardSphere; or a</span>
+<span class="sd">        verification disagreement.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import ozLib</span>
+<span class="sd">    &gt;&gt;&gt; res = ozLib.solve("HardSphere", phi=0.3)</span>
+<span class="sd">    &gt;&gt;&gt; q, S = res.q, res.Sq</span>
+
+<span class="sd">    A square well. Sign convention A (project-wide): eps is the DEPTH,</span>
+<span class="sd">    beta u = -eps in the well, so a POSITIVE eps is attractive and a negative</span>
+<span class="sd">    one a shoulder. (pyOZgui used the opposite sign.)</span>
+
+<span class="sd">    &gt;&gt;&gt; res = ozLib.solve("SquareWell", phi=0.3, potentialArgs=(1.0, 0.1),</span>
+<span class="sd">    ...                   closure="Hypernetted-Chain")</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The ValueErrors above are all checked HERE, before the solver is</span>
+<span class="sd">    touched, so a mistake is reported immediately rather than surfacing</span>
+<span class="sd">    later as a confusing internal AttributeError.</span>
+<span class="sd">    '''</span>
+    <span class="k">if</span> <span class="n">closure</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CLOSURE_SETTERS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown closure </span><span class="si">{</span><span class="n">closure</span><span class="si">!r}</span><span class="s2">, must be one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">CLOSURE_SETTERS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">resolveSolverName</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">solver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOLVER_CLASSES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown solver </span><span class="si">{</span><span class="n">solver</span><span class="si">!r}</span><span class="s2">, must be one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">SOLVER_CLASSES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">verifyMannAlpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">verifyMannAlpha</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">verifyMannAlpha</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verifyMannAlpha must be in (0, 1], got </span><span class="si">{</span><span class="n">verifyMannAlpha</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mannAlpha</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mannAlpha</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mannAlpha</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">mannAlpha</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mannAlpha must be in (0, 1], got </span><span class="si">{</span><span class="n">mannAlpha</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">closure</span> <span class="o">==</span> <span class="s2">"ZSEP"</span> <span class="ow">and</span> <span class="n">potential</span> <span class="o">!=</span> <span class="s2">"HardSphere"</span><span class="p">:</span>
+        <span class="c1"># OZsolver.fitZSEPparameters() ALSO checks this itself (see that</span>
+        <span class="c1"># method's own docstring) -- but only via a print()ed warning</span>
+        <span class="c1"># and an early `return None`, not an exception. Without this</span>
+        <span class="c1"># check here too, that would leave solverInstance completely</span>
+        <span class="c1"># unsolved (radialDistributionFunction etc. still at their</span>
+        <span class="c1"># __init__ all-zeros defaults) and this function would still</span>
+        <span class="c1"># happily package that up into a normal-looking OZResult full of</span>
+        <span class="c1"># zeros/S(Q)=1 everywhere, with no exception and nothing wrong</span>
+        <span class="c1"># visible except a Log-tab message a GUI user could easily miss.</span>
+        <span class="c1"># ZSEP's three fitting conditions (Lee 1995) are derived from the</span>
+        <span class="c1"># exact Carnahan-Starling hard-sphere equation of state</span>
+        <span class="c1"># specifically -- there is no meaningful way to "fit" it against</span>
+        <span class="c1"># any other potential's own equation of state.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"closure='ZSEP' is only meaningful for potential='HardSphere' "</span>
+                          <span class="s2">"(Lee (1995)'s zero-separation conditions are derived from the exact "</span>
+                          <span class="sa">f</span><span class="s2">"Carnahan-Starling hard-sphere equation of state), not </span><span class="si">{</span><span class="n">potential</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">setterName</span><span class="p">,</span> <span class="n">needsParam</span> <span class="o">=</span> <span class="n">CLOSURE_SETTERS</span><span class="p">[</span><span class="n">closure</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">findConsistentParameter</span> <span class="ow">and</span> <span class="n">closure</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CONSISTENT_PARAMETER_CLOSURES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"findConsistentParameter=True is only supported for "</span>
+                          <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">CONSISTENT_PARAMETER_CLOSURES</span><span class="p">)</span><span class="si">}</span><span class="s2">, not </span><span class="si">{</span><span class="n">closure</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">needsParam</span> <span class="ow">and</span> <span class="n">closureParam</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">findConsistentParameter</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"closure </span><span class="si">{</span><span class="n">closure</span><span class="si">!r}</span><span class="s2"> needs a closureParam value "</span>
+                          <span class="sa">f</span><span class="s2">"(or findConsistentParameter=True)"</span><span class="p">)</span>
+
+    <span class="n">solverClass</span><span class="p">,</span> <span class="n">solverLinearSolver</span> <span class="o">=</span> <span class="n">SOLVER_CLASSES</span><span class="p">[</span><span class="n">solver</span><span class="p">]</span>
+
+    <span class="n">gridKwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">numberOfRadialSamplingPoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gridKwargs</span><span class="p">[</span><span class="s2">"numberOfRadialSamplingPoints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">numberOfRadialSamplingPoints</span>
+    <span class="k">if</span> <span class="n">hardSphereDiameterInPoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gridKwargs</span><span class="p">[</span><span class="s2">"hardSphereDiameterInPoints"</span><span class="p">]</span> <span class="o">=</span> <span class="n">hardSphereDiameterInPoints</span>
+
+    <span class="c1">#CONSTRUCTION EXTRACTED INTO A CLOSURE so it can be repeated.</span>
+    <span class="c1">#</span>
+    <span class="c1">#This is the same sequence as before, unchanged, but callable: the</span>
+    <span class="c1">#deflation retry below needs to build and run the SAME solver again with</span>
+    <span class="c1">#its rootOperator wrapped, and inlining it twice would guarantee the two</span>
+    <span class="c1">#copies drift apart. `cls` defaults to the class the caller asked for;</span>
+    <span class="c1">#the retry passes a deflated subclass of it.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_buildAndSolve</span><span class="p">(</span><span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="p">(</span><span class="bp">cls</span> <span class="ow">or</span> <span class="n">solverClass</span><span class="p">)(</span><span class="n">port</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">gridKwargs</span><span class="p">)</span>
+        <span class="c1">#transformType: None = automatic (type 4 for one component, 1 for a</span>
+        <span class="c1">#mixture, see resolvedTransformType); 1 or 4 forces it, e.g. to</span>
+        <span class="c1">#compare the two. Set BEFORE the potential: the radial grid depends</span>
+        <span class="c1">#on it.</span>
+        <span class="k">if</span> <span class="n">transformType</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">transformType</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">transformType</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">solverLinearSolver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">linearSolver</span> <span class="o">=</span> <span class="n">solverLinearSolver</span>
+        <span class="c1">#Mann damping: only the Picard / Mann solver reads it.</span>
+        <span class="k">if</span> <span class="n">mannAlpha</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">PicardOZsolver</span><span class="p">):</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">mannAlpha</span> <span class="o">=</span> <span class="n">mannAlpha</span>
+        <span class="n">inst</span><span class="o">.</span><span class="n">setNumberOfIterations</span><span class="p">(</span><span class="n">maxIterations</span><span class="p">)</span>
+        <span class="n">inst</span><span class="o">.</span><span class="n">setVolumeDensity</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+        <span class="n">inst</span><span class="o">.</span><span class="n">setPotentialByName</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="o">*</span><span class="n">potentialArgs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">onSolverCreated</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">onSolverCreated</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">setterName</span> <span class="o">==</span> <span class="s2">"doRHNCclosure"</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">solveRHNC</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">setterName</span> <span class="o">==</span> <span class="s2">"doRMSAclosure"</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">solveRMSA</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">setterName</span> <span class="o">==</span> <span class="s2">"fitZSEPparameters"</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">fitZSEPparameters</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">findConsistentParameter</span><span class="p">:</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">findThermodynamicallyConsistentParameter</span><span class="p">(</span><span class="n">CONSISTENT_PARAMETER_CLOSURES</span><span class="p">[</span><span class="n">closure</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">needsParam</span><span class="p">:</span>
+                <span class="c1">#Closures listed in SECOND_CLOSURE_PARAM take a second</span>
+                <span class="c1">#scalar; pass it through when the caller supplied one,</span>
+                <span class="c1">#otherwise let the setter apply its own default (a = 0 for</span>
+                <span class="c1">#Extended RY, which reduces it exactly to Rogers-Young).</span>
+                <span class="n">extra</span> <span class="o">=</span> <span class="n">SECOND_CLOSURE_PARAM</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">extra</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">closureParam2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">setterName</span><span class="p">)(</span><span class="n">closureParam</span><span class="p">,</span> <span class="n">closureParam2</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">setterName</span><span class="p">)(</span><span class="n">closureParam</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">setterName</span><span class="p">)()</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">inst</span>
+
+    <span class="n">solverInstance</span> <span class="o">=</span> <span class="n">_buildAndSolve</span><span class="p">()</span>
+
+    <span class="c1">#CURVE DERIVATION EXTRACTED TOO, for the same reason as the construction</span>
+    <span class="c1">#above: the deflation retry produces a new solver instance and needs the</span>
+    <span class="c1">#same curves derived from it, and two copies of this would drift.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_deriveCurves</span><span class="p">(</span><span class="n">inst</span><span class="p">):</span>
+        <span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"gr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">getRDF</span><span class="p">()</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"cr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">getDirectCorrelationFunction</span><span class="p">()</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">getSq</span><span class="p">())</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">curves</span><span class="p">[</span><span class="s2">"gr"</span><span class="p">];</span> <span class="n">c</span> <span class="o">=</span> <span class="n">curves</span><span class="p">[</span><span class="s2">"cr"</span><span class="p">]</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span> <span class="o">-</span> <span class="n">c</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"hr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">boltzmannOfP2Ppotential</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"Ur"</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span>
+        <span class="n">EN</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">boltzmannOfP2Ppotential</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"fr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">EN</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="c1"># cavity y(r)=g/EN outside the hard core, and bridge</span>
+        <span class="c1"># B(r)=log(y(r))-Gamma(r) wherever y(r)&gt;0 -- matches the original</span>
+        <span class="c1"># Tcl GUI's own B(r)/y(r) tabs, derived the same way (from</span>
+        <span class="c1"># whatever g/c/Gamma the chosen closure and solver actually</span>
+        <span class="c1"># converged to, not re-solved).</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">EN</span> <span class="o">!=</span> <span class="mf">0.0</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">g</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">EN</span><span class="p">,</span> <span class="mf">1e-300</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="n">curves</span><span class="p">[</span><span class="s2">"yr"</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+            <span class="n">curves</span><span class="p">[</span><span class="s2">"Br"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">curves</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">curves</span>
+
+    <span class="n">curves</span> <span class="o">=</span> <span class="n">_deriveCurves</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">)</span>
+
+    <span class="c1">#PHYSICALITY SCREEN AND DEFLATION RETRY, before verification: there is no</span>
+    <span class="c1">#point cross-checking a root that is about to be rejected. See</span>
+    <span class="c1">#_deflateUntilPhysical for why deflation rather than switching solver.</span>
+    <span class="c1">#The screen itself (min S(Q) &gt;= 0) runs on EVERY solve, see below;</span>
+    <span class="c1">#deflateOnUnphysical only decides whether an unphysical root is retried.</span>
+    <span class="k">if</span> <span class="n">deflateOnUnphysical</span><span class="p">:</span>
+        <span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span> <span class="o">=</span> <span class="n">_deflateUntilPhysical</span><span class="p">(</span>
+            <span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">_buildAndSolve</span><span class="p">,</span>
+            <span class="n">deflateOnUnphysical</span><span class="p">,</span> <span class="n">_deriveCurves</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">OZResult</span><span class="p">(</span><span class="n">solverInstance</span><span class="o">.</span><span class="n">getrArray</span><span class="p">(),</span> <span class="n">solverInstance</span><span class="o">.</span><span class="n">getqArray</span><span class="p">(),</span>
+                     <span class="n">potential</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">potentialArgs</span><span class="p">),</span> <span class="n">closure</span><span class="p">,</span> <span class="n">closureParam</span><span class="p">,</span>
+                     <span class="n">phi</span><span class="p">,</span> <span class="n">solver</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">solverInstance</span><span class="p">)</span>
+    <span class="c1">#PHYSICALITY SCREEN, ALWAYS. S(Q) is a variance and cannot be negative,</span>
+    <span class="c1">#but no convergence test can see that: Newton-Krylov converges for</span>
+    <span class="c1">#Lennard-Jones eps = 0.8, phi = 0.3 (HNC) to a genuine root with</span>
+    <span class="c1">#min S(Q) = -35 and converged = True. Before, the screen ran only when</span>
+    <span class="c1">#deflateOnUnphysical &gt; 0 (default 0), so such a root came back without</span>
+    <span class="c1">#any notice. Now every result carries minSq / physical, and an</span>
+    <span class="c1">#unphysical one raises a RuntimeWarning (with deflation on, an</span>
+    <span class="c1">#unphysical root that deflation cannot replace has already raised).</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">minSq</span> <span class="o">=</span> <span class="n">_minSq</span><span class="p">(</span><span class="n">curves</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">physical</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">minSq</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">physical</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"min S(Q) = </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">minSq</span><span class="si">:</span><span class="s2">.4g</span><span class="si">}</span><span class="s2"> &lt; 0: </span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="s2"> converged to a root that is not a "</span>
+               <span class="sa">f</span><span class="s2">"fluid (negative compressibility branch, or past a spinodal). Use "</span>
+               <span class="sa">f</span><span class="s2">"deflateOnUnphysical &gt; 0 to search for a physical root, or a fixed-point solver."</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"WARNING:"</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">convergenceMessage</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s2">"convergenceMessage"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">verifiedWith</span> <span class="o">=</span> <span class="kc">None</span>             <span class="c1"># set below when verification ran</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">verificationDifference</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#the damping actually used (None for the solvers that have none)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">mannAlpha</span> <span class="o">=</span> <span class="p">((</span><span class="n">mannAlpha</span> <span class="k">if</span> <span class="n">mannAlpha</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1.0</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">isMannSolver</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1">#NOT CONVERGED IS REPORTED, not hidden. A solve that stops at the</span>
+    <span class="c1">#iteration limit still returns its last iterate, which looks like a</span>
+    <span class="c1">#solution: for hard spheres (PY, phi = 0.53) Picard/Mann after 1000</span>
+    <span class="c1">#iterations gave g_max between 4.35 and 6.77 depending on a, while the</span>
+    <span class="c1">#converged root is 5.556220 for every a &lt;= 0.6. The flag lets callers</span>
+    <span class="c1">#(and the GUI) tell such an iterate from a solution.</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"converged"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">finalRelativeProgress</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"finalRelativeProgress"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1">#the iteration limit that applied (Picard / Mann: ceil(N/a)) and, where</span>
+    <span class="c1">#the solver counts them, the iterations used</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">iterationLimit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"iterationLimit"</span><span class="p">,</span>
+                                    <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"numberOfIterations"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"iterations"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">stopReason</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"stopReason"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1">#INDEPENDENT RESIDUAL CHECK. The solver's own flag is a claim; the</span>
+    <span class="c1">#residual of the returned solution is evidence. T is applied once more to</span>
+    <span class="c1">#the returned fixpoint and the result is NOT converged when</span>
+    <span class="c1">#||T(x) - x|| / ||x|| &gt; residualTolerance, whatever the solver reported.</span>
+    <span class="c1">#Example: polydisperse hard-core Yukawa (HNC, phi = 0.1) under KIN_FP</span>
+    <span class="c1">#reports success and returns S(Q) = NaN everywhere; the residual is</span>
+    <span class="c1">#infinite. Converged solves give 1e-16 ... 1e-11, so 1e-6 rejects only</span>
+    <span class="c1">#real failures.</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">residual</span> <span class="o">=</span> <span class="n">_fixpointResidual</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="n">curves</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">residualTolerance</span> <span class="o">=</span> <span class="n">residualTolerance</span>
+    <span class="n">residualFailed</span> <span class="o">=</span> <span class="p">(</span><span class="n">residualTolerance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">residual</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                      <span class="ow">and</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">residual</span> <span class="o">&lt;=</span> <span class="n">residualTolerance</span><span class="p">)</span>
+    <span class="c1">#only a CLAIMED convergence can be overruled; an iteration that stopped at</span>
+    <span class="c1">#its limit is reported as such (its residual is then expected to be large)</span>
+    <span class="n">residualFailed</span> <span class="o">=</span> <span class="n">residualFailed</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span>
+    <span class="k">if</span> <span class="n">residualFailed</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">:</span>
+        <span class="n">prog</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">finalRelativeProgress</span>
+        <span class="k">if</span> <span class="n">residualFailed</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="s2"> reported convergence, but the residual of the returned solution is "</span>
+                   <span class="sa">f</span><span class="s2">"||T(x)-x||/||x|| = </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">residual</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> &gt; residualTolerance = "</span>
+                   <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">residualTolerance</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">; the result is not a solution."</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">solverInstance</span><span class="p">,</span> <span class="s2">"stopReason"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="s2"> did not converge"</span>
+                   <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (stopped early after </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">iterations</span><span class="si">}</span><span class="s2"> iterations: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">reason</span> <span class="k">else</span>
+                      <span class="sa">f</span><span class="s2">" within </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">iterationLimit</span><span class="si">}</span><span class="s2"> iterations"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">iterationLimit</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                   <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (relative progress </span><span class="si">{</span><span class="n">prog</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">prog</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                   <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", residual ||T(x)-x||/||x|| = </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">residual</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
+                      <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">residual</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                   <span class="o">+</span> <span class="s2">"; the result is the last iterate, not a solution."</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">convergenceMessage</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"WARNING:"</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1">#VERIFICATION IS ON BY DEFAULT. A converged residual is not evidence that</span>
+    <span class="c1">#the answer is right: the closure equations admit multiple fixed points,</span>
+    <span class="c1">#and this package has produced cases where a solver reported convergence</span>
+    <span class="c1">#and returned a root 34 % away from the correct one, finite and</span>
+    <span class="c1">#plausible. Reliability matters more here than speed, so the result is</span>
+    <span class="c1">#cross-checked against an INDEPENDENT solver from a COLD START before it</span>
+    <span class="c1">#is returned.</span>
+    <span class="c1">#</span>
+    <span class="c1">#Pass verify=False for an interactive sweep where the cost of a second</span>
+    <span class="c1">#solve matters and the states are already known to be well behaved. Note</span>
+    <span class="c1">#that the second solve must NOT be warm-started from the first: a wrong</span>
+    <span class="c1">#root is still a root, so a warm-started check agrees with anything it is</span>
+    <span class="c1">#given. See solveWithConsensus() for the measurement.</span>
+    <span class="k">if</span> <span class="n">verify</span> <span class="ow">and</span> <span class="n">verifyWith</span><span class="p">:</span>
+        <span class="c1">#verifyWith may be a single name or a sequence tried in order.</span>
+        <span class="c1">#</span>
+        <span class="c1">#BIGGS-ANDREWS FIRST, PICARD AS FALLBACK. Picard was first here on</span>
+        <span class="c1">#independence grounds -- no acceleration, no history vectors, so it</span>
+        <span class="c1">#cannot share an acceleration failure mode. That reasoning is sound</span>
+        <span class="c1">#but was outweighed by two measurements:</span>
+        <span class="c1">#</span>
+        <span class="c1">#  * it is the SLOWEST solver available, 0.0886 s against 0.0075 s</span>
+        <span class="c1">#    for the fastest, so verification cost a factor of ten;</span>
+        <span class="c1">#  * it was the one solver that returned a NON-SOLUTION while</span>
+        <span class="c1">#    reporting success (BPGG alpha=0.5, phi=0.4: g_max = 3.0039 with</span>
+        <span class="c1">#    a residual of 19.4). That specific defect is now fixed -- the</span>
+        <span class="c1">#    convergence test compares the increment rather than successive</span>
+        <span class="c1">#    norms -- but a verifier should be the sturdiest solver</span>
+        <span class="c1">#    available, not the one with the most recent repair.</span>
+        <span class="c1">#</span>
+        <span class="c1">#Biggs-Andrews is also a fixed-point method, so it still does not</span>
+        <span class="c1">#share a Newton-family failure mode, and it converged to the correct</span>
+        <span class="c1">#root on every case tested. Note it converges to ~5e-11 on hard</span>
+        <span class="c1">#spheres where accelerated solvers reach 1e-13; a verifier's own</span>
+        <span class="c1">#tolerance sets the floor on the disagreement it can detect.</span>
+        <span class="c1">#</span>
+        <span class="c1">#DO NOT use a Newton-Krylov method as the verifier. Measured at the</span>
+        <span class="c1">#Lennard-Jones state, all four Newton-Krylov variants converge to</span>
+        <span class="c1">#negative-compressibility branches (min S(Q) ~ -38) while every</span>
+        <span class="c1">#fixed-point method finds the physical root. Such a verifier would</span>
+        <span class="c1">#report disagreement everywhere near a fold, and be wrong itself.</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">([</span><span class="n">verifyWith</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verifyWith</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+                 <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">verifyWith</span><span class="p">))</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">resolveSolverName</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+        <span class="c1">#INDEPENDENCE: a verifier from the same algorithm family as the</span>
+        <span class="c1">#primary is no check (SUNDIALS KIN_FP, scipy Anderson and MDIIS are</span>
+        <span class="c1">#all Anderson/DIIS acceleration -- Pulay's DIIS and Anderson mixing</span>
+        <span class="c1">#are algebraically equivalent -- so they can share a failure mode and</span>
+        <span class="c1">#agree on a wrong answer). Such verifiers are skipped.</span>
+        <span class="n">fam</span> <span class="o">=</span> <span class="n">solverFamily</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
+        <span class="n">skipped</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">SOLVER_CLASSES</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">solver</span>
+                   <span class="ow">and</span> <span class="n">solverFamily</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">fam</span><span class="p">]</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">solver</span> <span class="ow">and</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">SOLVER_CLASSES</span>
+                 <span class="ow">and</span> <span class="n">solverFamily</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">!=</span> <span class="n">fam</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"no independent verifier for solver </span><span class="si">{</span><span class="n">solver</span><span class="si">!r}</span><span class="s2">: tried "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">verifyWith</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">skipped</span><span class="p">)</span><span class="si">}</span><span class="s2"> skipped: same algorithm family)"</span> <span class="k">if</span> <span class="n">skipped</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                <span class="o">+</span> <span class="s2">". Pass verify=False to accept an unverified result."</span><span class="p">)</span>
+        <span class="n">check</span><span class="p">,</span> <span class="n">attempts</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1">#Announce the verifier before it runs. Its own solve() prints</span>
+                <span class="c1">#"&lt;solver&gt; converged after N steps" exactly as the primary</span>
+                <span class="c1">#solve does, so the log showed two converged lines with</span>
+                <span class="c1">#nothing to say which was which -- it reads as though the</span>
+                <span class="c1">#solver had been switched, which is precisely what does NOT</span>
+                <span class="c1">#happen: the returned result is always from the solver the</span>
+                <span class="c1">#caller chose, and this second solve only cross-checks it.</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verifying with </span><span class="si">{</span><span class="n">nm</span><span class="si">}</span><span class="s2"> (independent cross-check; the "</span>
+                      <span class="sa">f</span><span class="s2">"result returned is still </span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="s2">'s)"</span><span class="p">)</span>
+                <span class="c1">#Each verifier runs with ITS OWN iteration limit from the</span>
+                <span class="c1">#preferences (maxIterations was chosen for the primary). The</span>
+                <span class="c1">#Picard / Mann verifier is DAMPED with verifyMannAlpha:</span>
+                <span class="c1">#undamped Picard diverges above phi ~ 0.42, exactly where</span>
+                <span class="c1">#Biggs-Andrews also stops converging, which left no verifier</span>
+                <span class="c1">#for dense states. Its limit is scaled by 1/a as usual.</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span>
+                              <span class="n">closureParam</span><span class="p">,</span> <span class="n">closureParam2</span><span class="p">,</span>
+                              <span class="n">findConsistentParameter</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">nm</span><span class="p">,</span>
+                              <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="n">numberOfRadialSamplingPoints</span><span class="p">,</span>
+                              <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="n">hardSphereDiameterInPoints</span><span class="p">,</span>
+                              <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transformType</span><span class="o">=</span><span class="n">transformType</span><span class="p">,</span>
+                              <span class="n">mannAlpha</span><span class="o">=</span><span class="n">verifyMannAlpha</span> <span class="k">if</span> <span class="n">isMannSolver</span><span class="p">(</span><span class="n">nm</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                              <span class="n">residualTolerance</span><span class="o">=</span><span class="n">residualTolerance</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">],</span> <span class="nb">float</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">b</span><span class="p">)):</span>
+                    <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nm</span><span class="si">}</span><span class="s2">: non-finite S(Q)"</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">converged</span><span class="p">:</span>
+                    <span class="c1">#A verifier that stopped at its iteration limit is no</span>
+                    <span class="c1">#reference: comparing with it would report an unfinished</span>
+                    <span class="c1">#iteration as a disagreement. Try the next one.</span>
+                    <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nm</span><span class="si">}</span><span class="s2">: not converged within </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">iterationLimit</span><span class="si">}</span><span class="s2"> iterations"</span>
+                                    <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">" (a = </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">mannAlpha</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">mannAlpha</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">check</span><span class="p">,</span> <span class="n">verifyWith</span> <span class="o">=</span> <span class="n">c</span><span class="p">,</span> <span class="n">nm</span>
+                    <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">attempts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nm</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">check</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1">#NO INDEPENDENT VERIFIER CONVERGED. This is not a disagreement, and</span>
+            <span class="c1">#must not pass silently as agreement either: the result is</span>
+            <span class="c1">#returned on the exception so a caller (the GUI) can still show</span>
+            <span class="c1">#it, clearly marked as unverified.</span>
+            <span class="k">raise</span> <span class="n">VerificationUnavailable</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"could not verify the result of </span><span class="si">{</span><span class="n">solver</span><span class="si">!r}</span><span class="s2">: no independent "</span>
+                <span class="sa">f</span><span class="s2">"verifier converged (</span><span class="si">{</span><span class="s1">'; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attempts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"; skipped as same algorithm family: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">skipped</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">skipped</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+                <span class="o">+</span> <span class="s2">"). Raise the iteration limits in the preferences, or pass "</span>
+                  <span class="s2">"verify=False to accept the unverified result."</span><span class="p">,</span>
+                <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">attempts</span><span class="o">=</span><span class="n">attempts</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">verifiedWith</span> <span class="o">=</span> <span class="n">verifyWith</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">],</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="s2">"Sq"</span><span class="p">],</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span><span class="p">))),</span> <span class="mf">1e-30</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)))</span><span class="o">/</span><span class="n">scale</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">verificationDifference</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">verifyTolerance</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"solver </span><span class="si">{</span><span class="n">solver</span><span class="si">!r}</span><span class="s2"> and </span><span class="si">{</span><span class="n">verifyWith</span><span class="si">!r}</span><span class="s2"> disagree by "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> (tolerance </span><span class="si">{</span><span class="n">verifyTolerance</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">) on S(Q) for "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">potential</span><span class="si">}</span><span class="s2"> at phi=</span><span class="si">{</span><span class="n">phi</span><span class="si">}</span><span class="s2">, closure </span><span class="si">{</span><span class="n">closure</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"Both converged. This is the signature of multiple "</span>
+                   <span class="sa">f</span><span class="s2">"fixed points -- do not use either result without an "</span>
+                   <span class="sa">f</span><span class="s2">"independent reference. "</span>
+                   <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span> <span class="k">else</span>
+                   <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="s2"> did NOT converge, so this is an unfinished "</span>
+                   <span class="sa">f</span><span class="s2">"iteration, not a second root: raise the iteration limit"</span>
+                   <span class="o">+</span> <span class="p">(</span><span class="s2">" or lower the damping a"</span> <span class="k">if</span> <span class="n">isMannSolver</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span> <span class="o">+</span> <span class="s2">". "</span><span class="p">)</span>
+                <span class="o">+</span> <span class="s2">"Pass verify=False to override."</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="c1"># ----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="solveWithConsensus">
+<a class="viewcode-back" href="../../../oz/api.html#pysasfit.oz.ozLib.solveWithConsensus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">solveWithConsensus</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="n">potentialArgs</span><span class="o">=</span><span class="p">(),</span> <span class="n">closure</span><span class="o">=</span><span class="s2">"doPYclosure"</span><span class="p">,</span>
+                       <span class="n">closureParam</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">volumeDensity</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                       <span class="c1">#"Anderson acceleration" WAS the first default here</span>
+                       <span class="c1">#and no longer exists -- removing it from</span>
+                       <span class="c1">#_BASE_SOLVER_CLASSES broke every call to this</span>
+                       <span class="c1">#function, since the name is looked up there. Found by</span>
+                       <span class="c1">#checking the manual's worked example against the</span>
+                       <span class="c1">#signature rather than by anything failing, because</span>
+                       <span class="c1">#nothing in the package calls this.</span>
+                       <span class="c1">#</span>
+                       <span class="c1">#The three chosen are deliberately DIFFERENT</span>
+                       <span class="c1">#implementations -- scipy's Anderson, Biggs-Andrews</span>
+                       <span class="c1">#and plain Picard -- since the point is agreement</span>
+                       <span class="c1">#between independent routes. Two copies of one</span>
+                       <span class="c1">#algorithm agreeing would prove nothing.</span>
+                       <span class="n">solvers</span><span class="o">=</span><span class="p">(</span><span class="s2">"scipy Anderson"</span><span class="p">,</span> <span class="s2">"Biggs-Andrews"</span><span class="p">,</span>
+                                <span class="s2">"Picard / Mann iteration"</span><span class="p">),</span>
+                       <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">gridN</span><span class="o">=</span><span class="mi">4095</span><span class="p">,</span> <span class="n">pointsPerSigma</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                       <span class="n">maxIterations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transformType</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="s2">"Sq"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Solve with several solvers and return a result only if they AGREE.</span>
+
+<span class="sd">    A converged residual is not evidence that the answer is right. The</span>
+<span class="sd">    closure equations admit multiple fixed points, and this project has</span>
+<span class="sd">    produced three separate cases where a solver reported convergence and</span>
+<span class="sd">    returned a wrong answer:</span>
+
+<span class="sd">      * two accelerated solvers converging to residuals ~1e-12 and returning</span>
+<span class="sd">        S(Q) = 17.0 and 9.7, both with min S(Q) &lt; 0;</span>
+<span class="sd">      * a polydisperse hard-sphere mixture solved as though every particle</span>
+<span class="sd">        had the same diameter (the identical-cores defect), which looked</span>
+<span class="sd">        entirely normal;</span>
+<span class="sd">      * Lennard-Jones at epsilon = 0.8, phi = 0.3 under HNC, where</span>
+<span class="sd">        `scipy Anderson` returns g_max = 1.43 against the correct 2.16 --</span>
+<span class="sd">        and does so for every value of its alpha tried (1.22, 1.43, 1.60),</span>
+<span class="sd">        so it is not a misconfiguration.</span>
+
+<span class="sd">    The last is reachable from a DEFAULT configuration with a standard</span>
+<span class="sd">    potential, not an exotic state point. Its wrong root IS caught by the</span>
+<span class="sd">    min S(Q) &gt;= 0 screen (min S(Q) = -46.5 there), but only because S(Q) is</span>
+<span class="sd">    the quantity screened: g_max alone is 1.43 and entirely plausible. This</span>
+<span class="sd">    function does not rely on any single screen.</span>
+
+<span class="sd">    Returns (solverInstance, report). Raises ValueError when no two solvers</span>
+<span class="sd">    agree, reporting every difference rather than picking a majority</span>
+<span class="sd">    silently -- three different answers is something the caller needs to see,</span>
+<span class="sd">    not a coin toss.</span>
+
+<span class="sd">    COST. Two to three solves. With Anderson at well under a second that is</span>
+<span class="sd">    cheap beside being silently wrong by a third. Reduce `solvers` to two for</span>
+<span class="sd">    speed, but keep them from different families: in testing</span>
+<span class="sd">    `Anderson acceleration` and `Biggs-Andrews` agreed on every case tried,</span>
+<span class="sd">    while both scipy wrappers proved unreliable on soft potentials.</span>
+
+<span class="sd">    DO NOT WARM-START THE LATER SOLVERS from the first one's answer. It is</span>
+<span class="sd">    the obvious optimisation, it IS faster -- 0.005 s against 0.017 s when</span>
+<span class="sd">    tried -- and it destroys the check entirely. Measured on the</span>
+<span class="sd">    Lennard-Jones case above: started from scipy Anderson's wrong root</span>
+<span class="sd">    (g_max = 1.430723), `Anderson acceleration` STAYS THERE and returns</span>
+<span class="sd">    1.430723, where from a cold start the same solver finds the correct</span>
+<span class="sd">    2.163595. The two would then "agree" and this function would accept the</span>
+<span class="sd">    wrong answer.</span>
+
+<span class="sd">    The reason is structural. A wrong root is still a ROOT: any solver</span>
+<span class="sd">    started on it sees a vanishing residual and has no reason to move. Warm</span>
+<span class="sd">    starting asks "is this a fixed point?", which the first solver's own</span>
+<span class="sd">    residual already answered. The question worth asking is "do independent</span>
+<span class="sd">    searches from different starting points land in the same basin?", and</span>
+<span class="sd">    that requires the starting points to be independent. The cost of the</span>
+<span class="sd">    cold starts is not overhead to be optimised away -- it is the entire</span>
+<span class="sd">    content of the check.</span>
+<span class="sd">    """</span>
+    <span class="n">results</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">solvers</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">resolveSolverName</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOLVER_CLASSES</span><span class="p">:</span>
+            <span class="n">failures</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"not installed"</span>
+            <span class="k">continue</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">_linear</span> <span class="o">=</span> <span class="n">SOLVER_CLASSES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">numberOfRadialSamplingPoints</span><span class="o">=</span><span class="n">gridN</span><span class="p">,</span>
+                    <span class="n">hardSphereDiameterInPoints</span><span class="o">=</span><span class="n">pointsPerSigma</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">transformType</span> <span class="o">=</span> <span class="n">transformType</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">setNumberOfIterations</span><span class="p">(</span><span class="n">maxIterations</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">setVolumeDensity</span><span class="p">(</span><span class="n">volumeDensity</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">setPotentialByName</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span> <span class="o">*</span><span class="n">potentialArgs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">closureParam</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">closure</span><span class="p">)(</span><span class="n">closureParam</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">closure</span><span class="p">)()</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">"get"</span> <span class="o">+</span> <span class="n">quantity</span><span class="p">)(),</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">y</span><span class="p">)):</span>
+                <span class="n">failures</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"non-finite result"</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">quantity</span> <span class="o">==</span> <span class="s2">"Sq"</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="n">failures</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"unphysical: min S(Q) = </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2"> &lt; 0"</span>
+                <span class="k">continue</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">failures</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"fewer than two solvers produced a usable result, so nothing can "</span>
+            <span class="sa">f</span><span class="s2">"be verified. Failures: </span><span class="si">{</span><span class="n">failures</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ref</span><span class="p">))),</span> <span class="mf">1e-30</span><span class="p">)</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)))</span><span class="o">/</span><span class="n">scale</span>
+             <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+    <span class="n">agreeing</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">diffs</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">agreeing</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1">#The first solver may itself be the outlier, so try each as the</span>
+        <span class="c1">#reference before concluding that nothing agrees.</span>
+        <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">cand</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r</span><span class="p">))),</span> <span class="mf">1e-30</span><span class="p">)</span>
+            <span class="n">grp</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span>
+                   <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span><span class="p">)))</span><span class="o">/</span><span class="n">sc</span> <span class="o">&lt;=</span> <span class="n">tolerance</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">agreeing</span><span class="p">,</span> <span class="n">ref</span> <span class="o">=</span> <span class="n">grp</span><span class="p">,</span> <span class="n">r</span>
+                <span class="n">diffs</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span><span class="p">)))</span><span class="o">/</span><span class="n">sc</span>
+                         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+                <span class="k">break</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">agreeing</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"no two solvers agree to </span><span class="si">{</span><span class="n">tolerance</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">. This is the signature of "</span>
+            <span class="sa">f</span><span class="s2">"multiple fixed points: every one of them 'converged'. Relative "</span>
+            <span class="sa">f</span><span class="s2">"differences </span><span class="si">{</span><span class="n">diffs</span><span class="si">}</span><span class="s2">; failures </span><span class="si">{</span><span class="n">failures</span><span class="si">}</span><span class="s2">. Do NOT use any of "</span>
+            <span class="sa">f</span><span class="s2">"these results without an independent reference."</span><span class="p">)</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">agreeing</span><span class="o">=</span><span class="n">agreeing</span><span class="p">,</span> <span class="n">differences</span><span class="o">=</span><span class="n">diffs</span><span class="p">,</span> <span class="n">failures</span><span class="o">=</span><span class="n">failures</span><span class="p">,</span>
+                  <span class="n">disagreeing</span><span class="o">=</span><span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">agreeing</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="n">agreeing</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">],</span> <span class="n">report</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discretization of the integral &mdash; pySASfit 0.2.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/logos.css?v=8e9fd85c" />
+
+  
+    <link rel="shortcut icon" href="../_static/pySASfit.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Regularization and choice of the regularization strength" href="theory_regularization.html" />
+    <link rel="prev" title="Forward model, data and information content" href="theory_forward_model.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #0E2740" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pySASfit
+              <img src="../_static/pySASfit-dark.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../launcher.html">Launcher</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conventions.html">Axis conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sasred/index.html">pySASred</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../studio_manual/index.html">pySASstudio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sldprofile/index.html">pySLDprofile</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">pyINVersion</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Usage (library)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html">Using the GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="theory.html">Theory</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="theory_forward_model.html">Forward model, data and information content</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Discretization of the integral</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general-scheme">General scheme</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#direct-collocation-on-a-point-grid">Direct collocation on a point grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#point-values-with-interpolation-and-fine-quadrature">Point values with interpolation and fine quadrature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#spacing-of-the-grid-points">Spacing of the grid points</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cubic-b-spline-basis">Cubic B-spline basis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#alternatives-in-the-literature">Alternatives in the literature</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="theory_regularization.html">Regularization and choice of the regularization strength</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_em_maxent.html">EM, maximum entropy and signed kernels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_uncertainty.html">Uncertainty of the recovered distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory_investigation.html">Development history and findings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#notation">Notation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="theory.html#main-references">Main references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../oz/index.html">pyOZsolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../morph/index.html">pySASmorph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scatter/index.html">pySCAtter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../seb/index.html">pySEBpolymers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../atsas/index.html">pyATsas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../density/index.html">pyDENsity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../densitymulti/index.html">pyDENSSmulti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sld/index.html">pySLDcalculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbox/index.html">pyTOOLbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../python_code.html">Copy Python code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #0E2740" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pySASfit</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Size distribution / p(r): <code class="docutils literal notranslate"><span class="pre">pysasfit.inversion</span></code></a></li>
+          <li class="breadcrumb-item"><a href="theory.html">Theory</a></li>
+      <li class="breadcrumb-item active">Discretization of the integral</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inversion/theory_discretization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discretization-of-the-integral">
+<h1>Discretization of the integral<a class="headerlink" href="#discretization-of-the-integral" title="Link to this heading"></a></h1>
+<section id="general-scheme">
+<h2>General scheme<a class="headerlink" href="#general-scheme" title="Link to this heading"></a></h2>
+<p>Every discretization represents the unknown by a finite expansion</p>
+<div class="math notranslate nohighlight" id="equation-expansion">
+<span class="eqno">(1)<a class="headerlink" href="#equation-expansion" title="Link to this equation"></a></span>\[x(r) = \sum_{k=1}^{N} c_k\, \varphi_k(r)\]</div>
+<p>and turns <a class="reference internal" href="theory_forward_model.html#equation-fredholm">(1)</a> into the linear system
+<span class="math notranslate nohighlight">\(\mathbf{A}\mathbf{c}\approx\mathbf{b}\)</span> with</p>
+<div class="math notranslate nohighlight" id="equation-amatrix">
+<span class="eqno">(2)<a class="headerlink" href="#equation-amatrix" title="Link to this equation"></a></span>\[A_{ik} = \int_0^{r_{max}} K(q_i,r)\,\varphi_k(r)\,\mathrm{d}r
+\qquad\text{(collocation in } q\text{)} .\]</div>
+<p>The data are matched exactly at the measured <span class="math notranslate nohighlight">\(q_i\)</span> (collocation);
+Galerkin projections are not used because the data exist only at discrete
+<span class="math notranslate nohighlight">\(q\)</span>. Three choices of <span class="math notranslate nohighlight">\(\varphi_k\)</span> are implemented: point values
+with a simple quadrature, point values with interpolation and a fine
+quadrature, and cubic B-splines. The table summarizes when each is used.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 26.0%" />
+<col style="width: 26.0%" />
+<col style="width: 48.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>representation</p></th>
+<th class="head"><p>unknowns <span class="math notranslate nohighlight">\(c_k\)</span></p></th>
+<th class="head"><p>used when</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>direct collocation</p></td>
+<td><p><span class="math notranslate nohighlight">\(x(r_k)\)</span></p></td>
+<td><p>uniform grid with step <span class="math notranslate nohighlight">\(\le 1.1\,\pi/q_{max}\)</span>, linear
+interpolation, B-splines off</p></td>
+</tr>
+<tr class="row-odd"><td><p>nodes + interpolation, fine quadrature</p></td>
+<td><p><span class="math notranslate nohighlight">\(x(r_k)\)</span></p></td>
+<td><p>non-uniform grid, cubic interpolation, or uniform step
+<span class="math notranslate nohighlight">\(&gt;1.1\,\pi/q_{max}\)</span> (automatic)</p></td>
+</tr>
+<tr class="row-even"><td><p>cubic B-splines</p></td>
+<td><p>spline coefficients</p></td>
+<td><p>“Represent p(r) by B-splines” checked</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="direct-collocation-on-a-point-grid">
+<h2>Direct collocation on a point grid<a class="headerlink" href="#direct-collocation-on-a-point-grid" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.build_size_distribution_kernel" title="pysasfit.inversion.kernels.build_size_distribution_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.kernels.build_size_distribution_kernel()</span></code></a> uses the
+grid points themselves as quadrature nodes,</p>
+<div class="math notranslate nohighlight" id="equation-collocation">
+<span class="eqno">(3)<a class="headerlink" href="#equation-collocation" title="Link to this equation"></a></span>\[A_{ij} = \Delta r_j\; r_j^{-\alpha}\, K(q_i, r_j),\qquad
+\Delta r_j = \tfrac12 (r_{j+1}-r_{j-1}),\]</div>
+<p>(<code class="docutils literal notranslate"><span class="pre">numpy.gradient</span></code>; one-sided at the ends). This is the rectangle/
+trapezoid rule and is accurate only if the kernel varies little between
+neighbouring points. For the <span class="math notranslate nohighlight">\(j_0\)</span> kernel the fastest oscillation
+in <span class="math notranslate nohighlight">\(r\)</span> has period <span class="math notranslate nohighlight">\(2\pi/q_{max}\)</span>, so a grid step
+<span class="math notranslate nohighlight">\(\Delta r&gt;\pi/q_{max}\)</span> undersamples the kernel at high <span class="math notranslate nohighlight">\(q\)</span> and
+<em>no</em> coefficient vector can fit those data. On test.dat
+(<span class="math notranslate nohighlight">\(\pi/q_{max}=8.2\)</span> nm, <span class="math notranslate nohighlight">\(D_{max}=782\)</span> nm) even unregularized
+least squares gives <span class="math notranslate nohighlight">\(\chi^2_r = 460\)</span>–<span class="math notranslate nohighlight">\(840\)</span> for
+<span class="math notranslate nohighlight">\(N\le45\)</span> points.</p>
+</section>
+<section id="point-values-with-interpolation-and-fine-quadrature">
+<h2>Point values with interpolation and fine quadrature<a class="headerlink" href="#point-values-with-interpolation-and-fine-quadrature" title="Link to this heading"></a></h2>
+<p>To decouple the number of unknowns from the quadrature accuracy,
+<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.build_kernel_on_nodes" title="pysasfit.inversion.kernels.build_kernel_on_nodes"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel_on_nodes()</span></code></a> keeps the node
+values <span class="math notranslate nohighlight">\(c_k=x(r_k)\)</span> as unknowns, interpolates between the nodes
+with fixed cardinal functions <span class="math notranslate nohighlight">\(\varphi_k\)</span>
+(<span class="math notranslate nohighlight">\(\varphi_k(r_j)=\delta_{jk}\)</span>), and evaluates <a class="reference internal" href="#equation-amatrix">(2)</a> on a
+fine uniform grid <span class="math notranslate nohighlight">\(\rho_l\)</span>:</p>
+<div class="math notranslate nohighlight" id="equation-nodekernel">
+<span class="eqno">(4)<a class="headerlink" href="#equation-nodekernel" title="Link to this equation"></a></span>\[\mathbf{A} = \mathbf{A}^{fine}\,\boldsymbol{\Phi},\qquad
+A^{fine}_{il} = \Delta\rho\, \rho_l^{-\alpha} K(q_i,\rho_l),\qquad
+\Phi_{lk} = \varphi_k(\rho_l).\]</div>
+<p>The size of the fine grid (<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.quadrature_points" title="pysasfit.inversion.kernels.quadrature_points"><code class="xref py py-func docutils literal notranslate"><span class="pre">quadrature_points()</span></code></a>)
+is</p>
+<div class="math notranslate nohighlight" id="equation-nquad">
+<span class="eqno">(5)<a class="headerlink" href="#equation-nquad" title="Link to this equation"></a></span>\[n_{q} = \max\!\left(4(N-1)+1,\;
+\left\lceil \frac{4\, r_{max}\, q_{max}}{\pi}\right\rceil + 1\right),\]</div>
+<p>i.e. at least four points per Shannon interval <span class="math notranslate nohighlight">\(\pi/q_{max}\)</span> and at
+least four per node interval. The node kernel reproduces a reference
+integral of a sphere PDDF to <span class="math notranslate nohighlight">\(2.7\times10^{-4}\)</span> (relative) on a
+60-point quadratic grid.</p>
+<dl>
+<dt>Linear interpolation (hat functions)</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}\varphi_k(r) = \begin{cases}
+\dfrac{r-r_{k-1}}{r_k-r_{k-1}} &amp; r_{k-1}\le r\le r_k\\[1ex]
+\dfrac{r_{k+1}-r}{r_{k+1}-r_k} &amp; r_k\le r\le r_{k+1}\\[1ex]
+0 &amp; \text{otherwise}\end{cases}\end{split}\]</div>
+<p><span class="math notranslate nohighlight">\(\varphi_k\ge 0\)</span> and <span class="math notranslate nohighlight">\(\sum_k\varphi_k=1\)</span>: non-negative node
+values give a non-negative <span class="math notranslate nohighlight">\(x(r)\)</span> and a non-negative kernel stays
+non-negative. Hence linear interpolation is compatible with every
+solver.</p>
+</dd>
+<dt>Cubic spline interpolation (not-a-knot)</dt><dd><p><span class="math notranslate nohighlight">\(\varphi_k\)</span> is the <span class="math notranslate nohighlight">\(C^2\)</span> cubic interpolating spline through
+the unit vector <span class="math notranslate nohighlight">\(\mathbf{e}_k\)</span> (<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.cubic_basis" title="pysasfit.inversion.kernels.cubic_basis"><code class="xref py py-func docutils literal notranslate"><span class="pre">cubic_basis()</span></code></a>).
+On each interval <span class="math notranslate nohighlight">\(x(r)\)</span> is a cubic; <span class="math notranslate nohighlight">\(x\)</span>, <span class="math notranslate nohighlight">\(x'\)</span> and
+<span class="math notranslate nohighlight">\(x''\)</span> are continuous at the inner nodes. The two missing
+conditions are the <em>not-a-knot</em> conditions – <span class="math notranslate nohighlight">\(x'''\)</span> is also
+continuous at <span class="math notranslate nohighlight">\(r_2\)</span> and <span class="math notranslate nohighlight">\(r_{N-1}\)</span>, i.e. the first two and
+the last two intervals are each one cubic. The alternative <em>natural</em>
+condition <span class="math notranslate nohighlight">\(x''(0)=x''(r_{max})=0\)</span> is wrong for a PDDF, which
+behaves like <span class="math notranslate nohighlight">\(r^2\)</span> near the origin (test.dat, uniform 45 points:
+<span class="math notranslate nohighlight">\(\chi^2_r\)</span> 2.42 natural vs 0.65 not-a-knot). The interpolation
+is exact for cubic polynomials and <span class="math notranslate nohighlight">\(\sum_k\varphi_k = 1\)</span>.</p>
+<p>The cardinal cubic splines oscillate: they have negative lobes
+(minimum about <span class="math notranslate nohighlight">\(-3.2\)</span> on a 60-point log grid, where adjacent
+intervals differ strongly in length). Consequently non-negative node
+values do <strong>not</strong> guarantee <span class="math notranslate nohighlight">\(x(r)\ge0\)</span>, and a non-negative kernel
+becomes slightly signed (3 % negative entries for the sphere kernel).
+The GUI therefore uses linear interpolation for the solvers that need
+<span class="math notranslate nohighlight">\(x\ge0\)</span> or a non-negative kernel (EM + smoothing, EM + MaxEnt,
+Hansen MaxEnt, ARLS <span class="math notranslate nohighlight">\(\ge0\)</span>).</p>
+</dd>
+</dl>
+<p>Effect of the representation (test.dat, <span class="math notranslate nohighlight">\(j_0\)</span> kernel, Bayesian evidence, <span class="math notranslate nohighlight">\(\chi^2_r\)</span>):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>r grid</p></th>
+<th class="head"><p>direct collocation</p></th>
+<th class="head"><p>linear, fine quadrature</p></th>
+<th class="head"><p>cubic, fine quadrature</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>uniform, 95 points</p></td>
+<td><p>0.43</p></td>
+<td><p>0.47</p></td>
+<td><p>0.44</p></td>
+</tr>
+<tr class="row-odd"><td><p>uniform, 45 points</p></td>
+<td><p>–</p></td>
+<td><p>13.9</p></td>
+<td><p>0.65</p></td>
+</tr>
+<tr class="row-even"><td><p>uniform, 30 points</p></td>
+<td><p>580</p></td>
+<td><p>282</p></td>
+<td><p>1.18</p></td>
+</tr>
+<tr class="row-odd"><td><p>quadratic, 60 points</p></td>
+<td><p>20.4</p></td>
+<td><p>0.53</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-even"><td><p>quadratic, 30 points</p></td>
+<td><p>516</p></td>
+<td><p>1.41</p></td>
+<td><p>0.79</p></td>
+</tr>
+<tr class="row-odd"><td><p>log, 60 points</p></td>
+<td><p>96.2</p></td>
+<td><p>0.65</p></td>
+<td><p>0.60</p></td>
+</tr>
+<tr class="row-even"><td><p>log, 30 points</p></td>
+<td><p>–</p></td>
+<td><p>2.29</p></td>
+<td><p>0.81</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="spacing-of-the-grid-points">
+<h2>Spacing of the grid points<a class="headerlink" href="#spacing-of-the-grid-points" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.kernels.make_r_grid" title="pysasfit.inversion.kernels.make_r_grid"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_r_grid()</span></code></a> places <span class="math notranslate nohighlight">\(N\)</span> points on
+<span class="math notranslate nohighlight">\([0,r_{max}]\)</span> with <span class="math notranslate nohighlight">\(u_k = (k-1)/(N-1)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\text{uniform: } r_k = r_{max}\,u_k ,\qquad
+\text{quadratic: } r_k = r_{max}\,u_k^2 ,\]</div>
+<div class="math notranslate nohighlight">
+\[\text{log: } r_1 = 0,\quad
+r_k = r_{max}\left(\frac{1}{2N}\right)^{\frac{N-k}{N-2}},\ k=2\dots N ,\]</div>
+<p>(a geometric series from <span class="math notranslate nohighlight">\(r_{max}/(2N)\)</span> to <span class="math notranslate nohighlight">\(r_{max}\)</span>). Dense
+spacing at small <span class="math notranslate nohighlight">\(r\)</span> suits a PDDF that rises steeply and has a long
+smooth tail; size distributions with structure at large <span class="math notranslate nohighlight">\(r\)</span> prefer
+the uniform grid.</p>
+<p>All smoothness penalties of the next chapter are built from differences of
+<em>neighbouring unknowns</em>. On a non-uniform grid they therefore measure
+smoothness in the grid index – on a log grid, smoothness in
+<span class="math notranslate nohighlight">\(\ln r\)</span>, which gives the solution more freedom at small <span class="math notranslate nohighlight">\(r\)</span>.</p>
+</section>
+<section id="cubic-b-spline-basis">
+<h2>Cubic B-spline basis<a class="headerlink" href="#cubic-b-spline-basis" title="Link to this heading"></a></h2>
+<p>Following Glatter (1977) the unknown can be represented by
+<span class="math notranslate nohighlight">\(N_c\ll N_s\)</span> cubic B-splines
+(<a class="reference internal" href="api/pysasfit.inversion.html#module-pysasfit.inversion.spline_basis" title="pysasfit.inversion.spline_basis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pysasfit.inversion.spline_basis</span></code></a>):</p>
+<div class="math notranslate nohighlight" id="equation-bspline">
+<span class="eqno">(6)<a class="headerlink" href="#equation-bspline" title="Link to this equation"></a></span>\[x(r) = \sum_{k=1}^{N_c} c_k\, B_{k}(r/r_{max}) .\]</div>
+<dl>
+<dt>Knot vector</dt><dd><p>Clamped, on <span class="math notranslate nohighlight">\(t=r/r_{max}\in[0,1]\)</span>, degree <span class="math notranslate nohighlight">\(d=3\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol\tau = (\underbrace{0,0,0,0}_{d+1},\ \tau_1,\dots,\tau_{K},\
+\underbrace{1,1,1,1}_{d+1}),\qquad K = N_c + 2 - d - 1 .\]</div>
+<p>The interior knots follow the same three rules as the grid points
+(<a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.spline_basis.interior_knots" title="pysasfit.inversion.spline_basis.interior_knots"><code class="xref py py-func docutils literal notranslate"><span class="pre">interior_knots()</span></code></a>): uniform
+<span class="math notranslate nohighlight">\(\tau_j = j/(K+1)\)</span>, quadratic <span class="math notranslate nohighlight">\(\tau_j=(j/(K+1))^2\)</span>, log
+geometric from <span class="math notranslate nohighlight">\(1/(2N_c)\)</span> to 1.</p>
+</dd>
+<dt>Cox–de Boor recursion</dt><dd><div class="math notranslate nohighlight">
+\[\begin{split}B_{j,0}(t) = \begin{cases}1 &amp; \tau_j\le t&lt;\tau_{j+1}\\ 0 &amp; \text{else}\end{cases},
+\qquad
+B_{j,d}(t) = \frac{t-\tau_j}{\tau_{j+d}-\tau_j}B_{j,d-1}(t)
+           + \frac{\tau_{j+d+1}-t}{\tau_{j+d+1}-\tau_{j+1}}B_{j+1,d-1}(t).\end{split}\]</div>
+<p>The clamped basis has <span class="math notranslate nohighlight">\(N_c+2\)</span> functions; the first and the last
+(the only ones that are non-zero at <span class="math notranslate nohighlight">\(t=0\)</span> and <span class="math notranslate nohighlight">\(t=1\)</span>) are
+dropped, which builds <span class="math notranslate nohighlight">\(x(0)=x(r_{max})=0\)</span> into the basis instead
+of imposing it by a penalty.</p>
+</dd>
+<dt>Properties</dt><dd><p><span class="math notranslate nohighlight">\(B_k\ge0\)</span>, local support on four knot intervals, <span class="math notranslate nohighlight">\(C^2\)</span>
+continuity. By the convex-hull property, <span class="math notranslate nohighlight">\(\mathbf c\ge0\)</span>
+implies <span class="math notranslate nohighlight">\(x(r)\ge0\)</span>; a non-negative kernel stays non-negative.
+Every solver – including the EM and MaxEnt solvers – can therefore be
+used unchanged on the coefficients.</p>
+</dd>
+<dt>Kernel and results</dt><dd><p>With <span class="math notranslate nohighlight">\(\boldsymbol\Phi_{lk}=B_k(\rho_l/r_{max})\)</span> on the fine grid
+<a class="reference internal" href="#equation-nquad">(5)</a> and <span class="math notranslate nohighlight">\(\mathbf{B}_{jk} = B_k(r_j/r_{max})\)</span> on the display
+grid,</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{A}_{spline} = \mathbf{A}^{fine}\boldsymbol\Phi
+\in\mathbb{R}^{M\times N_c},\qquad
+\mathbf{x} = \mathbf{B}\,\mathbf{c},\qquad
+\mathrm{Cov}(\mathbf{x}) = \mathbf{B}\,\mathrm{Cov}(\mathbf{c})\,\mathbf{B}^T .\]</div>
+<p><a class="reference internal" href="api/pysasfit.inversion.html#pysasfit.inversion.solver_registry.run_solver" title="pysasfit.inversion.solver_registry.run_solver"><code class="xref py py-func docutils literal notranslate"><span class="pre">pysasfit.inversion.solver_registry.run_solver()</span></code></a> with
+<code class="docutils literal notranslate"><span class="pre">spline=SplineOptions(n_coeffs,</span> <span class="pre">spacing,</span> <span class="pre">A_quad)</span></code> runs any registered
+solver on <span class="math notranslate nohighlight">\(\mathbf{A}_{spline}\)</span> and maps the result back. The
+solvers’ smoothness operators then act on neighbouring coefficients.</p>
+</dd>
+<dt>Why it helps</dt><dd><p>A cubic B-spline basis with knot spacing <span class="math notranslate nohighlight">\(\Delta\tau\,r_{max}\)</span>
+cannot represent oscillations shorter than about
+<span class="math notranslate nohighlight">\(2\Delta\tau\,r_{max}\)</span>. With <span class="math notranslate nohighlight">\(N_c=20\)</span> the basis cannot
+follow individual high-<span class="math notranslate nohighlight">\(q\)</span> points of log-spaced data, while a
+95-point grid can. On test.dat (<span class="math notranslate nohighlight">\(j_0\)</span>, 20 coefficients, log
+knots) all Bayesian-evidence and Tikhonov variants reach
+<span class="math notranslate nohighlight">\(\chi^2_r\approx1\)</span> with a high-<span class="math notranslate nohighlight">\(q\)</span> <span class="math notranslate nohighlight">\(\chi^2\)</span> of
+about 1.05, against 0.02–0.1 on the 95-point grid, and the Bayesian
+normalized evidence increases from <span class="math notranslate nohighlight">\(\ln Z=-153.0\)</span> to
+<span class="math notranslate nohighlight">\(-118.8\)</span>. With the sphere kernel, the spurious spike at
+<span class="math notranslate nohighlight">\(r\approx3\)</span> nm of the volume-weighted point-grid solution
+disappears.</p>
+<p>The number of coefficients is the regularization knob of this
+representation (typically 15–30); knot spacing matters as well
+(uniform knots needed about 25 coefficients on test.dat, log/quadratic
+knots 20).</p>
+</dd>
+</dl>
+</section>
+<section id="alternatives-in-the-literature">
+<h2>Alternatives in the literature<a class="headerlink" href="#alternatives-in-the-literature" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Sine series</strong> (Moore 1980): <span class="math notranslate nohighlight">\(p(r)=\sum_{n=1}^{N} a_n
+\sin(n\pi r/D_{max})\)</span>. The basis functions are the Shannon-optimal
+functions for a PDDF, vanish at both ends, and the integrals
+<a class="reference internal" href="#equation-amatrix">(2)</a> with <span class="math notranslate nohighlight">\(j_0\)</span> have closed forms. It is linear and signed
+(no positivity). Not implemented.</p></li>
+<li><p><strong>Shape-preserving cubic interpolation</strong> (PCHIP, Fritsch &amp; Carlson
+1980) does not overshoot, but its slopes depend non-linearly on the node
+values, so it cannot be written as a fixed matrix
+<span class="math notranslate nohighlight">\(\boldsymbol\Phi\)</span>; not usable in the linear framework.</p></li>
+<li><p><strong>Higher-order quadrature</strong> (Simpson, Gauss) of the collocation
+integrals improves the accuracy of <a class="reference internal" href="#equation-collocation">(3)</a> but not the
+undersampling problem, which is solved by the fine quadrature above.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory_forward_model.html" class="btn btn-neutral float-left" title="Forward model, data and information content" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="theory_regularization.html" class="btn btn-neutral float-right" title="Regularization and choice of the regularization strength" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Paul Scherrer Institut.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
