@@ -284,6 +284,12 @@ def _load():
         distributions,
     ):
         _register_module(mod)
+    try:  # optional GPL-3 module: hard polyhedra of BornAgain/libformfactor
+        from ..polyhedra import specs as _polyhedra
+    except ImportError:
+        pass
+    else:
+        _register_module(_polyhedra)
 
 
 def specs():

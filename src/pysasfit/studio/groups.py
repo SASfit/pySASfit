@@ -198,12 +198,28 @@ def _group_path(group, defs):
     return chain[::-1], root
 
 
+_MENU_PREFIX = "menu:"
+# order of the own top-level submenus relative to the tree of the SASfit plugins ("py plugin ports" is at +0.5)
+_TOP_OFFSET = {"BornAgain": 0.6, "Polyhedra": 0.7, "SasView": 0.8}
+
+
+def _menu_path(p):
+    """Submenu path (list of labels) of a function, or None for the other functions.
+
+    A function names its own place in the menu by ``group = "menu:Top/Sub/Subsub"`` (e.g. the polyhedra of
+    :mod:`pysasfit.studio.polyhedra`); the SasView models go below "SasView", one submenu per sasmodels category.
+    """
+    group = p.group or ""
+    if group.startswith(_MENU_PREFIX):
+        return [s.strip() for s in group[len(_MENU_PREFIX) :].split("/") if s.strip()] or None
+    if p.collection == "sasmodels" and not getattr(p, "builtin", False):
+        return ["SasView", group.split(":", 1)[1] if ":" in group else "other"]
+    return None
+
+
 def _special(p):
     if getattr(p, "builtin", False):
         return "(built-in)", "built-in (libsasfit)", 1
-    if p.collection == "sasmodels":  # SasView models, one group per sasmodels category
-        cat = p.group.split(":", 1)[1] if ":" in p.group else "other"
-        return f"(sasview {cat})", f"SasView: {cat}", 5
     if p.collection == "python" or p.collection.endswith(".py"):
         return "(python)", "Python plugins", 2
     return "(ungrouped)", "(not in a group)", 3
@@ -224,6 +240,14 @@ def build_menu(entries, types, defs=None):
     top = MenuNode()
     for p in entries:
         if p.type not in types:
+            continue
+        mp = _menu_path(p)
+        if mp:  # own submenus on the level of "py plugin ports": BornAgain, Polyhedra, SasView
+            node = top
+            top_order = order.get("ff_plugins", len(defs)) + _TOP_OFFSET.get(mp[0], 0.9)
+            for i, label in enumerate(mp):
+                node = node.child("(menu)" + "/".join(mp[: i + 1]), label, "", top_order if i == 0 else 0)
+            node.functions.append(p)
             continue
         base = top
         if p.collection == "py plugin ports":  # Python ports: a copy of the plugin tree below its own node

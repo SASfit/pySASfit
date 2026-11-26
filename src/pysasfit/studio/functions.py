@@ -190,7 +190,10 @@ class SASfitFunction:
             if pyfunc is None:
                 raise NotImplementedError(f"{self.name} has no {kind} function")
             if getattr(pyfunc, "vectorized", False):  # e.g. the SasView models: one call for all x
-                v = np.asarray(pyfunc(x, p), dtype=float)
+                v = np.asarray(pyfunc(x, p))
+                if kind == "amplitude" and np.iscomplexobj(v):  # complex scattering amplitudes stay complex
+                    return v if v.ndim else complex(v)
+                v = v.astype(float)
                 return v if v.ndim else float(v)
             for i, xi in np.ndenumerate(x):
                 out[i] = pyfunc(float(xi), p)

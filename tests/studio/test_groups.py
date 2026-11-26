@@ -159,3 +159,43 @@ def test_tree_lines_show_counts_and_functions(defs):
     assert "Spheres  [1]" in lines
     assert any(line.strip().startswith("- S") and "(s)" in line for line in lines)
     assert not any("(s)" in line for line in groups.tree_lines(top, functions=False))
+
+
+# ---- own submenus (BornAgain, Polyhedra, SasView) on the level of "py plugin ports" -----------------------------
+
+
+def test_menu_prefix_groups_nest_and_sit_beside_the_plugin_tree(defs):
+    entries = [
+        entry("ba_box", "menu:BornAgain", collection="py plugin ports"),
+        entry("ba_cube", "menu:Polyhedra/Platonic", collection="py plugin ports"),
+        entry("ba_tt", "menu:Polyhedra/Archimedean", collection="py plugin ports"),
+        entry("ba_cube_o", "menu:Polyhedra/Platonic/oriented", collection="py plugin ports"),
+        entry("sph", "FF_sph"),
+    ]
+    top = groups.build_menu(entries, "ff", defs)
+    assert [c.label for c in top.children] == ["Spheres", "BornAgain", "Polyhedra"]
+    poly = top.children[2]
+    assert [c.label for c in poly.children] == ["Platonic", "Archimedean"]
+    assert [c.label for c in poly.children[0].children] == ["oriented"]
+    assert [p.name for p in poly.children[0].functions] == ["ba_cube"]
+    assert top.count() == 5
+
+
+def test_sasview_models_are_nested_by_category(defs):
+    entries = [
+        entry("sv_a", "sasmodels:shape", collection="sasmodels"),
+        entry("sv_b", "sasmodels:sphere", collection="sasmodels"),
+        entry("sv_c", "sasmodels:shape", collection="sasmodels"),
+        entry("sph", "FF_sph"),
+    ]
+    top = groups.build_menu(entries, "ff", defs)
+    assert [c.label for c in top.children] == ["Spheres", "SasView"]
+    sv = top.children[1]
+    assert [c.label for c in sv.children] == ["shape", "sphere"]
+    assert [p.name for p in sv.children[0].functions] == ["sv_a", "sv_c"]
+
+
+def test_menu_prefix_works_without_definitions():
+    top = groups.build_menu([entry("x", "menu:BornAgain/oriented"), entry("y")], "ff", groups.GroupDefs())
+    assert [p.name for p in top.functions] == ["y"]
+    assert [c.label for c in top.children] == ["BornAgain"] and top.children[0].children[0].label == "oriented"
